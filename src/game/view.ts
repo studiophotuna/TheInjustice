@@ -12,7 +12,7 @@ import { SCHOOL_BY_ID, SCHOOLS } from "./content/schools";
 import { COUNTRIES, COUNTRY_BY_ID, TRAVEL_MODES, tripCost, tripMs } from "./content/world";
 import type { Arrival, CountryId, TravelMode } from "./types";
 import { GUT_READS } from "./combat";
-import { countryOf, FIGHT_ENERGY, inHospital, itemPrice, jobLock, scout } from "./engine";
+import { countryOf, dayKey, FIGHT_ENERGY, inHospital, itemPrice, jobLock, scout } from "./engine";
 import { describe, integrityHint } from "./stats";
 import type { DistrictId, LogEntry, PathId, Player } from "./types";
 
@@ -111,6 +111,14 @@ export interface PublicView {
     paid: number;
     reason: string | null;
   } | null;
+  daily: {
+    streak: number;
+    canClaim: boolean;
+    /** Day of the 7-day reward cycle the next claim would be. */
+    nextDay: number;
+    contracts: { id: string; label: string; target: number; progress: number; reward: number; claimed: boolean }[];
+  };
+  gym: { fee: number; energy: number };
   location: { country: CountryId; countryName: string; city: string; color: string; laws: string };
   travel: { to: CountryId; city: string; mode: TravelMode; msLeft: number; totalMs: number } | null;
   arrival: Arrival | null;
@@ -122,6 +130,8 @@ export interface PublicView {
     laws: string;
     color: string;
     here: boolean;
+    /** Your home in this country. */
+    home: string;
     schools: { name: string; career: string; open: boolean }[];
     routes: { mode: TravelMode; name: string; cost: number; minutes: number; risk: string }[];
   }[];
@@ -174,7 +184,7 @@ export function toView(p: Player, now: number): PublicView {
     name: p.name,
     now,
     cash: p.cash,
-    bank: p.bank,
+    bank: Math.floor(p.bank),
     hasBankAccount: p.hasBankAccount,
     energy: Math.floor(p.energy),
     maxEnergy: maxE,
@@ -188,6 +198,20 @@ export function toView(p: Player, now: number): PublicView {
     heatLabel: heatLabel(p.heat),
     reputation: p.reputation,
     housing: BALANCE.housing[p.housing].name,
+    daily: (() => {
+      const d = p.daily;
+      const today = dayKey(now);
+      const yesterday = dayKey(now - 86_400_000);
+      const streakAlive = d?.lastClaim === today || d?.lastClaim === yesterday;
+      const next = (streakAlive ? (d?.streak ?? 0) : 0) + (d?.lastClaim === today ? 0 : 1);
+      return {
+        streak: streakAlive ? d?.streak ?? 0 : 0,
+        canClaim: d?.lastClaim !== today,
+        nextDay: ((Math.max(1, next) - 1) % 7) + 1,
+        contracts: (d?.contracts ?? []).map(({ id, label, target, progress, reward, claimed }) => ({ id, label, target, progress, reward, claimed })),
+      };
+    })(),
+    gym: { fee: itemPrice(p, BALANCE.gym.fee), energy: BALANCE.gym.energy },
     inventory: Object.entries(p.inventory)
       .filter(([, n]) => n > 0)
       .map(([id, count]) => {
@@ -330,6 +354,7 @@ export function toView(p: Player, now: number): PublicView {
       laws: c.laws,
       color: c.color,
       here: c.id === here,
+      home: BALANCE.housing[c.id === here ? p.housing : (p.homes?.[c.id] ?? 0)].name,
       schools: [
         ...SCHOOLS.filter((sc) => sc.country === c.id).map((sc) => ({ name: sc.name, career: PATHS[sc.path].name, open: true })),
         ...c.plannedSchools.map((ps) => ({ ...ps, open: false })),

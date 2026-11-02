@@ -1,7 +1,7 @@
 import type { Action, CountryId, PathId, TravelMode } from "@/game/types";
 import { GameError } from "@/game/types";
 
-const PATH_IDS: PathId[] = ["police", "enforcer", "courts", "vigilante", "medicine"];
+const PATH_IDS: PathId[] = ["police", "enforcer", "courts", "vigilante", "medicine", "banking"];
 const COUNTRY_IDS: CountryId[] = ["varrow", "solmarra", "kestrova", "meridian"];
 const MODES: TravelMode[] = ["bus", "train", "plane"];
 const str = (v: unknown, max = 40): string => {
@@ -22,6 +22,13 @@ export function parseAction(body: unknown): Action {
       return { type: "travel", to: b.to as CountryId, mode: b.mode as TravelMode };
     case "ack_arrival":
       return { type: "ack_arrival" };
+    case "claim_daily":
+      return { type: "claim_daily" };
+    case "claim_contract":
+      return { type: "claim_contract", id: str(b.id) };
+    case "train":
+      if (b.stat !== "strength" && b.stat !== "toughness" && b.stat !== "agility") throw new GameError("Bad request.");
+      return { type: "train", stat: b.stat };
     case "job":
       return { type: "job", jobId: str(b.jobId) };
     case "buy":

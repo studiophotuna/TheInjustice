@@ -91,6 +91,19 @@ export const SCHOOLS: SchoolDef[] = [
     entrance: 22,
     requirements: (p) => basics(p, 10),
   },
+  {
+    id: "solace_finance",
+    name: "Solace Institute of Finance",
+    path: "banking",
+    country: "solmarra",
+    city: "Port Solace",
+    district: "exchange",
+    tuition: 1000,
+    dean: "Chancellor Rafael Montoya",
+    description: "Where the rich send their children to learn how money really moves.",
+    entrance: 16,
+    requirements: (p) => basics(p, 15),
+  },
 ];
 
 export const SCHOOL_BY_ID = Object.fromEntries(SCHOOLS.map((s) => [s.id, s])) as Record<string, SchoolDef>;

@@ -10,6 +10,13 @@ import {
   Globe2,
   MailOpen,
   MapPin,
+  Home,
+  Flame,
+  Gift,
+  ClipboardCheck,
+  Dumbbell as DumbbellIcon,
+  Shield,
+  Wind,
   HeartPulse,
   BookOpen,
   Brain,
@@ -89,6 +96,7 @@ export function JobsTab({ game, highlight }: { game: GameApi; highlight: string 
 
   return (
     <div className="stack">
+      <DailyCard game={game} />
       {view.path && careerJobs.length > 0 && (
         <section className="district career-jobs" style={{ ["--path" as string]: PATH_LOOKS[view.path.id].rim }}>
           <div className="career-head">
@@ -165,6 +173,7 @@ export function FightTab({ game }: { game: GameApi }) {
   const blocked = game.busy || game.live!.hospital > 0;
   return (
     <div className="stack">
+      <GymCard game={game} />
       <div className="callout glass">
         <Eye size={18} />
         <p>
@@ -519,6 +528,7 @@ export function WorldCard({ game }: { game: GameApi }) {
             </div>
             <p className="muted">{c.capital} · {c.mood}</p>
             <p className="laws">{c.laws}</p>
+            <p className="home-line"><Home size={12} /> Your home here: <b>{c.home}</b></p>
             <ul>
               {c.schools.map((sc) => (
                 <li key={sc.name} className={sc.open ? "" : "soon"}>
@@ -548,6 +558,93 @@ export function WorldCard({ game }: { game: GameApi }) {
         ))}
       </div>
       <p className="fine">Tickets are paid in cash. Times are shortened for testing.</p>
+    </section>
+  );
+}
+
+// ─── Daily reward & contracts ──────────────────────────────────────────────
+
+function DailyCard({ game }: { game: GameApi }) {
+  const d = game.view!.daily;
+  return (
+    <section className="card daily">
+      <div className="daily-head">
+        <h3 className="card-title"><Gift size={16} /> Daily</h3>
+        <span className="streak"><Flame size={14} /> {d.streak} day{d.streak === 1 ? "" : "s"}</span>
+      </div>
+      <div className="streak-track">
+        {Array.from({ length: 7 }, (_, i) => {
+          const day = i + 1;
+          const filled = d.canClaim ? day < d.nextDay : day <= d.nextDay;
+          const next = d.canClaim && day === d.nextDay;
+          return (
+            <span key={day} className={`streak-day ${filled ? "done" : ""} ${next ? "next" : ""} ${day === 3 || day === 7 ? "bonus" : ""}`}>
+              <b>${15 * day}</b>
+              <em>{day === 3 ? "+meal" : day === 7 ? "+medkit" : `Day ${day}`}</em>
+            </span>
+          );
+        })}
+      </div>
+      <motion.button whileTap={{ scale: 0.95 }} className={`btn btn-primary btn-sm ${d.canClaim ? "pulse" : ""}`} disabled={game.busy || !d.canClaim} onClick={() => game.act({ type: "claim_daily" })}>
+        {d.canClaim ? `Collect day ${d.nextDay}` : "Come back tomorrow"}
+      </motion.button>
+      <h4 className="subhead"><ClipboardCheck size={13} /> Today's contracts</h4>
+      <div className="contracts">
+        {d.contracts.map((c) => {
+          const done = c.progress >= c.target;
+          return (
+            <div key={c.id} className={`contract ${c.claimed ? "claimed" : done ? "ready" : ""}`}>
+              <div className="contract-top">
+                <span>{c.label}</span>
+                <b>${c.reward}</b>
+              </div>
+              <div className="bar-track"><motion.div className="contract-fill" animate={{ width: `${(c.progress / c.target) * 100}%` }} /></div>
+              <div className="contract-foot">
+                <span className="muted">{c.progress}/{c.target}</span>
+                {c.claimed ? (
+                  <span className="text-green">Collected</span>
+                ) : (
+                  <button className="btn btn-ghost btn-sm" disabled={game.busy || !done} onClick={() => game.act({ type: "claim_contract", id: c.id })}>Collect</button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// ─── Gym ───────────────────────────────────────────────────────────────────
+
+const EXERCISES = [
+  { stat: "strength", name: "Lift weights", note: "Hit harder", Icon: DumbbellIcon },
+  { stat: "toughness", name: "Spar & condition", note: "Take more hits", Icon: Shield },
+  { stat: "agility", name: "Footwork drills", note: "Dodge and strike first", Icon: Wind },
+] as const;
+
+function GymCard({ game }: { game: GameApi }) {
+  const view = game.view!;
+  const blocked = game.busy || game.live!.hospital > 0 || !!view.travel;
+  return (
+    <section className="card gym">
+      <h3 className="card-title"><DumbbellIcon size={16} /> {view.location.city} boxing gym</h3>
+      <p className="muted">Pick what to train. You won&apos;t see numbers, but you&apos;ll feel it. ${view.gym.fee} and ⚡{view.gym.energy} a session.</p>
+      <div className="exercises">
+        {EXERCISES.map(({ stat, name, note, Icon }) => (
+          <motion.button
+            key={stat}
+            whileTap={{ scale: 0.94 }}
+            className="exercise"
+            disabled={blocked || game.live!.energy < view.gym.energy || view.cash < view.gym.fee}
+            onClick={() => game.act({ type: "train", stat })}
+          >
+            <Icon size={22} />
+            <b>{name}</b>
+            <span>{note}</span>
+          </motion.button>
+        ))}
+      </div>
     </section>
   );
 }

@@ -15,6 +15,7 @@ const THEMES: Record<DistrictId | "title", Theme> = {
   boardwalk: { sky: ["#2a0f3a", "#ff7a59"], far: "#3a1a3a", mid: "#24102a", near: "#12081a", glow: "#ffd27a", window: "#ffe7b0" },
   casino_strip: { sky: ["#12051e", "#3a0a3a"], far: "#1e0a26", mid: "#14061c", near: "#08030c", glow: "#ff3df2", window: "#ffd27a" },
   marina: { sky: ["#0a1430", "#2a4a7a"], far: "#13203a", mid: "#0c162a", near: "#060b18", glow: "#ffc24b", window: "#ffe7b0" },
+  exchange: { sky: ["#061a14", "#1a5a46"], far: "#0e2a22", mid: "#0a1e18", near: "#040e0b", glow: "#7ee0a8", window: "#e8fff4" },
   rail_yards: { sky: ["#141820", "#3a3f4a"], far: "#20242c", mid: "#15181f", near: "#0a0c10", glow: "#ff6a2b", window: "#ffd08a" },
   checkpoint_row: { sky: ["#0c1018", "#2a3242"], far: "#181e2a", mid: "#10141e", near: "#080a10", glow: "#f4f8ff", window: "#d8e6ff" },
   foundry: { sky: ["#1a0c06", "#5a2410"], far: "#2a140a", mid: "#1a0c06", near: "#0c0604", glow: "#ff7a1a", window: "#ffb060" },
@@ -177,6 +178,20 @@ function Landmark({ district, t }: { district: DistrictId | "title"; t: Theme })
           <path d="M680 320 V140 h60 v14 h-48 v166" fill="none" stroke="#3a4a5a" strokeWidth="6" />
           <rect x="736" y="150" width="6" height="60" fill="#3a4a5a" />
           {Array.from({ length: 12 }, (_, i) => <rect key={i} x={i * 70} y={340 + (i % 3) * 8} width="40" height="2" fill={t.glow} opacity="0.4" />)}
+        </g>
+      );
+    case "exchange":
+      return (
+        <g>
+          <rect x="220" y="150" width="360" height="210" fill="#0c241c" />
+          <path d="M200 150 L400 90 L600 150Z" fill="#0e2a22" stroke={t.glow} strokeOpacity="0.5" />
+          {[250, 310, 370, 430, 490, 550].map((x) => <rect key={x} x={x - 9} y="160" width="18" height="170" fill="#123a2e" />)}
+          <rect x="200" y="330" width="400" height="30" fill="#0e2a22" />
+          <text x="400" y="138" textAnchor="middle" fontSize="16" fontWeight="900" fill={t.glow} letterSpacing="4" className="neon">EXCHANGE</text>
+          <rect x="40" y="190" width="150" height="46" rx="4" fill="#020806" stroke={t.glow} strokeWidth="1.5" />
+          <g className="ticker">
+            <text x="50" y="219" fontSize="14" fontWeight="800" fill={t.glow} fontFamily="monospace">C&amp;P ▲ 4.71 · VAR ▼ 1.2 · SOL ▲ 0.8</text>
+          </g>
         </g>
       );
     case "rail_yards":

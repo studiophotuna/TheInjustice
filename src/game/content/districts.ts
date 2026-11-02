@@ -97,6 +97,14 @@ export const DISTRICTS: DistrictDef[] = [
     locked: rep(15, "Dock bosses only hire faces they know."),
   },
 
+  {
+    id: "exchange",
+    country: "solmarra",
+    name: "The Exchange",
+    tagline: "Banks, brokers and offshore accounts with no names on them.",
+    locked: rep(12, "The doormen check your shoes before your face."),
+  },
+
   // ── Kestrova · Ironmoor ───────────────────────────────────────
   {
     id: "rail_yards",

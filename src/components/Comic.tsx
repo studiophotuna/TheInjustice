@@ -391,7 +391,31 @@ function Morgue() {
   );
 }
 
+function Vault() {
+  return (
+    <Frame bg="#0e0c06" id="ht-vt" dots="#ffc24b" dotOpacity={0.1}>
+      <Rays color="#ffc24b" cx={200} cy={130} />
+      <circle cx="200" cy="130" r="100" fill="#2a2414" stroke="#ffc24b" strokeWidth="4" />
+      <circle cx="200" cy="130" r="78" fill="#1e1a0e" stroke="#a88a3a" strokeWidth="3" />
+      <g className="vault-wheel" style={{ transformOrigin: "200px 130px" }}>
+        {Array.from({ length: 6 }, (_, i) => {
+          const a = (i / 6) * Math.PI * 2;
+          return <line key={i} x1="200" y1="130" x2={200 + Math.cos(a) * 56} y2={130 + Math.sin(a) * 56} stroke="#ffc24b" strokeWidth="7" strokeLinecap="round" />;
+        })}
+        <circle cx="200" cy="130" r="16" fill="#ffc24b" />
+      </g>
+      {Array.from({ length: 12 }, (_, i) => {
+        const a = (i / 12) * Math.PI * 2;
+        return <circle key={i} cx={200 + Math.cos(a) * 90} cy={130 + Math.sin(a) * 90} r="4" fill="#a88a3a" />;
+      })}
+      <rect x="290" y="200" width="92" height="40" fill="#3a2e14" stroke="#ffc24b" />
+      <text x="336" y="226" textAnchor="middle" fontSize="15" fontWeight="900" fill="#ffc24b">#4471</text>
+    </Frame>
+  );
+}
+
 const ART = {
+  vault: Vault,
   hospital: Hospital,
   morgue: Morgue,
   gavel: Gavel,

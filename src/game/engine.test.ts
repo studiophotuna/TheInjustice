@@ -446,7 +446,7 @@ describe("countries and travel", () => {
     const p = createPlayer("x", "Sol", T0, "solmarra");
     const v = toView(p, T0);
     expect(v.location.city).toBe("Port Solace");
-    expect(v.districts.map((d) => d.id)).toEqual(["boardwalk", "casino_strip", "marina"]);
+    expect(v.districts.map((d) => d.id)).toEqual(["boardwalk", "casino_strip", "marina", "exchange"]);
     expect(v.jobs.some((j) => j.id === "cans")).toBe(false);
     applyAction(p, { type: "job", jobId: "beach_chairs" }, T0, always(0.5));
     expect(() => applyAction(p, { type: "job", jobId: "cans" }, T0, always(0.5))).toThrow(/another country/);
@@ -544,5 +544,97 @@ describe("medicine", () => {
       if (q.hospitalUntil) stay = q.hospitalUntil - (T0 + 10);
     }
     expect(stay).toBeLessThanOrEqual(BALANCE.hp.hospitalMaxMs / 2);
+  });
+});
+
+describe("housing per country", () => {
+  it("each country has its own home, kept while you're away", () => {
+    const p = fresh();
+    p.cash = 1000;
+    applyAction(p, { type: "buy", itemId: "room" }, T0, always(0.5));
+    expect(p.housing).toBe(2);
+    applyAction(p, { type: "travel", to: "solmarra", mode: "plane" }, T0, always(0.99));
+    tick(p, p.travel!.arriveAt);
+    expect(p.housing).toBe(0);
+    expect(p.energy).toBeLessThanOrEqual(maxEnergy(0));
+    expect(toView(p, p.tickAt).countries.find((c) => c.id === "varrow")?.home).toBe("Rented room");
+    applyAction(p, { type: "buy", itemId: "sleeping_bag" }, p.tickAt, always(0.5));
+    expect(p.housing).toBe(1);
+    applyAction(p, { type: "travel", to: "varrow", mode: "plane" }, p.tickAt, always(0.99));
+    tick(p, p.travel!.arriveAt);
+    expect(p.housing).toBe(2);
+    expect(p.homes?.solmarra).toBe(1);
+  });
+
+  it("old saves without homes keep their housing where they live", () => {
+    const p = fresh();
+    delete p.homes;
+    p.housing = 2;
+    tick(p, T0 + 1000);
+    expect((p as Player).homes?.varrow).toBe(2);
+  });
+});
+
+describe("banking", () => {
+  it("Quell vouches at the Solace Institute; bankers earn interest", () => {
+    const p = createPlayer("b", "Banker", T0, "solmarra");
+    p.reputation = 15;
+    p.stats.wits = p.stats.charisma = 40;
+    p.jobCounts.count_cash = 4;
+    applyAction(p, { type: "job", jobId: "count_cash" }, T0, always(0.5));
+    expect(p.offers).toContain("banking");
+    applyAction(p, { type: "offer", path: "banking", accept: true }, T0, always(0.5));
+    tick(p, p.application!.decideAt);
+    applyAction(p, { type: "enroll" }, p.tickAt, always(0.5));
+    expect(p.path).toBe("banking");
+    p.bank = 1000;
+    tick(p, p.tickAt + 3_600_000);
+    expect(p.bank).toBeGreaterThan(1000);
+    expect(p.bank).toBeLessThanOrEqual(1050);
+  });
+});
+
+describe("daily reward, contracts and gym", () => {
+  it("daily reward builds a streak and can only be claimed once a day", () => {
+    const p = fresh();
+    tick(p, T0);
+    applyAction(p, { type: "claim_daily" }, T0, always(0.5));
+    expect(p.cash).toBe(15);
+    expect(() => applyAction(p, { type: "claim_daily" }, T0 + 1000, always(0.5))).toThrow(/tomorrow/);
+    applyAction(p, { type: "claim_daily" }, T0 + 86_400_000, always(0.5));
+    expect(p.daily?.streak).toBe(2);
+    expect(p.cash).toBe(15 + 30);
+    applyAction(p, { type: "claim_daily" }, T0 + 4 * 86_400_000, always(0.5));
+    expect(p.daily?.streak).toBe(1);
+  });
+
+  it("three contracts a day, the same all day, completed by playing", () => {
+    const p = fresh();
+    tick(p, T0);
+    const first = p.daily!.contracts.map((c) => c.label);
+    expect(first).toHaveLength(3);
+    tick(p, T0 + 1000);
+    expect(p.daily!.contracts.map((c) => c.label)).toEqual(first);
+    for (const c of p.daily!.contracts) c.progress = c.target - 1;
+    p.energy = 50;
+    p.cash = 100;
+    applyAction(p, { type: "job", jobId: "windshields" }, T0, always(0.5));
+    applyAction(p, { type: "train", stat: "strength" }, T0, always(0.5));
+    const done = p.daily!.contracts.filter((c) => c.progress >= c.target && c.kind !== "fights");
+    expect(done.length).toBeGreaterThan(0);
+    const before = p.cash;
+    applyAction(p, { type: "claim_contract", id: done[0].id }, T0, always(0.5));
+    expect(p.cash).toBeGreaterThan(before);
+    expect(() => applyAction(p, { type: "claim_contract", id: done[0].id }, T0, always(0.5))).toThrow(/Already/);
+  });
+
+  it("the gym trains the stat you choose, for energy and a fee", () => {
+    const p = fresh();
+    p.cash = 20;
+    applyAction(p, { type: "train", stat: "agility" }, T0, always(0.5));
+    expect(p.stats.agility).toBeGreaterThan(2);
+    expect(p.stats.strength).toBe(0);
+    expect(p.cash).toBe(15);
+    expect(p.energy).toBe(maxEnergy(0) - 10);
   });
 });

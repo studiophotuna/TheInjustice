@@ -54,7 +54,7 @@ export const COUNTRIES: CountryDef[] = [
     payMult: 1.1,
     heatMult: 0.6,
     priceMult: 1.2,
-    plannedSchools: [{ name: "Solace Institute of Finance", career: "Banking" }],
+    plannedSchools: [],
     startStory: "You spend your last coins on a ferry south. If you're going to be broke, be broke in the sun.",
   },
   {

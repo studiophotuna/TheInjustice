@@ -17,6 +17,8 @@ import {
   STAT_KEYS,
   type Action,
   type CountryId,
+  type Contract,
+  type ContractKind,
   type TravelMode,
   type TripIncident,
   type FightSummary,
@@ -48,6 +50,7 @@ export function createPlayer(id: string, rawName: string, now: number, country: 
     id,
     name: cleanName(rawName),
     country,
+    homes: { [country]: 0 },
     createdAt: now,
     cash: 0,
     bank: 0,
@@ -97,9 +100,127 @@ export function tick(p: Player, now: number): void {
     p.hp = Math.min(BALANCE.hp.max, p.hp + elapsed / BALANCE.hp.regenMs);
   }
   p.heat = Math.max(0, p.heat - elapsed / BALANCE.heatDecayMs);
+  if (!p.homes) p.homes = { [countryOf(p)]: p.housing };
+  accrueInterest(p, elapsed);
   p.tickAt = now;
   decideApplication(p);
   arrive(p);
+  ensureDaily(p, now);
+}
+
+/** Bankers earn interest on their savings (rate grows with rank, capped per update). */
+function accrueInterest(p: Player, elapsed: number) {
+  if (p.path !== "banking" || p.bank <= 0 || elapsed <= 0) return;
+  const { baseRatePerHour, ratePerRank, maxGainShare } = BALANCE.banking;
+  const rate = baseRatePerHour + ratePerRank * p.rank;
+  const gain = Math.min(p.bank * rate * (elapsed / 3_600_000), p.bank * maxGainShare);
+  p.bank = Math.round((p.bank + gain) * 100) / 100;
+}
+
+// ── Daily reward & contracts ─────────────────────────────────────────────
+
+export function dayKey(now: number): string {
+  return new Date(now).toISOString().slice(0, 10);
+}
+
+function seededPick(seed: string) {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
+  return () => {
+    h = Math.imul(h ^ (h >>> 15), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return ((h ^= h >>> 16) >>> 0) / 4294967296;
+  };
+}
+
+const CONTRACT_POOL: { kind: ContractKind; label: (n: number) => string; target: [number, number]; reward: number }[] = [
+  { kind: "jobs", label: (n) => `Finish ${n} jobs`, target: [6, 10], reward: 4 },
+  { kind: "fights", label: (n) => `Win ${n} street fights`, target: [1, 3], reward: 15 },
+  { kind: "earn", label: (n) => `Earn $${n} from work`, target: [60, 160], reward: 0.3 },
+  { kind: "train", label: (n) => `Train at the gym ${n} times`, target: [2, 4], reward: 8 },
+];
+
+/** Three fresh contracts each UTC day, the same for a player all day long. */
+function ensureDaily(p: Player, now: number) {
+  const today = dayKey(now);
+  if (p.daily?.day === today) return;
+  const rnd = seededPick(`${p.id}:${today}`);
+  const pool = [...CONTRACT_POOL].sort(() => rnd() - 0.5).slice(0, 3);
+  const contracts: Contract[] = pool.map((c, i) => {
+    const target = Math.round(c.target[0] + rnd() * (c.target[1] - c.target[0]));
+    return {
+      id: `${today}-${i}`,
+      kind: c.kind,
+      label: c.label(target),
+      target,
+      progress: 0,
+      reward: Math.round(c.kind === "earn" ? target * c.reward : target * c.reward + 10),
+      claimed: false,
+    };
+  });
+  p.daily = { day: today, lastClaim: p.daily?.lastClaim ?? null, streak: p.daily?.streak ?? 0, contracts };
+}
+
+function bumpContract(p: Player, kind: ContractKind, amount = 1) {
+  for (const c of p.daily?.contracts ?? []) {
+    if (c.kind === kind && !c.claimed) c.progress = Math.min(c.target, c.progress + amount);
+  }
+}
+
+function claimDaily(p: Player, now: number, events: GameEvent[]) {
+  const today = dayKey(now);
+  const d = p.daily!;
+  if (d.lastClaim === today) throw new GameError("You already collected today's reward. Come back tomorrow.");
+  const yesterday = dayKey(now - 86_400_000);
+  d.streak = d.lastClaim === yesterday ? d.streak + 1 : 1;
+  d.lastClaim = today;
+  const day = ((d.streak - 1) % 7) + 1;
+  const cash = 15 * day;
+  p.cash += cash;
+  let bonus = "";
+  if (day === 3) {
+    p.inventory.hot_meal = (p.inventory.hot_meal ?? 0) + 1;
+    bonus = " and a hot meal";
+  }
+  if (day === 7) {
+    p.inventory.medkit = (p.inventory.medkit ?? 0) + 1;
+    p.reputation += 2;
+    bonus = ", a medkit and +2 reputation";
+  }
+  events.push({ tone: "good", text: `Day ${d.streak} in a row. Someone left you $${cash}${bonus}.` });
+}
+
+function claimContract(p: Player, id: string, events: GameEvent[]) {
+  const c = p.daily?.contracts.find((x) => x.id === id);
+  if (!c) throw new GameError("No such contract.");
+  if (c.claimed) throw new GameError("Already collected.");
+  if (c.progress < c.target) throw new GameError("Not finished yet.");
+  c.claimed = true;
+  p.cash += c.reward;
+  p.reputation += 1;
+  events.push({ tone: "good", text: `Contract done: ${c.label}. +$${c.reward}, +1 reputation.` });
+}
+
+// ── Gym ──────────────────────────────────────────────────────────────────
+
+const GYM_LINES: Record<"strength" | "toughness" | "agility", string[]> = {
+  strength: ["The bar bends a little. So do you.", "One more rep. Then one more.", "Your grip is getting scary."],
+  toughness: ["Body shots on the heavy bag. Your ribs complain, then adapt.", "Ice bath. You stop flinching.", "Ten rounds of sparring. You're still standing."],
+  agility: ["Jump rope until the floor blurs.", "Footwork drills. Your feet stop tripping over each other.", "You slip a punch you never saw coming."],
+};
+
+function train(p: Player, stat: "strength" | "toughness" | "agility", rng: Rng, events: GameEvent[]) {
+  const cost = itemPrice(p, BALANCE.gym.fee);
+  if (p.energy < BALANCE.gym.energy) throw new GameError("You're too tired to train.");
+  if (p.cash < cost) throw new GameError(`The gym fee is $${cost}. Cash only.`);
+  p.energy -= BALANCE.gym.energy;
+  p.cash -= cost;
+  const key = `gym:${stat}`;
+  p.jobCounts[key] = (p.jobCounts[key] ?? 0) + 1;
+  const falloff = 1 / (1 + (p.jobCounts[key] - 1) / BALANCE.repeatFalloff);
+  events.push({ tone: "good", text: `${pick(rng, GYM_LINES[stat])} -$${cost}` });
+  grantXp(p, { [stat]: BALANCE.gym.xp }, falloff, events);
+  bumpContract(p, "train");
 }
 
 /** Rolls the trip's danger now; it is revealed and applied on arrival. */
@@ -175,7 +296,11 @@ function arrive(p: Player) {
   const at = trip.arriveAt;
   const inc = trip.incident;
   p.travel = null;
+  // Each country has its own home: leave this one, move into whatever you have there.
+  p.homes = { ...(p.homes ?? {}), [trip.from]: p.housing };
   p.country = trip.to;
+  p.housing = p.homes[trip.to] ?? 0;
+  p.energy = Math.min(p.energy, maxEnergy(p.housing));
   if (inc) {
     p.cash = Math.max(0, p.cash - (inc.cashLost ?? 0) - (inc.fine ?? 0));
     if (inc.fine) p.heat = Math.max(0, p.heat - 5);
@@ -285,6 +410,7 @@ function rebirth(p: Player, rawName: string | undefined, now: number, events: Ga
   p.cash = 0;
   p.inventory = {};
   p.housing = 0;
+  p.homes = { [countryOf(p)]: 0 };
   p.path = null;
   p.rank = 0;
   p.offers = [];
@@ -402,6 +528,7 @@ function fightNpc(p: Player, npc: NpcDef, now: number, rng: Rng, events: GameEve
     p.cash += loot;
     p.reputation += npc.reputation;
     p.jobCounts["fight:win"] = (p.jobCounts["fight:win"] ?? 0) + 1;
+    bumpContract(p, "fights");
     events.push({ tone: "good", text: `You beat the ${npc.name}.${loot ? ` +$${loot}` : ""}` });
   } else if (p.hp <= 0) {
     summary.outcome = knockout(p, now, rng, events, npc.name, power(them) / power(me)) ? "death" : "ko";
@@ -477,6 +604,8 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
   p.reputation += job.reputation ?? 0;
   shiftIntegrity(p, job.integrity);
   events.push({ tone: "good", text: `${pick(rng, job.lines)} +$${pay}` });
+  bumpContract(p, "jobs");
+  bumpContract(p, "earn", pay);
   grantXp(p, job.xp, falloff, events);
 
   if (job.find && rng() < job.find.chance) {
@@ -499,8 +628,9 @@ function buy(p: Player, itemId: string, events: GameEvent[]) {
   const price = itemPrice(p, item.price);
   if (p.cash < price) throw new GameError("You can't afford that. (Cash on hand only.)");
   if (item.kind === "housing") {
-    if (p.housing >= (item.housing ?? 0)) throw new GameError("You already have a better place.");
+    if (p.housing >= (item.housing ?? 0)) throw new GameError("You already have a better place here.");
     p.housing = item.housing!;
+    p.homes = { ...(p.homes ?? {}), [countryOf(p)]: p.housing };
   } else if (item.kind === "weapon" || item.kind === "armor") {
     if (p.inventory[item.id]) throw new GameError("You already own one.");
     p.inventory[item.id] = 1;
@@ -713,7 +843,8 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng): G
   }
   const blockedInHospital = action.type === "job" || action.type === "fight" || action.type === "bank" || action.type === "travel";
   if (blockedInHospital && inHospital(p, now)) throw new GameError("You're in the hospital. Rest up.");
-  const blockedOnTheRoad = ["job", "fight", "bank", "buy", "apply", "travel", "enroll"].includes(action.type);
+  const blockedOnTheRoad = ["job", "fight", "bank", "buy", "apply", "travel", "enroll", "train"].includes(action.type);
+  if (action.type === "train" && inHospital(p, now)) throw new GameError("You're in the hospital. Rest up.");
   if (blockedOnTheRoad && traveling(p)) throw new GameError("You're still on the road. Wait until you arrive.");
 
   switch (action.type) {
@@ -769,6 +900,16 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng): G
       break;
     case "ack_arrival":
       p.arrival = null;
+      break;
+    case "claim_daily":
+      claimDaily(p, now, events);
+      break;
+    case "claim_contract":
+      claimContract(p, action.id, events);
+      break;
+    case "train":
+      if (!["strength", "toughness", "agility"].includes(action.stat)) throw new GameError("Unknown exercise.");
+      train(p, action.stat, rng, events);
       break;
     case "dismiss_application":
       if (p.application?.status !== "rejected") throw new GameError("Nothing to dismiss.");

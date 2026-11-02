@@ -22,7 +22,8 @@ export type PanelArt =
   | "alley"
   | "rooftop"
   | "hospital"
-  | "morgue";
+  | "morgue"
+  | "vault";
 
 export interface Panel {
   art: PanelArt;
@@ -297,6 +298,49 @@ export const CHAPTERS: Chapter[] = [
         art: "ledger_book",
         caption:
           "His chart lists his specialist: a private clinic in Port Solace, paid by Crane & Partners. Wherever the money goes, he follows.",
+      },
+    ],
+  },
+
+  // ── Banking ───────────────────────────────────────────────────
+  {
+    id: "banking_2",
+    title: "Banking · Forty Accounts",
+    teaser: "Quell asks you to look at one client's file.",
+    panels: [
+      {
+        art: "ledger_book",
+        caption: "Quell slides a folder across her desk. \"One client. Forty accounts. All opened the same week.\"",
+      },
+      {
+        art: "case_file",
+        caption: "Account holder: C&P Holdings. Signatory: A. Crane. Deposits every time a verdict goes his way.",
+      },
+      {
+        art: "envelope",
+        caption:
+          "One deposit is dated the day after your sentencing. $10,000, from Kozak's card club. Your freedom had a price tag.",
+      },
+    ],
+  },
+  {
+    id: "banking_3",
+    title: "Banking · The Vault",
+    teaser: "The Ledger keeps more than money in Port Solace.",
+    panels: [
+      {
+        art: "vault",
+        caption: "Quell takes you to the deepest vault in the Exchange. Box 4471 is rented by C&P Holdings.",
+      },
+      {
+        art: "vault",
+        caption:
+          "Inside: the missing evidence from your trial, carefully kept. Crane never destroys anything he can use later.",
+      },
+      {
+        art: "rooftop",
+        caption:
+          "\"Evidence is worthless without a court that will hear it,\" Quell says. \"Find someone in Grayhaven who isn't bought.\"",
       },
     ],
   },

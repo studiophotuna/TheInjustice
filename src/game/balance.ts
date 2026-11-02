@@ -48,6 +48,14 @@ export const BALANCE = {
     /** Extra time held by customs when flying with heat (shortened for testing). */
     customsDelayMs: 5 * 60_000,
   },
+  gym: { fee: 5, energy: 10, xp: 2.2 },
+  banking: {
+    /** Bankers' interest per hour on savings (shortened for testing). */
+    baseRatePerHour: 0.002,
+    ratePerRank: 0.001,
+    /** Never more than this share of the balance in one update. */
+    maxGainShare: 0.05,
+  },
   /** Diminishing returns: XP multiplier is 1 / (1 + timesDone / this). */
   repeatFalloff: 60,
   logSize: 30,

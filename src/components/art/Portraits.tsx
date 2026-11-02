@@ -1,6 +1,6 @@
 // Vector character portraits: a lit silhouette bust plus a signature prop per character.
 
-type Prop = "hood" | "cap" | "gloves" | "bandana" | "hardhat" | "mask" | "fedora" | "glasses" | "scarf" | "bun" | "headmirror" | "helmet" | "visor" | "none";
+type Prop = "hood" | "cap" | "gloves" | "bandana" | "hardhat" | "mask" | "fedora" | "glasses" | "scarf" | "bun" | "headmirror" | "helmet" | "visor" | "tie" | "none";
 
 const NPC_LOOKS: Record<string, { rim: string; bg: string; prop: Prop }> = {
   alley_rat: { rim: "#9bff6a", bg: "#14200f", prop: "hood" },
@@ -15,6 +15,7 @@ const NPC_LOOKS: Record<string, { rim: string; bg: string; prop: Prop }> = {
   marsh: { rim: "#9b7bff", bg: "#140f2a", prop: "bun" },
   silas: { rim: "#3ee08f", bg: "#08201a", prop: "scarf" },
   mercy: { rim: "#ff7eb6", bg: "#2a0c1c", prop: "headmirror" },
+  quell: { rim: "#7ee0a8", bg: "#0a2418", prop: "tie" },
   // Other countries
   beach_hustler: { rim: "#ffd27a", bg: "#2a1a0a", prop: "glasses" },
   casino_bouncer: { rim: "#ff3df2", bg: "#22062a", prop: "none" },
@@ -97,6 +98,13 @@ function PropShape({ prop, rim }: { prop: Prop; rim: string }) {
       return <path d="M33 40 Q34 20 50 20 Q66 20 67 40 L70 42 H30Z" fill="#2a3448" stroke={rim} strokeWidth="1.2" />;
     case "visor":
       return <rect x="35" y="38" width="30" height="9" rx="4" fill={rim} opacity="0.6" />;
+    case "tie":
+      return (
+        <g>
+          <path d="M44 68 L50 74 L56 68Z" fill="#f4f8ff" />
+          <path d="M48 73 L52 73 L55 92 L50 98 L45 92Z" fill={rim} stroke="#050507" strokeWidth="0.8" />
+        </g>
+      );
     case "mask":
       return <rect x="36" y="38" width="28" height="8" rx="3" fill="#0b0b0b" stroke={rim} strokeWidth="0.8" />;
     default:
@@ -144,6 +152,7 @@ export const PATH_LOOKS: Record<string, { rim: string; prop: Prop }> = {
   courts: { rim: "#9b7bff", prop: "glasses" },
   vigilante: { rim: "#3ee08f", prop: "scarf" },
   medicine: { rim: "#ff7eb6", prop: "headmirror" },
+  banking: { rim: "#7ee0a8", prop: "tie" },
 };
 
 const PLAYER_RIMS = ["#ffc24b", "#38e1ff", "#ff3d5a", "#3ee08f", "#9b7bff", "#ff8a3d"];

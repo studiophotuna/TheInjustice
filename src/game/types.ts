@@ -19,7 +19,7 @@ export type HiddenStats = Record<StatKey, number> & {
   integrity: number;
 };
 
-export type PathId = "police" | "enforcer" | "courts" | "vigilante" | "medicine";
+export type PathId = "police" | "enforcer" | "courts" | "vigilante" | "medicine" | "banking";
 export type CountryId = "varrow" | "solmarra" | "kestrova" | "meridian";
 export type TravelMode = "bus" | "train" | "plane";
 export type DistrictId =
@@ -34,6 +34,7 @@ export type DistrictId =
   | "boardwalk"
   | "casino_strip"
   | "marina"
+  | "exchange"
   // Kestrova (Ironmoor)
   | "rail_yards"
   | "checkpoint_row"
@@ -106,6 +107,31 @@ export interface Player {
   travel?: Trip | null;
   /** Summary of the last finished trip, shown once on arrival. */
   arrival?: Arrival | null;
+  /** Housing owned in each country; `housing` mirrors the current country's. */
+  homes?: Partial<Record<CountryId, HousingTier>>;
+  /** Daily login streak and contracts. */
+  daily?: Daily;
+}
+
+export type ContractKind = "jobs" | "fights" | "earn" | "train";
+
+export interface Contract {
+  id: string;
+  kind: ContractKind;
+  label: string;
+  target: number;
+  progress: number;
+  reward: number;
+  claimed: boolean;
+}
+
+export interface Daily {
+  /** UTC day this record is for (YYYY-MM-DD). */
+  day: string;
+  /** Last UTC day the login reward was claimed. */
+  lastClaim: string | null;
+  streak: number;
+  contracts: Contract[];
 }
 
 export interface TripIncident {
@@ -194,6 +220,9 @@ export type Action =
   | { type: "apply"; school: string }
   | { type: "travel"; to: CountryId; mode: TravelMode }
   | { type: "ack_arrival" }
+  | { type: "claim_daily" }
+  | { type: "claim_contract"; id: string }
+  | { type: "train"; stat: "strength" | "toughness" | "agility" }
   | { type: "enroll" }
   | { type: "dismiss_application" };
 

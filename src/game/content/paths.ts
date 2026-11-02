@@ -171,6 +171,34 @@ export const PATHS: Record<PathId, PathDef> = {
     accepted: 'Doc Mercy calls the dean at St. Brigid\'s. "Helena, I have a student for you. Yes, that one."',
     promotion: (t) => `Doc Mercy pins a new badge on your coat. "${t}. Don't let it go to your head."`,
   },
+  banking: {
+    id: "banking",
+    name: "Banking",
+    side: "law",
+    ranks: ["Finance Student", "Bank Teller", "Loan Officer", "Analyst", "Investment Banker", "Fund Manager", "Bank Director", "Governor of the Exchange"],
+    keyStats: ["wits", "charisma", "nerve"],
+    promotionThresholds: [20, 27, 34, 42, 50, 59, 68],
+    jobsPerRank: 10,
+    school: "solace_finance",
+    graduationRank: 2,
+    contact: "Isadora Quell",
+    contactId: "quell",
+    blurb: "Follow the money. In Port Solace, money is the only thing that never lies.",
+    examStats: ["wits", "charisma"],
+    examName: "Audit",
+    qualifies: (p) =>
+      p.heat < BALANCE.cleanRecordHeat &&
+      (p.jobCounts.count_cash ?? 0) + (p.jobCounts.broker_errands ?? 0) >= 5 &&
+      sv(p, "wits") + sv(p, "charisma") >= 44,
+    offer: [
+      "A woman in white linen watches you count a stack of bills twice. You're never wrong.",
+      "\"Isadora Quell. Private banking. I've had eleven clerks this year. None of them could count.\"",
+      "\"The Institute only takes rich kids. Unless someone they respect vouches for you. I'm someone.\"",
+      "She smiles. \"And I'd like to know why a Grayhaven judge keeps forty accounts in my bank.\"",
+    ],
+    accepted: 'Quell writes to the Institute on bank letterhead. "They won\'t say no to me. They might say no to you, so be impressive."',
+    promotion: (t) => `Quell raises a glass of something expensive. "To the new ${t}. Don't let them see you count."`,
+  },
 };
 
 export function rankTitle(p: Player): string | null {
