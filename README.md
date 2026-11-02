@@ -38,7 +38,9 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
 
 ## What's in the first playable version
 
-- Create a character and read the opening comic, **Chapter 0 · The Verdict**.
+- Play as a guest right away, or **sign up / log in** (username + password) to keep your
+  character on any device. Signing up keeps the guest character you already have.
+- Read the opening comic, **Chapter 0 · The Verdict**.
 - 11 street jobs across The Gutter, Old Market and Iron Row, unlocked as you progress.
 - **Hidden stats** (strength, toughness, agility, wits, nerve, charisma, perception,
   integrity). They are never sent to the browser. You see words ("Scrawny", "Lean"…),
@@ -52,6 +54,9 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
 - Two career paths with 3 ranks each: **Police** (law) and **Enforcer** (street).
   Offers appear when your hidden stats are high enough. Police can also take bribes, which
   quietly lowers Integrity.
+- **Death**: being knocked out by someone far stronger can kill you. Hidden stats are halved,
+  cash, gear, housing and career are lost, bank savings survive. You continue as a new life,
+  keeping your name or choosing a new one, and the game tells you that you feel weak.
 - **Doc Mercy** assessment after a hospital stay (rough comparison, never numbers).
 - Leaderboard and event log.
 - Installable as a web app on phones (Add to Home Screen).

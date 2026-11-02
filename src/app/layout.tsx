@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Bangers } from "next/font/google";
+import { Bangers, Bebas_Neue, Inter } from "next/font/google";
 import "./globals.css";
 
-const bangers = Bangers({ weight: "400", subsets: ["latin"], display: "swap", variable: "--font-comic" });
+const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-body" });
+const bebas = Bebas_Neue({ weight: "400", subsets: ["latin"], display: "swap", variable: "--font-display" });
+const bangers = Bangers({ weight: "400", subsets: ["latin"], display: "swap", variable: "--font-sfx" });
 
 export const metadata: Metadata = {
   title: "Injustice",
@@ -15,12 +17,14 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#ffd23f",
+  viewportFit: "cover",
+  themeColor: "#07080c",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={bangers.variable}>
+    <html lang="en" className={`${inter.variable} ${bebas.variable} ${bangers.variable}`}>
       <body>{children}</body>
     </html>
   );
