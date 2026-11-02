@@ -245,11 +245,10 @@ other street paths, turf map, events, monetization.
 | 4 | **Law paths** | The **deepest path**: Police, Courts, Vigilante, 8 ranks each, clean/corrupt variants, player-driven justice loop. Two new hidden stats: **Perception** and **Integrity**. Balanced to be deeper, not stronger. See [LAW_PATH.md](LAW_PATH.md). |
 | 5 | **Assessments** | Yes, but **rare and story-tied**, never an always-available coach. See §5.2. |
 
-### Still open
-
-1. **Platform**: web/PWA first (recommended) or native mobile?
-2. **Monetization** plans, if any?
-3. City name: **Grayhaven** (placeholder) — keep or change?
+| 6 | **Platform** | **Web app (PWA)** that installs on phones from the browser. One codebase for phone and desktop, no app stores at first. |
+| 7 | **Timers & pop-ups** | Classic timers (energy, nerve, hospital, jail, travel) **plus smart pop-ups and push notifications** with a one-tap button that opens the right job. See [TIMERS_AND_MONETIZATION.md](TIMERS_AND_MONETIZATION.md). |
+| 8 | **Monetization** | **None at launch.** Later: cosmetics first; paid profile photo only as a moderated "Comic Portrait". Never sell stats or protection. |
+| 9 | **World** | **4 fictional countries** (Varrow, Solmarra, Kestrova, Meridian), phased in as expansions. Launch city **Grayhaven** with 10 districts. See [WORLD.md](WORLD.md). |
 
 ---
 
