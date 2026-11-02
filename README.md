@@ -4,6 +4,8 @@ A modern take on the classic text-based crime RPG. You were framed, jailed, and 
 with nothing. Start as a bum with $0 in **The Gutter** of Grayhaven, work your way up, and
 grow hidden stats that decide whether you survive.
 
+**Play online:** https://injustice-booking-cms.vercel.app
+
 ## Play it locally
 
 Needs Node.js 20 or newer.
