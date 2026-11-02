@@ -9,6 +9,8 @@ const THEMES: Record<DistrictId | "title", Theme> = {
   title: { sky: ["#140d24", "#3a1430"], far: "#1b1430", mid: "#120e1f", near: "#08070d", glow: "#ff3d5a", window: "#ffc24b" },
   gutter: { sky: ["#0c1220", "#1d2a3a"], far: "#141c2a", mid: "#0e141f", near: "#07090e", glow: "#ff8a3d", window: "#ffb84b" },
   old_market: { sky: ["#1a0f1f", "#4a2030"], far: "#26162a", mid: "#1a0f1e", near: "#0b070d", glow: "#ffc24b", window: "#ffd27a" },
+  southside: { sky: ["#170c18", "#3b1626"], far: "#221222", mid: "#170c17", near: "#0a050a", glow: "#3ee08f", window: "#ffcf7a" },
+  courthouse_hill: { sky: ["#0d0f1c", "#2a2440"], far: "#1a1a2c", mid: "#12121f", near: "#08080f", glow: "#9b7bff", window: "#e7dcff" },
   iron_row: { sky: ["#141414", "#3a2a1a"], far: "#211d19", mid: "#161310", near: "#0a0907", glow: "#ff6a2b", window: "#ff9f43" },
   precinct_square: { sky: ["#07112a", "#14264a"], far: "#0f1a33", mid: "#0a1226", near: "#050a16", glow: "#38e1ff", window: "#a8d8ff" },
 };
@@ -104,6 +106,49 @@ function Landmark({ district, t }: { district: DistrictId | "title"; t: Theme })
           ))}
           <path d="M0 300 L120 300 L120 260 L200 280 L200 260 L280 280 L280 260 L360 280 L360 300 L800 300 L800 400 L0 400Z" fill="#0d0b09" />
           <rect x="0" y="296" width="800" height="3" fill={t.glow} opacity="0.4" />
+        </g>
+      );
+    case "southside":
+      return (
+        <g>
+          {/* Tenements with fire escapes */}
+          {[40, 250, 520].map((x, k) => (
+            <g key={x}>
+              <rect x={x} y={170 + k * 15} width="150" height="200" fill="#120a12" />
+              {[0, 1, 2, 3].map((f) => (
+                <g key={f} stroke="#3a2632" strokeWidth="2" fill="none">
+                  <path d={`M${x + 20} ${200 + k * 15 + f * 40} h60 v12 h-60z`} />
+                  <path d={`M${x + 30} ${212 + k * 15 + f * 40} l40 28`} />
+                </g>
+              ))}
+            </g>
+          ))}
+          {/* Graffiti and a chalk scarf */}
+          <text x="600" y="240" fontSize="22" fontWeight="900" fill={t.glow} opacity="0.7" transform="rotate(-6 600 240)" className="neon">WATCHING</text>
+          {/* Streetlight */}
+          <rect x="460" y="250" width="5" height="110" fill="#222" />
+          <path d="M462 252 q20 -8 30 2" stroke="#222" strokeWidth="5" fill="none" />
+          <path className="win-flicker" d="M486 258 L520 360 L452 360Z" fill="#ffcf7a" opacity="0.12" />
+        </g>
+      );
+    case "courthouse_hill":
+      return (
+        <g>
+          {/* Courthouse with dome, columns and steps */}
+          <ellipse cx="400" cy="150" rx="70" ry="50" fill="#16162a" />
+          <rect x="396" y="88" width="8" height="18" fill="#16162a" />
+          <path d="M240 200 L400 150 L560 200Z" fill="#191930" stroke={t.glow} strokeOpacity="0.4" />
+          <rect x="250" y="200" width="300" height="12" fill="#1c1c34" />
+          {[268, 312, 356, 400, 444, 488, 532].map((x) => (
+            <rect key={x} x={x - 8} y="212" width="16" height="110" fill="#22223c" />
+          ))}
+          {[0, 1, 2, 3].map((k) => (
+            <rect key={k} x={230 - k * 12} y={322 + k * 10} width={340 + k * 24} height="10" fill="#1a1a30" />
+          ))}
+          {/* Statue of Justice with scales */}
+          <rect x="128" y="262" width="20" height="98" fill="#16162a" />
+          <circle cx="138" cy="252" r="8" fill="#16162a" />
+          <path d="M112 270 h52 M112 270 l-8 16 h16z M164 270 l-8 16 h16z" stroke={t.glow} strokeWidth="2" fill="none" className="neon" />
         </g>
       );
     case "precinct_square":

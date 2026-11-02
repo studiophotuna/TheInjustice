@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowRight, KeyRound, LogIn, Skull, UserPlus, Wallet } from "lucide-react";
 import { useState } from "react";
-import { PROLOGUE } from "@/game/content/story";
+import { CHAPTER_BY_ID, PROLOGUE } from "@/game/content/story";
 import type { PublicView } from "@/game/view";
 import { Skyline } from "./art/Skyline";
 import { ComicPanel, LightsOut } from "./Comic";
@@ -173,6 +173,47 @@ export function Prologue({ onDone }: { onDone: () => void }) {
       </div>
       <button className="skip" onClick={onDone}>Skip intro</button>
     </div>
+  );
+}
+
+/** Full-screen comic reader for a story chapter. */
+export function ChapterViewer({ id, onDone }: { id: string; onDone: () => void }) {
+  const chapter = CHAPTER_BY_ID[id];
+  const [i, setI] = useState(0);
+  if (!chapter) return null;
+  const last = i === chapter.panels.length - 1;
+  return (
+    <motion.div className="chapter-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <div className="cinematic">
+        <p className="eyebrow">{chapter.title}</p>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, x: 40, rotate: 0.8 }}
+            animate={{ opacity: 1, x: 0, rotate: 0 }}
+            exit={{ opacity: 0, x: -40 }}
+            transition={{ duration: 0.4, ease }}
+          >
+            <ComicPanel panel={chapter.panels[i]} />
+          </motion.div>
+        </AnimatePresence>
+        <div className="row center">
+          {i > 0 && (
+            <button className="btn btn-ghost" onClick={() => setI(i - 1)}>
+              Back
+            </button>
+          )}
+          <button className="btn btn-primary btn-lg" onClick={() => (last ? onDone() : setI(i + 1))}>
+            {last ? "Close" : "Next"} <ArrowRight size={18} />
+          </button>
+        </div>
+        <div className="dots">
+          {chapter.panels.map((_, k) => (
+            <span key={k} className={k === i ? "on" : ""} />
+          ))}
+        </div>
+      </div>
+    </motion.div>
   );
 }
 

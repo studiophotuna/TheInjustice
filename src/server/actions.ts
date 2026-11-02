@@ -1,7 +1,7 @@
 import type { Action, PathId } from "@/game/types";
 import { GameError } from "@/game/types";
 
-const PATH_IDS: PathId[] = ["police", "enforcer"];
+const PATH_IDS: PathId[] = ["police", "enforcer", "courts", "vigilante"];
 const str = (v: unknown, max = 40): string => {
   if (typeof v !== "string" || v.length === 0 || v.length > max) throw new GameError("Bad request.");
   return v;

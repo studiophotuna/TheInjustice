@@ -3,7 +3,8 @@
 
 import { BALANCE, maxEnergy, regenMs } from "./balance";
 import { gutRead, npcFighter, playerFighter, power, resolveFight } from "./combat";
-import { DISTRICT_BY_ID } from "./content/districts";
+import { DISTRICT_BY_ID, totalJobs } from "./content/districts";
+import { CHAPTER_BY_ID } from "./content/story";
 import { ITEM_BY_ID } from "./content/items";
 import { JOB_BY_ID, type JobDef } from "./content/jobs";
 import { mugger, NPC_BY_ID, type NpcDef } from "./content/npcs";
@@ -184,7 +185,34 @@ function rebirth(p: Player, rawName: string | undefined, now: number, events: Ga
   if (p.bank > 0) events.push({ tone: "good", text: `Your bank savings survived: $${p.bank}.` });
 }
 
+/** Chapter ids whose unlock condition the player currently meets. */
+export function eligibleChapters(p: Player): string[] {
+  const ids: string[] = [];
+  if (totalJobs(p) >= 15) ids.push("old_faces");
+  if (p.path && p.rank >= 2) ids.push(`${p.path}_2`);
+  if (p.path && p.rank >= 3) ids.push(`${p.path}_3`);
+  return ids.filter((id) => CHAPTER_BY_ID[id]);
+}
+
+/** Story knowledge is kept forever, even across deaths. */
+function unlockChapters(p: Player, events: GameEvent[]) {
+  for (const id of eligibleChapters(p)) {
+    if (p.flags.includes(`story:${id}`)) continue;
+    p.flags.push(`story:${id}`);
+    events.push({
+      tone: "story",
+      text: `New chapter: ${CHAPTER_BY_ID[id].title}`,
+      action: { label: "Read", target: `story:${id}` },
+    });
+  }
+}
+
 function checkProgress(p: Player, events: GameEvent[]) {
+  checkCareer(p, events);
+  unlockChapters(p, events);
+}
+
+function checkCareer(p: Player, events: GameEvent[]) {
   if (!p.path) {
     for (const id of Object.keys(PATHS) as PathId[]) {
       if (p.offers.includes(id) || p.flags.includes(`declined_${id}`)) continue;
@@ -207,9 +235,8 @@ function checkProgress(p: Player, events: GameEvent[]) {
   p.reputation += 3;
   const title = def.ranks[p.rank - 1];
   events.push({ tone: "story", text: def.promotion(title) });
-  if (p.path === "police") {
-    const [s1, s2] = def.keyStats;
-    events.push({ tone: "info", text: `Exam notes: ${band(p, s1)} ${band(p, s2)}` });
+  if (def.examStats) {
+    events.push({ tone: "info", text: `${def.examName}: ${def.examStats.map((k) => band(p, k)).join(" ")}` });
   }
 }
 
@@ -472,10 +499,13 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng): G
     case "assess":
       assess(p, now, events);
       break;
-    case "flag":
-      if (!ALLOWED_FLAGS.has(action.flag)) throw new GameError("Unknown flag.");
+    case "flag": {
+      const read = /^read:([a-z0-9_]+)$/.exec(action.flag);
+      const ok = ALLOWED_FLAGS.has(action.flag) || (read && p.flags.includes(`story:${read[1]}`));
+      if (!ok) throw new GameError("Unknown flag.");
       if (!p.flags.includes(action.flag)) p.flags.push(action.flag);
       break;
+    }
     case "rebirth":
       rebirth(p, action.name, now, events);
       break;

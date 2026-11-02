@@ -32,7 +32,15 @@ import {
 import { useState, type ComponentType } from "react";
 import type { JobView, PublicView } from "@/game/view";
 import { Skyline } from "./art/Skyline";
-import { NpcPortrait, PlayerAvatar } from "./art/Portraits";
+import { NpcPortrait, PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
+
+/** Vague hints only: what kind of person each contact is looking for. */
+const CAREER_HINTS = [
+  { id: "police", name: "Police", side: "Law", contact: "reyes", hint: "Work nights, keep your record clean, and get a real address." },
+  { id: "courts", name: "Courts", side: "Law", contact: "marsh", hint: "Spend time on Courthouse Hill, and read what everyone else ignores." },
+  { id: "vigilante", name: "Vigilante", side: "Law", contact: "silas", hint: "Look out for the people of Southside, and keep your conscience clean." },
+  { id: "enforcer", name: "Enforcer", side: "Street", contact: "kozak", hint: "Do muscle work for shady people. Win some fights." },
+];
 import { AuthForm } from "./screens";
 import { fmt, type GameApi } from "./useGame";
 
@@ -64,13 +72,16 @@ export function JobsTab({ game, highlight }: { game: GameApi; highlight: string 
   const view = game.view!;
   const energy = game.live!.energy;
   const blocked = game.busy || game.live!.hospital > 0;
-  const hasPath = (id: string) => view.jobs.some((j) => j.pathJob && j.district === id);
-  const districts = [...view.districts].sort((a, b) => Number(hasPath(b.id)) - Number(hasPath(a.id)));
+  // The district holding most of your career's jobs comes first.
+  const pathJobs = (id: string) => view.jobs.filter((j) => j.pathJob && j.district === id).length;
+  const districts = [...view.districts].sort((a, b) => pathJobs(b.id) - pathJobs(a.id));
 
   return (
     <div className="stack">
       {districts.map((d) => {
-        const jobs = view.jobs.filter((j) => j.district === d.id && (!d.locked || j.pathJob));
+        const jobs = view.jobs
+          .filter((j) => j.district === d.id && (!d.locked || j.pathJob))
+          .sort((x, y) => Number(y.pathJob) - Number(x.pathJob));
         return (
           <section key={d.id} className={`district ${d.locked && !jobs.length ? "is-locked" : ""}`}>
             <div className="district-hero">
@@ -229,8 +240,29 @@ export function ProfileTab({ game }: { game: GameApi }) {
       {view.path && (
         <section className="card">
           <h3 className="card-title"><ShieldAlert size={16} /> Career</h3>
-          <p>{view.path.name} path · answers to {view.path.contact}</p>
+          <div className="row">
+            <NpcPortrait id={view.path.contactId} className="avatar-sm" />
+            <p>{view.path.name} path · answers to {view.path.contact}</p>
+          </div>
           {view.path.promotion && <p className="muted">{view.path.promotion}</p>}
+        </section>
+      )}
+
+      {!view.path && (
+        <section className="card">
+          <h3 className="card-title"><ShieldAlert size={16} /> Careers</h3>
+          <p className="muted">Nobody hands you a career. Someone has to notice you first.</p>
+          <div className="careers">
+            {CAREER_HINTS.map((c) => (
+              <div key={c.id} className="career" style={{ ["--path" as string]: PATH_LOOKS[c.id].rim }}>
+                <NpcPortrait id={c.contact} className="career-portrait" />
+                <div>
+                  <b>{c.name}</b> <span className="path-side">{c.side}</span>
+                  <p className="muted">{c.hint}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
       )}
 
@@ -304,10 +336,23 @@ export function ProfileTab({ game }: { game: GameApi }) {
 
 // ─── City ──────────────────────────────────────────────────────────────────
 
-export function CityTab({ game }: { game: GameApi }) {
+export function CityTab({ game, onRead }: { game: GameApi; onRead: (id: string) => void }) {
   const view = game.view!;
   return (
     <div className="stack">
+      <section className="card">
+        <h3 className="card-title"><BookOpen size={16} /> The Ledger · Your story</h3>
+        <div className="chapters">
+          {view.chapters.map((c) => (
+            <button key={c.id} className={`chapter ${c.unlocked ? "" : "locked"} ${c.unlocked && !c.read ? "unread" : ""}`} disabled={!c.unlocked} onClick={() => onRead(c.id)}>
+              <span className="chapter-title">{c.unlocked ? c.title : "Locked chapter"}</span>
+              <span className="chapter-teaser">{c.unlocked ? c.teaser : "Keep working, or follow a career, to uncover this."}</span>
+              {c.unlocked && !c.read && <span className="chip chip-green">New</span>}
+              {!c.unlocked && <Lock size={14} />}
+            </button>
+          ))}
+        </div>
+      </section>
       <section className="card">
         <h3 className="card-title"><Trophy size={16} /> Most respected in Grayhaven</h3>
         <ol className="leaders">

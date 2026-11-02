@@ -30,6 +30,18 @@ export const DISTRICTS: DistrictDef[] = [
         : `Locals don't know your face yet. (Work ${20 - totalJobs(p)} more jobs, or earn Reputation.)`,
   },
   {
+    id: "southside",
+    name: "Southside",
+    tagline: "Tenements, fire escapes and streets the police stopped patrolling.",
+    locked: (p) => (p.reputation >= 10 ? null : "Southside doesn't trust strangers. (Earn some Reputation.)"),
+  },
+  {
+    id: "courthouse_hill",
+    name: "Courthouse Hill",
+    tagline: "Marble steps, law offices, and the courtroom where you were sentenced.",
+    locked: (p) => (p.reputation >= 10 ? null : "Security turns away anyone who looks like they sleep outside."),
+  },
+  {
     id: "iron_row",
     name: "Iron Row",
     tagline: "Factories, warehouses and back rooms.",

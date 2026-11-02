@@ -20,9 +20,9 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import type { FightSummary } from "@/game/types";
 import type { PublicView } from "@/game/view";
-import { NpcPortrait, PlayerAvatar } from "./art/Portraits";
+import { NpcPortrait, PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 import { Skyline } from "./art/Skyline";
-import { AuthForm, DeathScreen, Landing, Logo, Prologue } from "./screens";
+import { AuthForm, ChapterViewer, DeathScreen, Landing, Logo, Prologue } from "./screens";
 import { CityTab, FightTab, JobsTab, ProfileTab, ShopTab } from "./tabs";
 import { fmt, useGame, type GameApi } from "./useGame";
 
@@ -80,7 +80,22 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
   const [tab, setTab] = useState<Tab>("jobs");
   const [highlight, setHighlight] = useState<string | null>(null);
   const [saveOpen, setSaveOpen] = useState(false);
+  const [reading, setReading] = useState<string | null>(null);
   const live = game.live!;
+
+  // A newly unlocked chapter opens by itself once nothing else is on screen.
+  useEffect(() => {
+    if (view.unreadChapter && !game.fight && !view.offers.length) {
+      const t = setTimeout(() => setReading((r) => r ?? view.unreadChapter), game.toasts.length ? 1200 : 300);
+      return () => clearTimeout(t);
+    }
+  }, [view.unreadChapter, view.offers.length, game.fight, game.toasts.length]);
+
+  const closeChapter = () => {
+    const id = reading;
+    setReading(null);
+    if (id && view.chapters.find((c) => c.id === id && !c.read)) game.act({ type: "flag", flag: `read:${id}` });
+  };
 
   const go = useCallback((target: string) => {
     const [kind, id] = target.split(":");
@@ -88,6 +103,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
       setTab(id as Tab);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+    if (kind === "story") setReading(id);
     if (kind === "job") {
       setTab("jobs");
       setHighlight(id);
@@ -146,7 +162,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
             {tab === "fight" && <FightTab game={game} />}
             {tab === "shop" && <ShopTab game={game} />}
             {tab === "profile" && <ProfileTab game={game} />}
-            {tab === "city" && <CityTab game={game} />}
+            {tab === "city" && <CityTab game={game} onRead={setReading} />}
           </motion.main>
         </AnimatePresence>
       </div>
@@ -161,12 +177,21 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
         ))}
       </nav>
 
+      <AnimatePresence>{reading && <ChapterViewer key={reading} id={reading} onDone={closeChapter} />}</AnimatePresence>
+
       <AnimatePresence>
         {offer && (
           <Modal key="offer">
-            <div className="offer">
-              <p className="eyebrow"><Phone size={14} /> Incoming</p>
-              <h2>{offer.contact}</h2>
+            <div className="offer" style={{ ["--path" as string]: PATH_LOOKS[offer.id]?.rim }}>
+              <div className="offer-head">
+                <NpcPortrait id={offer.contactId} className="offer-portrait" />
+                <div>
+                  <p className="eyebrow"><Phone size={14} /> Incoming</p>
+                  <h2>{offer.contact}</h2>
+                  <span className="path-badge">{offer.side === "law" ? "Law" : "Street"} · {offer.name}</span>
+                </div>
+              </div>
+              <p className="offer-blurb">{offer.blurb}</p>
               {offer.lines.map((l, i) => (
                 <motion.p key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.35 }}>{l}</motion.p>
               ))}

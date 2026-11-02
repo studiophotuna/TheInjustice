@@ -293,3 +293,63 @@ describe("paths", () => {
     expect(p.stats.integrity).toBeLessThan(0);
   });
 });
+
+describe("courts and vigilante paths", () => {
+  it("courts offer comes to a clean courthouse worker with sharp wits", () => {
+    const p = fresh();
+    p.reputation = 12;
+    p.stats.wits = 40;
+    p.stats.perception = 40;
+    p.jobCounts.court_janitor = 4;
+    applyAction(p, { type: "job", jobId: "court_runner" }, T0, always(0.5));
+    expect(p.offers).toContain("courts");
+    applyAction(p, { type: "offer", path: "courts", accept: true }, T0, always(0.5));
+    expect(toView(p, T0).jobs.find((j) => j.id === "sort_files")?.locked).toBeNull();
+  });
+
+  it("vigilante offer needs a clean conscience", () => {
+    const p = fresh();
+    p.reputation = 12;
+    p.stats.agility = 40;
+    p.stats.nerve = 40;
+    p.jobCounts.watch_walk = 4;
+    p.stats.integrity = -20;
+    applyAction(p, { type: "job", jobId: "watch_walk" }, T0, always(0.5));
+    expect(p.offers).not.toContain("vigilante");
+    p.stats.integrity = 5;
+    applyAction(p, { type: "job", jobId: "watch_walk" }, T0, always(0.5));
+    expect(p.offers).toContain("vigilante");
+  });
+
+  it("new districts unlock with reputation", () => {
+    const p = fresh();
+    expect(() => applyAction(p, { type: "job", jobId: "watch_walk" }, T0, always(0.5))).toThrow();
+    p.reputation = 10;
+    applyAction(p, { type: "job", jobId: "watch_walk" }, T0, always(0.5));
+  });
+});
+
+describe("story chapters", () => {
+  it("unlock on milestones, survive death, and can only be marked read once unlocked", () => {
+    const p = fresh();
+    expect(() => applyAction(p, { type: "flag", flag: "read:old_faces" }, T0, always(0.5))).toThrow();
+    p.jobCounts.cans = 14;
+    const ev = applyAction(p, { type: "job", jobId: "cans" }, T0, always(0.5));
+    expect(ev.some((e) => e.action?.target === "story:old_faces")).toBe(true);
+    expect(toView(p, T0).unreadChapter).toBe("old_faces");
+    applyAction(p, { type: "flag", flag: "read:old_faces" }, T0, always(0.5));
+    expect(toView(p, T0).unreadChapter).toBeNull();
+
+    p.path = "courts";
+    p.rank = 1;
+    p.jobsSinceRank = 9;
+    p.stats.wits = p.stats.charisma = p.stats.perception = 30;
+    applyAction(p, { type: "job", jobId: "study_precedent" }, T0, always(0.5));
+    expect(p.rank).toBe(2);
+    expect(p.flags).toContain("story:courts_2");
+
+    p.dead = { at: T0, cause: "x" };
+    applyAction(p, { type: "rebirth" }, T0, always(0.5));
+    expect(toView(p, T0).chapters.find((c) => c.id === "courts_2")?.unlocked).toBe(true);
+  });
+});

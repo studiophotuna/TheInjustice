@@ -1,6 +1,6 @@
 // Vector character portraits: a lit silhouette bust plus a signature prop per character.
 
-type Prop = "hood" | "cap" | "gloves" | "bandana" | "hardhat" | "mask" | "none";
+type Prop = "hood" | "cap" | "gloves" | "bandana" | "hardhat" | "mask" | "fedora" | "glasses" | "scarf" | "bun" | "none";
 
 const NPC_LOOKS: Record<string, { rim: string; bg: string; prop: Prop }> = {
   alley_rat: { rim: "#9bff6a", bg: "#14200f", prop: "hood" },
@@ -9,6 +9,11 @@ const NPC_LOOKS: Record<string, { rim: string; bg: string; prop: Prop }> = {
   southside_bruiser: { rim: "#ff3d5a", bg: "#260c12", prop: "bandana" },
   iron_foreman: { rim: "#ff8a3d", bg: "#24140a", prop: "hardhat" },
   mugger: { rim: "#c9c9c9", bg: "#141414", prop: "mask" },
+  // Career contacts
+  reyes: { rim: "#38e1ff", bg: "#071a2a", prop: "cap" },
+  kozak: { rim: "#ff3d5a", bg: "#220810", prop: "fedora" },
+  marsh: { rim: "#9b7bff", bg: "#140f2a", prop: "bun" },
+  silas: { rim: "#3ee08f", bg: "#08201a", prop: "scarf" },
 };
 
 function PropShape({ prop, rim }: { prop: Prop; rim: string }) {
@@ -36,6 +41,39 @@ function PropShape({ prop, rim }: { prop: Prop; rim: string }) {
         <g>
           <path d="M34 34 Q50 14 66 34Z" fill="#f2b705" />
           <rect x="30" y="32" width="40" height="4" rx="2" fill="#f2b705" />
+        </g>
+      );
+    case "fedora":
+      return (
+        <g>
+          <path d="M28 34 Q50 28 72 34 L70 37 Q50 32 30 37Z" fill="#1b1b1b" stroke={rim} strokeWidth="0.8" />
+          <path d="M37 33 Q38 16 50 16 Q62 16 63 33Z" fill="#1b1b1b" stroke={rim} strokeWidth="0.8" />
+          <rect x="37" y="28" width="26" height="3" fill={rim} opacity="0.7" />
+        </g>
+      );
+    case "glasses":
+      return (
+        <g stroke={rim} strokeWidth="1.4" fill="rgba(255,255,255,0.08)">
+          <circle cx="44" cy="43" r="5" />
+          <circle cx="56" cy="43" r="5" />
+          <path d="M49 43h2" />
+        </g>
+      );
+    case "scarf":
+      return (
+        <g>
+          <path d="M34 48 Q50 56 66 48 L66 58 Q50 66 34 58Z" fill="#14321f" stroke={rim} strokeWidth="1" />
+          <path d="M60 58 l10 18 l-6 2 l-8 -16z" fill="#14321f" stroke={rim} strokeWidth="1" />
+        </g>
+      );
+    case "bun":
+      return (
+        <g>
+          <circle cx="50" cy="24" r="8" fill="#050507" stroke={rim} strokeWidth="1.2" />
+          <g stroke={rim} strokeWidth="1.2" fill="rgba(255,255,255,0.08)">
+            <rect x="39" y="40" width="9" height="6" rx="2" />
+            <rect x="52" y="40" width="9" height="6" rx="2" />
+          </g>
         </g>
       );
     case "mask":
@@ -78,6 +116,14 @@ export function NpcPortrait({ id, className = "" }: { id: string; className?: st
   );
 }
 
+/** Career colors, also used for badges across the UI. */
+export const PATH_LOOKS: Record<string, { rim: string; prop: Prop }> = {
+  police: { rim: "#38e1ff", prop: "cap" },
+  enforcer: { rim: "#ff3d5a", prop: "none" },
+  courts: { rim: "#9b7bff", prop: "glasses" },
+  vigilante: { rim: "#3ee08f", prop: "scarf" },
+};
+
 const PLAYER_RIMS = ["#ffc24b", "#38e1ff", "#ff3d5a", "#3ee08f", "#9b7bff", "#ff8a3d"];
 
 function hash(s: string) {
@@ -88,10 +134,11 @@ function hash(s: string) {
 
 /** The player's avatar. Its color comes from the name; police get a cap, enforcers a scar-red rim. */
 export function PlayerAvatar({ name, path, className = "" }: { name: string; path?: string | null; className?: string }) {
-  const rim = path === "police" ? "#38e1ff" : path === "enforcer" ? "#ff3d5a" : PLAYER_RIMS[hash(name) % PLAYER_RIMS.length];
+  const look = path ? PATH_LOOKS[path] : undefined;
+  const rim = look?.rim ?? PLAYER_RIMS[hash(name) % PLAYER_RIMS.length];
   return (
     <div className={`portrait ${className}`} style={{ ["--rim" as string]: rim }}>
-      <Bust rim={rim} bg="#0b0d12" prop={path === "police" ? "cap" : "none"} />
+      <Bust rim={rim} bg="#0b0d12" prop={look?.prop ?? "none"} />
     </div>
   );
 }

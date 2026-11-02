@@ -19,8 +19,14 @@ export type HiddenStats = Record<StatKey, number> & {
   integrity: number;
 };
 
-export type PathId = "police" | "enforcer";
-export type DistrictId = "gutter" | "old_market" | "iron_row" | "precinct_square";
+export type PathId = "police" | "enforcer" | "courts" | "vigilante";
+export type DistrictId =
+  | "gutter"
+  | "old_market"
+  | "southside"
+  | "courthouse_hill"
+  | "iron_row"
+  | "precinct_square";
 export type HousingTier = 0 | 1 | 2;
 
 export interface Player {

@@ -348,12 +348,35 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 .log li.bad { border-color: var(--red); }
 .log li.story { border-color: var(--violet); font-style: italic; }
 
+/* ─── Story & careers ───────────────────────────────────────────────────── */
+.chapter-overlay { position: fixed; inset: 0; z-index: 85; overflow: auto; background: radial-gradient(circle at 50% 30%, rgba(155, 123, 255, 0.16), rgba(5, 6, 10, 0.97) 65%); backdrop-filter: blur(8px); }
+.chapters { display: grid; gap: 8px; }
+.chapter { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; text-align: left; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: rgba(0, 0, 0, 0.25); cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+.chapter:hover:not(:disabled) { border-color: rgba(155, 123, 255, 0.5); background: rgba(155, 123, 255, 0.06); }
+.chapter.unread { border-color: rgba(62, 224, 143, 0.45); }
+.chapter.locked { opacity: 0.5; cursor: default; }
+.chapter-title { font-weight: 700; }
+.chapter-teaser { grid-column: 1; font-size: 13px; color: var(--muted); }
+.chapter > .chip, .chapter > svg { grid-row: 1 / span 2; grid-column: 2; }
+.careers { display: grid; gap: 10px; margin-top: 8px; }
+.career { display: flex; gap: 12px; align-items: center; padding: 10px; border-radius: 12px; background: rgba(0, 0, 0, 0.22); border-left: 3px solid var(--path); }
+.career p { font-size: 13px; }
+.career-portrait { width: 46px; height: 46px; }
+.path-side { font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--path); margin-left: 4px; }
+.offer-head { display: flex; gap: 14px; align-items: center; }
+.offer-portrait { width: 76px; height: 76px; }
+.offer h2 { color: var(--path, var(--cyan)); }
+.path-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; padding: 3px 8px; border-radius: 6px; color: var(--path); border: 1px solid var(--path); margin-top: 4px; }
+.offer-blurb { font-weight: 600; color: var(--text) !important; border-left: 3px solid var(--path); padding-left: 10px; }
+.scarf-wave { transform-origin: 8px -62px; animation: scarf 1.6s ease-in-out infinite alternate; }
+@keyframes scarf { to { transform: rotate(-8deg) scaleX(1.1); } }
+
 /* ─── Modal, toasts, floaters ───────────────────────────────────────────── */
 .modal-backdrop { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, 0.6); display: grid; place-items: end center; padding: 12px; }
 @media (min-width: 640px) { .modal-backdrop { place-items: center; } }
-.modal { position: relative; width: 100%; max-width: 460px; max-height: 90dvh; overflow: auto; border-radius: 24px; padding: 24px 20px; display: grid; gap: 12px; box-shadow: var(--shadow); }
+.modal { background: rgba(16, 19, 27, 0.97) !important; position: relative; width: 100%; max-width: 460px; max-height: 90dvh; overflow: auto; border-radius: 24px; padding: 24px 20px; display: grid; gap: 12px; box-shadow: var(--shadow); }
 .modal-x { position: absolute; top: 12px; right: 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 99px; width: 34px; height: 34px; display: grid; place-items: center; cursor: pointer; }
-.offer h2 { color: var(--cyan); margin: 4px 0 6px; }
+.offer h2 { color: var(--path, var(--cyan)); margin: 4px 0 6px; }
 .offer p { color: #d5dae3; }
 .offer .row { margin-top: 8px; }
 

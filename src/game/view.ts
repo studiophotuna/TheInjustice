@@ -7,6 +7,7 @@ import { ITEMS, ITEM_BY_ID } from "./content/items";
 import { JOBS } from "./content/jobs";
 import { NPCS } from "./content/npcs";
 import { PATHS, promotionHint, rankTitle } from "./content/paths";
+import { CHAPTERS } from "./content/story";
 import { GUT_READS } from "./combat";
 import { FIGHT_ENERGY, inHospital, jobLock, scout } from "./engine";
 import { describe, integrityHint } from "./stats";
@@ -48,8 +49,16 @@ export interface PublicView {
   housing: string;
   inventory: { id: string; name: string; icon: string; count: number; usable: boolean }[];
   feel: ReturnType<typeof describe> & { conscience: string };
-  path: { id: PathId; name: string; side: string; rank: string; contact: string; promotion: string | null } | null;
-  offers: { id: PathId; contact: string; lines: string[] }[];
+  path: {
+    id: PathId;
+    name: string;
+    side: string;
+    rank: string;
+    contact: string;
+    contactId: string;
+    promotion: string | null;
+  } | null;
+  offers: { id: PathId; name: string; side: string; blurb: string; contact: string; contactId: string; lines: string[] }[];
   districts: { id: DistrictId; name: string; tagline: string; locked: string | null }[];
   jobs: JobView[];
   recommendedJobId: string | null;
@@ -71,6 +80,9 @@ export interface PublicView {
   log: LogEntry[];
   dead: { at: number; cause: string } | null;
   deaths: number;
+  chapters: { id: string; title: string; teaser: string; unlocked: boolean; read: boolean }[];
+  /** First unlocked chapter the player hasn't read yet. */
+  unreadChapter: string | null;
 }
 
 function heatLabel(heat: number): PublicView["heatLabel"] {
@@ -144,10 +156,19 @@ export function toView(p: Player, now: number): PublicView {
           side: PATHS[p.path].side,
           rank: rankTitle(p) ?? "",
           contact: PATHS[p.path].contact,
+          contactId: PATHS[p.path].contactId,
           promotion: promotionHint(p),
         }
       : null,
-    offers: p.offers.map((o) => ({ id: o, contact: PATHS[o].contact, lines: PATHS[o].offer })),
+    offers: p.offers.map((o) => ({
+      id: o,
+      name: PATHS[o].name,
+      side: PATHS[o].side,
+      blurb: PATHS[o].blurb,
+      contact: PATHS[o].contact,
+      contactId: PATHS[o].contactId,
+      lines: PATHS[o].offer,
+    })),
     districts: DISTRICTS.filter((d) => d.id !== "precinct_square" || p.path === "police").map((d) => ({
       id: d.id,
       name: d.name,
@@ -191,5 +212,14 @@ export function toView(p: Player, now: number): PublicView {
     log: p.log,
     dead: p.dead ?? null,
     deaths: p.deaths ?? 0,
+    chapters: CHAPTERS.map((c) => ({
+      id: c.id,
+      title: c.title,
+      teaser: c.teaser,
+      unlocked: p.flags.includes(`story:${c.id}`),
+      read: p.flags.includes(`read:${c.id}`),
+    })),
+    unreadChapter:
+      CHAPTERS.find((c) => p.flags.includes(`story:${c.id}`) && !p.flags.includes(`read:${c.id}`))?.id ?? null,
   };
 }

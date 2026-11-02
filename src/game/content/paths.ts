@@ -14,11 +14,18 @@ export interface PathDef {
   /** Jobs needed at a rank before a promotion is considered. */
   jobsPerRank: number;
   contact: string;
+  /** Portrait key for the contact (see components/art/Portraits). */
+  contactId: string;
+  /** Short description shown on the career card. */
+  blurb: string;
   /** Whether a player qualifies for the offer (hidden check). */
   qualifies: (p: Player) => boolean;
   offer: string[];
   accepted: string;
   promotion: (rankTitle: string) => string;
+  /** Stats revealed (as vague bands) at each promotion. */
+  examStats?: StatKey[];
+  examName?: string;
 }
 
 const avg = (p: Player, keys: StatKey[]) => keys.reduce((s, k) => s + sv(p, k), 0) / keys.length;
@@ -33,6 +40,10 @@ export const PATHS: Record<PathId, PathDef> = {
     promotionThresholds: [20, 27],
     jobsPerRank: 10,
     contact: "Sgt. Dana Reyes",
+    contactId: "reyes",
+    blurb: "Wear the badge. Reopen your own case from the inside.",
+    examStats: ["toughness", "perception"],
+    examName: "Exam notes",
     qualifies: (p) =>
       p.housing >= 2 &&
       p.heat < BALANCE.cleanRecordHeat &&
@@ -58,6 +69,8 @@ export const PATHS: Record<PathId, PathDef> = {
     promotionThresholds: [20, 27],
     jobsPerRank: 10,
     contact: "Mr. Kozak",
+    contactId: "kozak",
+    blurb: "Muscle for a loan shark. Get strong enough that no one can touch you.",
     qualifies: (p) =>
       ((p.jobCounts.debt_run ?? 0) >= 3 || (p.jobCounts["fight:win"] ?? 0) >= 3) &&
       sv(p, "strength") + sv(p, "nerve") >= 42,
@@ -69,6 +82,58 @@ export const PATHS: Record<PathId, PathDef> = {
     ],
     accepted: "Kozak shakes your hand. His grip says: now you belong to someone.",
     promotion: (t) => `Kozak pours you a drink. \"You've earned it.\" You're now his ${t}.`,
+  },
+  courts: {
+    id: "courts",
+    name: "Courts",
+    side: "law",
+    ranks: ["File Clerk", "Paralegal", "Junior Attorney"],
+    keyStats: ["wits", "charisma", "perception"],
+    promotionThresholds: [20, 27],
+    jobsPerRank: 10,
+    contact: "Counselor Vivian Marsh",
+    contactId: "marsh",
+    blurb: "Learn the law that buried you, then use it to dig your way out.",
+    examStats: ["wits", "charisma"],
+    examName: "Bar review",
+    qualifies: (p) =>
+      p.heat < BALANCE.cleanRecordHeat &&
+      (p.jobCounts.court_janitor ?? 0) + (p.jobCounts.court_runner ?? 0) >= 5 &&
+      sv(p, "wits") + sv(p, "perception") >= 44,
+    offer: [
+      "A woman in a gray suit steps around your mop bucket, then stops.",
+      "\"You read the case files while you clean, don't you? Nobody else does.\"",
+      "\"I'm Vivian Marsh, public defender. My clerk quit. The pay is terrible and the hours are worse.\"",
+      "She glances at the name on your cleaning badge, then looks again, like she's seen it before.",
+    ],
+    accepted: 'Marsh hands you a key to the records room. "Don\'t lose it. Half this building would love to."',
+    promotion: (t) => `Marsh signs your papers without looking up. "Congratulations, ${t}. Now the real work starts."`,
+  },
+  vigilante: {
+    id: "vigilante",
+    name: "Vigilante",
+    side: "law",
+    ranks: ["Watcher", "Night Patroller", "Bounty Hunter"],
+    keyStats: ["agility", "nerve", "perception"],
+    promotionThresholds: [20, 27],
+    jobsPerRank: 10,
+    contact: "Silas, the Night Watchman",
+    contactId: "silas",
+    blurb: "The system failed you. Protect the streets your own way, outside the law.",
+    examStats: ["agility", "nerve"],
+    examName: "The Mirror",
+    qualifies: (p) =>
+      p.stats.integrity >= 0 &&
+      (p.jobCounts.watch_walk ?? 0) + (p.jobCounts.break_fight ?? 0) >= 5 &&
+      sv(p, "agility") + sv(p, "nerve") >= 44,
+    offer: [
+      "On a Southside rooftop, an old man in a long scarf is waiting for you.",
+      "\"I've watched you walk folks home. Break up fights. Nobody pays you for that.\"",
+      "\"Name's Silas. Thirty years a cop, until I testified against the wrong people. Now I watch.\"",
+      "\"The law won't protect this street. We will. Just know: the police won't love you for it.\"",
+    ],
+    accepted: 'Silas hands you a scarf like his. "Cover your face. They can\'t arrest a rumor."',
+    promotion: (t) => `Silas nods from the shadows. "The street's started talking about you. ${t}."`,
   },
 };
 
