@@ -265,6 +265,13 @@ describe("paths", () => {
     expect(events.some((e) => e.action?.target === "offer:police")).toBe(true);
 
     applyAction(p, { type: "offer", path: "police", accept: true }, T0, always(0.5));
+    // Reyes vouches; the Academy's commander still reviews the application.
+    expect(p.application?.status).toBe("pending");
+    expect(p.application?.paid).toBe(0);
+    expect(p.path).toBeNull();
+    tick(p, p.application!.decideAt);
+    expect(p.application?.status).toBe("accepted");
+    applyAction(p, { type: "enroll" }, p.tickAt, always(0.5));
     expect(p.path).toBe("police");
     expect(p.rank).toBe(1);
     const jobs = toView(p, T0).jobs;
@@ -304,7 +311,9 @@ describe("courts and vigilante paths", () => {
     applyAction(p, { type: "job", jobId: "court_runner" }, T0, always(0.5));
     expect(p.offers).toContain("courts");
     applyAction(p, { type: "offer", path: "courts", accept: true }, T0, always(0.5));
-    expect(toView(p, T0).jobs.find((j) => j.id === "sort_files")?.locked).toBeNull();
+    tick(p, p.application!.decideAt);
+    applyAction(p, { type: "enroll" }, p.tickAt, always(0.5));
+    expect(toView(p, p.tickAt).jobs.find((j) => j.id === "sort_files")?.locked).toBeNull();
   });
 
   it("vigilante offer needs a clean conscience", () => {
@@ -351,5 +360,83 @@ describe("story chapters", () => {
     p.dead = { at: T0, cause: "x" };
     applyAction(p, { type: "rebirth" }, T0, always(0.5));
     expect(toView(p, T0).chapters.find((c) => c.id === "courts_2")?.unlocked).toBe(true);
+  });
+});
+
+describe("schools", () => {
+  function applicant(): Player {
+    const p = fresh();
+    p.reputation = 25;
+    p.housing = 2;
+    p.hasBankAccount = true;
+    p.bank = 1000;
+    return p;
+  }
+
+  it("charge tuition from the bank and need basics first", () => {
+    const p = fresh();
+    expect(() => applyAction(p, { type: "apply", school: "grayhaven_academy" }, T0, always(0.5))).toThrow(/address/);
+    const a = applicant();
+    a.bank = 100;
+    expect(() => applyAction(a, { type: "apply", school: "grayhaven_academy" }, T0, always(0.5))).toThrow(/Tuition/);
+    a.bank = 1000;
+    applyAction(a, { type: "apply", school: "grayhaven_academy" }, T0, always(0.5));
+    expect(a.bank).toBe(600);
+    expect(a.application?.status).toBe("pending");
+    expect(() => applyAction(a, { type: "apply", school: "halloway_law" }, T0, always(0.5))).toThrow(/review/);
+  });
+
+  it("the dean rejects weak applicants with a vague reason and a partial refund", () => {
+    const p = applicant();
+    applyAction(p, { type: "apply", school: "halloway_law" }, T0, always(0.5));
+    tick(p, p.application!.decideAt + 1);
+    expect(p.application?.status).toBe("rejected");
+    expect(p.application?.reason).toMatch(/sharper|more persuasive|more observant/);
+    expect(p.bank).toBe(400 + 450);
+    expect(() => applyAction(p, { type: "apply", school: "halloway_law" }, p.tickAt, always(0.5))).toThrow(/so soon/);
+    applyAction(p, { type: "dismiss_application" }, p.tickAt, always(0.5));
+    expect(p.application).toBeNull();
+  });
+
+  it("a vouch makes it free and lowers the bar, but the dean still decides", () => {
+    const p = applicant();
+    p.stats.toughness = p.stats.perception = p.stats.strength = 3; // value ~17: weak but close
+    p.offers = ["police"];
+    applyAction(p, { type: "apply", school: "grayhaven_academy" }, T0, always(0.5));
+    expect(p.bank).toBe(1000);
+    expect(p.application?.vouchedBy).toBe("Sgt. Dana Reyes");
+    tick(p, p.application!.decideAt);
+    expect(p.application?.status).toBe("accepted");
+  });
+
+  it("graduating is reaching rank 2, and careers go up to 8 ranks", () => {
+    const p = applicant();
+    p.path = "police";
+    p.rank = 1;
+    p.jobsSinceRank = 9;
+    p.stats.toughness = p.stats.perception = p.stats.strength = 400;
+    const ev = applyAction(p, { type: "job", jobId: "study_law" }, T0, always(0.5));
+    expect(p.rank).toBe(2);
+    expect(ev.some((e) => /Graduation day/.test(e.text))).toBe(true);
+    expect(toView(p, T0).jobs.find((j) => j.id === "city_agenda")?.locked).toMatch(/Commissioner/);
+    for (let r = 2; r < 8; r++) {
+      p.jobsSinceRank = 100;
+      p.energy = 100;
+      applyAction(p, { type: "job", jobId: "walk_beat" }, T0, always(0.5));
+    }
+    expect(p.rank).toBe(8);
+    expect(toView(p, T0).path?.rank).toBe("Commissioner");
+    expect(toView(p, T0).jobs.find((j) => j.id === "city_agenda")?.locked).toBeNull();
+  });
+
+  it("street careers stay invitation-only", () => {
+    const p = applicant();
+    p.stats.strength = p.stats.nerve = 40;
+    p.jobCounts["fight:win"] = 3;
+    p.jobCounts.cans = 1;
+    applyAction(p, { type: "job", jobId: "cans" }, T0, always(0.5));
+    applyAction(p, { type: "offer", path: "enforcer", accept: true }, T0, always(0.5));
+    expect(p.path).toBe("enforcer");
+    expect(p.application ?? null).toBeNull();
   });
 });

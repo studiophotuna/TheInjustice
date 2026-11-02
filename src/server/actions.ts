@@ -24,6 +24,12 @@ export function parseAction(body: unknown): Action {
       return { type: "fight", npcId: str(b.npcId) };
     case "rebirth":
       return { type: "rebirth", name: b.name === undefined ? undefined : str(b.name, 60) };
+    case "apply":
+      return { type: "apply", school: str(b.school) };
+    case "enroll":
+      return { type: "enroll" };
+    case "dismiss_application":
+      return { type: "dismiss_application" };
     case "assess":
       return { type: "assess" };
     case "flag":

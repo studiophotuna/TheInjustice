@@ -23,7 +23,7 @@ import type { PublicView } from "@/game/view";
 import { NpcPortrait, PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 import { Skyline } from "./art/Skyline";
 import { AuthForm, ChapterViewer, DeathScreen, Landing, Logo, Prologue } from "./screens";
-import { CityTab, FightTab, JobsTab, ProfileTab, ShopTab } from "./tabs";
+import { CityTab, DeanLetter, FightTab, JobsTab, ProfileTab, ShopTab } from "./tabs";
 import { fmt, useGame, type GameApi } from "./useGame";
 
 type Tab = "jobs" | "fight" | "shop" | "profile" | "city";
@@ -81,6 +81,9 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
   const [highlight, setHighlight] = useState<string | null>(null);
   const [saveOpen, setSaveOpen] = useState(false);
   const [reading, setReading] = useState<string | null>(null);
+  const [letterSeen, setLetterSeen] = useState<string | null>(null);
+  const letterKey =
+    view.application && view.application.status !== "pending" ? `${view.application.schoolName}:${view.application.status}` : null;
   const live = game.live!;
 
   // A newly unlocked chapter opens by itself once nothing else is on screen.
@@ -201,6 +204,11 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
                 <button className="btn btn-ghost btn-lg" disabled={game.busy} onClick={() => game.act({ type: "offer", path: offer.id, accept: false })}>Turn it down</button>
               </div>
             </div>
+          </Modal>
+        )}
+        {letterKey && letterSeen !== letterKey && !offer && !reading && !game.fight && (
+          <Modal key="letter" onClose={() => setLetterSeen(letterKey)}>
+            <DeanLetter game={game} onClose={() => setLetterSeen(letterKey)} />
           </Modal>
         )}
         {saveOpen && !game.account && (

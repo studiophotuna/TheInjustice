@@ -34,6 +34,16 @@ export const BALANCE = {
     /** Share of reputation kept after dying. */
     reputationKept: 0.5,
   },
+  school: {
+    /** Time the dean takes to review an application (shortened for testing). */
+    reviewMs: 10 * 60_000,
+    /** Vouched applications are reviewed faster and judged more kindly. */
+    vouchedReviewMult: 0.5,
+    vouchBonus: 6,
+    /** Share of tuition refunded to the bank after a rejection. */
+    refundShare: 0.75,
+    reapplyCooldownMs: 30 * 60_000,
+  },
   /** Diminishing returns: XP multiplier is 1 / (1 + timesDone / this). */
   repeatFalloff: 60,
   logSize: 30,

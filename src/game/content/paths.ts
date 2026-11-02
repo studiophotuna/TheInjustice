@@ -11,8 +11,12 @@ export interface PathDef {
   keyStats: StatKey[];
   /** Average key-stat value needed to reach rank index+2 (rank 2, rank 3…). */
   promotionThresholds: number[];
-  /** Jobs needed at a rank before a promotion is considered. */
+  /** Jobs needed at rank 1 before a promotion is considered (grows with rank). */
   jobsPerRank: number;
+  /** School that trains this career; careers without one are invitation-only. */
+  school?: string;
+  /** Rank reached on graduating from the school. */
+  graduationRank?: number;
   contact: string;
   /** Portrait key for the contact (see components/art/Portraits). */
   contactId: string;
@@ -35,9 +39,11 @@ export const PATHS: Record<PathId, PathDef> = {
     id: "police",
     name: "Police",
     side: "law",
-    ranks: ["Academy Cadet", "Patrol Officer", "Senior Officer"],
+    ranks: ["Academy Cadet", "Patrol Officer", "Senior Officer", "Detective", "Sergeant", "Lieutenant", "Captain", "Commissioner"],
     keyStats: ["toughness", "perception", "strength"],
-    promotionThresholds: [20, 27],
+    promotionThresholds: [20, 27, 34, 42, 50, 59, 68],
+    school: "grayhaven_academy",
+    graduationRank: 2,
     jobsPerRank: 10,
     contact: "Sgt. Dana Reyes",
     contactId: "reyes",
@@ -52,11 +58,11 @@ export const PATHS: Record<PathId, PathDef> = {
     offer: [
       "A squad car slows down next to you outside the warehouse.",
       "\"I'm Sergeant Reyes. I've seen you on the night shift. You don't sleep on the job, and you notice things.\"",
-      "\"The academy is short on recruits who know the street. Interested?\"",
+      "\"The Academy is short on recruits who know the street. I can vouch for you. Interested?\"",
       "She hands you a card. On the back, someone has written your old case number.",
     ],
     accepted:
-      "You sign the papers at Precinct Square. The uniform doesn't fit yet. It will.",
+      "Reyes signs a recommendation and walks it to the Academy herself. \"The Commander still decides. Don't make me look stupid.\"",
     promotion: (t) =>
       `Academy exam passed. The instructor reads your results out loud: you're promoted to ${t}.`,
   },
@@ -64,9 +70,9 @@ export const PATHS: Record<PathId, PathDef> = {
     id: "enforcer",
     name: "Enforcer",
     side: "street",
-    ranks: ["Muscle", "Collector", "Enforcer"],
+    ranks: ["Muscle", "Collector", "Enforcer", "Crew Chief", "Fixer", "Lieutenant", "Underboss", "Boss of Iron Row"],
     keyStats: ["strength", "nerve", "toughness"],
-    promotionThresholds: [20, 27],
+    promotionThresholds: [20, 27, 34, 42, 50, 59, 68],
     jobsPerRank: 10,
     contact: "Mr. Kozak",
     contactId: "kozak",
@@ -87,9 +93,11 @@ export const PATHS: Record<PathId, PathDef> = {
     id: "courts",
     name: "Courts",
     side: "law",
-    ranks: ["File Clerk", "Paralegal", "Junior Attorney"],
+    ranks: ["Law Student", "Junior Attorney", "Associate", "Senior Attorney", "Partner", "Deputy District Attorney", "Judge", "Chief Justice"],
     keyStats: ["wits", "charisma", "perception"],
-    promotionThresholds: [20, 27],
+    promotionThresholds: [20, 27, 34, 42, 50, 59, 68],
+    school: "halloway_law",
+    graduationRank: 2,
     jobsPerRank: 10,
     contact: "Counselor Vivian Marsh",
     contactId: "marsh",
@@ -103,19 +111,19 @@ export const PATHS: Record<PathId, PathDef> = {
     offer: [
       "A woman in a gray suit steps around your mop bucket, then stops.",
       "\"You read the case files while you clean, don't you? Nobody else does.\"",
-      "\"I'm Vivian Marsh, public defender. My clerk quit. The pay is terrible and the hours are worse.\"",
+      "\"I'm Vivian Marsh, public defender. You belong in law school, not behind a mop. I can vouch for you.\"",
       "She glances at the name on your cleaning badge, then looks again, like she's seen it before.",
     ],
-    accepted: 'Marsh hands you a key to the records room. "Don\'t lose it. Half this building would love to."',
+    accepted: 'Marsh writes to Dean Halloway on your behalf. "He owes me a favor. He hates owing favors. Be brilliant."',
     promotion: (t) => `Marsh signs your papers without looking up. "Congratulations, ${t}. Now the real work starts."`,
   },
   vigilante: {
     id: "vigilante",
     name: "Vigilante",
     side: "law",
-    ranks: ["Watcher", "Night Patroller", "Bounty Hunter"],
+    ranks: ["Watcher", "Night Patroller", "Bounty Hunter", "Masked Vigilante", "Protector", "Hunter", "Legend", "Symbol"],
     keyStats: ["agility", "nerve", "perception"],
-    promotionThresholds: [20, 27],
+    promotionThresholds: [20, 27, 34, 42, 50, 59, 68],
     jobsPerRank: 10,
     contact: "Silas, the Night Watchman",
     contactId: "silas",
@@ -142,6 +150,15 @@ export function rankTitle(p: Player): string | null {
   return PATHS[p.path].ranks[p.rank - 1] ?? null;
 }
 
+/** Jobs needed at the given rank before the next promotion review. */
+export function jobsNeeded(path: PathId, rank: number): number {
+  return PATHS[path].jobsPerRank + 2 * (rank - 1);
+}
+
+export function isGraduation(path: PathId, newRank: number): boolean {
+  return PATHS[path].graduationRank === newRank;
+}
+
 export function keyStatAvg(p: Player, path: PathId): number {
   return avg(p, PATHS[path].keyStats);
 }
@@ -161,7 +178,7 @@ export function promotionHint(p: Player): string | null {
   if (!p.path) return null;
   const def = PATHS[p.path];
   if (p.rank >= def.ranks.length) return "You've reached the top rank available for now.";
-  const left = def.jobsPerRank - p.jobsSinceRank;
+  const left = jobsNeeded(p.path, p.rank) - p.jobsSinceRank;
   if (left > 0) return `Put in ${left} more job${left === 1 ? "" : "s"} before your next review.`;
   const weakest = [...def.keyStats].sort((a, b) => sv(p, a) - sv(p, b))[0];
   return `${def.contact} says you're not ready yet. You need to get ${NEEDS[weakest]}. Try different kinds of work.`;

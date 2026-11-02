@@ -88,3 +88,24 @@ fight over **turf** in Southside, the Docks and the Neon Strip.
 - **Law players** can work in another country's police or courts only after
   transferring their badge or license (a story quest).
 - **Heat is per country**: being wanted in Kestrova doesn't make you wanted in Solmarra.
+
+## 5. Schools by country
+
+Law careers are entered through schools; street careers (Enforcer, Vigilante) are
+invitation-only. Each country specialises, so travelling becomes part of a career.
+
+| Country | Capital | Schools | Status |
+|---|---|---|---|
+| Varrow | Grayhaven | Grayhaven Police Academy (Police), Halloway School of Law (Courts) | **Live** |
+| Solmarra | Port Solace | Solace Institute of Finance (Banking), Bayview Medical College (Medicine) | Planned |
+| Kestrova | Ironmoor | Ironmoor Military Academy (Military), State Police College (elite Police) | Planned |
+| Meridian | Halcyon | University of Medicine, Corporate Law School, Tech Institute (Hacking & security) | Planned |
+
+**Getting in:** pay tuition from your bank account (needs a clean record, a home address
+and some reputation), or get a free, faster application when a respected contact vouches
+for you. Either way the school's dean reviews the file, judged on hidden stats and record,
+and can reject you (75% of tuition refunded, short cooldown). Later, top-ranked players can
+become the ones who vouch.
+
+**Graduation:** rank 1 is the student rank; reaching rank 2 is graduation. Every career now
+has 8 ranks with its own jobs at ranks 1–4, 6 and 8.

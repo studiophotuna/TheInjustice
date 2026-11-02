@@ -51,7 +51,10 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
   plus a phone/desktop notification if alerts are on.
 - Shop (food, housing, weapons, armor, medkits), bank (muggers can't steal banked money),
   fights against street NPCs, random muggings.
-- Four career paths with 3 ranks each: **Police**, **Courts** and **Vigilante** (law) and
+- **Schools**: Police and Courts are entered through the Grayhaven Police Academy and the
+  Halloway School of Law. Pay tuition from the bank, or get vouched for by a contact for
+  free; the dean reviews every application. Rank 1 is the student rank, rank 2 is graduation.
+- Four career paths with **8 ranks** each: **Police**, **Courts** and **Vigilante** (law) and
   **Enforcer** (street). Each has a contact who approaches you when your hidden stats and
   habits fit, its own jobs, and a corrupt option that quietly lowers Integrity.
 - Six districts: The Gutter, Old Market, Southside, Courthouse Hill, Iron Row, Precinct Square.

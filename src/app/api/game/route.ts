@@ -21,10 +21,19 @@ export async function GET() {
     const id = await resolveIdentity(false);
     const now = Date.now();
     const store = getStore();
-    const [player, leaderboard] = await Promise.all([
+    let [player, leaderboard] = await Promise.all([
       id.playerId ? store.get(id.playerId) : null,
       store.leaderboard(10),
     ]);
+    const app = player?.application;
+    if (player && app?.status === "pending" && now >= app.decideAt) {
+      // The dean's decision is due: decide once and save it, so it can't change later.
+      player = await store.update(id.playerId!, (p) => {
+        if (!p) return { player: null, result: null };
+        tick(p, now);
+        return { player: p, result: p };
+      });
+    }
     if (player) tick(player, now);
     return NextResponse.json({
       view: player ? toView(player, now) : null,

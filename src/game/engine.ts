@@ -8,7 +8,8 @@ import { CHAPTER_BY_ID } from "./content/story";
 import { ITEM_BY_ID } from "./content/items";
 import { JOB_BY_ID, type JobDef } from "./content/jobs";
 import { mugger, NPC_BY_ID, type NpcDef } from "./content/npcs";
-import { keyStatAvg, PATHS } from "./content/paths";
+import { isGraduation, jobsNeeded, keyStatAvg, PATHS } from "./content/paths";
+import { SCHOOL_BY_ID, SCHOOL_FOR_PATH } from "./content/schools";
 import { emptyStats, statValue, sv, tierOf, TIER_UP_LINES } from "./stats";
 import {
   GameError,
@@ -91,6 +92,7 @@ export function tick(p: Player, now: number): void {
   }
   p.heat = Math.max(0, p.heat - elapsed / BALANCE.heatDecayMs);
   p.tickAt = now;
+  decideApplication(p);
 }
 
 /** Returns why a job can't be done right now, or null. Does not check energy. */
@@ -177,6 +179,7 @@ function rebirth(p: Player, rawName: string | undefined, now: number, events: Ga
   p.fullUntil = 0;
   p.assessmentReady = false;
   p.flags = p.flags.filter((f) => !f.startsWith("declined_"));
+  if (p.application?.status !== "pending") p.application = null;
   p.tickAt = now;
   events.push({
     tone: "story",
@@ -214,6 +217,7 @@ function checkProgress(p: Player, events: GameEvent[]) {
 
 function checkCareer(p: Player, events: GameEvent[]) {
   if (!p.path) {
+    if (p.application?.status === "pending") return;
     for (const id of Object.keys(PATHS) as PathId[]) {
       if (p.offers.includes(id) || p.flags.includes(`declined_${id}`)) continue;
       if (PATHS[id].qualifies(p)) {
@@ -228,13 +232,21 @@ function checkCareer(p: Player, events: GameEvent[]) {
     return;
   }
   const def = PATHS[p.path];
-  if (p.rank >= def.ranks.length || p.jobsSinceRank < def.jobsPerRank) return;
+  if (p.rank >= def.ranks.length || p.jobsSinceRank < jobsNeeded(p.path, p.rank)) return;
   if (keyStatAvg(p, p.path) < def.promotionThresholds[p.rank - 1]) return;
   p.rank += 1;
   p.jobsSinceRank = 0;
   p.reputation += 3;
   const title = def.ranks[p.rank - 1];
-  events.push({ tone: "story", text: def.promotion(title) });
+  if (isGraduation(p.path, p.rank)) {
+    const school = SCHOOL_FOR_PATH[p.path];
+    events.push({
+      tone: "story",
+      text: `Graduation day at ${school?.name ?? "school"}. Caps fly. Nobody came to watch you, but you came this far anyway. You are now: ${title}.`,
+    });
+  } else {
+    events.push({ tone: "story", text: def.promotion(title) });
+  }
   if (def.examStats) {
     events.push({ tone: "info", text: `${def.examName}: ${def.examStats.map((k) => band(p, k)).join(" ")}` });
   }
@@ -423,7 +435,7 @@ function bank(p: Player, op: "open" | "deposit" | "withdraw", amount: number | u
   }
 }
 
-function answerOffer(p: Player, path: PathId, accept: boolean, events: GameEvent[]) {
+function answerOffer(p: Player, path: PathId, accept: boolean, now: number, events: GameEvent[]) {
   if (!p.offers.includes(path)) throw new GameError("No such offer.");
   p.offers = p.offers.filter((o) => o !== path);
   if (!accept) {
@@ -432,17 +444,122 @@ function answerOffer(p: Player, path: PathId, accept: boolean, events: GameEvent
     return;
   }
   if (p.path) throw new GameError("You've already chosen your path.");
+  const school = SCHOOL_FOR_PATH[path];
+  if (school) {
+    // School careers: the contact vouches, the dean still decides.
+    if (p.application?.status === "pending") throw new GameError("You already have an application under review.");
+    submitApplication(p, school.id, PATHS[path].contact, now);
+    events.push({ tone: "story", text: PATHS[path].accepted });
+    events.push({
+      tone: "info",
+      text: `${school.dean} is reviewing your application to ${school.name}. Tuition waived.`,
+      action: { label: "View application", target: "tab:profile" },
+    });
+    return;
+  }
+  joinPath(p, path);
+  events.push({ tone: "story", text: PATHS[path].accepted });
+  events.push({
+    tone: "good",
+    text: `You are now: ${PATHS[path].ranks[0]}.`,
+    action: { label: "See new jobs", target: "tab:jobs" },
+  });
+}
+
+function joinPath(p: Player, path: PathId) {
   p.path = path;
   p.rank = 1;
   p.jobsSinceRank = 0;
   // Choosing one path closes the others in this version.
   for (const o of p.offers) p.flags.push(`declined_${o}`);
   p.offers = [];
-  events.push({ tone: "story", text: PATHS[path].accepted });
+}
+
+function submitApplication(p: Player, schoolId: string, vouchedBy: string | null, now: number) {
+  const school = SCHOOL_BY_ID[schoolId];
+  const review = BALANCE.school.reviewMs * (vouchedBy ? BALANCE.school.vouchedReviewMult : 1);
+  p.application = {
+    school: school.id,
+    path: school.path,
+    submittedAt: now,
+    decideAt: now + review,
+    vouchedBy,
+    paid: vouchedBy ? 0 : school.tuition,
+    status: "pending",
+  };
+}
+
+const NEED_WORDS: Record<StatKey, string> = {
+  strength: "stronger",
+  toughness: "tougher",
+  agility: "quicker",
+  wits: "sharper",
+  nerve: "bolder",
+  charisma: "more persuasive",
+  perception: "more observant",
+};
+
+/** The dean's decision. Deterministic, so it can run inside tick(). */
+function decideApplication(p: Player) {
+  const app = p.application;
+  if (!app || app.status !== "pending" || p.tickAt < app.decideAt) return;
+  const school = SCHOOL_BY_ID[app.school];
+  const path = PATHS[app.path];
+  const bar = school.entrance - (app.vouchedBy ? BALANCE.school.vouchBonus : 0);
+  let reason: string | null = null;
+  if (p.heat >= BALANCE.cleanRecordHeat) {
+    reason = "Your background check came back dirty. Clean up your record and apply again.";
+  } else if (keyStatAvg(p, app.path) < bar) {
+    const weakest = [...path.keyStats].sort((a, b) => sv(p, a) - sv(p, b))[0];
+    reason = `"Not yet. We need students who are ${NEED_WORDS[weakest]}." Train and apply again.`;
+  }
+  if (reason) {
+    app.status = "rejected";
+    app.reason = reason;
+    const refund = Math.floor(app.paid * BALANCE.school.refundShare);
+    p.bank += refund;
+    p.applyCooldownUntil = p.tickAt + BALANCE.school.reapplyCooldownMs;
+    p.log.unshift({ at: p.tickAt, tone: "bad", text: `${school.dean} rejected your application.${refund ? ` $${refund} refunded.` : ""}` });
+  } else {
+    app.status = "accepted";
+    p.log.unshift({ at: p.tickAt, tone: "good", text: `Accepted to ${school.name}!` });
+  }
+}
+
+function apply(p: Player, schoolId: string, now: number, events: GameEvent[]) {
+  const school = SCHOOL_BY_ID[schoolId];
+  if (!school) throw new GameError("No such school.");
+  if (p.path) throw new GameError("You already have a career.");
+  if (p.application?.status === "pending") throw new GameError("You already have an application under review.");
+  if ((p.applyCooldownUntil ?? 0) > now) throw new GameError("The admissions office won't see you again so soon.");
+  // A pending vouch from the career's contact makes the application free.
+  if (p.offers.includes(school.path)) {
+    answerOffer(p, school.path, true, now, events);
+    return;
+  }
+  const lock = school.requirements(p);
+  if (lock) throw new GameError(lock);
+  if (p.bank < school.tuition) throw new GameError(`Tuition is $${school.tuition}, paid from your bank account.`);
+  p.bank -= school.tuition;
+  submitApplication(p, school.id, null, now);
+  events.push({
+    tone: "info",
+    text: `Application sent to ${school.name}. $${school.tuition} tuition paid. ${school.dean} will decide soon.`,
+  });
+}
+
+function enroll(p: Player, events: GameEvent[]) {
+  const app = p.application;
+  if (!app || app.status !== "accepted") throw new GameError("You haven't been accepted anywhere.");
+  if (p.path) throw new GameError("You already have a career.");
+  const school = SCHOOL_BY_ID[app.school];
+  joinPath(p, app.path);
+  p.application = null;
+  events.push({ tone: "story", text: `First day at ${school.name}. You find your seat in the back row. Old habits.` });
   events.push({
     tone: "good",
-    text: `You are now: ${PATHS[path].ranks[0]}.`,
-    action: { label: "See new jobs", target: "tab:jobs" },
+    text: `You are now: ${PATHS[app.path].ranks[0]}. Graduate by completing your coursework.`,
+    action: { label: "See coursework", target: "tab:jobs" },
   });
 }
 
@@ -494,7 +611,7 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng): G
       bank(p, action.op, action.amount, events);
       break;
     case "offer":
-      answerOffer(p, action.path, action.accept, events);
+      answerOffer(p, action.path, action.accept, now, events);
       break;
     case "assess":
       assess(p, now, events);
@@ -508,6 +625,16 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng): G
     }
     case "rebirth":
       rebirth(p, action.name, now, events);
+      break;
+    case "apply":
+      apply(p, action.school, now, events);
+      break;
+    case "enroll":
+      enroll(p, events);
+      break;
+    case "dismiss_application":
+      if (p.application?.status !== "rejected") throw new GameError("Nothing to dismiss.");
+      p.application = null;
       break;
     case "create":
       throw new GameError("You already have a character.");

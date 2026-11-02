@@ -190,6 +190,7 @@ export function useGame() {
       fullIn: Math.max(0, view.energyFullMs - elapsed),
       hospital: Math.max(0, view.hospitalMs - elapsed),
       full: Math.max(0, view.fullMs - elapsed),
+      application: view.application?.status === "pending" ? Math.max(0, view.application.msLeft - elapsed) : 0,
     };
   }, [view, elapsed]);
 
@@ -210,6 +211,14 @@ export function useGame() {
         const text = job ? `Energy full. Best job now: ${job.name} (${times}× in a row).` : "Energy full.";
         pushToasts([{ tone: "good", text, action: job ? { label: "Go", target: `job:${job.id}` } : undefined }]);
         notify("Energy full", text, job ? `/?go=job:${job.id}` : "/");
+      });
+    }
+    if (view.application?.status === "pending" && live.application === 0) {
+      once("application", async () => {
+        await refresh();
+        const text = `${view.application!.dean} has made a decision about your application.`;
+        pushToasts([{ tone: "story", text, action: { label: "Open letter", target: "tab:profile" } }]);
+        notify("A letter from the dean", text, "/?go=tab:profile");
       });
     }
     if (view.hospitalMs > 0 && live.hospital === 0) {

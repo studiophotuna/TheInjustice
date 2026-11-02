@@ -77,6 +77,24 @@ export interface Player {
   dead?: { at: number; cause: string } | null;
   /** How many times this character has died. */
   deaths?: number;
+
+  /** A school application waiting for (or holding) the dean's decision. */
+  application?: Application | null;
+  /** Can't apply to a school again before this time (after a rejection). */
+  applyCooldownUntil?: number;
+}
+
+export interface Application {
+  school: string;
+  path: PathId;
+  submittedAt: number;
+  decideAt: number;
+  /** Contact who vouched, making the application free. */
+  vouchedBy: string | null;
+  /** Tuition paid (refunded in part if rejected). */
+  paid: number;
+  status: "pending" | "accepted" | "rejected";
+  reason?: string;
 }
 
 export interface LogEntry {
@@ -118,6 +136,9 @@ export type Action =
   | { type: "assess" }
   | { type: "flag"; flag: string }
   /** Start a new life after death. Omit `name` to keep the old one. */
-  | { type: "rebirth"; name?: string };
+  | { type: "rebirth"; name?: string }
+  | { type: "apply"; school: string }
+  | { type: "enroll" }
+  | { type: "dismiss_application" };
 
 export class GameError extends Error {}

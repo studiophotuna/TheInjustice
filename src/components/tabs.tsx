@@ -4,6 +4,11 @@ import { motion } from "motion/react";
 import {
   Backpack,
   Bell,
+  Clock,
+  Crown,
+  GraduationCap,
+  Globe2,
+  MailOpen,
   BookOpen,
   Brain,
   Crosshair,
@@ -36,8 +41,6 @@ import { NpcPortrait, PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 
 /** Vague hints only: what kind of person each contact is looking for. */
 const CAREER_HINTS = [
-  { id: "police", name: "Police", side: "Law", contact: "reyes", hint: "Work nights, keep your record clean, and get a real address." },
-  { id: "courts", name: "Courts", side: "Law", contact: "marsh", hint: "Spend time on Courthouse Hill, and read what everyone else ignores." },
   { id: "vigilante", name: "Vigilante", side: "Law", contact: "silas", hint: "Look out for the people of Southside, and keep your conscience clean." },
   { id: "enforcer", name: "Enforcer", side: "Street", contact: "kozak", hint: "Do muscle work for shady people. Win some fights." },
 ];
@@ -61,6 +64,9 @@ const TAG_ICONS: Record<string, IconT> = {
   Action: Siren,
   Corrupt: Hand,
   Pressure: Megaphone,
+  Investigation: Search,
+  Command: Crown,
+  Labor: Hammer,
 };
 
 const list = { hidden: {}, show: { transition: { staggerChildren: 0.04 } } };
@@ -237,34 +243,21 @@ export function ProfileTab({ game }: { game: GameApi }) {
         </div>
       </section>
 
-      {view.path && (
+      {view.path && view.ladder && (
         <section className="card">
           <h3 className="card-title"><ShieldAlert size={16} /> Career</h3>
           <div className="row">
             <NpcPortrait id={view.path.contactId} className="avatar-sm" />
-            <p>{view.path.name} path · answers to {view.path.contact}</p>
+            <p>{view.path.name} · answers to {view.path.contact}</p>
           </div>
+          <CareerLadder ranks={view.ladder.ranks} current={view.ladder.current} graduation={view.ladder.graduationRank} color={PATH_LOOKS[view.path.id].rim} />
           {view.path.promotion && <p className="muted">{view.path.promotion}</p>}
         </section>
       )}
 
-      {!view.path && (
-        <section className="card">
-          <h3 className="card-title"><ShieldAlert size={16} /> Careers</h3>
-          <p className="muted">Nobody hands you a career. Someone has to notice you first.</p>
-          <div className="careers">
-            {CAREER_HINTS.map((c) => (
-              <div key={c.id} className="career" style={{ ["--path" as string]: PATH_LOOKS[c.id].rim }}>
-                <NpcPortrait id={c.contact} className="career-portrait" />
-                <div>
-                  <b>{c.name}</b> <span className="path-side">{c.side}</span>
-                  <p className="muted">{c.hint}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      {view.application && <ApplicationCard game={game} />}
+
+      {!view.path && <CareersCard game={game} />}
 
       <section className="card">
         <h3 className="card-title"><Landmark size={16} /> Old Market Credit Union</h3>
@@ -353,6 +346,7 @@ export function CityTab({ game, onRead }: { game: GameApi; onRead: (id: string) 
           ))}
         </div>
       </section>
+      <WorldCard game={game} />
       <section className="card">
         <h3 className="card-title"><Trophy size={16} /> Most respected in Grayhaven</h3>
         <ol className="leaders">
@@ -376,5 +370,145 @@ export function CityTab({ game, onRead }: { game: GameApi; onRead: (id: string) 
         </ul>
       </section>
     </div>
+  );
+}
+
+// ─── Careers, schools & applications ───────────────────────────────────────
+
+function CareerLadder({ ranks, current, graduation, color }: { ranks: string[]; current: number; graduation: number | null; color: string }) {
+  return (
+    <ol className="ladder" style={{ ["--path" as string]: color }}>
+      {ranks.map((r, i) => {
+        const n = i + 1;
+        return (
+          <li key={r} className={n < current ? "done" : n === current ? "now" : ""}>
+            <span className="rung">{n === graduation ? <GraduationCap size={12} /> : n}</span>
+            <span className="rung-name">{r}</span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function CareersCard({ game }: { game: GameApi }) {
+  const view = game.view!;
+  return (
+    <section className="card">
+      <h3 className="card-title"><GraduationCap size={16} /> Careers &amp; schools</h3>
+      <p className="muted">
+        Law careers start at school: pay tuition, or get someone respected to vouch for you. The dean has the final say.
+        Street careers have no school. Someone has to notice you.
+      </p>
+      <div className="schools">
+        {view.schools.map((sc) => (
+          <article key={sc.id} className="school" style={{ ["--path" as string]: PATH_LOOKS[sc.path].rim }}>
+            <div className="school-head">
+              <span className="school-crest"><GraduationCap size={20} /></span>
+              <div>
+                <h4>{sc.name}</h4>
+                <p className="muted">{sc.city}, {sc.country} · trains <b>{sc.pathName}</b></p>
+              </div>
+            </div>
+            <p className="school-desc">{sc.description}</p>
+            <div className="school-meta">
+              <span className="chip">Tuition ${sc.tuition}</span>
+              <span className="chip">Dean: {sc.dean}</span>
+            </div>
+            {sc.vouchedBy && <p className="vouch">✓ {sc.vouchedBy} will vouch for you. No tuition.</p>}
+            {sc.locked ? (
+              <p className="job-lock"><Lock size={12} /> {sc.locked}</p>
+            ) : (
+              <motion.button whileTap={{ scale: 0.95 }} className="btn btn-primary btn-sm" disabled={game.busy} onClick={() => game.act({ type: "apply", school: sc.id })}>
+                {sc.vouchedBy ? "Apply free (vouched)" : `Apply · $${sc.tuition} from bank`}
+              </motion.button>
+            )}
+          </article>
+        ))}
+      </div>
+      <h4 className="subhead">By invitation only</h4>
+      <div className="careers">
+        {CAREER_HINTS.map((c) => (
+          <div key={c.id} className="career" style={{ ["--path" as string]: PATH_LOOKS[c.id].rim }}>
+            <NpcPortrait id={c.contact} className="career-portrait" />
+            <div>
+              <b>{c.name}</b> <span className="path-side">{c.side}</span>
+              <p className="muted">{c.hint}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ApplicationCard({ game }: { game: GameApi }) {
+  const app = game.view!.application!;
+  if (app.status === "pending") {
+    return (
+      <section className="card application">
+        <h3 className="card-title"><Clock size={16} /> Application under review</h3>
+        <p><b>{app.schoolName}</b> · {app.pathName}</p>
+        <p className="muted">{app.dean} is reviewing your file{app.vouchedBy ? `, with a recommendation from ${app.vouchedBy}` : ""}.</p>
+        <p className="big-number countdown">{fmt(game.live!.application)}</p>
+      </section>
+    );
+  }
+  return <DeanLetter game={game} />;
+}
+
+/** The dean's decision, written as a letter. */
+export function DeanLetter({ game, onClose }: { game: GameApi; onClose?: () => void }) {
+  const app = game.view!.application!;
+  const accepted = app.status === "accepted";
+  return (
+    <section className={`letter ${accepted ? "accepted" : "rejected"}`}>
+      <p className="eyebrow"><MailOpen size={14} /> From the office of {app.dean}</p>
+      <h3>{app.schoolName}</h3>
+      {accepted ? (
+        <p>
+          We are pleased to offer you a place in our {app.pathName} program
+          {app.vouchedBy ? `. ${app.vouchedBy} spoke highly of you. Do not prove them wrong.` : ". Classes begin immediately."}
+        </p>
+      ) : (
+        <p>We regret to inform you that your application was not successful. {app.reason}</p>
+      )}
+      <div className="row">
+        {accepted ? (
+          <button className="btn btn-primary" disabled={game.busy} onClick={() => game.act({ type: "enroll" }).then(() => onClose?.())}>
+            <GraduationCap size={16} /> Enroll
+          </button>
+        ) : (
+          <button className="btn btn-ghost" disabled={game.busy} onClick={() => game.act({ type: "dismiss_application" }).then(() => onClose?.())}>
+            Fold the letter away
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+export function WorldCard({ game }: { game: GameApi }) {
+  return (
+    <section className="card">
+      <h3 className="card-title"><Globe2 size={16} /> The world</h3>
+      <div className="world">
+        {game.view!.countries.map((c) => (
+          <article key={c.id} className={`country ${c.open ? "" : "soon"}`} style={{ ["--path" as string]: c.color }}>
+            <div className="country-head">
+              <h4>{c.name}</h4>
+              <span className="chip">{c.open ? "You are here" : "Coming soon"}</span>
+            </div>
+            <p className="muted">{c.capital} · {c.mood}</p>
+            <p className="laws">{c.laws}</p>
+            <ul>
+              {c.schools.map((sc) => (
+                <li key={sc.name}><GraduationCap size={12} /> {sc.name} <em>{sc.career}</em></li>
+              ))}
+            </ul>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }

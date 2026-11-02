@@ -8,6 +8,8 @@ import { JOBS } from "./content/jobs";
 import { NPCS } from "./content/npcs";
 import { PATHS, promotionHint, rankTitle } from "./content/paths";
 import { CHAPTERS } from "./content/story";
+import { SCHOOL_BY_ID, SCHOOLS } from "./content/schools";
+import { COUNTRIES, type CountryDef } from "./content/world";
 import { GUT_READS } from "./combat";
 import { FIGHT_ENERGY, inHospital, jobLock, scout } from "./engine";
 import { describe, integrityHint } from "./stats";
@@ -83,6 +85,34 @@ export interface PublicView {
   chapters: { id: string; title: string; teaser: string; unlocked: boolean; read: boolean }[];
   /** First unlocked chapter the player hasn't read yet. */
   unreadChapter: string | null;
+  schools: {
+    id: string;
+    name: string;
+    path: PathId;
+    pathName: string;
+    city: string;
+    country: string;
+    tuition: number;
+    dean: string;
+    description: string;
+    /** Why the player can't apply right now, or null. */
+    locked: string | null;
+    /** Contact currently offering to vouch (free application). */
+    vouchedBy: string | null;
+  }[];
+  application: {
+    schoolName: string;
+    dean: string;
+    pathName: string;
+    status: "pending" | "accepted" | "rejected";
+    msLeft: number;
+    vouchedBy: string | null;
+    paid: number;
+    reason: string | null;
+  } | null;
+  countries: CountryDef[];
+  /** Rank progress for the career ladder. */
+  ladder: { ranks: string[]; current: number; graduationRank: number | null } | null;
 }
 
 function heatLabel(heat: number): PublicView["heatLabel"] {
@@ -219,6 +249,48 @@ export function toView(p: Player, now: number): PublicView {
       unlocked: p.flags.includes(`story:${c.id}`),
       read: p.flags.includes(`read:${c.id}`),
     })),
+    schools: SCHOOLS.map((sc) => {
+      const vouch = p.offers.includes(sc.path);
+      let locked = p.path
+        ? "You already have a career."
+        : p.application?.status === "pending"
+          ? "You have an application under review."
+          : (p.applyCooldownUntil ?? 0) > now
+            ? "Admissions won't see you again so soon."
+            : vouch
+              ? null
+              : sc.requirements(p) ?? (p.bank < sc.tuition ? `Save $${sc.tuition} in the bank for tuition.` : null);
+      if (p.path === sc.path) locked = "You're already in this career.";
+      return {
+        id: sc.id,
+        name: sc.name,
+        path: sc.path,
+        pathName: PATHS[sc.path].name,
+        city: sc.city,
+        country: sc.country,
+        tuition: sc.tuition,
+        dean: sc.dean,
+        description: sc.description,
+        locked,
+        vouchedBy: vouch ? PATHS[sc.path].contact : null,
+      };
+    }),
+    application: p.application
+      ? {
+          schoolName: SCHOOL_BY_ID[p.application.school].name,
+          dean: SCHOOL_BY_ID[p.application.school].dean,
+          pathName: PATHS[p.application.path].name,
+          status: p.application.status,
+          msLeft: Math.max(0, p.application.decideAt - now),
+          vouchedBy: p.application.vouchedBy,
+          paid: p.application.paid,
+          reason: p.application.reason ?? null,
+        }
+      : null,
+    countries: COUNTRIES,
+    ladder: p.path
+      ? { ranks: PATHS[p.path].ranks, current: p.rank, graduationRank: PATHS[p.path].graduationRank ?? null }
+      : null,
     unreadChapter:
       CHAPTERS.find((c) => p.flags.includes(`story:${c.id}`) && !p.flags.includes(`read:${c.id}`))?.id ?? null,
   };
