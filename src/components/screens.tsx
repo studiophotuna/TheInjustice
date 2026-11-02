@@ -4,6 +4,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { ArrowRight, KeyRound, LogIn, Skull, UserPlus, Wallet } from "lucide-react";
 import { useState } from "react";
 import { CHAPTER_BY_ID, PROLOGUE } from "@/game/content/story";
+import { COUNTRIES } from "@/game/content/world";
+import type { CountryId } from "@/game/types";
 import type { PublicView } from "@/game/view";
 import { Skyline } from "./art/Skyline";
 import { ComicPanel, LightsOut } from "./Comic";
@@ -79,18 +81,38 @@ export function AuthForm({
 
 function NameForm({ game, label = "Start" }: { game: GameApi; label?: string }) {
   const [name, setName] = useState("");
+  const [country, setCountry] = useState<CountryId>("varrow");
+  const chosen = COUNTRIES.find((c) => c.id === country)!;
   return (
     <form
       className="name-form"
       onSubmit={(e) => {
         e.preventDefault();
-        game.act({ type: "create", name });
+        game.act({ type: "create", name, country });
       }}
     >
       <label className="field">
         <span>Your name on the street</span>
         <input autoFocus maxLength={20} placeholder="e.g. Rook" value={name} onChange={(e) => setName(e.target.value)} />
       </label>
+      <div className="field">
+        <span>Where will you live?</span>
+        <div className="country-pick">
+          {COUNTRIES.map((c) => (
+            <button
+              type="button"
+              key={c.id}
+              className={c.id === country ? "on" : ""}
+              style={{ ["--path" as string]: c.color }}
+              onClick={() => setCountry(c.id)}
+            >
+              <b>{c.capital}</b>
+              <span>{c.name}</span>
+            </button>
+          ))}
+        </div>
+        <p className="fine country-story">{chosen.startStory} <em>{chosen.laws}</em></p>
+      </div>
       <button className="btn btn-primary btn-lg" disabled={game.busy || name.trim().length < 2}>
         {label} <ArrowRight size={18} />
       </button>

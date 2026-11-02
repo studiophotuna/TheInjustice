@@ -9,6 +9,8 @@ import {
   GraduationCap,
   Globe2,
   MailOpen,
+  MapPin,
+  HeartPulse,
   BookOpen,
   Brain,
   Crosshair,
@@ -37,6 +39,7 @@ import {
 import { useState, type ComponentType } from "react";
 import type { JobView, PublicView } from "@/game/view";
 import { Skyline } from "./art/Skyline";
+import { Vehicle } from "./art/Vehicles";
 import { NpcPortrait, PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 
 /** Vague hints only: what kind of person each contact is looking for. */
@@ -67,6 +70,7 @@ const TAG_ICONS: Record<string, IconT> = {
   Investigation: Search,
   Command: Crown,
   Labor: Hammer,
+  Care: HeartPulse,
 };
 
 const list = { hidden: {}, show: { transition: { staggerChildren: 0.04 } } };
@@ -77,31 +81,42 @@ const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transiti
 export function JobsTab({ game, highlight }: { game: GameApi; highlight: string | null }) {
   const view = game.view!;
   const energy = game.live!.energy;
-  const blocked = game.busy || game.live!.hospital > 0;
-  // The district holding most of your career's jobs comes first.
-  const pathJobs = (id: string) => view.jobs.filter((j) => j.pathJob && j.district === id).length;
-  const districts = [...view.districts].sort((a, b) => pathJobs(b.id) - pathJobs(a.id));
+  const blocked = game.busy || game.live!.hospital > 0 || !!view.travel;
+  const careerJobs = view.jobs.filter((j) => j.pathJob);
+  const card = (j: JobView) => (
+    <JobCard key={j.id} job={j} energy={energy} blocked={blocked} best={j.id === view.recommendedJobId} flash={j.id === highlight} onWork={() => game.act({ type: "job", jobId: j.id })} />
+  );
 
   return (
     <div className="stack">
-      {districts.map((d) => {
-        const jobs = view.jobs
-          .filter((j) => j.district === d.id && (!d.locked || j.pathJob))
-          .sort((x, y) => Number(y.pathJob) - Number(x.pathJob));
+      {view.path && careerJobs.length > 0 && (
+        <section className="district career-jobs" style={{ ["--path" as string]: PATH_LOOKS[view.path.id].rim }}>
+          <div className="career-head">
+            <NpcPortrait id={view.path.contactId} className="avatar-sm" />
+            <div>
+              <h2>{view.path.rank}</h2>
+              <p className="muted">{view.path.name} · your career goes with you, wherever you live</p>
+            </div>
+          </div>
+          <motion.div className="job-grid" variants={list} initial="hidden" animate="show">
+            {careerJobs.sort((a, b) => Number(!!a.locked) - Number(!!b.locked)).map(card)}
+          </motion.div>
+        </section>
+      )}
+      {view.districts.map((d) => {
+        const jobs = view.jobs.filter((j) => j.district === d.id && !j.pathJob && !d.locked);
         return (
-          <section key={d.id} className={`district ${d.locked && !jobs.length ? "is-locked" : ""}`}>
+          <section key={d.id} className={`district ${d.locked ? "is-locked" : ""}`}>
             <div className="district-hero">
-              <Skyline district={d.id} rain={d.id === "gutter"} />
+              <Skyline district={d.id} rain={d.id === "gutter" || d.id === "rail_yards"} />
               <div className="district-title">
                 <h2>{d.name}</h2>
-                <p>{d.locked && !jobs.length ? <><Lock size={13} /> {d.locked}</> : d.tagline}</p>
+                <p>{d.locked ? <><Lock size={13} /> {d.locked}</> : d.tagline}</p>
               </div>
             </div>
             {jobs.length > 0 && (
               <motion.div className="job-grid" variants={list} initial="hidden" animate="show">
-                {jobs.map((j) => (
-                  <JobCard key={j.id} job={j} energy={energy} blocked={blocked} best={j.id === view.recommendedJobId} flash={j.id === highlight} onWork={() => game.act({ type: "job", jobId: j.id })} />
-                ))}
+                {jobs.map(card)}
               </motion.div>
             )}
           </section>
@@ -226,7 +241,7 @@ export function ProfileTab({ game }: { game: GameApi }) {
         <PlayerAvatar name={view.name} path={view.path?.id} className="avatar-xl" />
         <div>
           <h2>{view.name}</h2>
-          <p className="muted">{view.path ? `${view.path.rank} · ${view.path.name}` : "Bum · The Gutter"}{view.deaths ? ` · Life #${view.deaths + 1}` : ""}</p>
+          <p className="muted">{view.path ? `${view.path.rank} · ${view.path.name}` : `Bum · ${view.location.city}`}{view.deaths ? ` · Life #${view.deaths + 1}` : ""}</p>
           <p className="quote">“{view.feel.conscience}”</p>
         </div>
       </section>
@@ -489,26 +504,50 @@ export function DeanLetter({ game, onClose }: { game: GameApi; onClose?: () => v
 }
 
 export function WorldCard({ game }: { game: GameApi }) {
+  const view = game.view!;
+  const blocked = game.busy || !!view.travel || game.live!.hospital > 0;
   return (
     <section className="card">
-      <h3 className="card-title"><Globe2 size={16} /> The world</h3>
+      <h3 className="card-title"><Globe2 size={16} /> The world · Travel</h3>
+      <p className="muted">Every country is open. Each has its own laws, jobs and schools. Getting there takes time, and every way of travelling has its own danger.</p>
       <div className="world">
-        {game.view!.countries.map((c) => (
-          <article key={c.id} className={`country ${c.open ? "" : "soon"}`} style={{ ["--path" as string]: c.color }}>
+        {view.countries.map((c) => (
+          <article key={c.id} className={`country ${c.here ? "here" : ""}`} style={{ ["--path" as string]: c.color }}>
             <div className="country-head">
               <h4>{c.name}</h4>
-              <span className="chip">{c.open ? "You are here" : "Coming soon"}</span>
+              {c.here ? <span className="chip chip-green"><MapPin size={12} /> You live here</span> : <span className="chip">{c.capital}</span>}
             </div>
             <p className="muted">{c.capital} · {c.mood}</p>
             <p className="laws">{c.laws}</p>
             <ul>
               {c.schools.map((sc) => (
-                <li key={sc.name}><GraduationCap size={12} /> {sc.name} <em>{sc.career}</em></li>
+                <li key={sc.name} className={sc.open ? "" : "soon"}>
+                  <GraduationCap size={12} /> {sc.name} <em>{sc.open ? sc.career : `${sc.career} · soon`}</em>
+                </li>
               ))}
             </ul>
+            {c.routes.length > 0 && (
+              <div className="routes">
+                {c.routes.map((r) => (
+                  <button
+                    key={r.mode}
+                    className="route"
+                    disabled={blocked || view.cash < r.cost}
+                    title={r.risk}
+                    onClick={() => game.act({ type: "travel", to: c.id, mode: r.mode })}
+                  >
+                    <Vehicle mode={r.mode} />
+                    <span className="route-name">{r.name}</span>
+                    <span className="route-meta">${r.cost} · {r.minutes} min</span>
+                    <span className="route-risk">{r.risk}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </article>
         ))}
       </div>
+      <p className="fine">Tickets are paid in cash. Times are shortened for testing.</p>
     </section>
   );
 }

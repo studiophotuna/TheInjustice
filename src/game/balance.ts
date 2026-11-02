@@ -10,7 +10,7 @@ export const BALANCE = {
   housing: [
     { name: "Cardboard box", regenMult: 1, bonusMax: 0 },
     { name: "Sleeping bag under the overpass", regenMult: 1.25, bonusMax: 10 },
-    { name: "Rented room in Old Market", regenMult: 1.6, bonusMax: 25 },
+    { name: "Rented room", regenMult: 1.6, bonusMax: 25 },
   ],
   hp: { max: 100, regenMs: 30_000, hospitalMinMs: 3 * 60_000, hospitalMaxMs: 8 * 60_000 },
   /** Heat cools down by one point every this many ms. */
@@ -43,6 +43,10 @@ export const BALANCE = {
     /** Share of tuition refunded to the bank after a rejection. */
     refundShare: 0.75,
     reapplyCooldownMs: 30 * 60_000,
+  },
+  travel: {
+    /** Extra time held by customs when flying with heat (shortened for testing). */
+    customsDelayMs: 5 * 60_000,
   },
   /** Diminishing returns: XP multiplier is 1 / (1 + timesDone / this). */
   repeatFalloff: 60,

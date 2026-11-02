@@ -1,11 +1,11 @@
 import { BALANCE } from "../balance";
-import type { DistrictId, PathId, Player } from "../types";
+import type { CountryId, DistrictId, PathId, Player } from "../types";
 
 export interface SchoolDef {
   id: string;
   name: string;
   path: PathId;
-  country: string;
+  country: CountryId;
   city: string;
   district: DistrictId;
   tuition: number;
@@ -30,7 +30,7 @@ export const SCHOOLS: SchoolDef[] = [
     id: "grayhaven_academy",
     name: "Grayhaven Police Academy",
     path: "police",
-    country: "Varrow",
+    country: "varrow",
     city: "Grayhaven",
     district: "precinct_square",
     tuition: 400,
@@ -43,7 +43,7 @@ export const SCHOOLS: SchoolDef[] = [
     id: "halloway_law",
     name: "Halloway School of Law",
     path: "courts",
-    country: "Varrow",
+    country: "varrow",
     city: "Grayhaven",
     district: "courthouse_hill",
     tuition: 600,
@@ -52,7 +52,49 @@ export const SCHOOLS: SchoolDef[] = [
     entrance: 15,
     requirements: (p) => basics(p, 20),
   },
+  {
+    id: "st_brigids_med",
+    name: "St. Brigid's School of Medicine",
+    path: "medicine",
+    country: "varrow",
+    city: "Grayhaven",
+    district: "st_brigids",
+    tuition: 800,
+    dean: "Dr. Helena Voss",
+    description: "A teaching hospital that never turns anyone away. Its students learn on the city's worst nights.",
+    entrance: 16,
+    requirements: (p) => basics(p, 15),
+  },
+  {
+    id: "halcyon_med",
+    name: "Halcyon University of Medicine",
+    path: "medicine",
+    country: "meridian",
+    city: "Halcyon",
+    district: "glass_quarter",
+    tuition: 1500,
+    dean: "Provost Adrian Kell",
+    description: "The best hospitals in the world, and the richest patients. Hard to get into, harder to afford.",
+    entrance: 22,
+    requirements: (p) => basics(p, 25),
+  },
+  {
+    id: "ironmoor_police",
+    name: "Kestrova State Police College",
+    path: "police",
+    country: "kestrova",
+    city: "Ironmoor",
+    district: "checkpoint_row",
+    tuition: 250,
+    dean: "Colonel Marta Dragan",
+    description: "Cheap, brutal and strict. Its graduates are the toughest officers on the continent.",
+    entrance: 22,
+    requirements: (p) => basics(p, 10),
+  },
 ];
 
 export const SCHOOL_BY_ID = Object.fromEntries(SCHOOLS.map((s) => [s.id, s])) as Record<string, SchoolDef>;
-export const SCHOOL_FOR_PATH = Object.fromEntries(SCHOOLS.map((s) => [s.path, s])) as Partial<Record<PathId, SchoolDef>>;
+/** Schools offering a career; a career's contact vouches only at its home school (PATHS[path].school). */
+export function schoolsFor(path: PathId): SchoolDef[] {
+  return SCHOOLS.filter((s) => s.path === path);
+}

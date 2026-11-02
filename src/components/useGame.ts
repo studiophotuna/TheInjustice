@@ -191,6 +191,7 @@ export function useGame() {
       hospital: Math.max(0, view.hospitalMs - elapsed),
       full: Math.max(0, view.fullMs - elapsed),
       application: view.application?.status === "pending" ? Math.max(0, view.application.msLeft - elapsed) : 0,
+      travel: view.travel ? Math.max(0, view.travel.msLeft - elapsed) : 0,
     };
   }, [view, elapsed]);
 
@@ -219,6 +220,12 @@ export function useGame() {
         const text = `${view.application!.dean} has made a decision about your application.`;
         pushToasts([{ tone: "story", text, action: { label: "Open letter", target: "tab:profile" } }]);
         notify("A letter from the dean", text, "/?go=tab:profile");
+      });
+    }
+    if (view.travel && live.travel === 0) {
+      once("travel", async () => {
+        await refresh();
+        notify(`Arrived in ${view.travel!.city}`, "Your trip is over. See what happened on the way.", "/");
       });
     }
     if (view.hospitalMs > 0 && live.hospital === 0) {

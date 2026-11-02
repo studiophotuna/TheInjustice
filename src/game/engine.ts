@@ -7,14 +7,18 @@ import { DISTRICT_BY_ID, totalJobs } from "./content/districts";
 import { CHAPTER_BY_ID } from "./content/story";
 import { ITEM_BY_ID } from "./content/items";
 import { JOB_BY_ID, type JobDef } from "./content/jobs";
-import { mugger, NPC_BY_ID, type NpcDef } from "./content/npcs";
+import { mugger, NPC_BY_ID, roadGang, type NpcDef } from "./content/npcs";
 import { isGraduation, jobsNeeded, keyStatAvg, PATHS } from "./content/paths";
-import { SCHOOL_BY_ID, SCHOOL_FOR_PATH } from "./content/schools";
+import { SCHOOL_BY_ID } from "./content/schools";
+import { COUNTRY_BY_ID, MODE_BY_ID, tripCost, tripMs } from "./content/world";
 import { emptyStats, statValue, sv, tierOf, TIER_UP_LINES } from "./stats";
 import {
   GameError,
   STAT_KEYS,
   type Action,
+  type CountryId,
+  type TravelMode,
+  type TripIncident,
   type FightSummary,
   type GameEvent,
   type PathId,
@@ -38,10 +42,12 @@ export function cleanName(raw: string): string {
   return name;
 }
 
-export function createPlayer(id: string, rawName: string, now: number): Player {
+export function createPlayer(id: string, rawName: string, now: number, country: CountryId = "varrow"): Player {
+  if (!COUNTRY_BY_ID[country]) throw new GameError("Pick a country to live in.");
   return {
     id,
     name: cleanName(rawName),
+    country,
     createdAt: now,
     cash: 0,
     bank: 0,
@@ -93,10 +99,121 @@ export function tick(p: Player, now: number): void {
   p.heat = Math.max(0, p.heat - elapsed / BALANCE.heatDecayMs);
   p.tickAt = now;
   decideApplication(p);
+  arrive(p);
+}
+
+/** Rolls the trip's danger now; it is revealed and applied on arrival. */
+function rollIncident(p: Player, mode: TravelMode, rng: Rng, departAt: number): TripIncident | null {
+  const def = MODE_BY_ID[mode];
+  if (mode === "plane") {
+    if (p.heat < BALANCE.cleanRecordHeat) return null;
+    const fine = Math.round(p.heat * 6);
+    return {
+      kind: "customs",
+      text: `Customs pulls you aside. Your name is on a list. You pay a $${fine} fine and sit in a small room for a while.`,
+      fine,
+      delayMs: BALANCE.travel.customsDelayMs,
+    };
+  }
+  if (rng() >= def.riskChance) return null;
+  if (mode === "train") {
+    const dodge = clamp(0.2 + (sv(p, "perception") - 10) / 60, 0.2, 0.9);
+    if (rng() < dodge) {
+      return { kind: "pickpocket", text: "A hand slides toward your pocket. You catch the wrist. The thief runs for the next carriage.", cashLost: 0 };
+    }
+    const lost = Math.floor(p.cash * 0.4);
+    return { kind: "pickpocket", text: `Somewhere between stations, a pickpocket lifts $${lost} from your coat.`, cashLost: lost };
+  }
+  // Bus: a planned ambush by a road gang.
+  const me = playerFighter(p, BALANCE.hp.max);
+  const gang = roadGang(power(me));
+  const res = resolveFight(me, npcFighter(gang), rng);
+  const fight: FightSummary = { opponent: gang.name, icon: gang.icon, won: res.won, lines: res.lines, outcome: "win" };
+  if (res.won) {
+    return { kind: "ambush", text: "The bus stops in the middle of nowhere. A gang climbs aboard, looking for you. You fight your way off.", fight, hpAfter: res.playerHp, cashLost: 0 };
+  }
+  const lost = Math.floor(p.cash * 0.6);
+  if (res.playerHp <= 0) {
+    const died = rng() < deathChance(power(npcFighter(gang)) / power(me));
+    fight.outcome = died ? "death" : "ko";
+    return {
+      kind: "ambush",
+      text: died
+        ? "The ambush was planned. They knew your seat number. You never reach your stop."
+        : `The ambush was planned. They beat you, take $${lost}, and leave you by the road. A farmer drives you to a hospital.`,
+      fight,
+      hpAfter: 0,
+      cashLost: lost,
+      died,
+      hospitalMs: died ? 0 : randInt(rng, BALANCE.hp.hospitalMinMs, BALANCE.hp.hospitalMaxMs),
+    };
+  }
+  fight.outcome = "loss";
+  return { kind: "ambush", text: `A gang stops the bus. You lose the fight and $${lost}, but keep your life.`, fight, hpAfter: res.playerHp, cashLost: lost };
+}
+
+function startTrip(p: Player, to: CountryId, mode: TravelMode, now: number, rng: Rng, events: GameEvent[]) {
+  const from = countryOf(p);
+  if (!COUNTRY_BY_ID[to] || !MODE_BY_ID[mode]) throw new GameError("Unknown destination.");
+  if (to === from) throw new GameError("You're already here.");
+  const cost = tripCost(from, to, mode);
+  if (p.cash < cost) throw new GameError(`A ${MODE_BY_ID[mode].name.toLowerCase()} ticket costs $${cost}. Cash only.`);
+  p.cash -= cost;
+  const incident = rollIncident(p, mode, rng, now);
+  p.travel = { from, to, mode, departAt: now, arriveAt: now + tripMs(from, to, mode) + (incident?.delayMs ?? 0), incident };
+  p.arrival = null;
+  events.push({
+    tone: "info",
+    text: `You board the ${MODE_BY_ID[mode].name.toLowerCase()} to ${COUNTRY_BY_ID[to].capital}. $${cost}.`,
+  });
+}
+
+/** Finishes a trip whose time is up, applying whatever happened on the way. */
+function arrive(p: Player) {
+  const trip = p.travel;
+  if (!trip || p.tickAt < trip.arriveAt) return;
+  const at = trip.arriveAt;
+  const inc = trip.incident;
+  p.travel = null;
+  p.country = trip.to;
+  if (inc) {
+    p.cash = Math.max(0, p.cash - (inc.cashLost ?? 0) - (inc.fine ?? 0));
+    if (inc.fine) p.heat = Math.max(0, p.heat - 5);
+    if (inc.hpAfter !== undefined) p.hp = inc.hpAfter;
+    if (inc.fight) {
+      grantXp(p, { toughness: 0.8, strength: inc.fight.won ? 1 : 0.4, nerve: 0.8 }, 1, []);
+      if (inc.fight.won) p.reputation += 2;
+    }
+    if (inc.died) {
+      die(p, at, "Road Gang", []);
+    } else if (inc.hospitalMs) {
+      p.hp = 0;
+      p.hospitalUntil = at + inc.hospitalMs * (p.path === "medicine" ? 0.5 : 1);
+      p.assessmentReady = true;
+    }
+  }
+  p.arrival = { to: trip.to, mode: trip.mode, at, incident: inc };
+  p.log.unshift({
+    at,
+    tone: inc && inc.kind !== "pickpocket" ? "bad" : "info",
+    text: `Arrived in ${COUNTRY_BY_ID[trip.to].capital}.${inc ? ` ${inc.text}` : ""}`,
+  });
+  p.log = p.log.slice(0, BALANCE.logSize);
 }
 
 /** Returns why a job can't be done right now, or null. Does not check energy. */
+/** The country the player is in (old saves predate countries and live in Varrow). */
+export function countryOf(p: Player): CountryId {
+  return p.country ?? "varrow";
+}
+
+export function traveling(p: Player): boolean {
+  return !!p.travel;
+}
+
 export function jobLock(p: Player, job: JobDef): string | null {
+  // Career work can be done wherever you live; everything else is local.
+  if (!job.path && DISTRICT_BY_ID[job.district].country !== countryOf(p)) return "That's in another country.";
   if (job.path && p.path !== job.path) return "Not your line of work.";
   if (job.minRank && p.rank < job.minRank) return `Needs rank: ${PATHS[job.path!].ranks[job.minRank - 1]}.`;
   const d = DISTRICT_BY_ID[job.district].locked(p);
@@ -121,7 +238,9 @@ function shiftIntegrity(p: Player, delta = 0) {
 
 function hospitalize(p: Player, now: number, rng: Rng, events: GameEvent[]) {
   p.hp = 0;
-  p.hospitalUntil = now + randInt(rng, BALANCE.hp.hospitalMinMs, BALANCE.hp.hospitalMaxMs);
+  // Medics know how to heal: their hospital stays are halved.
+  const stay = randInt(rng, BALANCE.hp.hospitalMinMs, BALANCE.hp.hospitalMaxMs) * (p.path === "medicine" ? 0.5 : 1);
+  p.hospitalUntil = now + Math.round(stay);
   p.assessmentReady = true;
   const lost = Math.floor(p.cash * 0.25);
   p.cash -= lost;
@@ -239,7 +358,7 @@ function checkCareer(p: Player, events: GameEvent[]) {
   p.reputation += 3;
   const title = def.ranks[p.rank - 1];
   if (isGraduation(p.path, p.rank)) {
-    const school = SCHOOL_FOR_PATH[p.path];
+    const school = p.school ? SCHOOL_BY_ID[p.school] : null;
     events.push({
       tone: "story",
       text: `Graduation day at ${school?.name ?? "school"}. Caps fly. Nobody came to watch you, but you came this far anyway. You are now: ${title}.`,
@@ -294,7 +413,7 @@ function fightNpc(p: Player, npc: NpcDef, now: number, rng: Rng, events: GameEve
 
 function maybeMugging(p: Player, job: JobDef, now: number, rng: Rng, events: GameEvent[]) {
   if (p.cash < BALANCE.muggingMinCash) return;
-  if (job.district !== "gutter" && job.district !== "old_market") return;
+  if (!["gutter", "old_market", "boardwalk", "rail_yards", "undercity"].includes(job.district)) return;
   if (rng() >= BALANCE.muggingChance) return;
   const m = mugger(p.reputation);
   events.push({ tone: "bad", text: "On the way back, someone steps out of an alley. \"Wallet. Now.\"" });
@@ -339,7 +458,7 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
     const avg = job.risk.stats.reduce((s, k) => s + sv(p, k), 0) / job.risk.stats.length;
     const chance = clamp(0.5 + (avg - job.risk.difficulty) / 30, 0.15, 0.95);
     if (rng() >= chance) {
-      p.heat += job.risk.failHeat ?? 0;
+      p.heat += (job.risk.failHeat ?? 0) * COUNTRY_BY_ID[countryOf(p)].heatMult;
       grantXp(p, job.xp, falloff * 0.5, events);
       events.push({ tone: "bad", text: job.risk.failText });
       if (job.risk.failHp) {
@@ -351,10 +470,10 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
     }
   }
 
-  let pay = randInt(rng, job.pay[0], job.pay[1]);
+  let pay = Math.round(randInt(rng, job.pay[0], job.pay[1]) * COUNTRY_BY_ID[countryOf(p)].payMult);
   if (job.payStat) pay = Math.round(pay * (1 + (sv(p, job.payStat) - 10) / 40));
   p.cash += pay;
-  p.heat += job.heat ?? 0;
+  p.heat += (job.heat ?? 0) * COUNTRY_BY_ID[countryOf(p)].heatMult;
   p.reputation += job.reputation ?? 0;
   shiftIntegrity(p, job.integrity);
   events.push({ tone: "good", text: `${pick(rng, job.lines)} +$${pay}` });
@@ -369,10 +488,16 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
   maybeMugging(p, job, now, rng, events);
 }
 
+/** Shop prices follow the local cost of living. */
+export function itemPrice(p: Player, base: number): number {
+  return Math.round(base * COUNTRY_BY_ID[countryOf(p)].priceMult);
+}
+
 function buy(p: Player, itemId: string, events: GameEvent[]) {
   const item = ITEM_BY_ID[itemId];
   if (!item) throw new GameError("That item doesn't exist.");
-  if (p.cash < item.price) throw new GameError("You can't afford that. (Cash on hand only.)");
+  const price = itemPrice(p, item.price);
+  if (p.cash < price) throw new GameError("You can't afford that. (Cash on hand only.)");
   if (item.kind === "housing") {
     if (p.housing >= (item.housing ?? 0)) throw new GameError("You already have a better place.");
     p.housing = item.housing!;
@@ -382,7 +507,7 @@ function buy(p: Player, itemId: string, events: GameEvent[]) {
   } else {
     p.inventory[item.id] = (p.inventory[item.id] ?? 0) + 1;
   }
-  p.cash -= item.price;
+  p.cash -= price;
   events.push({ tone: "good", text: `Bought ${item.icon} ${item.name}.` });
 }
 
@@ -444,7 +569,7 @@ function answerOffer(p: Player, path: PathId, accept: boolean, now: number, even
     return;
   }
   if (p.path) throw new GameError("You've already chosen your path.");
-  const school = SCHOOL_FOR_PATH[path];
+  const school = PATHS[path].school ? SCHOOL_BY_ID[PATHS[path].school!] : null;
   if (school) {
     // School careers: the contact vouches, the dean still decides.
     if (p.application?.status === "pending") throw new GameError("You already have an application under review.");
@@ -532,8 +657,11 @@ function apply(p: Player, schoolId: string, now: number, events: GameEvent[]) {
   if (p.path) throw new GameError("You already have a career.");
   if (p.application?.status === "pending") throw new GameError("You already have an application under review.");
   if ((p.applyCooldownUntil ?? 0) > now) throw new GameError("The admissions office won't see you again so soon.");
-  // A pending vouch from the career's contact makes the application free.
-  if (p.offers.includes(school.path)) {
+  if (school.country !== countryOf(p)) {
+    throw new GameError(`${school.name} is in ${COUNTRY_BY_ID[school.country].capital}. Travel there to apply in person.`);
+  }
+  // A pending vouch from the career's contact makes the application free (at their home school).
+  if (p.offers.includes(school.path) && PATHS[school.path].school === school.id) {
     answerOffer(p, school.path, true, now, events);
     return;
   }
@@ -554,6 +682,7 @@ function enroll(p: Player, events: GameEvent[]) {
   if (p.path) throw new GameError("You already have a career.");
   const school = SCHOOL_BY_ID[app.school];
   joinPath(p, app.path);
+  p.school = app.school;
   p.application = null;
   events.push({ tone: "story", text: `First day at ${school.name}. You find your seat in the back row. Old habits.` });
   events.push({
@@ -582,8 +711,10 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng): G
   if (isDead(p) && action.type !== "rebirth" && action.type !== "flag") {
     throw new GameError("You're dead. Start a new life to keep playing.");
   }
-  const blockedInHospital = action.type === "job" || action.type === "fight" || action.type === "bank";
+  const blockedInHospital = action.type === "job" || action.type === "fight" || action.type === "bank" || action.type === "travel";
   if (blockedInHospital && inHospital(p, now)) throw new GameError("You're in the hospital. Rest up.");
+  const blockedOnTheRoad = ["job", "fight", "bank", "buy", "apply", "travel", "enroll"].includes(action.type);
+  if (blockedOnTheRoad && traveling(p)) throw new GameError("You're still on the road. Wait until you arrive.");
 
   switch (action.type) {
     case "job":
@@ -592,6 +723,7 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng): G
     case "fight": {
       const npc = NPC_BY_ID[action.npcId];
       if (!npc) throw new GameError("Nobody by that name around here.");
+      if (DISTRICT_BY_ID[npc.district].country !== countryOf(p)) throw new GameError("They're in another country.");
       const lock = DISTRICT_BY_ID[npc.district].locked(p);
       if (lock) throw new GameError(lock);
       if (p.energy < FIGHT_ENERGY) throw new GameError("You're too tired to fight.");
@@ -631,6 +763,12 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng): G
       break;
     case "enroll":
       enroll(p, events);
+      break;
+    case "travel":
+      startTrip(p, action.to, action.mode, now, rng, events);
+      break;
+    case "ack_arrival":
+      p.arrival = null;
       break;
     case "dismiss_application":
       if (p.application?.status !== "rejected") throw new GameError("Nothing to dismiss.");

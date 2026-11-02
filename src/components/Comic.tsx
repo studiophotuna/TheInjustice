@@ -354,7 +354,46 @@ function Rooftop() {
   );
 }
 
+function Hospital() {
+  return (
+    <Frame bg="#08141a" id="ht-hs" dots="#7ff0d8" dotOpacity={0.08}>
+      <rect x="0" y="0" width="400" height="260" fill="url(#hs-light)" />
+      <defs>
+        <radialGradient id="hs-light" cx="0.5" cy="0" r="0.9"><stop offset="0" stopColor="#bff6ea" stopOpacity="0.3" /><stop offset="1" stopColor="#000" stopOpacity="0" /></radialGradient>
+      </defs>
+      <rect x="170" y="10" width="60" height="8" rx="4" fill="#e8fffa" opacity="0.8" />
+      <rect x="70" y="150" width="220" height="40" rx="8" fill="#dfe9ea" stroke="#7ff0d8" strokeWidth="1.5" />
+      <rect x="60" y="120" width="18" height="90" fill="#9fb5b8" />
+      <circle cx="100" cy="148" r="14" fill="#0b1418" stroke="#7ff0d8" strokeWidth="1.5" />
+      <rect x="300" y="60" width="70" height="50" rx="4" fill="#0b1418" stroke="#7ff0d8" strokeWidth="2" />
+      <path className="ekg" d="M306 86 h14 l6 -14 l8 26 l6 -12 h30" stroke="#3ee08f" strokeWidth="2.5" fill="none" />
+      <Figure x={330} y={250} scale={1} rim="#ff7eb6" coat />
+      <rect x="340" y="140" width="40" height="110" fill="#07090e" opacity="0.6" />
+    </Frame>
+  );
+}
+
+function Morgue() {
+  return (
+    <Frame bg="#0a0d12" id="ht-mg" dots="#a8d8ff" dotOpacity={0.07}>
+      {[0, 1, 2].map((r) => [0, 1, 2, 3].map((c) => (
+        <rect key={`${r}-${c}`} x={20 + c * 95} y={14 + r * 54} width="86" height="46" fill="#1a222c" stroke="#3a4a5c" strokeWidth="2" />
+      )))}
+      <path d="M40 200 h320 l-20 40 h-280z" fill="#2a3644" stroke="#a8d8ff" strokeWidth="1.5" />
+      <path d="M80 196 q120 -40 240 0" fill="#e8eef2" opacity="0.9" />
+      <g transform="translate(312 184) rotate(14)">
+        <rect x="0" y="0" width="44" height="22" rx="3" fill="#f4ecd8" stroke="#000" />
+        <circle cx="6" cy="11" r="3" fill="#0a0d12" />
+        <text x="26" y="15" textAnchor="middle" fontSize="8" fontWeight="800" fill="#7a0d1e">#4471</text>
+      </g>
+      <text x="30" y="250" fontFamily="var(--font-sfx), Impact, sans-serif" fontSize="26" fill="#a8d8ff" stroke="#000" strokeWidth="3" paintOrder="stroke">NOT A SUICIDE.</text>
+    </Frame>
+  );
+}
+
 const ART = {
+  hospital: Hospital,
+  morgue: Morgue,
   gavel: Gavel,
   bars: Bars,
   street: Street,

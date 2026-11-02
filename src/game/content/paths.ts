@@ -143,6 +143,34 @@ export const PATHS: Record<PathId, PathDef> = {
     accepted: 'Silas hands you a scarf like his. "Cover your face. They can\'t arrest a rumor."',
     promotion: (t) => `Silas nods from the shadows. "The street's started talking about you. ${t}."`,
   },
+  medicine: {
+    id: "medicine",
+    name: "Medicine",
+    side: "law",
+    ranks: ["Medical Student", "Intern", "Resident", "Doctor", "Specialist", "Surgeon", "Chief of Surgery", "Medical Director"],
+    keyStats: ["wits", "perception", "toughness"],
+    promotionThresholds: [20, 27, 34, 42, 50, 59, 68],
+    jobsPerRank: 10,
+    school: "st_brigids_med",
+    graduationRank: 2,
+    contact: "Doc Mercy",
+    contactId: "mercy",
+    blurb: "Heal the city that broke you. Doctors see everything, even what the dead can't say.",
+    examStats: ["wits", "perception"],
+    examName: "Board review",
+    qualifies: (p) =>
+      p.heat < BALANCE.cleanRecordHeat &&
+      (p.jobCounts.clinic_volunteer ?? 0) + (p.jobCounts.er_mop ?? 0) >= 5 &&
+      sv(p, "wits") + sv(p, "perception") >= 44,
+    offer: [
+      "Doc Mercy peels off her gloves and looks at you over her glasses.",
+      "\"You've got steady hands and you don't faint at blood. That's half of medicine.\"",
+      "\"The other half is eight years of school you can't afford. Unless someone vouches for you.\"",
+      "\"I patched you up once. Let me do it properly this time.\"",
+    ],
+    accepted: 'Doc Mercy calls the dean at St. Brigid\'s. "Helena, I have a student for you. Yes, that one."',
+    promotion: (t) => `Doc Mercy pins a new badge on your coat. "${t}. Don't let it go to your head."`,
+  },
 };
 
 export function rankTitle(p: Player): string | null {

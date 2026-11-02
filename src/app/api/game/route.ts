@@ -26,8 +26,10 @@ export async function GET() {
       store.leaderboard(10),
     ]);
     const app = player?.application;
-    if (player && app?.status === "pending" && now >= app.decideAt) {
-      // The dean's decision is due: decide once and save it, so it can't change later.
+    const decisionDue = app?.status === "pending" && now >= app.decideAt;
+    const arrivalDue = !!player?.travel && now >= player.travel.arriveAt;
+    if (player && (decisionDue || arrivalDue)) {
+      // A dean's decision or an arrival is due: settle it once and save it, so it can't change.
       player = await store.update(id.playerId!, (p) => {
         if (!p) return { player: null, result: null };
         tick(p, now);
@@ -54,7 +56,7 @@ export async function POST(req: Request) {
     const out = await getStore().update(playerId!, (p) => {
       if (action.type === "create") {
         if (p) throw new GameError("You already have a character.");
-        const fresh = createPlayer(playerId!, action.name, now);
+        const fresh = createPlayer(playerId!, action.name, now, action.country);
         return { player: fresh, result: { view: toView(fresh, now), events: [] as GameEvent[] } };
       }
       if (!p) throw new GameError("Create a character first.");

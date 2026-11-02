@@ -1,6 +1,6 @@
 // Vector character portraits: a lit silhouette bust plus a signature prop per character.
 
-type Prop = "hood" | "cap" | "gloves" | "bandana" | "hardhat" | "mask" | "fedora" | "glasses" | "scarf" | "bun" | "none";
+type Prop = "hood" | "cap" | "gloves" | "bandana" | "hardhat" | "mask" | "fedora" | "glasses" | "scarf" | "bun" | "headmirror" | "helmet" | "visor" | "none";
 
 const NPC_LOOKS: Record<string, { rim: string; bg: string; prop: Prop }> = {
   alley_rat: { rim: "#9bff6a", bg: "#14200f", prop: "hood" },
@@ -14,6 +14,15 @@ const NPC_LOOKS: Record<string, { rim: string; bg: string; prop: Prop }> = {
   kozak: { rim: "#ff3d5a", bg: "#220810", prop: "fedora" },
   marsh: { rim: "#9b7bff", bg: "#140f2a", prop: "bun" },
   silas: { rim: "#3ee08f", bg: "#08201a", prop: "scarf" },
+  mercy: { rim: "#ff7eb6", bg: "#2a0c1c", prop: "headmirror" },
+  // Other countries
+  beach_hustler: { rim: "#ffd27a", bg: "#2a1a0a", prop: "glasses" },
+  casino_bouncer: { rim: "#ff3df2", bg: "#22062a", prop: "none" },
+  rail_rat: { rim: "#ff8a3d", bg: "#1a120a", prop: "cap" },
+  state_enforcer: { rim: "#d8e6ff", bg: "#101626", prop: "helmet" },
+  undercity_scav: { rim: "#3ee08f", bg: "#061a12", prop: "hood" },
+  corp_security: { rim: "#9b7bff", bg: "#120f2a", prop: "visor" },
+  road_gang: { rim: "#ffc24b", bg: "#1e1606", prop: "bandana" },
 };
 
 function PropShape({ prop, rim }: { prop: Prop; rim: string }) {
@@ -76,6 +85,18 @@ function PropShape({ prop, rim }: { prop: Prop; rim: string }) {
           </g>
         </g>
       );
+    case "headmirror":
+      return (
+        <g>
+          <path d="M35 34 Q50 26 65 34" stroke={rim} strokeWidth="2" fill="none" />
+          <circle cx="50" cy="31" r="6" fill="#dfe9ea" stroke={rim} strokeWidth="1.5" />
+          <circle cx="50" cy="31" r="2" fill="#050507" />
+        </g>
+      );
+    case "helmet":
+      return <path d="M33 40 Q34 20 50 20 Q66 20 67 40 L70 42 H30Z" fill="#2a3448" stroke={rim} strokeWidth="1.2" />;
+    case "visor":
+      return <rect x="35" y="38" width="30" height="9" rx="4" fill={rim} opacity="0.6" />;
     case "mask":
       return <rect x="36" y="38" width="28" height="8" rx="3" fill="#0b0b0b" stroke={rim} strokeWidth="0.8" />;
     default:
@@ -122,6 +143,7 @@ export const PATH_LOOKS: Record<string, { rim: string; prop: Prop }> = {
   enforcer: { rim: "#ff3d5a", prop: "none" },
   courts: { rim: "#9b7bff", prop: "glasses" },
   vigilante: { rim: "#3ee08f", prop: "scarf" },
+  medicine: { rim: "#ff7eb6", prop: "headmirror" },
 };
 
 const PLAYER_RIMS = ["#ffc24b", "#38e1ff", "#ff3d5a", "#3ee08f", "#9b7bff", "#ff8a3d"];

@@ -440,3 +440,109 @@ describe("schools", () => {
     expect(p.application ?? null).toBeNull();
   });
 });
+
+describe("countries and travel", () => {
+  it("a new character can start in any country, with that country's districts and jobs", () => {
+    const p = createPlayer("x", "Sol", T0, "solmarra");
+    const v = toView(p, T0);
+    expect(v.location.city).toBe("Port Solace");
+    expect(v.districts.map((d) => d.id)).toEqual(["boardwalk", "casino_strip", "marina"]);
+    expect(v.jobs.some((j) => j.id === "cans")).toBe(false);
+    applyAction(p, { type: "job", jobId: "beach_chairs" }, T0, always(0.5));
+    expect(() => applyAction(p, { type: "job", jobId: "cans" }, T0, always(0.5))).toThrow(/another country/);
+  });
+
+  it("travel costs cash, takes time, blocks work, and moves you on arrival", () => {
+    const p = fresh();
+    p.cash = 500;
+    applyAction(p, { type: "travel", to: "kestrova", mode: "train" }, T0, always(0.99));
+    expect(p.cash).toBe(500 - toView(createPlayer("y", "Yy", T0), T0).countries.find((c) => c.id === "kestrova")!.routes.find((r) => r.mode === "train")!.cost);
+    expect(() => applyAction(p, { type: "job", jobId: "cans" }, T0 + 1000, always(0.5))).toThrow(/on the road/);
+    tick(p, p.travel!.arriveAt);
+    expect(p.country).toBe("kestrova");
+    expect(p.travel).toBeNull();
+    expect(p.arrival?.to).toBe("kestrova");
+    applyAction(p, { type: "ack_arrival" }, p.tickAt, always(0.5));
+    expect(p.arrival).toBeNull();
+    applyAction(p, { type: "job", jobId: "shovel_coal" }, p.tickAt, always(0.5));
+  });
+
+  it("buses can be ambushed by a road gang (revealed on arrival)", () => {
+    const p = fresh();
+    p.cash = 200;
+    applyAction(p, { type: "travel", to: "solmarra", mode: "bus" }, T0, seeded(1));
+    let tries = 1;
+    while (p.travel?.incident?.kind !== "ambush" && tries < 50) {
+      p.travel = null;
+      p.cash = 200;
+      applyAction(p, { type: "travel", to: "solmarra", mode: "bus" }, T0, seeded(++tries));
+    }
+    expect(p.travel?.incident?.kind).toBe("ambush");
+    expect(toView(p, T0).arrival).toBeNull(); // still secret while travelling
+    tick(p, p.travel!.arriveAt);
+    expect(p.arrival?.incident?.fight).toBeDefined();
+  });
+
+  it("planes are safe for clean travellers but customs stops wanted ones", () => {
+    const clean = fresh();
+    clean.cash = 1000;
+    applyAction(clean, { type: "travel", to: "meridian", mode: "plane" }, T0, always(0));
+    expect(clean.travel?.incident).toBeNull();
+    const wanted = fresh();
+    wanted.cash = 1000;
+    wanted.heat = 30;
+    applyAction(wanted, { type: "travel", to: "meridian", mode: "plane" }, T0, always(0));
+    expect(wanted.travel?.incident?.kind).toBe("customs");
+    expect(wanted.travel!.arriveAt).toBeGreaterThan(clean.travel!.arriveAt);
+  });
+
+  it("schools must be applied to in person", () => {
+    const p = fresh();
+    p.reputation = 30;
+    p.housing = 2;
+    p.hasBankAccount = true;
+    p.bank = 5000;
+    expect(() => applyAction(p, { type: "apply", school: "halcyon_med" }, T0, always(0.5))).toThrow(/Travel there/);
+    p.country = "meridian";
+    applyAction(p, { type: "apply", school: "halcyon_med" }, T0, always(0.5));
+    expect(p.bank).toBe(3500);
+  });
+
+  it("country laws change pay and heat", () => {
+    const sol = createPlayer("s", "Sol", T0, "solmarra");
+    const kes = createPlayer("k", "Kes", T0, "kestrova");
+    sol.reputation = kes.reputation = 20;
+    applyAction(sol, { type: "job", jobId: "shell_game" }, T0, always(0));
+    applyAction(kes, { type: "job", jobId: "black_market" }, T0, always(0));
+    expect(sol.heat).toBeCloseTo(4 * 0.6);
+    expect(kes.heat).toBeCloseTo(5 * 1.6);
+  });
+});
+
+describe("medicine", () => {
+  it("Doc Mercy vouches at St. Brigid's, and medics heal faster", () => {
+    const p = fresh();
+    p.stats.wits = p.stats.perception = 40;
+    p.jobCounts.clinic_volunteer = 4;
+    applyAction(p, { type: "job", jobId: "clinic_volunteer" }, T0, always(0.5));
+    expect(p.offers).toContain("medicine");
+    applyAction(p, { type: "offer", path: "medicine", accept: true }, T0, always(0.5));
+    expect(p.application?.school).toBe("st_brigids_med");
+    tick(p, p.application!.decideAt);
+    applyAction(p, { type: "enroll" }, p.tickAt, always(0.5));
+    expect(p.path).toBe("medicine");
+    expect(p.school).toBe("st_brigids_med");
+    expect(toView(p, p.tickAt).path?.rank).toBe("Medical Student");
+
+    // Hospital stays are halved for medics.
+    p.reputation = 20;
+    p.hp = 21;
+    let stay = 0;
+    for (let seed = 1; seed < 100 && !stay; seed++) {
+      const q = structuredClone(p);
+      applyAction(q, { type: "fight", npcId: "iron_foreman" }, T0 + 10, seeded(seed));
+      if (q.hospitalUntil) stay = q.hospitalUntil - (T0 + 10);
+    }
+    expect(stay).toBeLessThanOrEqual(BALANCE.hp.hospitalMaxMs / 2);
+  });
+});

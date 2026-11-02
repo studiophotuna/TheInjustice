@@ -20,7 +20,9 @@ export type PanelArt =
   | "judge_ring"
   | "string_wall"
   | "alley"
-  | "rooftop";
+  | "rooftop"
+  | "hospital"
+  | "morgue";
 
 export interface Panel {
   art: PanelArt;
@@ -252,6 +254,49 @@ export const CHAPTERS: Chapter[] = [
         art: "rooftop",
         caption:
           "\"The money comes from Solmarra. Ask about the casino.\" You let him go. Above the city, you finally know where to look.",
+      },
+    ],
+  },
+
+  // ── Medicine ──────────────────────────────────────────────────
+  {
+    id: "medicine_2",
+    title: "Medicine · The Quiet Patient",
+    teaser: "A body in the morgue with the wrong cause of death.",
+    panels: [
+      {
+        art: "morgue",
+        caption: "Night shift in the morgue. A man brought in as a suicide. The file says he jumped.",
+      },
+      {
+        art: "morgue",
+        caption: "Bruised wrists. Skin under his fingernails. Nobody jumps like that. Somebody held him.",
+      },
+      {
+        art: "case_file",
+        caption:
+          "His name was on a witness list, for a retrial of one of Judge Crane's old cases. The hearing was next week.",
+      },
+    ],
+  },
+  {
+    id: "medicine_3",
+    title: "Medicine · Prescription",
+    teaser: "A very important patient checks in under a false name.",
+    panels: [
+      {
+        art: "hospital",
+        caption:
+          "A private room, guards at the door, a patient registered as \"Mr. Gray.\" You bring his medicine.",
+      },
+      {
+        art: "judge_ring",
+        caption: "It's Aldous Crane. His heart is failing. On the nightstand, the gavel ring. He doesn't recognize you.",
+      },
+      {
+        art: "ledger_book",
+        caption:
+          "His chart lists his specialist: a private clinic in Port Solace, paid by Crane & Partners. Wherever the money goes, he follows.",
       },
     ],
   },

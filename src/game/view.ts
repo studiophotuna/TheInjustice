@@ -2,16 +2,17 @@
 // Hidden stats are converted into words here and never included as numbers.
 
 import { BALANCE, maxEnergy, regenMs } from "./balance";
-import { DISTRICTS } from "./content/districts";
+import { DISTRICT_BY_ID, DISTRICTS } from "./content/districts";
 import { ITEMS, ITEM_BY_ID } from "./content/items";
 import { JOBS } from "./content/jobs";
 import { NPCS } from "./content/npcs";
 import { PATHS, promotionHint, rankTitle } from "./content/paths";
 import { CHAPTERS } from "./content/story";
 import { SCHOOL_BY_ID, SCHOOLS } from "./content/schools";
-import { COUNTRIES, type CountryDef } from "./content/world";
+import { COUNTRIES, COUNTRY_BY_ID, TRAVEL_MODES, tripCost, tripMs } from "./content/world";
+import type { Arrival, CountryId, TravelMode } from "./types";
 import { GUT_READS } from "./combat";
-import { FIGHT_ENERGY, inHospital, jobLock, scout } from "./engine";
+import { countryOf, FIGHT_ENERGY, inHospital, itemPrice, jobLock, scout } from "./engine";
 import { describe, integrityHint } from "./stats";
 import type { DistrictId, LogEntry, PathId, Player } from "./types";
 
@@ -110,7 +111,20 @@ export interface PublicView {
     paid: number;
     reason: string | null;
   } | null;
-  countries: CountryDef[];
+  location: { country: CountryId; countryName: string; city: string; color: string; laws: string };
+  travel: { to: CountryId; city: string; mode: TravelMode; msLeft: number; totalMs: number } | null;
+  arrival: Arrival | null;
+  countries: {
+    id: CountryId;
+    name: string;
+    capital: string;
+    mood: string;
+    laws: string;
+    color: string;
+    here: boolean;
+    schools: { name: string; career: string; open: boolean }[];
+    routes: { mode: TravelMode; name: string; cost: number; minutes: number; risk: string }[];
+  }[];
   /** Rank progress for the career ladder. */
   ladder: { ranks: string[]; current: number; graduationRank: number | null } | null;
 }
@@ -129,7 +143,9 @@ export function toView(p: Player, now: number): PublicView {
   const nextEnergyMs = missing > 0 ? Math.ceil((1 - (p.energy % 1)) * rMs) : 0;
   const lockedDistrict = Object.fromEntries(DISTRICTS.map((d) => [d.id, d.locked(p)]));
 
-  const jobs: JobView[] = JOBS.filter((j) => !j.path || j.path === p.path).map((j) => ({
+  const here = countryOf(p);
+  const localDistrict = (id: DistrictId) => DISTRICT_BY_ID[id].country === here;
+  const jobs: JobView[] = JOBS.filter((j) => (j.path ? j.path === p.path : localDistrict(j.district))).map((j) => ({
     id: j.id,
     name: j.name,
     district: j.district,
@@ -199,7 +215,7 @@ export function toView(p: Player, now: number): PublicView {
       contactId: PATHS[o].contactId,
       lines: PATHS[o].offer,
     })),
-    districts: DISTRICTS.filter((d) => d.id !== "precinct_square" || p.path === "police").map((d) => ({
+    districts: DISTRICTS.filter((d) => d.country === here && (!d.visible || d.visible(p))).map((d) => ({
       id: d.id,
       name: d.name,
       tagline: d.tagline,
@@ -211,7 +227,7 @@ export function toView(p: Player, now: number): PublicView {
       id: i.id,
       name: i.name,
       icon: i.icon,
-      price: i.price,
+      price: itemPrice(p, i.price),
       description: i.description,
       kind: i.kind,
       owned:
@@ -219,7 +235,7 @@ export function toView(p: Player, now: number): PublicView {
           ? p.housing >= (i.housing ?? 0)
           : (i.kind === "weapon" || i.kind === "armor") && !!p.inventory[i.id],
     })),
-    fights: NPCS.map((n) => ({
+    fights: NPCS.filter((n) => localDistrict(n.district)).map((n) => ({
       id: n.id,
       name: n.name,
       icon: n.icon,
@@ -250,7 +266,7 @@ export function toView(p: Player, now: number): PublicView {
       read: p.flags.includes(`read:${c.id}`),
     })),
     schools: SCHOOLS.map((sc) => {
-      const vouch = p.offers.includes(sc.path);
+      const vouch = p.offers.includes(sc.path) && PATHS[sc.path].school === sc.id;
       let locked = p.path
         ? "You already have a career."
         : p.application?.status === "pending"
@@ -261,13 +277,14 @@ export function toView(p: Player, now: number): PublicView {
               ? null
               : sc.requirements(p) ?? (p.bank < sc.tuition ? `Save $${sc.tuition} in the bank for tuition.` : null);
       if (p.path === sc.path) locked = "You're already in this career.";
+      else if (!locked && sc.country !== here) locked = `In ${sc.city}, ${COUNTRY_BY_ID[sc.country].name}. Travel there to apply in person.`;
       return {
         id: sc.id,
         name: sc.name,
         path: sc.path,
         pathName: PATHS[sc.path].name,
         city: sc.city,
-        country: sc.country,
+        country: COUNTRY_BY_ID[sc.country].name,
         tuition: sc.tuition,
         dean: sc.dean,
         description: sc.description,
@@ -287,7 +304,47 @@ export function toView(p: Player, now: number): PublicView {
           reason: p.application.reason ?? null,
         }
       : null,
-    countries: COUNTRIES,
+    location: {
+      country: here,
+      countryName: COUNTRY_BY_ID[here].name,
+      city: COUNTRY_BY_ID[here].capital,
+      color: COUNTRY_BY_ID[here].color,
+      laws: COUNTRY_BY_ID[here].laws,
+    },
+    travel: p.travel
+      ? {
+          to: p.travel.to,
+          city: COUNTRY_BY_ID[p.travel.to].capital,
+          mode: p.travel.mode,
+          msLeft: Math.max(0, p.travel.arriveAt - now),
+          totalMs: p.travel.arriveAt - p.travel.departAt,
+        }
+      : null,
+    // The incident stays secret until arrival.
+    arrival: p.arrival ?? null,
+    countries: COUNTRIES.map((c) => ({
+      id: c.id,
+      name: c.name,
+      capital: c.capital,
+      mood: c.mood,
+      laws: c.laws,
+      color: c.color,
+      here: c.id === here,
+      schools: [
+        ...SCHOOLS.filter((sc) => sc.country === c.id).map((sc) => ({ name: sc.name, career: PATHS[sc.path].name, open: true })),
+        ...c.plannedSchools.map((ps) => ({ ...ps, open: false })),
+      ],
+      routes:
+        c.id === here
+          ? []
+          : TRAVEL_MODES.map((m) => ({
+              mode: m.id,
+              name: m.name,
+              cost: tripCost(here, c.id, m.id),
+              minutes: Math.round(tripMs(here, c.id, m.id) / 60_000),
+              risk: m.risk,
+            })),
+    })),
     ladder: p.path
       ? { ranks: PATHS[p.path].ranks, current: p.rank, graduationRank: PATHS[p.path].graduationRank ?? null }
       : null,

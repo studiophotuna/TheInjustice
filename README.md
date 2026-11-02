@@ -54,10 +54,17 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
 - **Schools**: Police and Courts are entered through the Grayhaven Police Academy and the
   Halloway School of Law. Pay tuition from the bank, or get vouched for by a contact for
   free; the dean reviews every application. Rank 1 is the student rank, rank 2 is graduation.
-- Four career paths with **8 ranks** each: **Police**, **Courts** and **Vigilante** (law) and
-  **Enforcer** (street). Each has a contact who approaches you when your hidden stats and
+- Five career paths with **8 ranks** each: **Police**, **Courts** and **Vigilante** (law),
+  **Medicine**, and **Enforcer** (street). Each has a contact who approaches you when your hidden stats and
   habits fit, its own jobs, and a corrupt option that quietly lowers Integrity.
-- Six districts: The Gutter, Old Market, Southside, Courthouse Hill, Iron Row, Precinct Square.
+- **Four countries, all open**: choose where to live when you create your character —
+  Grayhaven (Varrow), Port Solace (Solmarra), Ironmoor (Kestrova) or Halcyon (Meridian).
+  Each has its own districts, jobs, enemies and laws (pay, heat and prices differ).
+- **Travel** by bus, train or airplane: slower is cheaper, and each has a danger — planned
+  gang ambushes on buses, pickpockets on trains, customs stops on planes if you're wanted.
+  Career work goes with you; everything else is local.
+- **Medicine** career (8 ranks, Doc Mercy vouches) at St. Brigid's in Grayhaven or Halcyon
+  University of Medicine; medics heal twice as fast. Kestrova also has its own Police college.
 - **Story**: the mystery of who framed you, told in comic chapters that unlock as you play
   (one for everyone, two per career), replayable from the City tab. Story progress survives
   death.

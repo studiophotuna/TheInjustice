@@ -58,12 +58,12 @@ export const ITEMS: ItemDef[] = [
   },
   {
     id: "room",
-    name: "Rented room in Old Market",
+    name: "Rented room",
     kind: "housing",
     price: 180,
     housing: 2,
     icon: "🏠",
-    description: "Four walls, a door that locks, and an address. Some employers care about that.",
+    description: "Four walls, a door that locks, and an address. Schools and some employers care about that.",
   },
   {
     id: "pipe",

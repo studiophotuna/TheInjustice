@@ -2,6 +2,7 @@
 
 import { AnimatePresence, animate, motion, useMotionValue, useTransform } from "motion/react";
 import {
+  MapPin,
   Briefcase,
   Building2,
   Cross,
@@ -22,6 +23,7 @@ import type { FightSummary } from "@/game/types";
 import type { PublicView } from "@/game/view";
 import { NpcPortrait, PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 import { Skyline } from "./art/Skyline";
+import { Vehicle } from "./art/Vehicles";
 import { AuthForm, ChapterViewer, DeathScreen, Landing, Logo, Prologue } from "./screens";
 import { CityTab, DeanLetter, FightTab, JobsTab, ProfileTab, ShopTab } from "./tabs";
 import { fmt, useGame, type GameApi } from "./useGame";
@@ -128,6 +130,9 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
   }, [go]);
 
   const offer = view.offers[0];
+  const [arrivalFightDone, setArrivalFightDone] = useState<number | null>(null);
+  const arrival = view.arrival;
+  const arrivalFight = arrival?.incident?.fight && arrivalFightDone !== arrival.at ? arrival.incident.fight : null;
 
   return (
     <div className="shell">
@@ -148,6 +153,21 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
           <button className="save-banner" onClick={() => setSaveOpen(true)}>
             <Save size={16} /> <span>Playing as a guest. <b>Save your character</b> to keep it on any device.</span>
           </button>
+        )}
+
+        {view.travel && (
+          <div className="travel-banner">
+            <div className="travel-top">
+              <span>On the {view.travel.mode === "plane" ? "plane" : view.travel.mode} to <b>{view.travel.city}</b></span>
+              <b>{fmt(live.travel)}</b>
+            </div>
+            <div className="travel-track">
+              <div className="travel-road" />
+              <div className="travel-vehicle" style={{ left: `${Math.min(100, 100 - (live.travel / view.travel.totalMs) * 100)}%` }}>
+                <Vehicle mode={view.travel.mode} />
+              </div>
+            </div>
+          </div>
         )}
 
         {live.hospital > 0 && (
@@ -181,6 +201,11 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
       </nav>
 
       <AnimatePresence>{reading && <ChapterViewer key={reading} id={reading} onDone={closeChapter} />}</AnimatePresence>
+      <AnimatePresence>
+        {arrivalFight && arrival && (
+          <FightScene fight={arrivalFight} view={view} onClose={() => setArrivalFightDone(arrival.at)} />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {offer && (
@@ -206,7 +231,12 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
             </div>
           </Modal>
         )}
-        {letterKey && letterSeen !== letterKey && !offer && !reading && !game.fight && (
+        {arrival && !arrivalFight && !offer && !reading && !game.fight && (
+          <Modal key="arrival" onClose={() => game.act({ type: "ack_arrival" })}>
+            <ArrivalCard view={view} onDone={() => game.act({ type: "ack_arrival" })} />
+          </Modal>
+        )}
+        {letterKey && letterSeen !== letterKey && !offer && !reading && !game.fight && !arrival && (
           <Modal key="letter" onClose={() => setLetterSeen(letterKey)}>
             <DeanLetter game={game} onClose={() => setLetterSeen(letterKey)} />
           </Modal>
@@ -237,7 +267,7 @@ function Hud({ view, live }: { view: PublicView; live: NonNullable<GameApi["live
         <PlayerAvatar name={view.name} path={view.path?.id} className="avatar-sm" />
         <div>
           <div className="hud-name">{view.name}</div>
-          <div className="hud-title">{view.path ? `${view.path.rank} · ${view.path.name}` : "Bum · The Gutter"}</div>
+          <div className="hud-title">{view.path ? `${view.path.rank} · ${view.path.name}` : `Bum · ${view.location.city}`}</div>
         </div>
         <div className="hud-money">
           <Counter value={view.cash} className="cash" prefix="$" />
@@ -253,6 +283,7 @@ function Hud({ view, live }: { view: PublicView; live: NonNullable<GameApi["live
       <div className="hud-chips">
         <span className={`chip heat-${heatTone}`}><Flame size={12} /> {view.heatLabel}</span>
         <span className="chip"><Star size={12} /> Rep {view.reputation}</span>
+        <span className="chip" style={{ color: view.location.color }}><MapPin size={12} /> {view.location.city}</span>
         <span className="chip"><Home size={12} /> {view.housing}</span>
       </div>
     </header>
@@ -314,6 +345,33 @@ const OUTCOME = {
 } as const;
 
 /** Plays the fight: both fighters face off, the blow-by-blow lines appear, then the result bursts in. */
+const MODE_WORDS = { bus: "bus", train: "train", plane: "flight" } as const;
+
+function ArrivalCard({ view, onDone }: { view: PublicView; onDone: () => void }) {
+  const a = view.arrival!;
+  const country = view.countries.find((c) => c.id === a.to)!;
+  const inc = a.incident;
+  return (
+    <div className="arrival" style={{ ["--path" as string]: country.color }}>
+      <div className="arrival-art">
+        <Skyline district={view.districts[0]?.id ?? "title"} />
+        <div className="arrival-title">
+          <p className="eyebrow"><MapPin size={14} /> Welcome to</p>
+          <h2>{country.capital}</h2>
+          <span className="path-badge">{country.name}</span>
+        </div>
+      </div>
+      <p className="muted">{country.laws}</p>
+      {inc ? (
+        <p className={`arrival-incident ${inc.kind}`}>{inc.text}</p>
+      ) : (
+        <p className="arrival-incident safe">The {MODE_WORDS[a.mode]} was uneventful. You arrive in one piece.</p>
+      )}
+      <button className="btn btn-primary btn-lg" onClick={onDone}>Hit the streets</button>
+    </div>
+  );
+}
+
 function FightScene({ fight, view, onClose }: { fight: FightSummary; view: PublicView; onClose: () => void }) {
   const [shown, setShown] = useState(0);
   const lines = fight.lines.slice(0, 7);
@@ -324,7 +382,8 @@ function FightScene({ fight, view, onClose }: { fight: FightSummary; view: Publi
     return () => clearTimeout(t);
   }, [shown, done]);
   const o = OUTCOME[fight.outcome];
-  const npcId = fight.opponent === "Mugger" ? "mugger" : view.fights.find((f) => f.name === fight.opponent)?.id ?? "mugger";
+  const npcId =
+    fight.opponent === "Road Gang" ? "road_gang" : view.fights.find((f) => f.name === fight.opponent)?.id ?? "mugger";
 
   return (
     <motion.div className="fight-scene" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={done ? onClose : undefined}>

@@ -1,7 +1,9 @@
-import type { Action, PathId } from "@/game/types";
+import type { Action, CountryId, PathId, TravelMode } from "@/game/types";
 import { GameError } from "@/game/types";
 
-const PATH_IDS: PathId[] = ["police", "enforcer", "courts", "vigilante"];
+const PATH_IDS: PathId[] = ["police", "enforcer", "courts", "vigilante", "medicine"];
+const COUNTRY_IDS: CountryId[] = ["varrow", "solmarra", "kestrova", "meridian"];
+const MODES: TravelMode[] = ["bus", "train", "plane"];
 const str = (v: unknown, max = 40): string => {
   if (typeof v !== "string" || v.length === 0 || v.length > max) throw new GameError("Bad request.");
   return v;
@@ -13,7 +15,13 @@ export function parseAction(body: unknown): Action {
   const b = body as Record<string, unknown>;
   switch (b.type) {
     case "create":
-      return { type: "create", name: str(b.name, 60) };
+      if (b.country !== undefined && !COUNTRY_IDS.includes(b.country as CountryId)) throw new GameError("Bad request.");
+      return { type: "create", name: str(b.name, 60), country: b.country as CountryId | undefined };
+    case "travel":
+      if (!COUNTRY_IDS.includes(b.to as CountryId) || !MODES.includes(b.mode as TravelMode)) throw new GameError("Bad request.");
+      return { type: "travel", to: b.to as CountryId, mode: b.mode as TravelMode };
+    case "ack_arrival":
+      return { type: "ack_arrival" };
     case "job":
       return { type: "job", jobId: str(b.jobId) };
     case "buy":
