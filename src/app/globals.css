@@ -246,6 +246,7 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 
 /* ─── Districts & jobs ──────────────────────────────────────────────────── */
 .district { display: grid; gap: 10px; }
+@media (min-width: 960px) { .district-hero { height: 230px !important; } .district.is-locked .district-hero { height: 110px !important; } }
 .district-hero { position: relative; height: 150px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
 .district-hero .skyline { position: absolute; inset: 0; }
 .district-title { position: absolute; left: 16px; right: 16px; bottom: 12px; }
