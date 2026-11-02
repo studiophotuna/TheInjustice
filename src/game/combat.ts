@@ -109,13 +109,22 @@ function hashNoise(seed: string): number {
   return ((h >>> 0) / 4294967295) * 2 - 1;
 }
 
+/** Gut reads from safest (0) to deadliest (4). */
+export const GUT_READS = [
+  "Easy mark.",
+  "You'd probably take them.",
+  "Could go either way.",
+  "Risky. They look tougher than you.",
+  "They'd flatten you.",
+] as const;
+
 /** Gut read before a fight. Higher Perception = less noise. */
 export function gutRead(p: Player, me: Fighter, them: Fighter, seed: string): string {
   const noiseAmp = clamp(0.45 - (sv(p, "perception") - 10) / 100, 0.05, 0.45);
   const ratio = (power(me) / power(them)) * (1 + hashNoise(seed) * noiseAmp);
-  if (ratio > 1.5) return "Easy mark.";
-  if (ratio > 1.15) return "You'd probably take them.";
-  if (ratio > 0.9) return "Could go either way.";
-  if (ratio > 0.7) return "Risky. They look tougher than you.";
-  return "They'd flatten you.";
+  if (ratio > 1.5) return GUT_READS[0];
+  if (ratio > 1.15) return GUT_READS[1];
+  if (ratio > 0.9) return GUT_READS[2];
+  if (ratio > 0.7) return GUT_READS[3];
+  return GUT_READS[4];
 }

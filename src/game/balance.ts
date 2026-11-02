@@ -24,6 +24,16 @@ export const BALANCE = {
   muggingChance: 0.1,
   muggingMinCash: 40,
   assessmentCooldownMs: 7 * 24 * 60 * 60_000,
+  death: {
+    /** Death chance when knocked out: (threat - safeRatio) * slope, capped. */
+    safeRatio: 1.1,
+    slope: 0.9,
+    maxChance: 0.75,
+    /** Share of every hidden stat kept after dying. */
+    statsKept: 0.5,
+    /** Share of reputation kept after dying. */
+    reputationKept: 0.5,
+  },
   /** Diminishing returns: XP multiplier is 1 / (1 + timesDone / this). */
   repeatFalloff: 60,
   logSize: 30,

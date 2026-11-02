@@ -7,6 +7,7 @@ import { ITEMS, ITEM_BY_ID } from "./content/items";
 import { JOBS } from "./content/jobs";
 import { NPCS } from "./content/npcs";
 import { PATHS, promotionHint, rankTitle } from "./content/paths";
+import { GUT_READS } from "./combat";
 import { FIGHT_ENERGY, inHospital, jobLock, scout } from "./engine";
 import { describe, integrityHint } from "./stats";
 import type { DistrictId, LogEntry, PathId, Player } from "./types";
@@ -53,11 +54,23 @@ export interface PublicView {
   jobs: JobView[];
   recommendedJobId: string | null;
   shop: { id: string; name: string; icon: string; price: number; description: string; kind: string; owned: boolean }[];
-  fights: { id: string; name: string; icon: string; description: string; district: DistrictId; read: string; locked: string | null }[];
+  fights: {
+    id: string;
+    name: string;
+    icon: string;
+    description: string;
+    district: DistrictId;
+    read: string;
+    /** 0 (easy) … 4 (deadly), from the noisy gut read, not the true odds. */
+    danger: number;
+    locked: string | null;
+  }[];
   fightEnergy: number;
   assessment: { available: boolean; reason: string };
   flags: string[];
   log: LogEntry[];
+  dead: { at: number; cause: string } | null;
+  deaths: number;
 }
 
 function heatLabel(heat: number): PublicView["heatLabel"] {
@@ -162,6 +175,7 @@ export function toView(p: Player, now: number): PublicView {
       description: n.description,
       district: n.district,
       read: scout(p, n.id, now),
+      danger: GUT_READS.indexOf(scout(p, n.id, now) as (typeof GUT_READS)[number]),
       locked: lockedDistrict[n.district],
     })),
     fightEnergy: FIGHT_ENERGY,
@@ -175,5 +189,7 @@ export function toView(p: Player, now: number): PublicView {
     },
     flags: p.flags.filter((f) => !f.startsWith("declined_")),
     log: p.log,
+    dead: p.dead ?? null,
+    deaths: p.deaths ?? 0,
   };
 }

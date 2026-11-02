@@ -22,6 +22,8 @@ export function parseAction(body: unknown): Action {
       return { type: "use", itemId: str(b.itemId) };
     case "fight":
       return { type: "fight", npcId: str(b.npcId) };
+    case "rebirth":
+      return { type: "rebirth", name: b.name === undefined ? undefined : str(b.name, 60) };
     case "assess":
       return { type: "assess" };
     case "flag":

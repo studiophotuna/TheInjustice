@@ -66,6 +66,11 @@ export interface Player {
   lastAssessmentAt: number;
 
   log: LogEntry[];
+
+  /** Set when the character dies; only a rebirth is possible until it's cleared. */
+  dead?: { at: number; cause: string } | null;
+  /** How many times this character has died. */
+  deaths?: number;
 }
 
 export interface LogEntry {
@@ -76,9 +81,20 @@ export interface LogEntry {
 
 export type GameEventTone = "good" | "bad" | "info" | "story";
 
+export interface FightSummary {
+  opponent: string;
+  icon: string;
+  won: boolean;
+  /** Descriptive round-by-round lines, no numbers. */
+  lines: string[];
+  outcome: "win" | "loss" | "ko" | "death";
+}
+
 export interface GameEvent {
   tone: GameEventTone;
   text: string;
+  /** Present on fight results so the client can play the fight scene. */
+  fight?: FightSummary;
   /** Optional call to action the client can render as a button. */
   action?: { label: string; target: string };
 }
@@ -94,6 +110,8 @@ export type Action =
   | { type: "fight"; npcId: string }
   | { type: "offer"; path: PathId; accept: boolean }
   | { type: "assess" }
-  | { type: "flag"; flag: string };
+  | { type: "flag"; flag: string }
+  /** Start a new life after death. Omit `name` to keep the old one. */
+  | { type: "rebirth"; name?: string };
 
 export class GameError extends Error {}

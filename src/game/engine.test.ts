@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BALANCE, maxEnergy } from "./balance";
 import { resolveFight } from "./combat";
-import { applyAction, createPlayer, tick } from "./engine";
+import { applyAction, createPlayer, deathChance, tick } from "./engine";
 import { GameError, type Player } from "./types";
 import { toView } from "./view";
 
@@ -166,16 +166,89 @@ describe("combat", () => {
     expect(foremanWins).toBeLessThan(10);
   });
 
-  it("knockouts send you to the hospital and unlock Doc Mercy", () => {
+  it("knockouts send you to the clinic or, when badly outmatched, kill you", () => {
+    let sawHospital = false;
+    let sawDeath = false;
+    for (let seed = 1; seed < 200 && !(sawHospital && sawDeath); seed++) {
+      const p = fresh();
+      p.reputation = 20;
+      p.hp = 21;
+      p.cash = 50;
+      p.bank = 30;
+      p.stats.strength = 100;
+      applyAction(p, { type: "fight", npcId: "iron_foreman" }, T0, seeded(seed));
+      if (p.dead) {
+        sawDeath = true;
+        expect(p.stats.strength).toBeCloseTo(50, 0);
+        expect(p.cash).toBe(0);
+        expect(p.bank).toBe(30);
+        expect(() => applyAction(p, { type: "job", jobId: "cans" }, T0, seeded(1))).toThrow(/dead/);
+      } else if (p.hospitalUntil > T0) {
+        sawHospital = true;
+        expect(p.assessmentReady).toBe(true);
+        const ev = applyAction(p, { type: "assess" }, T0 + 1, seeded(3));
+        expect(ev[0].text).toMatch(/Doc Mercy/);
+        expect(() => applyAction(p, { type: "assess" }, T0 + 2, seeded(3))).toThrow();
+      }
+    }
+    expect(sawHospital).toBe(true);
+    expect(sawDeath).toBe(true);
+  });
+
+  it("only fights you were badly outmatched in can kill", () => {
+    expect(deathChance(0.8)).toBe(0);
+    expect(deathChance(1.1)).toBe(0);
+    expect(deathChance(1.5)).toBeGreaterThan(0.3);
+    expect(deathChance(5)).toBe(0.75);
+  });
+});
+
+describe("death and rebirth", () => {
+  function deadPlayer(): Player {
     const p = fresh();
-    p.reputation = 20;
-    p.hp = 21;
-    applyAction(p, { type: "fight", npcId: "iron_foreman" }, T0, seeded(3));
-    expect(p.hospitalUntil).toBeGreaterThan(T0);
-    expect(p.assessmentReady).toBe(true);
-    const ev = applyAction(p, { type: "assess" }, T0 + 1, seeded(3));
-    expect(ev[0].text).toMatch(/Doc Mercy/);
-    expect(() => applyAction(p, { type: "assess" }, T0 + 2, seeded(3))).toThrow();
+    p.dead = { at: T0, cause: "Crooked Foreman" };
+    p.deaths = 1;
+    p.bank = 120;
+    p.reputation = 21;
+    p.housing = 2;
+    p.path = "police";
+    p.rank = 2;
+    p.inventory = { knuckles: 1 };
+    p.jobCounts = { cans: 40 };
+    p.stats.strength = 40;
+    return p;
+  }
+
+  it("keeps the name, bank and stats, and resets the rest", () => {
+    const p = deadPlayer();
+    const ev = applyAction(p, { type: "rebirth" }, T0 + 1000, always(0.5));
+    expect(p.dead).toBeNull();
+    expect(p.name).toBe("Rook");
+    expect(p.bank).toBe(120);
+    expect(p.stats.strength).toBe(40);
+    expect(p.reputation).toBe(10);
+    expect(p.housing).toBe(0);
+    expect(p.path).toBeNull();
+    expect(p.inventory).toEqual({});
+    expect(p.jobCounts).toEqual({});
+    expect(p.energy).toBe(maxEnergy(0));
+    expect(ev.some((e) => /feel weak/.test(e.text))).toBe(true);
+    applyAction(p, { type: "job", jobId: "cans" }, T0 + 2000, always(0.5));
+  });
+
+  it("can take a new name", () => {
+    const p = deadPlayer();
+    applyAction(p, { type: "rebirth", name: "Phoenix" }, T0, always(0.5));
+    expect(p.name).toBe("Phoenix");
+    expect(() => applyAction(p, { type: "rebirth" }, T0, always(0.5))).toThrow(/alive/);
+  });
+
+  it("shows death in the view without leaking stats", () => {
+    const p = deadPlayer();
+    const v = toView(p, T0);
+    expect(v.dead?.cause).toBe("Crooked Foreman");
+    expect(v.deaths).toBe(1);
+    expect(JSON.stringify(v)).not.toContain('"stats"');
   });
 });
 

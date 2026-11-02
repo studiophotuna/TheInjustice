@@ -2,7 +2,7 @@
 // API route today and a database function (or worker) later without changes.
 
 import { BALANCE, maxEnergy, regenMs } from "./balance";
-import { gutRead, npcFighter, playerFighter, resolveFight } from "./combat";
+import { gutRead, npcFighter, playerFighter, power, resolveFight } from "./combat";
 import { DISTRICT_BY_ID } from "./content/districts";
 import { ITEM_BY_ID } from "./content/items";
 import { JOB_BY_ID, type JobDef } from "./content/jobs";
@@ -13,6 +13,7 @@ import {
   GameError,
   STAT_KEYS,
   type Action,
+  type FightSummary,
   type GameEvent,
   type PathId,
   type Player,
@@ -62,7 +63,13 @@ export function createPlayer(id: string, rawName: string, now: number): Player {
     assessmentReady: false,
     lastAssessmentAt: 0,
     log: [],
+    dead: null,
+    deaths: 0,
   };
+}
+
+export function isDead(p: Player): boolean {
+  return !!p.dead;
 }
 
 export function inHospital(p: Player, now: number): boolean {
@@ -121,6 +128,62 @@ function hospitalize(p: Player, now: number, rng: Rng, events: GameEvent[]) {
   });
 }
 
+/** Chance that a knockout is fatal, based on how outmatched the player was. */
+export function deathChance(threat: number): number {
+  const d = BALANCE.death;
+  return clamp((threat - d.safeRatio) * d.slope, 0, d.maxChance);
+}
+
+function die(p: Player, now: number, cause: string, events: GameEvent[]) {
+  const keep = BALANCE.death.statsKept;
+  for (const k of STAT_KEYS) p.stats[k] *= keep;
+  p.stats.integrity *= keep;
+  p.cash = 0;
+  p.hp = 0;
+  p.hospitalUntil = 0;
+  p.dead = { at: now, cause };
+  p.deaths = (p.deaths ?? 0) + 1;
+  events.push({ tone: "bad", text: `Lights out. The ${cause} was too much for you. You didn't make it.` });
+}
+
+/** Knocked out: usually the clinic, sometimes the morgue when badly outmatched. */
+function knockout(p: Player, now: number, rng: Rng, events: GameEvent[], cause: string, threat: number): boolean {
+  if (rng() < deathChance(threat)) {
+    die(p, now, cause, events);
+    return true;
+  }
+  hospitalize(p, now, rng, events);
+  return false;
+}
+
+function rebirth(p: Player, rawName: string | undefined, now: number, events: GameEvent[]) {
+  if (!p.dead) throw new GameError("You're still alive.");
+  if (rawName !== undefined) p.name = cleanName(rawName);
+  p.dead = null;
+  p.cash = 0;
+  p.inventory = {};
+  p.housing = 0;
+  p.path = null;
+  p.rank = 0;
+  p.offers = [];
+  p.jobCounts = {};
+  p.jobsSinceRank = 0;
+  p.heat = 0;
+  p.reputation = Math.floor(p.reputation * BALANCE.death.reputationKept);
+  p.energy = maxEnergy(0);
+  p.hp = BALANCE.hp.max;
+  p.hospitalUntil = 0;
+  p.fullUntil = 0;
+  p.assessmentReady = false;
+  p.flags = p.flags.filter((f) => !f.startsWith("declined_"));
+  p.tickAt = now;
+  events.push({
+    tone: "story",
+    text: `${p.name} wakes up under the overpass again. You feel weak. Your body has forgotten half of what it learned.`,
+  });
+  if (p.bank > 0) events.push({ tone: "good", text: `Your bank savings survived: $${p.bank}.` });
+}
+
 function checkProgress(p: Player, events: GameEvent[]) {
   if (!p.path) {
     for (const id of Object.keys(PATHS) as PathId[]) {
@@ -169,9 +232,12 @@ export function band(p: Player, stat: StatKey): string {
 }
 
 function fightNpc(p: Player, npc: NpcDef, now: number, rng: Rng, events: GameEvent[]) {
-  const res = resolveFight(playerFighter(p, BALANCE.hp.max), npcFighter(npc), rng);
+  const me = playerFighter(p, BALANCE.hp.max);
+  const them = npcFighter(npc);
+  const res = resolveFight(me, them, rng);
   p.hp = res.playerHp;
-  events.push({ tone: "info", text: res.lines.join(" ") });
+  const summary: FightSummary = { opponent: npc.name, icon: npc.icon, won: res.won, lines: res.lines, outcome: "win" };
+  events.push({ tone: res.won ? "good" : "bad", text: `Fight: ${npc.name}`, fight: summary });
   grantXp(p, { toughness: 0.8, strength: res.won ? 1 : 0.4, agility: 0.5, nerve: 0.6 }, 1, events);
   if (res.won) {
     const loot = randInt(rng, npc.cash[0], npc.cash[1]);
@@ -180,8 +246,9 @@ function fightNpc(p: Player, npc: NpcDef, now: number, rng: Rng, events: GameEve
     p.jobCounts["fight:win"] = (p.jobCounts["fight:win"] ?? 0) + 1;
     events.push({ tone: "good", text: `You beat the ${npc.name}.${loot ? ` +$${loot}` : ""}` });
   } else if (p.hp <= 0) {
-    hospitalize(p, now, rng, events);
+    summary.outcome = knockout(p, now, rng, events, npc.name, power(them) / power(me)) ? "death" : "ko";
   } else {
+    summary.outcome = "loss";
     events.push({ tone: "bad", text: `The ${npc.name} got the better of you.` });
   }
 }
@@ -192,8 +259,12 @@ function maybeMugging(p: Player, job: JobDef, now: number, rng: Rng, events: Gam
   if (rng() >= BALANCE.muggingChance) return;
   const m = mugger(p.reputation);
   events.push({ tone: "bad", text: "On the way back, someone steps out of an alley. \"Wallet. Now.\"" });
-  const res = resolveFight(playerFighter(p, BALANCE.hp.max), npcFighter(m), rng);
+  const me = playerFighter(p, BALANCE.hp.max);
+  const them = npcFighter(m);
+  const res = resolveFight(me, them, rng);
   p.hp = res.playerHp;
+  const summary: FightSummary = { opponent: m.name, icon: m.icon, won: res.won, lines: res.lines, outcome: "win" };
+  events.push({ tone: res.won ? "good" : "bad", text: "Fight: Mugger", fight: summary });
   grantXp(p, { toughness: 0.6, nerve: 0.6 }, 1, events);
   if (res.won) {
     p.reputation += 1;
@@ -201,9 +272,10 @@ function maybeMugging(p: Player, job: JobDef, now: number, rng: Rng, events: Gam
     return;
   }
   if (p.hp <= 0) {
-    hospitalize(p, now, rng, events);
+    summary.outcome = knockout(p, now, rng, events, m.name, power(them) / power(me)) ? "death" : "ko";
     return;
   }
+  summary.outcome = "loss";
   const lost = Math.floor(p.cash * 0.5);
   p.cash -= lost;
   events.push({
@@ -363,6 +435,9 @@ function assess(p: Player, now: number, events: GameEvent[]) {
 export function applyAction(p: Player, action: Action, now: number, rng: Rng): GameEvent[] {
   tick(p, now);
   const events: GameEvent[] = [];
+  if (isDead(p) && action.type !== "rebirth" && action.type !== "flag") {
+    throw new GameError("You're dead. Start a new life to keep playing.");
+  }
   const blockedInHospital = action.type === "job" || action.type === "fight" || action.type === "bank";
   if (blockedInHospital && inHospital(p, now)) throw new GameError("You're in the hospital. Rest up.");
 
@@ -400,6 +475,9 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng): G
     case "flag":
       if (!ALLOWED_FLAGS.has(action.flag)) throw new GameError("Unknown flag.");
       if (!p.flags.includes(action.flag)) p.flags.push(action.flag);
+      break;
+    case "rebirth":
+      rebirth(p, action.name, now, events);
       break;
     case "create":
       throw new GameError("You already have a character.");
