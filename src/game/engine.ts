@@ -10,6 +10,7 @@ import { JOB_BY_ID, type JobDef } from "./content/jobs";
 import { mugger, NPC_BY_ID, roadGang, type NpcDef } from "./content/npcs";
 import { isGraduation, jobsNeeded, keyStatAvg, PATHS } from "./content/paths";
 import { SCHOOL_BY_ID } from "./content/schools";
+import { PROPERTY_BY_ID, PROPERTY_MAX_HOURS } from "./content/properties";
 import { COUNTRY_BY_ID, MODE_BY_ID, tripCost, tripMs } from "./content/world";
 import { emptyStats, statValue, sv, tierOf, TIER_UP_LINES } from "./stats";
 import {
@@ -597,7 +598,9 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
     }
   }
 
-  let pay = Math.round(randInt(rng, job.pay[0], job.pay[1]) * COUNTRY_BY_ID[countryOf(p)].payMult);
+  // Crew members get a small bonus: someone always has your back.
+  const crewBonus = p.crewId ? 1.05 : 1;
+  let pay = Math.round(randInt(rng, job.pay[0], job.pay[1]) * COUNTRY_BY_ID[countryOf(p)].payMult * crewBonus);
   if (job.payStat) pay = Math.round(pay * (1 + (sv(p, job.payStat) - 10) / 40));
   p.cash += pay;
   p.heat += (job.heat ?? 0) * COUNTRY_BY_ID[countryOf(p)].heatMult;
@@ -615,6 +618,13 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
   }
   checkProgress(p, events);
   maybeMugging(p, job, now, rng, events);
+}
+
+/** Income waiting at a property, capped so absent owners don't pile up forever. */
+export function propertyIncome(id: string, since: number, now: number): number {
+  const prop = PROPERTY_BY_ID[id];
+  const hours = Math.min(PROPERTY_MAX_HOURS, Math.max(0, now - since) / 3_600_000);
+  return Math.floor(prop.incomePerHour * hours);
 }
 
 /** Shop prices follow the local cost of living. */
@@ -795,6 +805,17 @@ function apply(p: Player, schoolId: string, now: number, events: GameEvent[]) {
     answerOffer(p, school.path, true, now, events);
     return;
   }
+  // A vouch from a high-ranking player works like a contact's vouch.
+  const playerVouch = p.vouches?.find((v) => v.path === school.path && PATHS[school.path].school === school.id);
+  if (playerVouch) {
+    // No tuition, so no bank account needed; everything else still applies.
+    const lock = school.requirements(p);
+    if (lock && !lock.startsWith("Tuition")) throw new GameError(lock);
+    p.vouches = p.vouches!.filter((v) => v !== playerVouch);
+    submitApplication(p, school.id, playerVouch.by, now);
+    events.push({ tone: "info", text: `Application sent to ${school.name} with ${playerVouch.by}'s recommendation. Tuition waived.` });
+    return;
+  }
   const lock = school.requirements(p);
   if (lock) throw new GameError(lock);
   if (p.bank < school.tuition) throw new GameError(`Tuition is $${school.tuition}, paid from your bank account.`);
@@ -900,6 +921,31 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng): G
       break;
     case "ack_arrival":
       p.arrival = null;
+      break;
+    case "buy_property": {
+      const prop = PROPERTY_BY_ID[action.id];
+      if (!prop) throw new GameError("No such property.");
+      if (prop.country !== countryOf(p)) throw new GameError("You have to be in the country to sign the deed.");
+      if (p.properties?.[prop.id]) throw new GameError("You already own it.");
+      if (p.bank < prop.price) throw new GameError(`It costs $${prop.price}, paid from your bank account.`);
+      p.bank -= prop.price;
+      p.properties = { ...(p.properties ?? {}), [prop.id]: now };
+      events.push({ tone: "good", text: `You bought ${prop.name}. It earns about $${prop.incomePerHour} an hour.` });
+      break;
+    }
+    case "collect_property": {
+      const prop = PROPERTY_BY_ID[action.id];
+      const since = prop && p.properties?.[prop.id];
+      if (!prop || !since) throw new GameError("You don't own that.");
+      const income = propertyIncome(prop.id, since, now);
+      if (income < 1) throw new GameError("Nothing to collect yet.");
+      p.properties![prop.id] = now;
+      p.bank += income;
+      events.push({ tone: "good", text: `${prop.name}: $${income} deposited to your bank.` });
+      break;
+    }
+    case "read_inbox":
+      for (const n of p.inbox ?? []) n.read = true;
       break;
     case "claim_daily":
       claimDaily(p, now, events);

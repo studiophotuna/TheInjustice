@@ -37,6 +37,7 @@ export function useGame() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [fight, setFight] = useState<FightSummary | null>(null);
   const [floaters, setFloaters] = useState<Floater[]>([]);
+  const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
   const [receivedAt, setReceivedAt] = useState(0);
   const [clock, setClock] = useState(0);
   const seq = useRef(0);
@@ -136,17 +137,53 @@ export function useGame() {
     [busy, view?.cash, accept, pushToasts, floatText],
   );
 
+  /** Actions that involve other players (attacks, chat, crews). */
+  const social = useCallback(
+    async (body: Record<string, unknown>) => {
+      if (busy) return null;
+      setBusy(true);
+      try {
+        const res = await fetch("/api/community", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          pushToasts([{ tone: "bad", text: data.error ?? "Something went wrong." }]);
+          vibrate(60);
+          return null;
+        }
+        accept(data.view);
+        const events = (data.events ?? []) as GameEvent[];
+        const fightEvent = events.find((e) => e.fight);
+        if (fightEvent?.fight) {
+          setFight(fightEvent.fight);
+          setTimeout(() => pushToasts(events), 2600);
+        } else pushToasts(events);
+        return data.view as PublicView;
+      } catch {
+        pushToasts([{ tone: "bad", text: "Connection lost. Try again." }]);
+        return null;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [busy, accept, pushToasts],
+  );
+
   const auth = useCallback(
-    async (op: "login" | "register" | "logout", username?: string, password?: string) => {
+    async (op: "login" | "register" | "logout" | "recover" | "new_recovery", username?: string, password?: string, code?: string) => {
       setBusy(true);
       try {
         const res = await fetch("/api/auth", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ op, username, password }),
+          body: JSON.stringify({ op, username, password, code }),
         });
         const data = await res.json();
         if (!res.ok) return { error: (data.error as string) ?? "Something went wrong." };
+        if (data.recoveryCode) setRecoveryCode(data.recoveryCode as string);
         await refresh();
         return { ok: true as const, claimed: !!data.claimed };
       } catch {
@@ -252,6 +289,9 @@ export function useGame() {
     refresh,
     act,
     auth,
+    social,
+    recoveryCode,
+    clearRecoveryCode: () => setRecoveryCode(null),
     dismiss,
     closeFight: () => setFight(null),
     pushToasts,

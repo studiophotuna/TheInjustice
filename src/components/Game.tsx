@@ -2,6 +2,9 @@
 
 import { AnimatePresence, animate, motion, useMotionValue, useTransform } from "motion/react";
 import {
+  Users,
+  KeyRound,
+  Copy,
   MapPin,
   Briefcase,
   Building2,
@@ -26,14 +29,16 @@ import { Skyline } from "./art/Skyline";
 import { Vehicle } from "./art/Vehicles";
 import { AuthForm, ChapterViewer, DeathScreen, Landing, Logo, Prologue } from "./screens";
 import { CityTab, DeanLetter, FightTab, JobsTab, ProfileTab, ShopTab } from "./tabs";
+import { CommunityTab } from "./community";
 import { fmt, useGame, type GameApi } from "./useGame";
 
-type Tab = "jobs" | "fight" | "shop" | "profile" | "city";
+type Tab = "jobs" | "fight" | "shop" | "people" | "profile" | "city";
 
 const TABS: { id: Tab; label: string; Icon: typeof Briefcase }[] = [
   { id: "jobs", label: "Jobs", Icon: Briefcase },
   { id: "fight", label: "Fight", Icon: Swords },
   { id: "shop", label: "Shop", Icon: ShoppingBag },
+  { id: "people", label: "People", Icon: Users },
   { id: "profile", label: "Me", Icon: UserRound },
   { id: "city", label: "City", Icon: Building2 },
 ];
@@ -61,9 +66,34 @@ export default function Game() {
     <>
       {view.dead ? <DeathScreen game={game} view={view} /> : <Shell game={game} view={view} />}
       <Toasts game={game} />
+      <AnimatePresence>{game.recoveryCode && <RecoveryCodeModal game={game} />}</AnimatePresence>
       <AnimatePresence>{game.fight && <FightScene fight={game.fight} view={view} onClose={game.closeFight} />}</AnimatePresence>
       <Floaters game={game} />
     </>
+  );
+}
+
+/** Shown once after sign-up or a reset: the only way to recover the account. */
+function RecoveryCodeModal({ game }: { game: GameApi }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <Modal>
+      <p className="eyebrow"><KeyRound size={14} /> Save this somewhere safe</p>
+      <h2>Your recovery code</h2>
+      <p className="muted">If you forget your password, this code is the only way back into your account. It is shown once.</p>
+      <div className="recovery-code">{game.recoveryCode}</div>
+      <div className="row">
+        <button
+          className="btn btn-ghost"
+          onClick={() => {
+            navigator.clipboard?.writeText(game.recoveryCode ?? "").then(() => setCopied(true), () => undefined);
+          }}
+        >
+          <Copy size={14} /> {copied ? "Copied" : "Copy"}
+        </button>
+        <button className="btn btn-primary" onClick={game.clearRecoveryCode}>I saved it</button>
+      </div>
+    </Modal>
   );
 }
 
@@ -141,6 +171,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
         {TABS.map(({ id, label, Icon }) => (
           <button key={id} className={tab === id ? "on" : ""} onClick={() => go(`tab:${id}`)}>
             <Icon size={20} /> <span>{label}</span>
+            {id === "people" && view.inbox.unread > 0 && <span className="badge-dot">{view.inbox.unread}</span>}
             {tab === id && <motion.span layoutId="nav-pill" className="nav-pill" />}
           </button>
         ))}
@@ -184,6 +215,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
             {tab === "jobs" && <JobsTab game={game} highlight={highlight} />}
             {tab === "fight" && <FightTab game={game} />}
             {tab === "shop" && <ShopTab game={game} />}
+            {tab === "people" && <CommunityTab game={game} />}
             {tab === "profile" && <ProfileTab game={game} />}
             {tab === "city" && <CityTab game={game} onRead={setReading} />}
           </motion.main>
@@ -196,6 +228,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
             {tab === id && <motion.span layoutId="bottom-pill" className="bottom-pill" />}
             <Icon size={22} />
             <span>{label}</span>
+            {id === "people" && view.inbox.unread > 0 && <span className="badge-dot nav-dot">{view.inbox.unread}</span>}
           </button>
         ))}
       </nav>

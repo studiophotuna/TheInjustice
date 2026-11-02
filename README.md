@@ -67,6 +67,17 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
   rough until you rent there; your old place is still waiting when you come back.
 - **Banking** career in Port Solace (The Exchange district, Solace Institute of Finance,
   Isadora Quell vouches). Bankers earn interest on their savings.
+- **Community** (People tab): see who's in your city, chat (global, city, crew), and an inbox
+  for what other players do to you.
+  - **Attack other players** in the same country: the winner takes 10% of the loser's cash on
+    hand (the bank is safe). Never fatal. Newcomers are protected for their first hours, you
+    can't bully much weaker players, and there's a cooldown per target. Revenge in one tap.
+  - **Players vouch for players**: rank 5+ in a school career can vouch once a day; the dean
+    still decides.
+  - **Crews**: found one for $500, accept members, shared vault, crew chat, +5% job pay.
+- **Businesses**: buy one in any country (paid from the bank) and collect hourly income.
+- **Account recovery**: a one-time recovery code is shown at sign-up; use it with
+  "Forgot password?" to set a new password. Players can generate a new code in the Me tab.
 - **Daily**: a login reward with a 7-day streak, three daily contracts, and a boxing gym in
   every city to train the stat you choose.
 - **Medicine** career (8 ranks, Doc Mercy vouches) at St. Brigid's in Grayhaven or Halcyon

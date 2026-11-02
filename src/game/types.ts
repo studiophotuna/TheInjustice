@@ -111,6 +111,46 @@ export interface Player {
   homes?: Partial<Record<CountryId, HousingTier>>;
   /** Daily login streak and contracts. */
   daily?: Daily;
+
+  // ── Community ──────────────────────────────────────────────
+  /** Messages about things other players did to you. */
+  inbox?: Notice[];
+  /** Crew the player belongs to. */
+  crewId?: string | null;
+  /** Vouches from high-ranking players, one per career. */
+  vouches?: { path: PathId; by: string; byId: string; at: number }[];
+  /** Last time this player vouched for someone (one per day). */
+  lastVouchAt?: number;
+  /** Last time this player attacked each target (anti-bullying cooldown). */
+  attackLog?: Record<string, number>;
+  /** Players whose chat messages are hidden. */
+  blocked?: string[];
+  lastChatAt?: number;
+  /** Businesses owned: property id → when income was last collected. */
+  properties?: Record<string, number>;
+}
+
+export interface Notice {
+  id: string;
+  at: number;
+  text: string;
+  tone: GameEventTone;
+  /** Optional player this is about (e.g. an attacker, for revenge). */
+  fromId?: string;
+  fromName?: string;
+  read: boolean;
+}
+
+export interface Crew {
+  id: string;
+  name: string;
+  tag: string;
+  leaderId: string;
+  members: { id: string; name: string; role: "leader" | "member"; joinedAt: number }[];
+  requests: { id: string; name: string; at: number }[];
+  vault: number;
+  log: { at: number; text: string }[];
+  createdAt: number;
 }
 
 export type ContractKind = "jobs" | "fights" | "earn" | "train";
@@ -223,6 +263,9 @@ export type Action =
   | { type: "claim_daily" }
   | { type: "claim_contract"; id: string }
   | { type: "train"; stat: "strength" | "toughness" | "agility" }
+  | { type: "buy_property"; id: string }
+  | { type: "collect_property"; id: string }
+  | { type: "read_inbox" }
   | { type: "enroll" }
   | { type: "dismiss_application" };
 

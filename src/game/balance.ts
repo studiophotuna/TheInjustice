@@ -49,6 +49,19 @@ export const BALANCE = {
     customsDelayMs: 5 * 60_000,
   },
   gym: { fee: 5, energy: 10, xp: 2.2 },
+  pvp: {
+    energy: 15,
+    /** New characters can't be attacked for this long (shortened for testing). */
+    protectionMs: 2 * 60 * 60_000,
+    /** Wait before attacking the same player again. */
+    cooldownMs: 30 * 60_000,
+    /** Share of the loser's cash on hand the winner takes. */
+    cashShare: 0.1,
+    heat: 8,
+  },
+  vouch: { minRank: 5, cooldownMs: 24 * 60 * 60_000 },
+  crew: { createCost: 500, maxMembers: 12 },
+  chat: { cooldownMs: 3_000, maxLength: 280 },
   banking: {
     /** Bankers' interest per hour on savings (shortened for testing). */
     baseRatePerHour: 0.002,

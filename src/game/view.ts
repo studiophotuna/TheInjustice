@@ -12,7 +12,8 @@ import { SCHOOL_BY_ID, SCHOOLS } from "./content/schools";
 import { COUNTRIES, COUNTRY_BY_ID, TRAVEL_MODES, tripCost, tripMs } from "./content/world";
 import type { Arrival, CountryId, TravelMode } from "./types";
 import { GUT_READS } from "./combat";
-import { countryOf, dayKey, FIGHT_ENERGY, inHospital, itemPrice, jobLock, scout } from "./engine";
+import { PROPERTIES } from "./content/properties";
+import { countryOf, dayKey, propertyIncome, FIGHT_ENERGY, inHospital, itemPrice, jobLock, scout } from "./engine";
 import { describe, integrityHint } from "./stats";
 import type { DistrictId, LogEntry, PathId, Player } from "./types";
 
@@ -119,6 +120,21 @@ export interface PublicView {
     contracts: { id: string; label: string; target: number; progress: number; reward: number; claimed: boolean }[];
   };
   gym: { fee: number; energy: number };
+  inbox: { items: import("./types").Notice[]; unread: number };
+  properties: {
+    id: string;
+    name: string;
+    icon: string;
+    description: string;
+    price: number;
+    incomePerHour: number;
+    city: string;
+    owned: boolean;
+    /** Income waiting to be collected. */
+    waiting: number;
+    buyable: boolean;
+  }[];
+  crewId: string | null;
   location: { country: CountryId; countryName: string; city: string; color: string; laws: string };
   travel: { to: CountryId; city: string; mode: TravelMode; msLeft: number; totalMs: number } | null;
   arrival: Arrival | null;
@@ -212,6 +228,20 @@ export function toView(p: Player, now: number): PublicView {
       };
     })(),
     gym: { fee: itemPrice(p, BALANCE.gym.fee), energy: BALANCE.gym.energy },
+    inbox: { items: p.inbox ?? [], unread: (p.inbox ?? []).filter((n) => !n.read).length },
+    properties: PROPERTIES.filter((pr) => pr.country === here || p.properties?.[pr.id]).map((pr) => ({
+      id: pr.id,
+      name: pr.name,
+      icon: pr.icon,
+      description: pr.description,
+      price: pr.price,
+      incomePerHour: pr.incomePerHour,
+      city: COUNTRY_BY_ID[pr.country].capital,
+      owned: !!p.properties?.[pr.id],
+      waiting: p.properties?.[pr.id] ? propertyIncome(pr.id, p.properties[pr.id], now) : 0,
+      buyable: pr.country === here && !p.properties?.[pr.id],
+    })),
+    crewId: p.crewId ?? null,
     inventory: Object.entries(p.inventory)
       .filter(([, n]) => n > 0)
       .map(([id, count]) => {
@@ -290,16 +320,20 @@ export function toView(p: Player, now: number): PublicView {
       read: p.flags.includes(`read:${c.id}`),
     })),
     schools: SCHOOLS.map((sc) => {
-      const vouch = p.offers.includes(sc.path) && PATHS[sc.path].school === sc.id;
+      const homeSchool = PATHS[sc.path].school === sc.id;
+      const playerVouch = homeSchool ? p.vouches?.find((v) => v.path === sc.path) : undefined;
+      const vouch = (p.offers.includes(sc.path) && homeSchool) || !!playerVouch;
       let locked = p.path
         ? "You already have a career."
         : p.application?.status === "pending"
           ? "You have an application under review."
           : (p.applyCooldownUntil ?? 0) > now
             ? "Admissions won't see you again so soon."
-            : vouch
-              ? null
-              : sc.requirements(p) ?? (p.bank < sc.tuition ? `Save $${sc.tuition} in the bank for tuition.` : null);
+            : playerVouch
+              ? (sc.requirements(p)?.startsWith("Tuition") ? null : sc.requirements(p))
+              : vouch
+                ? null
+                : sc.requirements(p) ?? (p.bank < sc.tuition ? `Save $${sc.tuition} in the bank for tuition.` : null);
       if (p.path === sc.path) locked = "You're already in this career.";
       else if (!locked && sc.country !== here) locked = `In ${sc.city}, ${COUNTRY_BY_ID[sc.country].name}. Travel there to apply in person.`;
       return {
@@ -313,7 +347,7 @@ export function toView(p: Player, now: number): PublicView {
         dean: sc.dean,
         description: sc.description,
         locked,
-        vouchedBy: vouch ? PATHS[sc.path].contact : null,
+        vouchedBy: playerVouch ? playerVouch.by : vouch ? PATHS[sc.path].contact : null,
       };
     }),
     application: p.application

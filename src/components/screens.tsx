@@ -32,7 +32,8 @@ export function AuthForm({
   initial?: "login" | "register";
   onDone?: (claimed: boolean) => void;
 }) {
-  const [mode, setMode] = useState<"login" | "register">(initial);
+  const [mode, setMode] = useState<"login" | "register" | "recover">(initial);
+  const [code, setCode] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +44,7 @@ export function AuthForm({
       onSubmit={async (e) => {
         e.preventDefault();
         setError(null);
-        const r = await game.auth(mode, username, password);
+        const r = await game.auth(mode, username, password, code);
         if ("error" in r) setError(r.error ?? "Something went wrong.");
         else onDone?.(r.claimed);
       }}
@@ -60,8 +61,14 @@ export function AuthForm({
         <span>Username</span>
         <input autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="3–20 letters, numbers or _" />
       </label>
+      {mode === "recover" && (
+        <label className="field">
+          <span>Recovery code</span>
+          <input autoComplete="off" value={code} onChange={(e) => setCode(e.target.value)} placeholder="XXXX-XXXX-XXXX-XXXX" />
+        </label>
+      )}
       <label className="field">
-        <span>Password</span>
+        <span>{mode === "recover" ? "New password" : "Password"}</span>
         <input
           type="password"
           autoComplete={mode === "login" ? "current-password" : "new-password"}
@@ -72,8 +79,12 @@ export function AuthForm({
       </label>
       {error && <p className="form-error">{error}</p>}
       <button className="btn btn-primary btn-lg" disabled={game.busy || username.length < 3 || password.length < 8}>
-        <KeyRound size={18} /> {mode === "register" ? "Create account" : "Log in"}
+        <KeyRound size={18} /> {mode === "register" ? "Create account" : mode === "recover" ? "Reset password" : "Log in"}
       </button>
+      {mode === "login" && (
+        <button type="button" className="skip" onClick={() => setMode("recover")}>Forgot password?</button>
+      )}
+      {mode === "recover" && <p className="fine">Use the recovery code you saved when you signed up.</p>}
       {mode === "register" && <p className="fine">Your character is saved to your account, so you can play on any device.</p>}
     </form>
   );

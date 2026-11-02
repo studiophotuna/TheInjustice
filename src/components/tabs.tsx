@@ -10,6 +10,8 @@ import {
   Globe2,
   MailOpen,
   MapPin,
+  Building,
+  KeyRound,
   Home,
   Flame,
   Gift,
@@ -219,6 +221,34 @@ const KIND_LABEL: Record<string, string> = { food: "Food", housing: "Housing", w
 export function ShopTab({ game }: { game: GameApi }) {
   const view = game.view!;
   return (
+    <div className="stack">
+      <section className="card">
+        <h3 className="card-title"><Building size={16} /> Businesses</h3>
+        <p className="muted">Buy a business with money from your bank. It earns every hour (up to a day's worth waits for you). You must be in its country to buy it.</p>
+        <div className="properties">
+          {view.properties.map((pr) => (
+            <article key={pr.id} className={`property ${pr.owned ? "owned" : ""}`}>
+              <div className="shop-emoji">{pr.icon}</div>
+              <div className="shop-body">
+                <span className="chip">{pr.city}</span>
+                <h3>{pr.name}</h3>
+                <p className="muted">{pr.description}</p>
+                <p className="property-income">≈ ${pr.incomePerHour}/hour</p>
+              </div>
+              {pr.owned ? (
+                <button className="btn btn-primary btn-sm" disabled={game.busy || pr.waiting < 1} onClick={() => game.act({ type: "collect_property", id: pr.id })}>
+                  Collect ${pr.waiting}
+                </button>
+              ) : (
+                <button className="btn btn-ghost btn-sm" disabled={game.busy || !pr.buyable || view.bank < pr.price} onClick={() => game.act({ type: "buy_property", id: pr.id })}>
+                  Buy · ${pr.price.toLocaleString()}
+                </button>
+              )}
+            </article>
+          ))}
+        </div>
+      </section>
+      <h3 className="subhead">Supplies</h3>
     <motion.div className="shop-grid" variants={list} initial="hidden" animate="show">
       {view.shop.map((i) => (
         <motion.article key={i.id} variants={item} className={`shop-item ${i.owned ? "owned" : ""}`}>
@@ -234,6 +264,7 @@ export function ShopTab({ game }: { game: GameApi }) {
         </motion.article>
       ))}
     </motion.div>
+      </div>
   );
 }
 
@@ -336,10 +367,16 @@ export function ProfileTab({ game }: { game: GameApi }) {
       <section className="card">
         <h3 className="card-title"><UserRound size={16} /> Account</h3>
         {game.account ? (
+          <>
           <div className="row between">
             <p>Logged in as <b>{game.account.username}</b></p>
             <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.auth("logout")}><LogOut size={14} /> Log out</button>
           </div>
+          <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.auth("new_recovery")}>
+            <KeyRound size={14} /> New recovery code
+          </button>
+          <p className="fine">A recovery code lets you reset your password. Getting a new one cancels the old one.</p>
+          </>
         ) : (
           <>
             <p className="muted">You&apos;re playing as a guest. Create an account to keep this character on any device.</p>

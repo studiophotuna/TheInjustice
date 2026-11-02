@@ -24,6 +24,12 @@ export function parseAction(body: unknown): Action {
       return { type: "ack_arrival" };
     case "claim_daily":
       return { type: "claim_daily" };
+    case "buy_property":
+      return { type: "buy_property", id: str(b.id) };
+    case "collect_property":
+      return { type: "collect_property", id: str(b.id) };
+    case "read_inbox":
+      return { type: "read_inbox" };
     case "claim_contract":
       return { type: "claim_contract", id: str(b.id) };
     case "train":

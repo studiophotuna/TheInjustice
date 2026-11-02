@@ -4,7 +4,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import postgres from "postgres";
 import { rankTitle } from "@/game/content/paths";
-import type { Player } from "@/game/types";
+import type { Crew, Player } from "@/game/types";
 import { LOCKOUT_MS, MAX_FAILED_LOGINS } from "./auth";
 
 export interface LeaderRow {
@@ -18,6 +18,26 @@ export interface AccountRow {
   username: string;
   passwordHash: string;
   lockedUntil: number | null;
+  recoveryHash?: string | null;
+}
+
+export interface ChatMessage {
+  id: number;
+  channel: string;
+  authorId: string;
+  authorName: string;
+  body: string;
+  at: number;
+}
+
+/** Exclusive access to several records at once; everything is saved together or not at all. */
+export interface Tx {
+  /** Locks and returns the players (in a fixed order, so concurrent pairs can't deadlock). */
+  getPlayers(ids: string[]): Promise<(Player | null)[]>;
+  putPlayer(p: Player): Promise<void>;
+  getCrew(id: string): Promise<Crew | null>;
+  putCrew(c: Crew): Promise<void>;
+  deleteCrew(id: string): Promise<void>;
 }
 
 /**
@@ -41,6 +61,17 @@ export interface PlayerStore {
   createSession(tokenHash: string, accountId: string, expiresAt: number): Promise<void>;
   getSession(tokenHash: string): Promise<{ accountId: string; username: string } | null>;
   deleteSession(tokenHash: string): Promise<void>;
+  setRecovery(accountId: string, recoveryHash: string): Promise<void>;
+  setPassword(accountId: string, passwordHash: string): Promise<void>;
+
+  /** Runs `fn` inside one transaction with row locks. */
+  transaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T>;
+  /** Most recently active players in a country. */
+  listPlayers(country: string, limit: number): Promise<Player[]>;
+  listCrews(limit: number): Promise<Crew[]>;
+  getCrew(id: string): Promise<Crew | null>;
+  postMessage(m: Omit<ChatMessage, "id" | "at">): Promise<void>;
+  listMessages(channel: string, limit: number): Promise<ChatMessage[]>;
 }
 
 export class StoreConfigError extends Error {}
@@ -56,6 +87,8 @@ interface FileData {
   players: Record<string, Player>;
   accounts: Record<string, FileAccount>;
   sessions: Record<string, { accountId: string; expiresAt: number }>;
+  crews: Record<string, Crew>;
+  messages: ChatMessage[];
 }
 
 export class FileStore implements PlayerStore {
@@ -70,11 +103,17 @@ export class FileStore implements PlayerStore {
       const raw = JSON.parse(await fs.readFile(this.file, "utf8"));
       // Older saves were a bare map of players.
       this.data = raw.players
-        ? { players: raw.players, accounts: raw.accounts ?? {}, sessions: raw.sessions ?? {} }
-        : { players: raw, accounts: {}, sessions: {} };
+        ? {
+            players: raw.players,
+            accounts: raw.accounts ?? {},
+            sessions: raw.sessions ?? {},
+            crews: raw.crews ?? {},
+            messages: raw.messages ?? [],
+          }
+        : { players: raw, accounts: {}, sessions: {}, crews: {}, messages: [] };
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
-      this.data = { players: {}, accounts: {}, sessions: {} };
+      this.data = { players: {}, accounts: {}, sessions: {}, crews: {}, messages: [] };
     }
     return this.data!;
   }
@@ -142,7 +181,9 @@ export class FileStore implements PlayerStore {
     const a = Object.values((await this.load()).accounts).find(
       (x) => x.username.toLowerCase() === username.toLowerCase(),
     );
-    return a ? { id: a.id, username: a.username, passwordHash: a.passwordHash, lockedUntil: a.lockedUntil } : null;
+    return a
+      ? { id: a.id, username: a.username, passwordHash: a.passwordHash, lockedUntil: a.lockedUntil, recoveryHash: a.recoveryHash ?? null }
+      : null;
   }
 
   recordLogin(accountId: string, success: boolean) {
@@ -177,6 +218,78 @@ export class FileStore implements PlayerStore {
     return this.serial((d) => {
       delete d.sessions[tokenHash];
     });
+  }
+
+  setRecovery(accountId: string, recoveryHash: string) {
+    return this.serial((d) => {
+      if (d.accounts[accountId]) d.accounts[accountId].recoveryHash = recoveryHash;
+    });
+  }
+
+  setPassword(accountId: string, passwordHash: string) {
+    return this.serial((d) => {
+      const a = d.accounts[accountId];
+      if (a) {
+        a.passwordHash = passwordHash;
+        a.failedLogins = 0;
+        a.lockedUntil = null;
+      }
+      for (const [k, s] of Object.entries(d.sessions)) if (s.accountId === accountId) delete d.sessions[k];
+    });
+  }
+
+  transaction<T>(fn: (tx: Tx) => Promise<T>) {
+    return this.serial(async (d) => {
+      // Work on copies; only commit if fn succeeds.
+      const players = new Map<string, Player>();
+      const crews = new Map<string, Crew | null>();
+      const tx: Tx = {
+        getPlayers: async (ids) => ids.map((id) => (d.players[id] ? structuredClone(d.players[id]) : null)),
+        putPlayer: async (p) => void players.set(p.id, structuredClone(p)),
+        getCrew: async (id) => (d.crews[id] ? structuredClone(d.crews[id]) : null),
+        putCrew: async (c) => void crews.set(c.id, structuredClone(c)),
+        deleteCrew: async (id) => void crews.set(id, null),
+      };
+      const result = await fn(tx);
+      for (const [id, p] of players) d.players[id] = p;
+      for (const [id, c] of crews) {
+        if (c) d.crews[id] = c;
+        else delete d.crews[id];
+      }
+      return result;
+    });
+  }
+
+  async listPlayers(country: string, limit: number) {
+    return Object.values((await this.load()).players)
+      .filter((p) => (p.country ?? "varrow") === country)
+      .sort((a, b) => b.tickAt - a.tickAt)
+      .slice(0, limit)
+      .map((p) => structuredClone(p));
+  }
+
+  async listCrews(limit: number) {
+    return Object.values((await this.load()).crews)
+      .sort((a, b) => b.members.length - a.members.length)
+      .slice(0, limit)
+      .map((c) => structuredClone(c));
+  }
+
+  async getCrew(id: string) {
+    const c = (await this.load()).crews[id];
+    return c ? structuredClone(c) : null;
+  }
+
+  postMessage(m: Omit<ChatMessage, "id" | "at">) {
+    return this.serial((d) => {
+      const id = (d.messages.at(-1)?.id ?? 0) + 1;
+      d.messages.push({ ...m, id, at: Date.now() });
+      d.messages = d.messages.slice(-500);
+    });
+  }
+
+  async listMessages(channel: string, limit: number) {
+    return (await this.load()).messages.filter((m) => m.channel === channel).slice(-limit);
   }
 }
 
@@ -242,12 +355,18 @@ class PostgresStore implements PlayerStore {
   }
 
   async findAccount(username: string) {
-    const rows = await this.sql<{ id: string; username: string; password_hash: string; locked_until: Date | null }[]>`
-      select id, username, password_hash, locked_until from injustice.accounts
+    const rows = await this.sql<{ id: string; username: string; password_hash: string; locked_until: Date | null; recovery_hash: string | null }[]>`
+      select id, username, password_hash, locked_until, recovery_hash from injustice.accounts
       where lower(username) = lower(${username})`;
     const r = rows[0];
     return r
-      ? { id: r.id, username: r.username, passwordHash: r.password_hash, lockedUntil: r.locked_until?.getTime() ?? null }
+      ? {
+          id: r.id,
+          username: r.username,
+          passwordHash: r.password_hash,
+          lockedUntil: r.locked_until?.getTime() ?? null,
+          recoveryHash: r.recovery_hash,
+        }
       : null;
   }
 
@@ -281,6 +400,86 @@ class PostgresStore implements PlayerStore {
 
   async deleteSession(tokenHash: string) {
     await this.sql`delete from injustice.sessions where token_hash = ${tokenHash}`;
+  }
+
+  async setRecovery(accountId: string, recoveryHash: string) {
+    await this.sql`update injustice.accounts set recovery_hash = ${recoveryHash} where id = ${accountId}`;
+  }
+
+  async setPassword(accountId: string, passwordHash: string) {
+    await this.sql.begin(async (tx) => {
+      await tx`update injustice.accounts set password_hash = ${passwordHash}, failed_logins = 0, locked_until = null where id = ${accountId}`;
+      // A password reset logs out every device.
+      await tx`delete from injustice.sessions where account_id = ${accountId}`;
+    });
+  }
+
+  async transaction<T>(fn: (tx: Tx) => Promise<T>) {
+    return (await this.sql.begin(async (q) => {
+      const tx: Tx = {
+        getPlayers: async (ids) => {
+          const sorted = [...new Set(ids)].sort();
+          const rows = await q<{ id: string; data: Player }[]>`
+            select id, data from injustice.players where id = any(${sorted}) order by id for update`;
+          const byId = new Map(rows.map((r) => [r.id, r.data]));
+          return ids.map((id) => byId.get(id) ?? null);
+        },
+        putPlayer: async (p) => {
+          await q`
+            update injustice.players set
+              name = ${p.name}, reputation = ${p.reputation}, title = ${titleOf(p)},
+              data = ${q.json(p as unknown as postgres.JSONValue)}, updated_at = now()
+            where id = ${p.id}`;
+        },
+        getCrew: async (id) => {
+          const rows = await q<{ data: Crew }[]>`select data from injustice.crews where id = ${id} for update`;
+          return rows[0]?.data ?? null;
+        },
+        putCrew: async (c) => {
+          await q`
+            insert into injustice.crews (id, tag, name, data) values (${c.id}, ${c.tag}, ${c.name}, ${q.json(c as unknown as postgres.JSONValue)})
+            on conflict (id) do update set name = excluded.name, data = excluded.data`;
+        },
+        deleteCrew: async (id) => {
+          await q`delete from injustice.crews where id = ${id}`;
+        },
+      };
+      return fn(tx);
+    })) as T;
+  }
+
+  async listPlayers(country: string, limit: number) {
+    const rows = await this.sql<{ data: Player }[]>`
+      select data from injustice.players
+      where coalesce(data->>'country', 'varrow') = ${country}
+      order by updated_at desc limit ${limit}`;
+    return rows.map((r) => r.data);
+  }
+
+  async listCrews(limit: number) {
+    const rows = await this.sql<{ data: Crew }[]>`
+      select data from injustice.crews order by jsonb_array_length(data->'members') desc, created_at asc limit ${limit}`;
+    return rows.map((r) => r.data);
+  }
+
+  async getCrew(id: string) {
+    const rows = await this.sql<{ data: Crew }[]>`select data from injustice.crews where id = ${id}`;
+    return rows[0]?.data ?? null;
+  }
+
+  async postMessage(m: Omit<ChatMessage, "id" | "at">) {
+    await this.sql`
+      insert into injustice.messages (channel, author_id, author_name, body)
+      values (${m.channel}, ${m.authorId}, ${m.authorName}, ${m.body})`;
+  }
+
+  async listMessages(channel: string, limit: number) {
+    const rows = await this.sql<{ id: string; channel: string; author_id: string; author_name: string; body: string; created_at: Date }[]>`
+      select id, channel, author_id, author_name, body, created_at from injustice.messages
+      where channel = ${channel} order by id desc limit ${limit}`;
+    return rows
+      .reverse()
+      .map((r) => ({ id: Number(r.id), channel: r.channel, authorId: r.author_id, authorName: r.author_name, body: r.body, at: r.created_at.getTime() }));
   }
 }
 
