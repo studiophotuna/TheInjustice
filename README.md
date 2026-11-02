@@ -21,8 +21,18 @@ npm run lint       # type check
 npm run build && npm start   # production build
 ```
 
-Game saves are stored in `.data/players.json` (set `INJUSTICE_DATA_FILE` to change it).
-Delete that file to wipe all characters.
+Locally, game saves are stored in `.data/players.json` (set `INJUSTICE_DATA_FILE` to change
+it). Delete that file to wipe all characters.
+
+## Online (Supabase + Vercel)
+
+When `DATABASE_URL` or `POSTGRES_URL` is set, saves go to Postgres instead. Online, that's
+the Supabase project **injustice** (Singapore), table `injustice.players` in a private
+schema the public Supabase API can't reach. Setup SQL: `supabase/migrations/`.
+
+On Vercel, `POSTGRES_URL` is provided automatically by the Supabase integration once the
+Supabase project is connected to the Vercel project. Without it, the deployed game shows
+"The game database isn't connected yet" instead of losing saves.
 
 ## What's in the first playable version
 
@@ -56,8 +66,8 @@ Delete that file to wipe all characters.
 | `src/components/` | The comic-style UI |
 
 All rules run on the server, so the game is ready for multiplayer. Storage sits behind a
-small `PlayerStore` interface; the JSON file store will be replaced by a database
-(Supabase/Postgres) before going online.
+small `PlayerStore` interface (`src/server/store.ts`) with a Postgres version for Supabase and a JSON file version
+for local development.
 
 ## Design docs
 

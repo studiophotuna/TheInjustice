@@ -42,6 +42,7 @@ export default function Game() {
   const [view, setView] = useState<PublicView | null>(null);
   const [leaders, setLeaders] = useState<Leader[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [fatal, setFatal] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("jobs");
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [busy, setBusy] = useState(false);
@@ -65,9 +66,18 @@ export default function Game() {
   }, []);
 
   const refresh = useCallback(async () => {
-    const res = await fetch("/api/game", { cache: "no-store" });
-    const data = await res.json();
-    accept(data.view);
+    let data: { view?: PublicView | null; leaderboard?: Leader[]; error?: string } = {};
+    try {
+      const res = await fetch("/api/game", { cache: "no-store" });
+      data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "The city is unreachable right now.");
+    } catch (e) {
+      setFatal(e instanceof Error ? e.message : "The city is unreachable right now.");
+      setLoaded(true);
+      return null;
+    }
+    setFatal(null);
+    accept(data.view ?? null);
     setLeaders(data.leaderboard ?? []);
     setLoaded(true);
     return data.view as PublicView | null;
@@ -199,6 +209,21 @@ export default function Game() {
   }, [view, go]);
 
   if (!loaded) return <div className="loading">Loading Grayhaven…</div>;
+  if (fatal && !view) {
+    return (
+      <div className="splash">
+        <h1 className="logo">
+          INJUSTICE<span>Grayhaven</span>
+        </h1>
+        <p>{fatal} Try again in a minute.</p>
+        <div className="row">
+          <button className="btn primary" onClick={() => refresh()}>
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
   if (!view) return <CreateCharacter onCreate={(name) => act({ type: "create", name })} busy={busy} />;
   if (!view.flags.includes("seen_prologue")) {
     return <Prologue onDone={() => act({ type: "flag", flag: "seen_prologue" })} />;

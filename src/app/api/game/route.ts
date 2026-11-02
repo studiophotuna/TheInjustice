@@ -2,11 +2,10 @@ import { randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { applyAction, createPlayer, tick } from "@/game/engine";
-import { rankTitle } from "@/game/content/paths";
 import { GameError, type GameEvent } from "@/game/types";
 import { toView } from "@/game/view";
 import { parseAction } from "@/server/actions";
-import { getStore } from "@/server/store";
+import { getStore, StoreConfigError } from "@/server/store";
 
 export const dynamic = "force-dynamic";
 
@@ -29,23 +28,24 @@ async function sessionId(create: boolean): Promise<string | null> {
   return fresh;
 }
 
-async function leaderboard() {
-  const players = await getStore().list();
-  return players
-    .sort((a, b) => b.reputation - a.reputation)
-    .slice(0, 10)
-    .map((p) => ({ name: p.name, reputation: p.reputation, title: rankTitle(p) ?? "Nobody" }));
+function failure(e: unknown) {
+  if (e instanceof GameError) return NextResponse.json({ error: e.message }, { status: 400 });
+  if (e instanceof StoreConfigError) return NextResponse.json({ error: e.message }, { status: 503 });
+  console.error(e);
+  return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
 }
 
 export async function GET() {
-  const sid = await sessionId(false);
-  const now = Date.now();
-  const player = sid ? await getStore().get(sid) : null;
-  if (player) tick(player, now);
-  return NextResponse.json({
-    view: player ? toView(player, now) : null,
-    leaderboard: await leaderboard(),
-  });
+  try {
+    const sid = await sessionId(false);
+    const now = Date.now();
+    const store = getStore();
+    const [player, leaderboard] = await Promise.all([sid ? store.get(sid) : null, store.leaderboard(10)]);
+    if (player) tick(player, now);
+    return NextResponse.json({ view: player ? toView(player, now) : null, leaderboard });
+  } catch (e) {
+    return failure(e);
+  }
 }
 
 export async function POST(req: Request) {
@@ -65,8 +65,6 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(out);
   } catch (e) {
-    if (e instanceof GameError) return NextResponse.json({ error: e.message }, { status: 400 });
-    console.error(e);
-    return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
+    return failure(e);
   }
 }
