@@ -123,6 +123,8 @@ export interface PublicView {
   inbox: { items: import("./types").Notice[]; unread: number };
   /** Crimes the player witnessed and can still report. */
   sightings: { caseId: string; text: string; until: number }[];
+  /** Held for trial or serving a sentence. */
+  jail: { until: number; reason: string; custodyCase: string | null } | null;
   properties: {
     id: string;
     name: string;
@@ -231,6 +233,10 @@ export function toView(p: Player, now: number): PublicView {
     })(),
     gym: { fee: itemPrice(p, BALANCE.gym.fee), energy: BALANCE.gym.energy },
     inbox: { items: p.inbox ?? [], unread: (p.inbox ?? []).filter((n) => !n.read).length },
+    jail:
+      p.custodyCase || (p.jailUntil ?? 0) > now
+        ? { until: p.jailUntil ?? now, reason: p.jailReason ?? "Behind bars.", custodyCase: p.custodyCase ?? null }
+        : null,
     sightings: (p.sightings ?? []).filter((s) => s.until > now).map((s) => ({ caseId: s.caseId, text: s.text, until: s.until })),
     properties: PROPERTIES.filter((pr) => pr.country === here || p.properties?.[pr.id]).map((pr) => ({
       id: pr.id,

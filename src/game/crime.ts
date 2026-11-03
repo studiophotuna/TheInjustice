@@ -6,7 +6,7 @@ import { BALANCE } from "./balance";
 import { playerFighter, resolveFight } from "./combat";
 import { DISTRICTS } from "./content/districts";
 import { COUNTRY_BY_ID } from "./content/world";
-import { countryOf, inHospital, shiftIntegrity } from "./engine";
+import { countryOf, inHospital, inJail, shiftIntegrity } from "./engine";
 import { notify, protectedUntil } from "./social";
 import { DESCRIPTORS, describe, sv } from "./stats";
 import {
@@ -157,8 +157,13 @@ export function eyeAccuracy(p: Player, bonus = 0): number {
   return clamp(0.5 + (sv(p, "perception") - 10) / 60 + bonus, 0.5, 0.92);
 }
 
+export function caseCold(c: CaseFile, now: number): boolean {
+  return now - c.at >= BALANCE.crime.coldMs;
+}
+
+/** Open for scene work and arrests: not cold, and nobody has been arrested for it yet. */
 export function caseOpen(c: CaseFile, now: number): boolean {
-  return now - c.at < BALANCE.crime.coldMs;
+  return !c.trial && now - c.at < BALANCE.crime.coldMs;
 }
 
 /** Why `a` can't commit `kind` against `t` right now, or null. */
@@ -167,6 +172,8 @@ export function crimeBlock(a: Player, t: Player, kind: CrimeKind, now: number): 
   if (a.dead || t.dead) return "They're not around anymore.";
   if (countryOf(a) !== countryOf(t)) return "They're in another country.";
   if (a.travel || t.travel) return "One of you is on the road.";
+  if (inJail(a, now)) return "You're in a cell.";
+  if (inJail(t, now)) return "They're behind bars.";
   if (inHospital(a, now)) return "You're in the hospital.";
   if (inHospital(t, now)) return "They're in the clinic, behind a security guard.";
   if (now < protectedUntil(t)) return "They're new in town. The street protects newcomers for a while.";
@@ -324,7 +331,7 @@ export function reportSighting(w: Player, c: CaseFile, culprit: Player | null, n
   const s = (w.sightings ?? []).find((x) => x.caseId === c.id);
   if (!s || s.until <= now) throw new GameError("It's too late to report that.");
   w.sightings = (w.sightings ?? []).filter((x) => x.caseId !== c.id);
-  if (!caseOpen(c, now)) return [{ tone: "info", text: "The case already went cold." }];
+  if (caseCold(c, now) || c.trial?.verdict) return [{ tone: "info", text: "The case is already closed." }];
   const tip = addTip(c, "witness", eyeAccuracy(w), now, rng, w.id, "Witness");
   w.reputation += BALANCE.crime.reportRep;
   shiftIntegrity(w, 1);
@@ -347,7 +354,8 @@ export function canReadCases(p: Player): string | null {
 export function investigateBlock(o: Player, c: CaseFile, now: number): string | null {
   if (o.path !== "police" || o.rank < BALANCE.crime.detectiveRank) return "Only detectives can work a scene.";
   if (countryOf(o) !== c.country) return "That case is in another country.";
-  if (!caseOpen(c, now)) return "This case went cold.";
+  if (c.trial) return "Someone has already been arrested for this.";
+  if (caseCold(c, now)) return "This case went cold.";
   if (c.investigatedBy.includes(o.id)) return "You already worked this scene.";
   if (c.culpritId === o.id) return "Better not draw attention to this one.";
   if (o.energy < BALANCE.crime.investigateEnergy) return "You're too tired.";
@@ -367,13 +375,19 @@ export function investigate(o: Player, c: CaseFile, now: number, rng: Rng): Game
 }
 
 /** Players who fit the tips, best match first. Never says who did it. */
-export function suspectsFor(c: CaseFile, people: { player: Player; crewTag: string | null }[]): { name: string; matches: number }[] {
+export interface SuspectMatch {
+  id: string;
+  name: string;
+  matches: number;
+}
+
+export function suspectsFor(c: CaseFile, people: { player: Player; crewTag: string | null }[]): SuspectMatch[] {
   if (c.tips.length < 2) return [];
   return people
     .filter(({ player }) => player.id !== c.victimId && !player.dead)
     .map(({ player, crewTag }) => {
       const prof = suspectProfile(player, crewTag);
-      return { name: player.name, matches: c.tips.filter((t) => prof[t.trait] === t.value).length };
+      return { id: player.id, name: player.name, matches: c.tips.filter((t) => prof[t.trait] === t.value).length };
     })
     .filter((s) => s.matches >= Math.max(2, Math.ceil(c.tips.length / 2)))
     .sort((x, y) => y.matches - x.matches)
@@ -381,7 +395,7 @@ export function suspectsFor(c: CaseFile, people: { player: Player; crewTag: stri
 }
 
 /** What police see. The culprit, the true profile and tip accuracy stay on the server. */
-export function caseView(c: CaseFile, viewer: Player, now: number, suspects?: { name: string; matches: number }[]) {
+export function caseView(c: CaseFile, viewer: Player, now: number, suspects?: SuspectMatch[]) {
   return {
     id: c.id,
     kind: c.kind,
@@ -394,5 +408,6 @@ export function caseView(c: CaseFile, viewer: Player, now: number, suspects?: { 
     tips: c.tips.map((t) => ({ id: t.id, source: t.source, text: t.text, at: t.at })),
     canInvestigate: investigateBlock(viewer, c, now),
     suspects: suspects ?? null,
+    arrested: c.trial ? { suspectName: c.trial.suspectName, officerName: c.trial.officerName } : null,
   };
 }

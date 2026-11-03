@@ -5,6 +5,7 @@ import { toView } from "@/game/view";
 import { parseAction } from "@/server/actions";
 import { assertJson } from "@/server/auth";
 import { resolveIdentity } from "@/server/identity";
+import { settleTrial } from "@/server/justice";
 import { getStore, StoreConfigError } from "@/server/store";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,22 @@ export async function GET() {
       id.playerId ? store.get(id.playerId) : null,
       store.leaderboard(10),
     ]);
+    // Held past the trial deadline with no judge: the court clerk rules now.
+    if (player?.custodyCase && now >= (player.jailUntil ?? 0)) {
+      await settleTrial(store, player.custodyCase, now).catch((e) => console.error(e));
+      player = await store.get(id.playerId!);
+      // Safety net: never hold anyone long past the deadline (e.g. the case record is gone).
+      if (player?.custodyCase && now >= (player.jailUntil ?? 0) + 5 * 60_000) {
+        player = await store.update(id.playerId!, (p) => {
+          if (p) {
+            p.custodyCase = null;
+            p.jailUntil = 0;
+            p.jailReason = null;
+          }
+          return { player: p, result: p };
+        });
+      }
+    }
     const app = player?.application;
     const decisionDue = app?.status === "pending" && now >= app.decideAt;
     const arrivalDue = !!player?.travel && now >= player.travel.arriveAt;

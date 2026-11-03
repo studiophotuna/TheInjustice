@@ -79,6 +79,16 @@ export const BALANCE = {
     detectiveRank: 4,
     investigateEnergy: 10,
   },
+  justice: {
+    /** Suspects are held this long; if no judge rules, the court clerk decides. */
+    trialMs: 30 * 60_000,
+    arrestEnergy: 10,
+    /** Courts rank to argue a case (Junior Attorney) and to sit as judge (Judge). */
+    lawyerRank: 2,
+    judgeRank: 7,
+    sentenceMs: { pickpocket: 10 * 60_000, snatch: 15 * 60_000, mug: 25 * 60_000 },
+    minBribe: 50,
+  },
   chat: { cooldownMs: 3_000, maxLength: 280 },
   banking: {
     /** Bankers' interest per hour on savings (shortened for testing). */

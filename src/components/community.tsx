@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { Ban, Crown, Eye, EyeOff, FileSearch, Footprints, Hand, Inbox, Lock, MessageSquare, Search, Send, Shield, Siren, Swords, UserCheck, Users, Vault } from "lucide-react";
+import { Ban, Crown, Eye, EyeOff, FileSearch, Footprints, Gavel, Hand, Inbox, Lock, MessageSquare, Search, Send, Shield, Siren, Swords, UserCheck, Users, Vault } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 import type { GameApi } from "./useGame";
@@ -40,8 +40,35 @@ type CaseCard = {
   open: boolean;
   tips: { id: string; source: "witness" | "victim" | "bystander" | "detective"; text: string; at: number }[];
   canInvestigate: string | null;
-  suspects: { name: string; matches: number }[] | null;
+  suspects: { id: string; name: string; matches: number }[] | null;
+  arrested: { suspectName: string; officerName: string } | null;
 };
+type TrialCard = {
+  caseId: string;
+  crime: string;
+  district: string;
+  victimName: string;
+  amount: number;
+  suspectName: string;
+  officerName: string;
+  at: number;
+  deadline: number;
+  prosecutor: string | null;
+  defender: string | null;
+  strength: number | null;
+  clues: string[];
+  verdict: "guilty" | "not_guilty" | null;
+  decidedBy: string | null;
+  decidedAt: number | null;
+  sentenceMin: number | null;
+  restitution: number | null;
+  envelope: number;
+  canProsecute: string | null;
+  canDefend: string | null;
+  canJudge: string | null;
+  overdue: boolean;
+};
+type JusticeData = { cases: CaseCard[]; court: TrialCard[]; block: string | null; detective: boolean; lawyer: boolean; judge: boolean };
 type CrewView = {
   id: string;
   name: string;
@@ -535,7 +562,7 @@ const SOURCE_LABEL: Record<CaseCard["tips"][number]["source"], string> = {
 
 function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
   const view = game.view!;
-  const [data, setData] = useState<{ cases: CaseCard[]; block: string | null; detective?: boolean } | null>(null);
+  const [data, setData] = useState<JusticeData | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/community?cases=1", { cache: "no-store" });
@@ -543,8 +570,14 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
   }, []);
 
   useEffect(() => {
-    if (hub?.readsCases) load();
-  }, [hub?.readsCases, load, view.location.country]);
+    load();
+  }, [load, view.location.country]);
+
+  const act = async (body: Record<string, unknown>) => {
+    if (await game.social(body)) load();
+  };
+  const docket = data?.court.filter((t) => !t.verdict) ?? [];
+  const record = data?.court.filter((t) => t.verdict) ?? [];
 
   return (
     <div className="stack">
@@ -555,12 +588,13 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
           <p>You haven&apos;t seen anything lately. When someone gets robbed near you, you&apos;ll decide here whether to report it.</p>
         </section>
       )}
+
       {hub && !hub.readsCases && (
         <section className="card">
           <h3 className="card-title"><FileSearch size={16} /> Case files</h3>
           <p className="muted">
             Only the police can read case files. Every report adds one clue: a body type, how they moved, part of a name,
-            a crew patch. Some clues are wrong. Detectives put them together.
+            a crew patch. Some clues are wrong. Detectives put them together and make arrests.
           </p>
         </section>
       )}
@@ -574,10 +608,10 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
           {data && data.cases.length === 0 && <p className="muted">No open cases. A quiet night in {view.location.city}.</p>}
           <div className="case-list">
             {data?.cases.map((c) => (
-              <article key={c.id} className={`case ${c.open ? "" : "cold"}`}>
+              <article key={c.id} className={`case ${c.open || c.arrested ? "" : "cold"}`}>
                 <header>
                   <b>#{c.id} · {c.crime}</b>
-                  <span className={`chip ${c.open ? "chip-red" : ""}`}>{c.open ? "Open" : "Cold"}</span>
+                  <span className={`chip ${c.open ? "chip-red" : ""}`}>{c.arrested ? "In court" : c.open ? "Open" : "Cold"}</span>
                 </header>
                 <p className="muted">
                   {c.victimName} · {c.district} · {ago(c.at)}{c.amount ? ` · $${c.amount} taken` : ""}
@@ -590,34 +624,142 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
                     </li>
                   ))}
                 </ul>
+                {c.arrested && <p className="fine">Detective {c.arrested.officerName} arrested <b>{c.arrested.suspectName}</b>. The case is in court.</p>}
                 {c.suspects && c.suspects.length > 0 && (
                   <div className="suspects">
                     <span className="crime-label">People who fit</span>
-                    {c.suspects.map((s) => (
-                      <span key={s.name} className="chip">{s.name} · {s.matches}/{c.tips.length}</span>
+                    {c.suspects.map((x) => (
+                      <span key={x.id} className="suspect">
+                        <span className="chip">{x.name} · {x.matches}/{c.tips.length}</span>
+                        <button className="btn btn-danger btn-xs" disabled={game.busy || c.tips.length < 2} onClick={() => act({ op: "arrest", caseId: c.id, suspectId: x.id })}>
+                          <Handcuffs /> Arrest
+                        </button>
+                      </span>
                     ))}
                   </div>
                 )}
-                {data.detective ? (
-                  <button
-                    className="btn btn-primary btn-sm"
-                    disabled={game.busy || !!c.canInvestigate}
-                    title={c.canInvestigate ?? ""}
-                    onClick={async () => {
-                      if (await game.social({ op: "investigate", caseId: c.id })) load();
-                    }}
-                  >
+                {!c.arrested && (data.detective ? (
+                  <button className="btn btn-primary btn-sm" disabled={game.busy || !!c.canInvestigate} title={c.canInvestigate ?? ""} onClick={() => act({ op: "investigate", caseId: c.id })}>
                     <Search size={14} /> Work the scene
                   </button>
                 ) : (
-                  <p className="fine muted">Detectives can work the scene for a reliable clue and see who fits.</p>
-                )}
-                {data.detective && c.canInvestigate && <p className="job-lock"><Lock size={11} /> {c.canInvestigate}</p>}
+                  <p className="fine muted">Detectives can work the scene, see who fits and make arrests.</p>
+                ))}
+                {data.detective && c.canInvestigate && !c.arrested && <p className="job-lock"><Lock size={11} /> {c.canInvestigate}</p>}
               </article>
             ))}
           </div>
         </section>
       )}
+
+      <section className="card courthouse">
+        <h3 className="card-title"><Gavel size={16} /> Courthouse · {view.location.city}</h3>
+        {!data && <p className="muted">Checking the docket…</p>}
+        {data && docket.length === 0 && <p className="muted">No trials today.</p>}
+        {data && !data.lawyer && !data.judge && docket.length > 0 && (
+          <p className="fine muted">Attorneys (Courts, rank 2+) can prosecute or defend. Judges rule. If no judge rules in time, the court clerk decides on the evidence.</p>
+        )}
+        <div className="case-list">
+          {docket.map((t) => (
+            <article key={t.caseId} className="case trial">
+              <header>
+                <b>#{t.caseId} · The city v. {t.suspectName}</b>
+                <span className="chip chip-gold">{t.overdue ? "Verdict due" : `Verdict in ${Math.max(1, Math.round((t.deadline - Date.now()) / 60000))}m`}</span>
+              </header>
+              <p className="muted">{t.crime} on {t.victimName} in {t.district} · arrested by {t.officerName}</p>
+              <ul className="tips">
+                {t.clues.map((x, i) => <li key={i}>{x}</li>)}
+              </ul>
+              <div className="bench">
+                <span><span className="crime-label">Prosecution</span> {t.prosecutor ?? "—"}</span>
+                <span><span className="crime-label">Defense</span> {t.defender ?? "—"}</span>
+              </div>
+              {t.strength !== null && (
+                <div className="strength" title="How likely the case is to hold up">
+                  <span className="crime-label">Case strength</span>
+                  <div className="meter"><span style={{ width: `${t.strength}%` }} /></div>
+                  <b>{t.strength}%</b>
+                </div>
+              )}
+              <div className="row wrap">
+                {data?.lawyer && !data.judge && !t.canProsecute && <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => act({ op: "court_join", caseId: t.caseId, side: "prosecutor" })}>Prosecute</button>}
+                {data?.lawyer && !data.judge && !t.canDefend && <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => act({ op: "court_join", caseId: t.caseId, side: "defender" })}>Defend</button>}
+                {data?.judge && !t.canJudge && (
+                  <>
+                    <button className="btn btn-danger btn-sm" disabled={game.busy} onClick={() => act({ op: "rule", caseId: t.caseId, verdict: "guilty" })}><Gavel size={14} /> Guilty</button>
+                    <button className="btn btn-primary btn-sm" disabled={game.busy} onClick={() => act({ op: "rule", caseId: t.caseId, verdict: "not_guilty" })}>Not guilty</button>
+                    {t.envelope > 0 && (
+                      <button className="btn btn-ghost btn-sm envelope" disabled={game.busy} onClick={() => act({ op: "rule", caseId: t.caseId, takeBribe: true })}>
+                        ✉️ Take the envelope (${t.envelope})
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+              {data?.judge && t.canJudge && <p className="job-lock"><Lock size={11} /> {t.canJudge}</p>}
+            </article>
+          ))}
+        </div>
+        {record.length > 0 && (
+          <>
+            <h4 className="crime-label record-title">Court record</h4>
+            <ul className="log record">
+              {record.map((t) => (
+                <li key={t.caseId} className={t.verdict === "guilty" ? "bad" : "good"}>
+                  #{t.caseId} · {t.suspectName}: <b>{t.verdict === "guilty" ? "guilty" : "not guilty"}</b> of the {t.crime.toLowerCase()} in {t.district}
+                  {t.verdict === "guilty" && t.sentenceMin ? `, ${t.sentenceMin} min` : ""} · {t.decidedBy} · {ago(t.decidedAt ?? t.at)}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </section>
     </div>
+  );
+}
+
+/** Handcuffs icon (two linked rings). */
+function Handcuffs() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <circle cx="6.5" cy="15" r="4.5" />
+      <circle cx="17.5" cy="15" r="4.5" />
+      <path d="M9.5 11.5 12 8l2.5 3.5M12 8V5" />
+    </svg>
+  );
+}
+
+/** Shown while the player is held for trial or serving a sentence. */
+export function JailCard({ game }: { game: GameApi }) {
+  const jail = game.view!.jail;
+  const [amount, setAmount] = useState("100");
+  if (!jail) return null;
+  const left = Math.max(0, jail.until - Date.now());
+  return (
+    <section className="card jail-card">
+      <div className="bars" aria-hidden />
+      <h3 className="card-title"><Lock size={16} /> {jail.custodyCase ? "In custody" : "In a cell"}</h3>
+      <p>{jail.reason}</p>
+      <p className="muted">
+        {jail.custodyCase
+          ? left > 0
+            ? `Trial within ${Math.ceil(left / 60000)} min. A judge rules, or the court clerk decides on the evidence.`
+            : "The verdict is coming."
+          : `Free in ${Math.ceil(left / 60000)} min. No jobs, crimes or travel until then.`}
+      </p>
+      {jail.custodyCase && (
+        <form
+          className="row wrap bribe"
+          onSubmit={(e) => {
+            e.preventDefault();
+            game.social({ op: "bribe", caseId: jail.custodyCase, amount: Number(amount) });
+          }}
+        >
+          <input type="number" min={50} step={10} value={amount} onChange={(e) => setAmount(e.target.value)} aria-label="Envelope amount" />
+          <button className="btn btn-ghost btn-sm" disabled={game.busy}>✉️ Send an envelope to the judge</button>
+          <span className="fine muted">From your bank. Only a judge can take it; otherwise it comes back.</span>
+        </form>
+      )}
+    </section>
   );
 }

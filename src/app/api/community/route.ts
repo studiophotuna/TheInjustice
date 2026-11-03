@@ -34,6 +34,8 @@ import {
   reportSighting,
   suspectsFor,
 } from "@/game/crime";
+import { arrest, isDetective, isJudge, isLawyer, joinTrial, offerBribe, trialView } from "@/game/justice";
+import { settleTrial } from "@/server/justice";
 import { GameError, type Crew, type CrewPolicy, type GameEvent, type Player } from "@/game/types";
 import { toView } from "@/game/view";
 import { assertJson } from "@/server/auth";
@@ -89,21 +91,34 @@ export async function GET(req: Request) {
     tick(p, now);
     const url = new URL(req.url);
     if (url.searchParams.get("cases")) {
-      const block = canReadCases(p);
-      if (block) return NextResponse.json({ cases: [], block });
       const country = countryOf(p);
-      const detective = p.rank >= BALANCE.crime.detectiveRank;
-      const [cases, people, crews] = await Promise.all([
-        store.listCases(country, 20),
-        detective ? store.listPlayers(country, 200) : Promise.resolve([]),
-        detective ? store.listCrews(200) : Promise.resolve([]),
-      ]);
-      const tags = new Map(crews.map((c) => [c.id, c.tag]));
-      const pool = people.filter((o) => o.id !== p.id).map((o) => ({ player: o, crewTag: o.crewId ? tags.get(o.crewId) ?? null : null }));
+      let cases = await store.listCases(country, 40);
+      // Trials nobody ruled on in time are closed by the court clerk.
+      const overdue = cases.filter((c) => c.trial && !c.trial.verdict && now >= c.trial.deadline).slice(0, 3);
+      if (overdue.length) {
+        for (const c of overdue) await settleTrial(store, c.id, now).catch((e) => console.error(e));
+        cases = await store.listCases(country, 40);
+      }
+      const block = canReadCases(p);
+      const detective = isDetective(p);
+      let pool: { player: Player; crewTag: string | null }[] = [];
+      if (detective) {
+        const [people, crews] = await Promise.all([store.listPlayers(country, 200), store.listCrews(200)]);
+        const tags = new Map(crews.map((c) => [c.id, c.tag]));
+        pool = people.filter((o) => o.id !== p.id).map((o) => ({ player: o, crewTag: o.crewId ? tags.get(o.crewId) ?? null : null }));
+      }
       return NextResponse.json({
-        block: null,
+        block,
         detective,
-        cases: cases.map((c) => caseView(c, p, now, detective ? suspectsFor(c, pool) : undefined)),
+        lawyer: isLawyer(p),
+        judge: isJudge(p),
+        cases: block
+          ? []
+          : cases
+              .filter((c) => !c.trial?.verdict)
+              .slice(0, 20)
+              .map((c) => caseView(c, p, now, detective && !c.trial ? suspectsFor(c, pool) : undefined)),
+        court: cases.filter((c) => c.trial).slice(0, 20).map((c) => trialView(c, p, now)),
       });
     }
     const channel = url.searchParams.get("channel");
@@ -287,6 +302,72 @@ export async function POST(req: Request) {
           await tx.putCase(c);
           return out;
         });
+        break;
+      }
+      case "arrest": {
+        const caseId = str(b.caseId);
+        const suspectId = str(b.suspectId);
+        const self = await store.get(playerId);
+        if (!self) throw new GameError("Create a character first.");
+        // Who the detective could have picked: everyone in the country who fits.
+        const [people, crews] = await Promise.all([store.listPlayers(countryOf(self), 200), store.listCrews(200)]);
+        const tags = new Map(crews.map((c) => [c.id, c.tag]));
+        const tagOf = (o: Player) => (o.crewId ? tags.get(o.crewId) ?? null : null);
+        events = await store.transaction(async (tx) => {
+          const c = await tx.getCase(caseId);
+          if (!c) throw new GameError("That case doesn't exist.");
+          const [o, suspect] = await tx.getPlayers([playerId, suspectId]);
+          if (!o) throw new GameError("Create a character first.");
+          if (!suspect) throw new GameError("That player doesn't exist.");
+          tick(o, now);
+          tick(suspect, now);
+          const pool = people.filter((x) => x.id !== o.id).map((x) => ({ player: x, crewTag: tagOf(x) }));
+          const out = arrest(o, suspect, c, pool, tagOf(suspect), now);
+          await tx.putPlayer(o);
+          await tx.putPlayer(suspect);
+          await tx.putCase(c);
+          return out;
+        });
+        break;
+      }
+      case "court_join": {
+        const caseId = str(b.caseId);
+        const side = b.side === "defender" ? "defender" : b.side === "prosecutor" ? "prosecutor" : null;
+        if (!side) throw new GameError("Bad request.");
+        events = await store.transaction(async (tx) => {
+          const c = await tx.getCase(caseId);
+          if (!c?.trial) throw new GameError("There's no trial to join.");
+          const [l, suspect] = await tx.getPlayers([playerId, c.trial.suspectId]);
+          if (!l) throw new GameError("Create a character first.");
+          const out = joinTrial(l, c, side, suspect && suspect.id !== l.id ? suspect : null, now);
+          if (suspect && suspect.id !== l.id) await tx.putPlayer(suspect);
+          await tx.putCase(c);
+          return out;
+        });
+        break;
+      }
+      case "bribe": {
+        const caseId = str(b.caseId);
+        const amount = Number(b.amount);
+        events = await store.transaction(async (tx) => {
+          const c = await tx.getCase(caseId);
+          if (!c) throw new GameError("That case doesn't exist.");
+          const [s] = await tx.getPlayers([playerId]);
+          if (!s) throw new GameError("Create a character first.");
+          tick(s, now);
+          const out = offerBribe(s, c, amount);
+          await tx.putPlayer(s);
+          await tx.putCase(c);
+          return out;
+        });
+        break;
+      }
+      case "rule": {
+        const caseId = str(b.caseId);
+        const takeBribe = b.takeBribe === true;
+        const verdict = b.verdict === "guilty" || b.verdict === "not_guilty" ? b.verdict : undefined;
+        if (!takeBribe && !verdict) throw new GameError("Guilty or not guilty?");
+        events = await settleTrial(store, caseId, now, { judgeId: playerId, verdict, takeBribe });
         break;
       }
       case "vouch": {

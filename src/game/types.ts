@@ -132,6 +132,11 @@ export interface Player {
   crewInvites?: { crewId: string; name: string; tag: string; by: string; at: number }[];
   /** Crimes this player saw and hasn't decided about yet (report or look away). */
   sightings?: Sighting[];
+  /** Locked up (custody or a sentence) until this time. */
+  jailUntil?: number;
+  jailReason?: string | null;
+  /** Case the player is held for while awaiting trial. */
+  custodyCase?: string | null;
 }
 
 // ── Street crime and case files ────────────────────────────────────────────
@@ -178,6 +183,39 @@ export interface CaseFile {
   witnesses: string[];
   /** Officers who already searched the scene. */
   investigatedBy: string[];
+  trial?: Trial;
+}
+
+export interface CourtParty {
+  id: string;
+  name: string;
+  /** 0.3–1: how well they argue. */
+  power: number;
+}
+
+export type Verdict = "guilty" | "not_guilty";
+
+/** Opened by an arrest; closed by a judge or, if none rules in time, the court clerk. */
+export interface Trial {
+  suspectId: string;
+  suspectName: string;
+  officerId: string;
+  officerName: string;
+  at: number;
+  deadline: number;
+  /** Share of the tips that fit the suspect at the time of arrest. */
+  evidence: number;
+  prosecutor?: CourtParty;
+  defender?: CourtParty;
+  /** Money the suspect slipped into an envelope for the judge (held until the verdict). */
+  bribe?: number;
+  verdict?: Verdict;
+  decidedBy?: string;
+  decidedAt?: number;
+  sentenceMs?: number;
+  restitution?: number;
+  /** Server-only: the judge took the envelope. Evidence for internal affairs later. */
+  bribed?: boolean;
 }
 
 export type CrewPolicy = "open" | "request" | "invite";

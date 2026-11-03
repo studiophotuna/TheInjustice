@@ -5,7 +5,7 @@ import { BALANCE } from "./balance";
 import { gutRead, GUT_READS, playerFighter, resolveFight } from "./combat";
 import { PATHS, rankTitle } from "./content/paths";
 import { COUNTRY_BY_ID } from "./content/world";
-import { countryOf, inHospital } from "./engine";
+import { countryOf, inHospital, inJail } from "./engine";
 import { GameError, type Crew, type CrewPolicy, type FightSummary, type GameEvent, type GameEventTone, type Player, type Rng } from "./types";
 
 export function notify(p: Player, text: string, tone: GameEventTone, from?: Player, now = Date.now()) {
@@ -25,6 +25,8 @@ export function attackBlock(a: Player, t: Player, now: number): string | null {
   if (a.dead || t.dead) return "They're not around anymore.";
   if (countryOf(a) !== countryOf(t)) return "They're in another country.";
   if (a.travel || t.travel) return "One of you is on the road.";
+  if (inJail(a, now)) return "You're in a cell.";
+  if (inJail(t, now)) return "They're behind bars.";
   if (inHospital(a, now)) return "You're in the hospital.";
   if (inHospital(t, now)) return "They're already in the hospital. Even you have limits.";
   if (now < protectedUntil(t)) return "They're new in town. The street protects newcomers for a while.";

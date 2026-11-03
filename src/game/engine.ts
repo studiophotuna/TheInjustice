@@ -84,6 +84,11 @@ export function isDead(p: Player): boolean {
   return !!p.dead;
 }
 
+/** In a cell: held for trial or serving a sentence. */
+export function inJail(p: Player, now: number): boolean {
+  return !!p.custodyCase || (p.jailUntil ?? 0) > now;
+}
+
 export function inHospital(p: Player, now: number): boolean {
   return p.hospitalUntil > now;
 }
@@ -91,6 +96,10 @@ export function inHospital(p: Player, now: number): boolean {
 /** Brings timers up to date: energy and hp regen, heat cooling, hospital discharge. */
 export function tick(p: Player, now: number): void {
   const elapsed = Math.max(0, now - p.tickAt);
+  if (p.jailUntil && p.jailUntil <= now && !p.custodyCase) {
+    p.jailUntil = 0;
+    p.jailReason = null;
+  }
   if (p.hospitalUntil && p.hospitalUntil <= now) {
     p.hospitalUntil = 0;
     p.hp = BALANCE.hp.max;
@@ -867,6 +876,7 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng): G
   const blockedOnTheRoad = ["job", "fight", "bank", "buy", "apply", "travel", "enroll", "train"].includes(action.type);
   if (action.type === "train" && inHospital(p, now)) throw new GameError("You're in the hospital. Rest up.");
   if (blockedOnTheRoad && traveling(p)) throw new GameError("You're still on the road. Wait until you arrive.");
+  if (blockedOnTheRoad && inJail(p, now)) throw new GameError(p.custodyCase ? "You're held for trial. Wait for the verdict." : "You're in a cell. Serve your time.");
 
   switch (action.type) {
     case "job":

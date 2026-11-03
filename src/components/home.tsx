@@ -5,7 +5,7 @@ import { ArrowRight, BookOpen, Briefcase, Cross, Inbox, MapPin, Plane, Sparkles,
 import type { CountryId, PathId } from "@/game/types";
 import { PATH_LOOKS } from "./art/Portraits";
 import { Scene, type CharacterKind, type SceneKind } from "./art/Scenes";
-import { Sightings } from "./community";
+import { JailCard, Sightings } from "./community";
 import { DailyCard } from "./tabs";
 import { fmt, type GameApi } from "./useGame";
 
@@ -48,7 +48,9 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
         <p className="eyebrow"><MapPin size={13} /> {view.location.city}, {view.location.countryName}</p>
         <h1 className="home-title">{greeting()}, {view.name}.</h1>
         <p className="home-sub">
-          {view.travel
+          {view.jail
+            ? view.jail.custodyCase ? "Behind bars, waiting for a verdict." : "Behind bars, doing your time."
+            : view.travel
             ? `On the ${view.travel.mode} to ${view.travel.city}.`
             : live.hospital > 0
               ? `Recovering in the clinic for ${fmt(live.hospital)}.`
@@ -58,12 +60,15 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
         </p>
       </Scene>
 
+      <JailCard game={game} />
       <Sightings game={game} compact />
 
       <div className="home-grid">
         <section className="card next-move">
           <h3 className="card-title"><Sparkles size={16} /> Your next move</h3>
-          {view.travel ? (
+          {view.jail ? (
+            <p className="muted">You&apos;re behind bars. Nothing to do but wait{view.jail.custodyCase ? " for the verdict" : ""}.</p>
+          ) : view.travel ? (
             <p><Plane size={14} /> Arriving in {fmt(live.travel)}. Sit tight.</p>
           ) : live.hospital > 0 ? (
             <p><Cross size={14} /> Rest up. Medkits cut the stay in half.</p>

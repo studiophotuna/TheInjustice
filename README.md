@@ -80,8 +80,14 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
     name like "…esk", crew patch) and some clues are wrong. Stand-in bystanders leave tips when
     the streets are empty. The criminal hears that "someone talked", never who.
   - **Case files**: police (Patrol Officer and up) read the city's cases; Detectives can work
-    a scene once for a reliable clue and see which players fit the clues. Arrests and court
-    cases come next.
+    a scene once for a reliable clue, see which players fit the clues, and **arrest** one.
+  - **Courthouse**: an arrest puts the suspect in custody and opens a trial. Attorneys (Courts
+    rank 2+) prosecute or defend, which moves the case strength. A Judge (Courts rank 7+)
+    rules guilty or not guilty; if no judge rules within 30 minutes, the court clerk decides on
+    the evidence. Guilty means jail time (no jobs, crimes or travel) and paying the victim back.
+    Suspects can send the judge an envelope from their bank; a judge who takes it lets them
+    walk and loses integrity. Wrongful convictions are possible, and only the real criminal
+    ever knows. Every verdict goes on the public court record.
   - **Crews**: only street bosses (Mafia at Capo, rank 4, or higher) can found one,
     for $500. The leader picks who can join: **Open** (anyone joins), **On request** (the
     leader approves) or **Invite only** (the leader invites from the People list). Shared
