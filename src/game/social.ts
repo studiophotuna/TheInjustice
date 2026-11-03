@@ -6,6 +6,8 @@ import { gutRead, GUT_READS, playerFighter, resolveFight } from "./combat";
 import { PATHS, rankTitle } from "./content/paths";
 import { COUNTRY_BY_ID } from "./content/world";
 import { countryOf, inHospital, inJail } from "./engine";
+import { bumpSeason } from "./season";
+import { streetTitle } from "./titles";
 import { GameError, type Crew, type CrewPolicy, type FightSummary, type GameEvent, type GameEventTone, type Player, type Rng } from "./types";
 
 export function notify(p: Player, text: string, tone: GameEventTone, from?: Player, now = Date.now()) {
@@ -68,6 +70,7 @@ export function attackPlayer(a: Player, t: Player, now: number, rng: Rng): { eve
     t.cash -= taken;
     a.cash += taken;
     a.reputation += 2;
+    bumpSeason(a, "wins", 1, now);
     t.hp = Math.max(0, t.hp - Math.max(30, t.hp * 0.6));
     if (t.hp <= 0) knockOut(t, now, rng);
     a.hp = res.playerHp;
@@ -115,6 +118,7 @@ export interface PublicProfile {
   read: string;
   danger: number;
   lastSeen: number;
+  streetTitle: string | null;
   online: boolean;
   canAttack: string | null;
   canVouch: string | null;
@@ -142,6 +146,7 @@ export function profileFor(viewer: Player, p: Player, now: number): PublicProfil
     read,
     danger: GUT_READS.indexOf(read as (typeof GUT_READS)[number]),
     lastSeen: p.seenAt ?? p.tickAt,
+    streetTitle: streetTitle(p),
     online: now - (p.seenAt ?? 0) < BALANCE.onlineMs,
     canAttack: attackBlock(viewer, p, now),
     canVouch,

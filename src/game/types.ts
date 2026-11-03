@@ -87,6 +87,8 @@ export interface Player {
   bailAmount?: number;
   /** Last free meal from a city soup kitchen. */
   lastSoupAt?: number;
+  /** This month's counters for the anonymous season leaderboard. */
+  season?: { id: number; earned: number; wins: number; arrests: number };
   /** Last time the player had the game open (for "online now"). */
   seenAt?: number;
   /** Recent repetitions of each job or exercise (fades over time), for diminishing returns. */

@@ -23,6 +23,7 @@ type Profile = {
   canAttack: string | null;
   canVouch: string | null;
   canInvite: boolean;
+  streetTitle: string | null;
   canCrime: Record<CrimeKind, string | null>;
 };
 type CrimeKind = "pickpocket" | "snatch" | "mug";
@@ -282,6 +283,7 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
               </div>
               <p className="muted" style={{ color: p.path ? PATH_LOOKS[p.path]?.rim : undefined }}>
                 {p.title} · ★ {p.reputation} · seen {ago(p.lastSeen)}
+                {p.streetTitle && <em className="street-title"> · {p.streetTitle}</em>}
               </p>
               <div className="gut">
                 <span className={`danger-pill d${p.danger}`}>{DANGER[p.danger]}</span>

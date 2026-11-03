@@ -163,6 +163,7 @@ export function hunt(
       notify(victim, `A masked figure left an envelope at your door: $${restitution}, and a note: "Case #${c.id}. Handled."`, "good", undefined, now);
     }
     v.reputation += 3;
+    v.jobCounts.hunt = (v.jobCounts.hunt ?? 0) + 1;
     v.stats.nerve += 0.5;
     notify(suspect, `A masked vigilante caught you alone and made you pay for the ${crime} in ${c.district}${restitution ? `: $${restitution}` : ""}.`, "bad", undefined, now);
     events.push({ tone: "good", text: `${suspect.name} goes down. ${restitution ? `$${restitution} goes back to ${c.victimName}.` : "Their pockets are empty."}` });

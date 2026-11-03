@@ -1,3 +1,5 @@
+import { cityEvent } from "./events";
+import { streetTitle } from "./titles";
 // The only shape of player data that ever leaves the server.
 // Hidden stats are converted into words here and never included as numbers.
 
@@ -129,6 +131,10 @@ export interface PublicView {
   onBail: string | null;
   /** Nobody can attack or mug you until then (survived a fight). */
   immuneUntil: number;
+  /** What's going on in your city this hour. */
+  event: { name: string; text: string; endsAt: number } | null;
+  /** What the street calls you. */
+  streetTitle: string | null;
   properties: {
     id: string;
     name: string;
@@ -245,6 +251,11 @@ export function toView(p: Player, now: number): PublicView {
         ? { until: p.jailUntil ?? now, reason: p.jailReason ?? "Behind bars.", custodyCase: p.custodyCase ?? null, bail: p.bailAmount ?? 0 }
         : null,
     onBail: p.onBail ?? null,
+    event: (() => {
+      const e = cityEvent(countryOf(p), now);
+      return e ? { name: e.name, text: e.text, endsAt: e.endsAt } : null;
+    })(),
+    streetTitle: streetTitle(p),
     immuneUntil: (p.immuneUntil ?? 0) > now ? p.immuneUntil! : 0,
     sightings: (p.sightings ?? []).filter((s) => s.until > now).map((s) => ({ caseId: s.caseId, text: s.text, until: s.until })),
     properties: PROPERTIES.filter((pr) => pr.country === here || p.properties?.[pr.id]).map((pr) => ({

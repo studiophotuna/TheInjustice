@@ -48,6 +48,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
       <Scene kind={scene} className="home-hero" characters={[{ kind: character, x: 78, scale: 0.95 }]}>
         <p className="eyebrow"><MapPin size={13} /> {view.location.city}, {view.location.countryName}</p>
         <h1 className="home-title">{greeting()}, {view.name}.</h1>
+        {view.streetTitle && <p className="street-title">&ldquo;{view.streetTitle}&rdquo;</p>}
         <p className="home-sub">
           {view.jail
             ? view.jail.custodyCase ? "Behind bars, waiting for a verdict." : "Behind bars, doing your time."
@@ -61,6 +62,12 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
         </p>
       </Scene>
 
+      {view.event && (
+        <section className="card city-event">
+          <b>{view.event.name} in {view.location.city}</b>
+          <span className="muted"> · {view.event.text} Until {new Date(view.event.endsAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}.</span>
+        </section>
+      )}
       <JailCard game={game} />
       <Sightings game={game} compact />
 

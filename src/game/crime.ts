@@ -8,6 +8,7 @@ import { DISTRICTS } from "./content/districts";
 import { COUNTRY_BY_ID } from "./content/world";
 import { addMerit, countryOf, inHospital, inJail, shiftIntegrity } from "./engine";
 import { notify, protectedUntil } from "./social";
+import { cityEvent } from "./events";
 import { DESCRIPTORS, describe, sv } from "./stats";
 import {
   GameError,
@@ -266,7 +267,8 @@ export function commitCrime(
     a.immuneUntil = 0;
     t.immuneUntil = now + BALANCE.pvp.immunityMs;
   }
-  const crack = ctx.crackdown ? BALANCE.city.crackdownHeat : 1;
+  const event = cityEvent(countryOf(a), now);
+  const crack = (ctx.crackdown ? BALANCE.city.crackdownHeat : 1) * (event?.crimeHeat ?? 1);
   a.heat += def.heat * COUNTRY_BY_ID[countryOf(a)].heatMult * crack;
   shiftIntegrity(a, def.integrity);
   a.jobCounts[`crime:${kind}`] = (a.jobCounts[`crime:${kind}`] ?? 0) + 1;
@@ -291,7 +293,7 @@ export function commitCrime(
     a.stats.strength += 0.5;
     a.stats.nerve += 0.4;
   } else {
-    success = rng() < crimeOdds(a, t, kind) * (ctx.crackdown ? BALANCE.city.crackdownOdds : 1);
+    success = rng() < crimeOdds(a, t, kind) * (ctx.crackdown ? BALANCE.city.crackdownOdds : 1) * (event?.crimeOdds ?? 1);
     a.stats.agility += 0.5;
     a.stats.nerve += 0.3;
     if (kind === "pickpocket") a.stats.wits += 0.3;
@@ -348,7 +350,8 @@ export function commitCrime(
   // The victim saw something too, unless it was a clean lift.
   if (kind !== "pickpocket") addTip(c, "victim", eyeAccuracy(t), now, rng, t.id, "Victim");
   // Stand-in bystanders keep quiet streets from being crime-free zones.
-  const minWitnesses = BALANCE.crime.minWitnesses + (ctx.crackdown ? 1 : 0);
+  // In a blackout nobody else sees a thing; in a crackdown there are extra eyes.
+  const minWitnesses = event?.maxWitnesses !== undefined ? 0 : BALANCE.crime.minWitnesses + (ctx.crackdown ? 1 : 0);
   for (let i = ctx.witnesses.length; i < minWitnesses; i++) addTip(c, "bystander", 0.6, now, rng, undefined, pick(BYSTANDERS, rng));
 
   const lost = amount ? `$${amount} gone` : "Nothing taken";
@@ -372,6 +375,7 @@ export function reportSighting(w: Player, c: CaseFile, culprit: Player | null, n
   if (caseCold(c, now) || c.trial?.verdict) return [{ tone: "info", text: "The case is already closed." }];
   const tip = addTip(c, "witness", eyeAccuracy(w), now, rng, w.id, "Witness");
   w.reputation += BALANCE.crime.reportRep;
+  w.jobCounts.report = (w.jobCounts.report ?? 0) + 1;
   shiftIntegrity(w, 1);
   if (culprit && !culprit.dead) {
     notify(culprit, `Word on the street: someone talked to the police about what happened in ${c.district}.`, "bad", undefined, now);

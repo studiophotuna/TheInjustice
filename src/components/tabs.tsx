@@ -445,18 +445,7 @@ export function CityTab({ game, onRead }: { game: GameApi; onRead: (id: string) 
         </div>
       </section>
       <WorldCard game={game} />
-      <section className="card">
-        <h3 className="card-title"><Trophy size={16} /> Most respected in Grayhaven</h3>
-        <ol className="leaders">
-          {game.leaders.map((l, i) => (
-            <li key={i} className={l.name === view.name ? "me" : ""}>
-              <span className={`rank r${i + 1}`}>{i + 1}</span>
-              <span className="leader-name">{l.name}<em>{l.title}</em></span>
-              <b>★ {l.reputation}</b>
-            </li>
-          ))}
-        </ol>
-      </section>
+      <SeasonBoard />
       <section className="card">
         <h3 className="card-title"><Newspaper size={16} /> What happened</h3>
         <ul className="log">
@@ -719,6 +708,48 @@ function GymCard({ game }: { game: GameApi }) {
           </motion.button>
         ))}
       </div>
+    </section>
+  );
+}
+
+type Board = { id: string; label: string; top: { place: number; who: string; value: number }[]; you: { place: number; value: number } | null };
+
+/** This month's leaderboards. Anonymous: a public list of names would put targets on backs. */
+function SeasonBoard() {
+  const [data, setData] = useState<{ season: string; boards: Board[] } | null>(null);
+  const [tab, setTab] = useState(0);
+  useEffect(() => {
+    fetch("/api/season", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setData)
+      .catch(() => undefined);
+  }, []);
+  if (!data) return null;
+  const b = data.boards[tab];
+  const fmtValue = (v: number) => (b.id === "earned" ? `$${v.toLocaleString()}` : v.toLocaleString());
+  return (
+    <section className="card season">
+      <h3 className="card-title"><Trophy size={16} /> Season · {data.season}</h3>
+      <p className="muted fine">No names on this list. Nobody needs a target on their back.</p>
+      <div className="chips-row">
+        {data.boards.map((x, i) => (
+          <button key={x.id} className={`chip-btn ${i === tab ? "on" : ""}`} onClick={() => setTab(i)}>{x.label}</button>
+        ))}
+      </div>
+      {b.top.length === 0 ? (
+        <p className="muted">Nobody on the board yet this month.</p>
+      ) : (
+        <ol className="leaders">
+          {b.top.map((l) => (
+            <li key={l.place} className={l.who === "You" ? "me" : ""}>
+              <span className={`rank r${l.place}`}>{l.place}</span>
+              <span className="leader-name">{l.who}</span>
+              <b>{fmtValue(l.value)}</b>
+            </li>
+          ))}
+        </ol>
+      )}
+      <p className="fine">{b.you ? `Your place: #${b.you.place} (${fmtValue(b.you.value)}).` : "You're not on this board yet."}</p>
     </section>
   );
 }

@@ -7,6 +7,7 @@ import { BALANCE } from "./balance";
 import { CRIMES, caseCold, suspectsFor, type SuspectMatch } from "./crime";
 import { COUNTRY_BY_ID } from "./content/world";
 import { addMerit, countryOf, inJail, shiftIntegrity } from "./engine";
+import { bumpSeason } from "./season";
 import { notify } from "./social";
 import { sv } from "./stats";
 import { GameError, type CaseFile, type CourtParty, type GameEvent, type Player, type Rng, type Trial, type Verdict } from "./types";
@@ -56,6 +57,8 @@ export function arrest(o: Player, suspect: Player, c: CaseFile, pool: { player: 
   if (block) throw new GameError(block);
   const match = eligible.find((s) => s.id === suspect.id)!;
   o.energy -= BALANCE.justice.arrestEnergy;
+  o.jobCounts.arrest = (o.jobCounts.arrest ?? 0) + 1;
+  bumpSeason(o, "arrests", 1, now);
   const deadline = now + BALANCE.justice.trialMs;
   c.trial = {
     suspectId: suspect.id,

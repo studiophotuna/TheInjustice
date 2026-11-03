@@ -12,6 +12,8 @@ import { isGraduation, keyStatAvg, meritNeeded, PATHS } from "./content/paths";
 import { SCHOOL_BY_ID } from "./content/schools";
 import { PROPERTY_BY_ID, PROPERTY_MAX_HOURS } from "./content/properties";
 import { COUNTRY_BY_ID, MODE_BY_ID, tripCost, tripMs } from "./content/world";
+import { cityEvent } from "./events";
+import { bumpSeason } from "./season";
 import { emptyStats, statValue, sv, tierOf, TIER_UP_LINES } from "./stats";
 import {
   GameError,
@@ -582,6 +584,7 @@ function fightNpc(p: Player, npc: NpcDef, now: number, rng: Rng, events: GameEve
     p.cash += loot;
     p.reputation += npc.reputation;
     p.jobCounts["fight:win"] = (p.jobCounts["fight:win"] ?? 0) + 1;
+    bumpSeason(p, "wins", 1, now);
     bumpContract(p, "fights");
     events.push({ tone: "good", text: `You beat the ${npc.name}.${loot ? ` +$${loot}` : ""}` });
   } else if (p.hp <= 0) {
@@ -676,9 +679,11 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
 
   // Crew members get a small bonus: someone always has your back.
   const crewBonus = p.crewId ? 1.05 : 1;
-  let pay = Math.round(randInt(rng, job.pay[0], job.pay[1]) * COUNTRY_BY_ID[countryOf(p)].payMult * crewBonus);
+  const event = cityEvent(countryOf(p), now);
+  let pay = Math.round(randInt(rng, job.pay[0], job.pay[1]) * COUNTRY_BY_ID[countryOf(p)].payMult * crewBonus * (event?.payMult ?? 1));
   if (job.payStat) pay = Math.round(pay * (1 + (sv(p, job.payStat) - 10) / 40));
   const { net, tax } = withholdTax(p, countryOf(p), pay, ctx);
+  bumpSeason(p, "earned", net, now);
   p.cash += net;
   p.heat += (job.heat ?? 0) * COUNTRY_BY_ID[countryOf(p)].heatMult;
   p.reputation += job.reputation ?? 0;

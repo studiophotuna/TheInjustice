@@ -1,3 +1,4 @@
+import { cityEvent } from "@/game/events";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { countryOf, inJail, tick } from "@/game/engine";
@@ -255,7 +256,7 @@ export async function GET(req: Request) {
           return {
             id: o.id,
             name: o.name,
-            title: prof.title,
+            title: prof.streetTitle ?? prof.title,
             path: o.path,
             crewTag: o.crewId ? tags.get(o.crewId) ?? null : null,
             status: prof.status,
@@ -388,7 +389,7 @@ export async function POST(req: Request) {
         const nearby = (await store.listPlayers(country, 40))
           .filter((o) => o.id !== playerId && o.id !== target && !o.dead && !o.travel && now - o.tickAt < BALANCE.crime.witnessWindowMs)
           .sort(() => Math.random() - 0.5)
-          .slice(0, BALANCE.crime.maxWitnesses)
+          .slice(0, Math.min(BALANCE.crime.maxWitnesses, cityEvent(country, now)?.maxWitnesses ?? 99))
           .map((o) => o.id);
         const crewTag = self.crewId ? (await store.getCrew(self.crewId))?.tag ?? null : null;
         const city = await store.getCity(country);

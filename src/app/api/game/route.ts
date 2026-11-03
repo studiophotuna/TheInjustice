@@ -24,10 +24,9 @@ export async function GET() {
     const id = await resolveIdentity(false);
     const now = Date.now();
     const store = getStore();
-    let [player, leaderboard] = await Promise.all([
-      id.playerId ? store.get(id.playerId) : null,
-      store.leaderboard(10),
-    ]);
+    // The named reputation leaderboard is gone: a public list of names puts targets on backs.
+    // Anonymous season boards live at /api/season.
+    let player = id.playerId ? await store.get(id.playerId) : null;
     // Held past the trial deadline with no judge: the court clerk rules now.
     if (player?.onBail) {
       // Out on bail: the verdict comes when the trial's time is up.
@@ -72,7 +71,7 @@ export async function GET() {
     return NextResponse.json({
       view: player ? toView(player, now) : null,
       account: id.account ? { username: id.account.username } : null,
-      leaderboard,
+      leaderboard: [],
     });
   } catch (e) {
     return failure(e);
