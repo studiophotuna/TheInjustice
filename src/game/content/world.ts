@@ -24,6 +24,8 @@ export interface CountryDef {
   plannedSchools: { name: string; career: string }[];
   /** Shown when a new character chooses to start here. */
   startStory: string;
+  /** What a new player can expect here: "best for", schools, risks, money. */
+  expect: { good: string; schools: string; risk: string; money: string };
 }
 
 export const COUNTRIES: CountryDef[] = [
@@ -41,6 +43,7 @@ export const COUNTRIES: CountryDef[] = [
     priceMult: 1,
     plannedSchools: [],
     startStory: "You stay where they framed you. Grayhaven owes you answers.",
+    expect: { good: "Every career starts here. Best all-round first city.", schools: "Police Academy, School of Law, St. Brigid's (Medicine)", risk: "Muggers in the Gutter, the Mafia runs Iron Row", money: "Normal pay, normal prices" },
   },
   {
     id: "solmarra",
@@ -56,6 +59,7 @@ export const COUNTRIES: CountryDef[] = [
     priceMult: 1.2,
     plannedSchools: [],
     startStory: "You spend your last coins on a ferry south. If you're going to be broke, be broke in the sun.",
+    expect: { good: "Banking and street hustles. Crime draws little heat.", schools: "Solace Institute of Finance (Banking)", risk: "Casino sharks and pickpockets on the Boardwalk", money: "Pay +10%, prices +20%" },
   },
   {
     id: "kestrova",
@@ -71,6 +75,7 @@ export const COUNTRIES: CountryDef[] = [
     priceMult: 0.85,
     plannedSchools: [{ name: "Ironmoor Military Academy", career: "Military" }],
     startStory: "You ride a freight car north to Ironmoor. Nobody there knows your face, and they watch every face.",
+    expect: { good: "Honest work and the Police. Hard mode for criminals.", schools: "State Police College", risk: "Crime draws 60% more heat, cold nights in the Rail Yards", money: "Pay −5%, cheapest prices" },
   },
   {
     id: "meridian",
@@ -89,6 +94,7 @@ export const COUNTRIES: CountryDef[] = [
       { name: "Halcyon Tech Institute", career: "Hacking & security" },
     ],
     startStory: "You stow away on a cargo plane to Halcyon. Down in the Undercity, the towers block out the sky.",
+    expect: { good: "Big money for Medicine and anyone who can afford it.", schools: "Halcyon University of Medicine", risk: "Street crime is punished hard, rent is brutal", money: "Pay +30%, prices +50%" },
   },
 ];
 

@@ -68,9 +68,10 @@ export const PATHS: Record<PathId, PathDef> = {
   },
   enforcer: {
     id: "enforcer",
-    name: "Enforcer",
+    name: "Mafia",
     side: "street",
-    ranks: ["Muscle", "Collector", "Enforcer", "Crew Chief", "Fixer", "Lieutenant", "Underboss", "Boss of Iron Row"],
+    // The family ladder: hang-around, sworn in, run a crew, advise, second in command, the top.
+    ranks: ["Associate", "Soldier", "Made Man", "Capo", "Consigliere", "Underboss", "Boss", "Don"],
     keyStats: ["strength", "nerve", "toughness"],
     promotionThresholds: [20, 27, 34, 42, 50, 59, 68],
     jobsPerRank: 10,

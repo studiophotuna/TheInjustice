@@ -137,7 +137,7 @@ export const CHAPTERS: Chapter[] = [
   // ── Enforcer ──────────────────────────────────────────────────
   {
     id: "enforcer_2",
-    title: "Enforcer · Tribute",
+    title: "Mafia · Tribute",
     teaser: "Even Kozak answers to someone.",
     panels: [
       {
@@ -156,7 +156,7 @@ export const CHAPTERS: Chapter[] = [
   },
   {
     id: "enforcer_3",
-    title: "Enforcer · Paid in Full",
+    title: "Mafia · Paid in Full",
     teaser: "Kozak keeps a book of everyone who owes.",
     panels: [
       {

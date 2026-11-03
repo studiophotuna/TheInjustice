@@ -172,16 +172,16 @@ describe("properties", () => {
 });
 
 describe("crew founding and join policies", () => {
-  it("only Enforcers at Crew Chief or above can found a crew", () => {
+  it("only Mafia Capos or above can found a crew", () => {
     const p = createPlayer("p", "Founder", T0);
     p.cash = 1000;
-    expect(crewFoundBlock(p)).toMatch(/Crew Chief/);
+    expect(crewFoundBlock(p)).toMatch(/Capo/);
     p.path = "police";
     p.rank = 8;
     expect(() => createCrew(p, "c", "Blue Line", "BL", T0)).toThrow(/street bosses/);
     p.path = "enforcer";
     p.rank = 3;
-    expect(() => createCrew(p, "c", "Iron", "IR", T0)).toThrow(/Crew Chief/);
+    expect(() => createCrew(p, "c", "Iron", "IR", T0)).toThrow(/Capo/);
     p.rank = 4;
     expect(createCrew(p, "c", "Iron", "IR", T0, "open").policy).toBe("open");
   });

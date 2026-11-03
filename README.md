@@ -55,7 +55,7 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
   Halloway School of Law. Pay tuition from the bank, or get vouched for by a contact for
   free; the dean reviews every application. Rank 1 is the student rank, rank 2 is graduation.
 - Six career paths with **8 ranks** each: **Police**, **Courts** and **Vigilante** (law),
-  **Medicine**, **Banking**, and **Enforcer** (street). Each has a contact who approaches you when your hidden stats and
+  **Medicine**, **Banking**, and **Mafia** (street: Associate, Soldier, Made Man, Capo, Consigliere, Underboss, Boss, Don). Each has a contact who approaches you when your hidden stats and
   habits fit, its own jobs, and a corrupt option that quietly lowers Integrity.
 - **Four countries, all open**: choose where to live when you create your character —
   Grayhaven (Varrow), Port Solace (Solmarra), Ironmoor (Kestrova) or Halcyon (Meridian).
@@ -74,7 +74,7 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
     can't bully much weaker players, and there's a cooldown per target. Revenge in one tap.
   - **Players vouch for players**: rank 5+ in a school career can vouch once a day; the dean
     still decides.
-  - **Crews**: only street bosses (Enforcer at Crew Chief, rank 4, or higher) can found one,
+  - **Crews**: only street bosses (Mafia at Capo, rank 4, or higher) can found one,
     for $500. The leader picks who can join: **Open** (anyone joins), **On request** (the
     leader approves) or **Invite only** (the leader invites from the People list). Shared
     vault, crew chat, +5% job pay.

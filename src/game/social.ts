@@ -154,7 +154,7 @@ export function validateCrew(name: unknown, tag: unknown): { name: string; tag: 
 export function crewFoundBlock(p: Player): string | null {
   const { path, minRank } = BALANCE.crew;
   if (p.path !== path || p.rank < minRank) {
-    return `Only street bosses found crews: reach ${PATHS[path].ranks[minRank - 1]} as an ${PATHS[path].name}.`;
+    return `Only street bosses found crews: reach ${PATHS[path].ranks[minRank - 1]} in the ${PATHS[path].name}.`;
   }
   if (p.crewId) return "Leave your crew first.";
   return null;

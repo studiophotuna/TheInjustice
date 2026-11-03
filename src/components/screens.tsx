@@ -123,7 +123,16 @@ function NameForm({ game, label = "Start" }: { game: GameApi; label?: string }) 
             </button>
           ))}
         </div>
-        <p className="fine country-story">{chosen.startStory} <em>{chosen.laws}</em></p>
+        <div className="country-story" style={{ ["--path" as string]: chosen.color }}>
+          <p className="fine">{chosen.startStory}</p>
+          <dl className="expect">
+            <dt>Good for</dt><dd>{chosen.expect.good}</dd>
+            <dt>Schools</dt><dd>{chosen.expect.schools}</dd>
+            <dt>Watch out</dt><dd>{chosen.expect.risk}</dd>
+            <dt>Money</dt><dd>{chosen.expect.money}</dd>
+            <dt>Law</dt><dd>{chosen.laws}</dd>
+          </dl>
+        </div>
       </div>
       <button className="btn btn-primary btn-lg" disabled={game.busy || name.trim().length < 2}>
         {label} <ArrowRight size={18} />

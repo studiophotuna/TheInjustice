@@ -66,7 +66,7 @@ import { NpcPortrait, PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 /** Vague hints only: what kind of person each contact is looking for. */
 const CAREER_HINTS = [
   { id: "vigilante", name: "Vigilante", side: "Law", contact: "silas", hint: "Look out for the people of Southside, and keep your conscience clean." },
-  { id: "enforcer", name: "Enforcer", side: "Street", contact: "kozak", hint: "Do muscle work for shady people. Win some fights." },
+  { id: "enforcer", name: "Mafia", side: "Street", contact: "kozak", hint: "Do muscle work for shady people. Win some fights." },
 ];
 import { AuthForm } from "./screens";
 import { fmt, type GameApi } from "./useGame";
