@@ -160,6 +160,12 @@ export interface Player {
   pendingDeposit?: { caseId: string; amount: number; at: number } | null;
   /** Protection money owed to the crew that runs the district where you just worked. */
   turfOwed?: { crewId: string; amount: number } | null;
+  /** A lawyer on retainer defends this player automatically if they're arrested. */
+  retainer?: { lawyerId: string; name: string; power: number; until: number } | null;
+  /** Doctors: taking back-alley patients. */
+  backAlley?: boolean;
+  /** Server-only: off-the-books treatments (internal affairs can find them). */
+  offBooks?: { at: number; amount: number; exposed?: boolean }[];
   /** Bounties on this player's head; whoever beats them in a fight collects. */
   bounties?: { byId: string; byName: string; amount: number; at: number }[];
   /** City tax withheld from this player's pay, waiting to reach the city treasury. */
@@ -219,6 +225,8 @@ export interface CaseFile {
   deposit?: { amount: number; at: number; account: string; review?: "reported" | "buried"; reviewerName?: string; reviewerId?: string };
   /** A vigilante went after a suspect on a cold case. */
   hunt?: { hunterId: string; hunterName: string; suspectId: string; suspectName: string; won: boolean; at: number; restitution: number };
+  /** Homes searched with a warrant for this case. */
+  searches?: { searcherId: string; suspectId: string; suspectName: string; found: boolean; at: number }[];
   /** City hall put the witnesses under police protection: nobody can lean on them. */
   protectedBy?: { name: string; at: number };
   /** The criminal's crew leaned on the witnesses (once per case). */

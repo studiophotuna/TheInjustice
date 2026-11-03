@@ -1,7 +1,7 @@
 import { cityEvent } from "@/game/events";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
-import { countryOf, inJail, tick } from "@/game/engine";
+import { countryOf, inHospital, inJail, tick } from "@/game/engine";
 import { BALANCE } from "@/game/balance";
 import {
   acceptJoin,
@@ -38,7 +38,8 @@ import {
   reportSighting,
   suspectsFor,
 } from "@/game/crime";
-import { arrest, isDetective, isJudge, isLawyer, joinTrial, offerBribe, postBail, trialView } from "@/game/justice";
+import { arrest, isDetective, isJudge, isLawyer, joinTrial, lawyerPower, offerBribe, postBail, trialView } from "@/game/justice";
+import { backAlleyFee, backAlleyTreat, hireLawyer, retainerFee, searchHome, setBackAlley } from "@/game/batch3";
 import { settleTrial } from "@/server/justice";
 import {
   answerPayoff,
@@ -244,6 +245,15 @@ export async function GET(req: Request) {
         });
       return NextResponse.json({ inmates, open: true, channel: yardChannel(p) });
     }
+    if (url.searchParams.get("backalley")) {
+      // Doctors in this city who'll patch you up off the books (only shown to patients).
+      if (!inHospital(p, now)) return NextResponse.json({ doctors: [] });
+      const doctors = (await store.listPlayers(countryOf(p), 200))
+        .filter((o) => o.id !== p.id && o.backAlley && !o.dead && !inJail(o, now))
+        .slice(0, 10)
+        .map((o) => ({ id: o.id, name: o.name, fee: backAlleyFee(o) }));
+      return NextResponse.json({ doctors });
+    }
     if (url.searchParams.get("online")) {
       // Players in this city with the game open right now, with quick actions.
       const [people, crews] = await Promise.all([store.listPlayers(countryOf(p), 80), store.listCrews(200)]);
@@ -294,8 +304,9 @@ export async function GET(req: Request) {
           tick(o, now);
           const prof = profileFor(p, o, now);
           const canInvite = !!leading && !o.crewId && !(leading.invites ?? []).some((i) => i.id === o.id);
+          const lawyerFee = o.path === "courts" && o.rank >= BALANCE.justice.lawyerRank ? retainerFee(o) : null;
           const canCrime = Object.fromEntries(CRIME_KINDS.map((k) => [k, crimeBlock(p, o, k, now)]));
-          return { ...prof, crewTag: prof.crewId ? crewTags.get(prof.crewId) ?? null : null, canInvite, canCrime };
+          return { ...prof, crewTag: prof.crewId ? crewTags.get(prof.crewId) ?? null : null, canInvite, canCrime, lawyerFee };
         }),
       invites: p.crewInvites ?? [],
       foundBlock: crewFoundBlock(p),
@@ -456,6 +467,47 @@ export async function POST(req: Request) {
           await tx.putCase(c);
           return out;
         });
+        break;
+      }
+      case "search_home": {
+        const caseId = str(b.caseId);
+        const suspectId = str(b.suspectId);
+        const self = await store.get(playerId);
+        if (!self) throw new GameError("Create a character first.");
+        const [people, crews] = await Promise.all([store.listPlayers(countryOf(self), 200), store.listCrews(200)]);
+        const tags = new Map(crews.map((c) => [c.id, c.tag]));
+        const tagOf = (o: Player) => (o.crewId ? tags.get(o.crewId) ?? null : null);
+        events = await store.transaction(async (tx) => {
+          const c = await tx.getCase(caseId);
+          if (!c) throw new GameError("That case doesn't exist.");
+          const [o, suspect] = await tx.getPlayers([playerId, suspectId]);
+          if (!o) throw new GameError("Create a character first.");
+          if (!suspect) throw new GameError("That player doesn't exist.");
+          tick(o, now);
+          const pool = people.filter((x) => x.id !== o.id).map((x) => ({ player: x, crewTag: tagOf(x) }));
+          const out = searchHome(o, suspect, c, pool, tagOf(suspect), now, Math.random);
+          await tx.putPlayer(o);
+          await tx.putPlayer(suspect);
+          await tx.putCase(c);
+          return out;
+        });
+        break;
+      }
+      case "hire_lawyer": {
+        const lawyerId = str(b.lawyerId);
+        events = await store.transaction((tx) => withPair(tx, playerId, lawyerId, now, (client, lawyer) => hireLawyer(client, lawyer, now, lawyerPower(lawyer))));
+        break;
+      }
+      case "back_alley_toggle": {
+        events = await store.update(playerId, (p) => {
+          if (!p) throw new GameError("Create a character first.");
+          return { player: p, result: setBackAlley(p, b.open === true) };
+        });
+        break;
+      }
+      case "back_alley": {
+        const doctorId = str(b.doctorId);
+        events = await store.transaction((tx) => withPair(tx, playerId, doctorId, now, (patient, doctor) => backAlleyTreat(patient, doctor, now)));
         break;
       }
       case "arrest": {

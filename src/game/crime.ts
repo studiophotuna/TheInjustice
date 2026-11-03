@@ -452,6 +452,8 @@ export function caseView(c: CaseFile, viewer: Player, now: number, suspects?: Su
     suspects: suspects ?? null,
     arrested: c.trial ? { suspectName: c.trial.suspectName, officerName: c.trial.officerName } : null,
     witnessStatements: c.tips.filter((t) => t.source === "witness" && t.byId).length,
+    searches: (c.searches ?? []).map((s) => ({ name: s.suspectName, found: s.found })),
+    searchedByYou: !!c.searches?.some((s) => s.searcherId === viewer.id),
     protectedBy: c.protectedBy?.name ?? null,
   };
 }

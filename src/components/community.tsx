@@ -26,6 +26,7 @@ type Profile = {
   streetTitle: string | null;
   canCrime: Record<CrimeKind, string | null>;
   bounty: number;
+  lawyerFee: number | null;
 };
 type CrimeKind = "pickpocket" | "snatch" | "mug";
 const CRIME_BUTTONS: { id: CrimeKind; label: string; Icon: typeof Hand; note: string }[] = [
@@ -47,6 +48,8 @@ type CaseCard = {
   arrested: { suspectName: string; officerName: string } | null;
   witnessStatements: number;
   protectedBy: string | null;
+  searches: { name: string; found: boolean }[];
+  searchedByYou: boolean;
 };
 type TrialCard = {
   caseId: string;
@@ -298,6 +301,11 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
                 {!p.canVouch && (
                   <button className="btn btn-primary btn-sm" disabled={game.busy} onClick={() => social({ op: "vouch", targetId: p.id })}>
                     <UserCheck size={14} /> Vouch
+                  </button>
+                )}
+                {p.lawyerFee !== null && (
+                  <button className="btn btn-ghost btn-sm" disabled={game.busy} title="A week on retainer: if you're arrested, they defend you automatically" onClick={() => social({ op: "hire_lawyer", lawyerId: p.id })}>
+                    Hire as lawyer (${p.lawyerFee}/wk)
                   </button>
                 )}
                 {p.canInvite && (
@@ -867,6 +875,9 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
                   ))}
                 </ul>
                 {c.arrested && <p className="fine">Detective {c.arrested.officerName} arrested <b>{c.arrested.suspectName}</b>. The case is in court.</p>}
+                {c.searches.map((s, i) => (
+                  <p key={i} className="fine">Warrant served on {s.name}: {s.found ? <b>stolen goods found</b> : "nothing found"}.</p>
+                ))}
                 {c.protectedBy ? (
                   <p className="fine"><ShieldCheck size={12} /> Witnesses under police protection (ordered by {c.protectedBy}).</p>
                 ) : data.canProtect && c.open && c.witnessStatements > 0 ? (
@@ -880,6 +891,11 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
                     {c.suspects.map((x) => (
                       <span key={x.id} className="suspect">
                         <span className="chip">{x.name} · {x.matches}/{c.tips.length}</span>
+                        {!c.searchedByYou && (
+                          <button className="btn btn-ghost btn-xs" disabled={game.busy || c.tips.length < 2} title="Search their home with a warrant" onClick={() => act({ op: "search_home", caseId: c.id, suspectId: x.id })}>
+                            <Search size={11} /> Search
+                          </button>
+                        )}
                         <button className="btn btn-danger btn-xs" disabled={game.busy || c.tips.length < 2} onClick={() => act({ op: "arrest", caseId: c.id, suspectId: x.id })}>
                           <Handcuffs /> Arrest
                         </button>
@@ -1197,5 +1213,35 @@ function Yard({ game, hub, social }: { game: GameApi; hub: Hub | null; social: (
 
       {hub && channel && hub.channels.includes(channel) && <Chat game={game} hub={hub} initial={channel} />}
     </div>
+  );
+}
+
+/** Patients in the clinic can pay a doctor to walk out today, no paperwork. */
+export function BackAlleyCard({ game }: { game: GameApi }) {
+  const [doctors, setDoctors] = useState<{ id: string; name: string; fee: number }[]>([]);
+  const inClinic = (game.view?.hospitalMs ?? 0) > 0;
+  useEffect(() => {
+    if (!inClinic) return;
+    fetch("/api/community?backalley=1", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : { doctors: [] }))
+      .then((d) => setDoctors(d.doctors ?? []))
+      .catch(() => undefined);
+  }, [inClinic]);
+  if (!inClinic || doctors.length === 0) return null;
+  return (
+    <section className="card back-alley">
+      <h3 className="card-title">🩹 A quiet word in the clinic</h3>
+      <p className="muted">Some doctors will get you out of here today. Cash, no questions, no paperwork.</p>
+      <ul className="officials">
+        {doctors.map((d) => (
+          <li key={d.id}>
+            <span><b>Dr. {d.name}</b></span>
+            <button className="btn btn-ghost btn-xs" disabled={game.busy || game.view!.cash < d.fee} onClick={() => game.social({ op: "back_alley", doctorId: d.id })}>
+              Pay ${d.fee}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

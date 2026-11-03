@@ -56,6 +56,7 @@ export function arrest(o: Player, suspect: Player, c: CaseFile, pool: { player: 
   const block = arrestBlock(o, c, suspect, eligible, now);
   if (block) throw new GameError(block);
   const match = eligible.find((s) => s.id === suspect.id)!;
+  const searched = c.searches?.some((s) => s.suspectId === suspect.id && s.found);
   o.energy -= BALANCE.justice.arrestEnergy;
   o.jobCounts.arrest = (o.jobCounts.arrest ?? 0) + 1;
   bumpSeason(o, "arrests", 1, now);
@@ -67,8 +68,13 @@ export function arrest(o: Player, suspect: Player, c: CaseFile, pool: { player: 
     officerName: o.name,
     at: now,
     deadline,
-    evidence: match.matches / c.tips.length,
+    // Stolen goods found with a warrant make the case airtight.
+    evidence: searched ? 1 : match.matches / c.tips.length,
   };
+  // A lawyer on retainer takes the defense right away.
+  if (suspect.retainer && suspect.retainer.until > now && suspect.retainer.lawyerId !== o.id) {
+    c.trial.defender = { id: suspect.retainer.lawyerId, name: suspect.retainer.name, power: suspect.retainer.power };
+  }
   suspect.custodyCase = c.id;
   suspect.jailUntil = deadline;
   suspect.bailAmount = bailFor(c);

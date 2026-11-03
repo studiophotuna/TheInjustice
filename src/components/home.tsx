@@ -5,7 +5,7 @@ import { ArrowRight, BookOpen, Briefcase, Cross, Inbox, MapPin, Plane, Sparkles,
 import type { CountryId, PathId } from "@/game/types";
 import { PATH_LOOKS } from "./art/Portraits";
 import { Scene, type CharacterKind, type SceneKind } from "./art/Scenes";
-import { JailCard, Sightings } from "./community";
+import { BackAlleyCard, JailCard, Sightings } from "./community";
 import { OnlineNow } from "./online";
 import { DailyCard } from "./tabs";
 import { fmt, type GameApi } from "./useGame";
@@ -69,6 +69,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
         </section>
       )}
       <JailCard game={game} />
+      <BackAlleyCard game={game} />
       <Sightings game={game} compact />
 
       <div className="home-grid">

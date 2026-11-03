@@ -343,6 +343,17 @@ export function ProfileTab({ game }: { game: GameApi }) {
           </div>
           <CareerLadder ranks={view.ladder.ranks} current={view.ladder.current} graduation={view.ladder.graduationRank} color={PATH_LOOKS[view.path.id].rim} />
           {view.path.promotion && <p className="muted">{view.path.promotion}</p>}
+          {view.path.id === "medicine" && (
+            <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.social({ op: "back_alley_toggle", open: !view.backAlley })}>
+              {view.backAlley ? "Stop taking back-alley patients" : "Take back-alley patients (cash, no paperwork)"}
+            </button>
+          )}
+        </section>
+      )}
+
+      {view.retainer && (
+        <section className="card">
+          <p className="fine">⚖️ {view.retainer.name} is your lawyer on retainer until {new Date(view.retainer.until).toLocaleDateString()}. If you're arrested, they defend you.</p>
         </section>
       )}
 

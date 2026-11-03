@@ -156,7 +156,8 @@ export function isOfficial(p: Player): boolean {
   return (
     (p.path === "police" && p.rank >= 2) ||
     (p.path === "courts" && p.rank >= BALANCE.justice.judgeRank) ||
-    (p.path === "banking" && p.rank >= BALANCE.casework.bank.minRank)
+    (p.path === "banking" && p.rank >= BALANCE.casework.bank.minRank) ||
+    (p.path === "medicine" && p.rank >= BALANCE.casework.clinic.minRank)
   );
 }
 
@@ -199,13 +200,18 @@ export function audit(
 
   const found = cases.map((c) => ({ c, hit: corruptionIn(c, target.id) })).filter((x) => x.hit);
   const skims = city ? city.skims.filter((x) => x.mayorId === target.id && !x.exposed) : [];
+  // Doctors' secret ledger of back-alley patients counts like a skim.
+  const offBooks = (target.offBooks ?? []).filter((x) => !x.exposed);
   const skimmed = skims.reduce((s, x) => s + x.amount, 0);
-  if (!found.length && !skims.length) {
+  const backAlley = offBooks.reduce((s, x) => s + x.amount, 0);
+  if (!found.length && !skims.length && !offBooks.length) {
     target.reputation += 1;
     notify(target, "Internal affairs went through your files. They found nothing. +1 reputation.", "good", undefined, now);
     return { events: [{ tone: "info", text: `${target.name} comes up clean. Or careful.` }], changed: [], cityChanged: false };
   }
-  const total = found.reduce((s, x) => s + x.hit!.amount, 0) + skimmed;
+  const total = found.reduce((s, x) => s + x.hit!.amount, 0) + skimmed + backAlley;
+  for (const x of offBooks) x.exposed = true;
+  if (offBooks.length) target.backAlley = false;
   const fine = Math.min(target.cash + target.bank, total * 2);
   const fromCash = Math.min(target.cash, fine);
   target.cash -= fromCash;
@@ -225,10 +231,14 @@ export function audit(
     if (city.mayor?.id === target.id) city.mayor = null;
     city.log = [{ at: now, text: `Internal affairs caught Mayor ${target.name} skimming $${skimmed} from the treasury. City hall is empty until the next vote.` }, ...city.log].slice(0, 20);
   }
-  const hits = found.length + (skims.length ? 1 : 0);
+  const hits = found.length + (skims.length ? 1 : 0) + (offBooks.length ? 1 : 0);
   a.reputation += Math.min(10, 5 * hits);
   addMerit(a, "police", 3 * hits);
-  const ids = [...found.map((x) => `#${x.c.id}`), ...(skimmed ? ["the city treasury"] : [])].join(", ");
+  const ids = [
+    ...found.map((x) => `#${x.c.id}`),
+    ...(skimmed ? ["the city treasury"] : []),
+    ...(offBooks.length ? [`${offBooks.length} back-alley patient${offBooks.length > 1 ? "s" : ""}`] : []),
+  ].join(", ");
   notify(
     target,
     `Internal affairs caught you (${ids}). Fined $${fine}${target.path ? `, demoted to ${PATHS[target.path].ranks[target.rank - 1]}` : ""}${skimmed ? ", removed from office" : ""}, and held for ${Math.round(R.audit.jailMs / 60_000)} minutes.`,

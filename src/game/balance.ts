@@ -83,6 +83,12 @@ export const BALANCE = {
     heat: 6,
     damage: 25,
   },
+  /** Search warrants: a detective searches a suspect's home once per case. */
+  search: { energy: 15, missChance: 0.2 },
+  /** Lawyers on retainer: a week of defense, paid up front. */
+  retainer: { base: 100, perRank: 20, weekMs: 7 * 24 * 60 * 60_000 },
+  /** Doctors' back-alley treatment: cash, no paperwork. */
+  backAlley: { base: 50, perRank: 10 },
   /** Bounties on other players: posted from the bank, collected by beating the target. */
   bounty: { min: 100 },
   /** Bail = the stolen amount × this, at least `min`; refunded to whoever paid at the verdict. */

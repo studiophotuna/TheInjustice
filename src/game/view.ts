@@ -135,6 +135,10 @@ export interface PublicView {
   event: { name: string; text: string; endsAt: number } | null;
   /** What the street calls you. */
   streetTitle: string | null;
+  /** Your lawyer on retainer, if any. */
+  retainer: { name: string; until: number } | null;
+  /** Doctors: taking back-alley patients. */
+  backAlley: boolean;
   properties: {
     id: string;
     name: string;
@@ -256,6 +260,8 @@ export function toView(p: Player, now: number): PublicView {
       return e ? { name: e.name, text: e.text, endsAt: e.endsAt } : null;
     })(),
     streetTitle: streetTitle(p),
+    retainer: p.retainer && p.retainer.until > now ? { name: p.retainer.name, until: p.retainer.until } : null,
+    backAlley: !!p.backAlley,
     immuneUntil: (p.immuneUntil ?? 0) > now ? p.immuneUntil! : 0,
     sightings: (p.sightings ?? []).filter((s) => s.until > now).map((s) => ({ caseId: s.caseId, text: s.text, until: s.until })),
     properties: PROPERTIES.filter((pr) => pr.country === here || p.properties?.[pr.id]).map((pr) => ({
