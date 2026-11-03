@@ -33,6 +33,7 @@ export function intimidateBlock(m: Player, c: CaseFile, now: number): string | n
   if (c.trial) return "It's in court now. Too late to scare anyone.";
   if (!stillOpen(c, now)) return "That case is closed.";
   if (c.intimidatedAt) return "You already sent the message.";
+  if (c.protectedBy) return "The witnesses are under police protection. Nobody can get near them.";
   if (!c.tips.some((t) => t.source === "witness" && t.byId)) return "Nobody talked. Yet.";
   if (inJail(m, now)) return "You're in a cell.";
   if (m.energy < R.intimidate.energy) return "You're too tired.";
@@ -268,6 +269,7 @@ export function myCaseView(c: CaseFile | null, mine: NonNullable<Player["myCases
     status,
     clues: c && status === "open" ? c.tips.length : null,
     statements: c && status === "open" ? c.tips.filter((t) => t.source === "witness" && t.byId).length : null,
+    protectedWitnesses: !!c?.protectedBy,
     canIntimidate: c ? intimidateBlock(m, c, now) : "That case is closed.",
     canPayoff: c ? payoffBlock(m, c, null, R.payoff.minAmount, now)?.replace("Pick an officer.", "") || null : "That case is closed.",
     payoffAllowed: isMafia(m, R.payoff.minRank),

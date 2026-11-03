@@ -160,6 +160,8 @@ export const BALANCE = {
     mealEnergy: 15,
     soupMaxMoney: 100,
     soupEveryMs: 6 * 60 * 60_000,
+    /** Witness protection: a police detail paid from the treasury, per case. */
+    protectionCost: 50,
     /** Recall: signatures needed = max(min, share × last election's turnout). */
     recallMin: 3,
     recallShare: 0.5,

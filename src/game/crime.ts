@@ -447,5 +447,7 @@ export function caseView(c: CaseFile, viewer: Player, now: number, suspects?: Su
     canInvestigate: investigateBlock(viewer, c, now),
     suspects: suspects ?? null,
     arrested: c.trial ? { suspectName: c.trial.suspectName, officerName: c.trial.officerName } : null,
+    witnessStatements: c.tips.filter((t) => t.source === "witness" && t.byId).length,
+    protectedBy: c.protectedBy?.name ?? null,
   };
 }

@@ -222,3 +222,30 @@ describe("the mayor's powers", () => {
     expect(c.log[0].text).toMatch(/skimming/);
   });
 });
+
+describe("witness protection", () => {
+  it("the mayor or chief protects a case's witnesses; the Mafia can't lean on them", async () => {
+    const { reportSighting } = await import("./crime");
+    const { intimidateBlock } = await import("./racket");
+    const { protectWitnesses } = await import("./city");
+    const boss = mk("a", "Novak Petresk");
+    boss.path = "enforcer" as PathId;
+    boss.rank = 4;
+    const victim = mk("t", "Victor");
+    victim.cash = 200;
+    const witness = mk("w", "Wanda");
+    const cf = commitCrime(boss, victim, "snatch", LATER, always(0), { caseId: "C1", district: "X", crewTag: null, witnesses: [witness] }).caseFile!;
+    reportSighting(witness, cf, boss, LATER, always(0));
+    expect(intimidateBlock(boss, cf, LATER)).toBeNull();
+
+    const m = mk("m", "Mayor");
+    const c = cityWithMayor(m);
+    expect(() => protectWitnesses(c, m, cf, LATER)).toThrow(/treasury/);
+    c.treasury = 100;
+    expect(() => protectWitnesses(c, mk("x", "Random"), cf, LATER)).toThrow(/mayor or the police chief/);
+    protectWitnesses(c, m, cf, LATER);
+    expect(c.treasury).toBe(100 - B.protectionCost);
+    expect(intimidateBlock(boss, cf, LATER)).toMatch(/police protection/);
+    expect(() => protectWitnesses(c, m, cf, LATER)).toThrow(/already/);
+  });
+});

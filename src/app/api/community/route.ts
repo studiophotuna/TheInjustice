@@ -52,7 +52,7 @@ import {
   withdrawPayoff,
 } from "@/game/racket";
 import { rankTitle } from "@/game/content/paths";
-import { crackdownOn } from "@/game/city";
+import { advanceCity, crackdownOn, isChief, isMayor as isCityMayor, protectWitnesses } from "@/game/city";
 import { inmateView, prisonWork, yardChannel, yardFight } from "@/game/prison";
 import { breakoutView, cancelBreakout, executeBreakout, joinBreakout, planBlock, planBreakout, serving } from "@/game/breakout";
 import {
@@ -156,7 +156,10 @@ export async function GET(req: Request) {
       const all = cases;
       // A file a bent cop "lost" is gone for everyone working cases.
       cases = cases.filter((c) => !fileLost(c));
-      const block = canReadCases(p);
+      const cityHall = await store.getCity(country);
+      // The mayor and the police chief can read the files too (to order witness protection).
+      const official = !!cityHall && (isCityMayor(cityHall, p) || isChief(cityHall, p));
+      const block = official ? null : canReadCases(p);
       const detective = isDetective(p);
       const medic = isMedic(p);
       const banker = isBanker(p);
@@ -164,7 +167,7 @@ export async function GET(req: Request) {
       let pool: { player: Player; crewTag: string | null }[] = [];
       const mafia = isMafia(p);
       const ia = isInternalAffairs(p);
-      const city = ia ? await store.getCity(country) : null;
+      const city = ia ? cityHall : null;
       let people: Player[] = [];
       if (detective || vigilante || mafia || ia) people = await store.listPlayers(country, 200);
       if (detective || vigilante) {
@@ -177,6 +180,7 @@ export async function GET(req: Request) {
         detective,
         lawyer: isLawyer(p),
         judge: isJudge(p),
+        canProtect: official,
         cases: block
           ? []
           : cases
@@ -271,10 +275,11 @@ export async function GET(req: Request) {
       const messages = (await store.listMessages(channel, 60)).filter((m) => !blocked.has(m.authorId));
       return NextResponse.json({ messages });
     }
-    const [players, crews, myCrew] = await Promise.all([
+    const [players, crews, myCrew, hubCity] = await Promise.all([
       store.listPlayers(countryOf(p), 40),
       store.listCrews(20),
       p.crewId ? store.getCrew(p.crewId) : null,
+      store.getCity(countryOf(p)),
     ]);
     const crewTags = new Map(crews.map((c) => [c.id, c.tag]));
     if (myCrew) crewTags.set(myCrew.id, myCrew.tag);
@@ -296,7 +301,7 @@ export async function GET(req: Request) {
       breakout: myCrew ? await crewJailView(store, myCrew, p, now) : null,
       channels: channelsFor(p),
       blocked: p.blocked ?? [],
-      readsCases: !canReadCases(p),
+      readsCases: !canReadCases(p) || (!!hubCity && (isCityMayor(hubCity, p) || isChief(hubCity, p))),
     });
   } catch (e) {
     return failure(e);
@@ -522,6 +527,23 @@ export async function POST(req: Request) {
           await tx.putPlayer(payer);
           if (s !== payer) await tx.putPlayer(s);
           await tx.putCase(c);
+          return out;
+        });
+        break;
+      }
+      case "protect_witnesses": {
+        const caseId = str(b.caseId);
+        events = await store.transaction(async (tx) => {
+          const c = await tx.getCase(caseId);
+          if (!c) throw new GameError("That case doesn't exist.");
+          const [me] = await tx.getPlayers([playerId]);
+          if (!me) throw new GameError("Create a character first.");
+          const city = await tx.getCity(c.country);
+          if (!city) throw new GameError("City hall is empty.");
+          advanceCity(city, now);
+          const out = protectWitnesses(city, me, c, now);
+          await tx.putCase(c);
+          await tx.putCity(city);
           return out;
         });
         break;

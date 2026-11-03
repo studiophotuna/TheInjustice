@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { Ban, Crown, Eye, EyeOff, ShieldAlert, FileSearch, Footprints, Gavel, Hand, Landmark, Moon, Stethoscope, Inbox, Lock, MessageSquare, Search, Send, Shield, Siren, Swords, UserCheck, Users, Vault } from "lucide-react";
+import { Ban, Crown, Eye, EyeOff, ShieldAlert, ShieldCheck, FileSearch, Footprints, Gavel, Hand, Landmark, Moon, Stethoscope, Inbox, Lock, MessageSquare, Search, Send, Shield, Siren, Swords, UserCheck, Users, Vault } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 import { OnlineNow } from "./online";
@@ -43,6 +43,8 @@ type CaseCard = {
   canInvestigate: string | null;
   suspects: { id: string; name: string; matches: number }[] | null;
   arrested: { suspectName: string; officerName: string } | null;
+  witnessStatements: number;
+  protectedBy: string | null;
 };
 type TrialCard = {
   caseId: string;
@@ -93,6 +95,7 @@ type JusticeData = {
   detective: boolean;
   lawyer: boolean;
   judge: boolean;
+  canProtect: boolean;
   roles: { medic: boolean; banker: boolean; vigilante: boolean };
   patients: Patient[];
   deposits: Deposit[];
@@ -111,6 +114,7 @@ type JusticeData = {
       canPayoff: string | null;
       payoff: { copName: string; amount: number; status: string } | null;
       payoffAllowed: boolean;
+      protectedWitnesses: boolean;
     }[];
     cops: { id: string; name: string; title: string }[];
   } | null;
@@ -849,6 +853,13 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
                   ))}
                 </ul>
                 {c.arrested && <p className="fine">Detective {c.arrested.officerName} arrested <b>{c.arrested.suspectName}</b>. The case is in court.</p>}
+                {c.protectedBy ? (
+                  <p className="fine"><ShieldCheck size={12} /> Witnesses under police protection (ordered by {c.protectedBy}).</p>
+                ) : data.canProtect && c.open && c.witnessStatements > 0 ? (
+                  <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => act({ op: "protect_witnesses", caseId: c.id })}>
+                    <ShieldCheck size={14} /> Protect the {c.witnessStatements === 1 ? "witness" : `${c.witnessStatements} witnesses`} ($50 from the treasury)
+                  </button>
+                ) : null}
                 {c.suspects && c.suspects.length > 0 && (
                   <div className="suspects">
                     <span className="crime-label">People who fit</span>
@@ -996,7 +1007,10 @@ function Racket({ game, racket, act }: { game: GameApi; racket: NonNullable<Just
             </header>
             <p className="muted">{x.victimName} · {x.district} · {ago(x.at)}</p>
             {x.statements !== null && (
-              <p className="fine">The police have {x.clues} clue{x.clues === 1 ? "" : "s"}; {x.statements} from witnesses who talked.</p>
+              <p className="fine">
+                The police have {x.clues} clue{x.clues === 1 ? "" : "s"}; {x.statements} from witnesses who talked.
+                {x.protectedWitnesses ? " There are cops outside their doors." : ""}
+              </p>
             )}
             {x.payoff && (
               <p className="fine">

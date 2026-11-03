@@ -213,6 +213,8 @@ export interface CaseFile {
   deposit?: { amount: number; at: number; account: string; review?: "reported" | "buried"; reviewerName?: string; reviewerId?: string };
   /** A vigilante went after a suspect on a cold case. */
   hunt?: { hunterId: string; hunterName: string; suspectId: string; suspectName: string; won: boolean; at: number; restitution: number };
+  /** City hall put the witnesses under police protection: nobody can lean on them. */
+  protectedBy?: { name: string; at: number };
   /** The criminal's crew leaned on the witnesses (once per case). */
   intimidatedAt?: number;
   /** Money offered to a police officer to lose the file. */

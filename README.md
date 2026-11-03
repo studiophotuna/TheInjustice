@@ -111,7 +111,10 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
     statement, a brave one gives the police another clue. Capos+ can leave an envelope on a
     police officer's desk to lose the file: taking it buries the case for everyone; refusing
     returns the money and puts a solid clue about the briber in the file.
-  - **Internal affairs**: Police Sergeants+ audit officials (police, bankers, judges) once a
+  - **Witness protection**: the mayor or the police chief can read the case files and put a
+  case's witnesses under police protection ($50 from the treasury). Protected witnesses can't
+  be leaned on; the Mafia sees "there are cops outside their doors".
+- **Internal affairs**: Police Sergeants+ audit officials (police, bankers, judges) once a
     day each. Hidden records of taken envelopes, buried deposits and lost files come out: a
     fine of twice the money, a demotion and 20 minutes held. Clean officials gain reputation.
     Every exposure goes on the public court record.

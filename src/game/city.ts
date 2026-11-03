@@ -9,7 +9,8 @@ import { COUNTRY_BY_ID } from "./content/world";
 import { maxEnergy } from "./balance";
 import { countryOf, inJail, shiftIntegrity } from "./engine";
 import { notify, protectedUntil } from "./social";
-import { GameError, type City, type CountryId, type GameEvent, type Player } from "./types";
+import { caseCold } from "./crime";
+import { GameError, type CaseFile, type City, type CountryId, type GameEvent, type Player } from "./types";
 
 const B = BALANCE.city;
 /** Terms are counted from this date, so every city's terms line up. */
@@ -235,6 +236,28 @@ export function signRecall(c: City, p: Player, now: number): GameEvent[] {
   }
   if (c.recall.length === 1) announce(c, `A recall petition against Mayor ${c.mayor!.name} is going around.`, now);
   return [{ tone: "good", text: `You signed the recall petition (${c.recall.length} of ${needed}).` }];
+}
+
+// ── Witness protection ─────────────────────────────────────────────────────
+
+export function protectBlock(c: City, p: Player, cf: CaseFile, now: number): string | null {
+  if (!isMayor(c, p) && !isChief(c, p)) return "Only the mayor or the police chief can order protection.";
+  if (countryOf(p) !== c.country || cf.country !== c.country) return "That case is in another city.";
+  if (cf.protectedBy) return "Those witnesses are already protected.";
+  if (cf.trial?.verdict || cf.hunt || caseCold(cf, now)) return "The case is closed.";
+  if (!cf.tips.some((t) => t.source === "witness" && t.byId)) return "No witnesses have come forward.";
+  if (c.treasury < B.protectionCost) return `A protection detail costs $${B.protectionCost} from the treasury.`;
+  return null;
+}
+
+/** The mayor or chief puts a case's witnesses under guard, paid from the treasury. */
+export function protectWitnesses(c: City, p: Player, cf: CaseFile, now: number): GameEvent[] {
+  const block = protectBlock(c, p, cf, now);
+  if (block) throw new GameError(block);
+  c.treasury -= B.protectionCost;
+  cf.protectedBy = { name: p.name, at: now };
+  announce(c, `${isMayor(c, p) ? "Mayor" : "Chief"} ${p.name} puts the witnesses in case #${cf.id} under police protection.`, now);
+  return [{ tone: "good", text: `Officers are posted outside every witness's door in case #${cf.id}. Nobody gets to them now.` }];
 }
 
 // ── Police chief ───────────────────────────────────────────────────────────
