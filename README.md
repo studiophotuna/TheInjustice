@@ -331,3 +331,13 @@ Links anywhere in the game can open a building directly with `place:<id>` (for e
   ($100–$5,000). The buyer pays from the Black market card on the Street, dirty money first, and
   the soldier is paid in dirty money. Each sale goes on a hidden ledger: internal affairs (soldiers
   Corporal and up are now auditable officials) and court-martials can find it.
+
+## Gear, arson and portraits (v1.2.0)
+
+- **Gear slots.** Equip one weapon and one armor (Me → Gear). Gear wears out with every fight;
+  repair it at the shop, or replace it when it breaks. Issued gear: free armory service once a day.
+- **Torch a business** (Mafia in a crew): from the People list, against rivals' businesses in your
+  city. Closes it for 12 hours on success; can land you in a cell on failure.
+- **Career portraits**: looping real-footage clips in `public/portraits/` (credits in
+  `public/scenes/CREDITS.md`).
+- **Whacking** is designed but not built: see `WHACK.md`.

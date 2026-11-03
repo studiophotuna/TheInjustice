@@ -1,5 +1,6 @@
 "use client";
 
+import { CareerPortrait } from "./art/CareerPortrait";
 import { motion } from "motion/react";
 import { ArrowRight, BookOpen, Briefcase, Cross, Inbox, MapPin, Plane, Sparkles, Zap } from "lucide-react";
 import type { CountryId, PathId } from "@/game/types";
@@ -61,6 +62,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
   return (
     <div className="stack home">
       <Scene kind={scene} className="home-hero" characters={[{ kind: character, x: 78, scale: 0.95 }]}>
+        <CareerPortrait path={view.path?.id} name={view.name} className="hero-portrait" />
         <p className="eyebrow"><MapPin size={13} /> {view.location.city}, {view.location.countryName}</p>
         <h1 className="home-title">{greeting()}, {view.name}.</h1>
         {view.streetTitle && <p className="street-title">&ldquo;{view.streetTitle}&rdquo;</p>}

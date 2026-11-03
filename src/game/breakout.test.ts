@@ -22,7 +22,7 @@ function crewWithPrisoner(): { crew: Crew; boss: Player; mate: Player; con: Play
   const boss = mk("b", "Boss");
   boss.path = "enforcer";
   boss.rank = 4;
-  boss.cash = 1000;
+  boss.cash = 1000 + BALANCE.crew.createCost;
   const crew = createCrew(boss, "c1", "Iron Row", "IR", LATER);
   const mate = mk("m", "Mate");
   const con = mk("k", "Con");

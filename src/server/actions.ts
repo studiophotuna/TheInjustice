@@ -41,6 +41,13 @@ export function parseAction(body: unknown): Action {
       return { type: "buy", itemId: str(b.itemId) };
     case "use":
       return { type: "use", itemId: str(b.itemId) };
+    case "equip":
+      return { type: "equip", itemId: str(b.itemId) };
+    case "repair":
+      return { type: "repair", itemId: str(b.itemId) };
+    case "unequip":
+      if (b.slot !== "weapon" && b.slot !== "armor") throw new GameError("Bad request.");
+      return { type: "unequip", slot: b.slot };
     case "fight":
       return { type: "fight", npcId: str(b.npcId) };
     case "rebirth":

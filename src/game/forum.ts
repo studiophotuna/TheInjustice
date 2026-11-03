@@ -5,7 +5,7 @@
 import { notify } from "./social";
 import { GameError, type Crew, type GameEvent, type Player } from "./types";
 
-export const FORUM = { cost: 200, maxGuests: 20, nameMax: 30 };
+export const FORUM = { cost: 1000, maxGuests: 20, nameMax: 30 };
 
 export const forumChannel = (crewId: string) => `forum:${crewId}`;
 

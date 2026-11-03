@@ -43,7 +43,7 @@ export type DistrictId =
   | "undercity"
   | "glass_quarter"
   | "tech_park";
-export type HousingTier = 0 | 1 | 2;
+export type HousingTier = 0 | 1 | 2 | 3 | 4 | 5;
 
 export interface Player {
   id: string;
@@ -84,6 +84,12 @@ export interface Player {
   reputation: number;
   housing: HousingTier;
   inventory: Record<string, number>;
+  /** Gear in use: only equipped gear counts in a fight. */
+  equipped?: { weapon?: string | null; armor?: string | null };
+  /** Uses left on each piece of gear (missing = brand new). */
+  wear?: Record<string, number>;
+  /** Last free service of issued gear at the armory. */
+  armoryAt?: number;
 
   stats: HiddenStats;
 
@@ -184,6 +190,8 @@ export interface Player {
   lastChatAt?: number;
   /** Businesses owned: property id → when income was last collected. */
   properties?: Record<string, number>;
+  /** Businesses burned down (torched by a crew): closed until this time. */
+  closed?: Record<string, number>;
   /** Crews that invited this player. */
   crewInvites?: { crewId: string; name: string; tag: string; by: string; at: number }[];
   /** Crimes this player saw and hasn't decided about yet (report or look away). */
@@ -514,6 +522,9 @@ export type Action =
   | { type: "job"; jobId: string }
   | { type: "buy"; itemId: string }
   | { type: "use"; itemId: string }
+  | { type: "equip"; itemId: string }
+  | { type: "unequip"; slot: "weapon" | "armor" }
+  | { type: "repair"; itemId: string }
   | { type: "bank"; op: "open" | "deposit" | "withdraw"; amount?: number }
   | { type: "fight"; npcId: string }
   | { type: "offer"; path: PathId; accept: boolean }

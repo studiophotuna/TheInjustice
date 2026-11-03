@@ -24,9 +24,9 @@ const career = (p: Player, path: Player["path"], rank: number) => {
 };
 const boss = (id: string, name: string, tag: string) => {
   const b = career(mk(id, name), "enforcer", 4);
-  b.cash = 1000;
+  b.cash = 1000 + BALANCE.crew.createCost;
   const crew = createCrew(b, `crew-${id}`, `${name} Crew`, tag, LATER);
-  crew.vault = 5000;
+  crew.vault = 50000;
   return { b, crew };
 };
 

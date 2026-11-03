@@ -1,6 +1,7 @@
 // Rules for players interacting with each other. Pure functions over Player/Crew objects:
 // the server loads and saves both sides inside one transaction.
 
+import { wearGear } from "./gear";
 import { breakOmerta, huntsRat, OMERTA, ratOf } from "./family";
 import { BALANCE } from "./balance";
 import { gutRead, GUT_READS, playerFighter, resolveFight } from "./combat";
@@ -83,6 +84,8 @@ export function attackPlayer(a: Player, t: Player, now: number, rng: Rng): { eve
   a.heat += BALANCE.pvp.heat * COUNTRY_BY_ID[countryOf(a)].heatMult;
 
   const res = resolveFight(playerFighter(a, BALANCE.hp.max), { ...playerFighter(t, BALANCE.hp.max), hp: t.hp }, rng);
+  const broke = wearGear(a, ["weapon", "armor"]);
+  for (const e of wearGear(t, ["weapon", "armor"])) notify(t, e.text, "bad", undefined, now);
   const fight: FightSummary = { opponent: t.name, icon: "🧍", won: res.won, lines: res.lines, outcome: res.won ? "win" : "loss" };
   const events: GameEvent[] = [{ tone: res.won ? "good" : "bad", text: `Fight: ${t.name}`, fight }];
 
@@ -118,6 +121,7 @@ export function attackPlayer(a: Player, t: Player, now: number, rng: Rng): { eve
     events.push({ tone: "bad", text: `${t.name} fought you off.${a.hp <= 0 ? " You wake up in the clinic." : ""}` });
     notify(t, `${a.name} tried to jump you. You fought them off. +1 reputation.`, "good", a, now);
   }
+  events.push(...broke);
   return { events, fight };
 }
 

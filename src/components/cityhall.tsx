@@ -409,7 +409,7 @@ function Turf({ turf, game, act }: { turf: CityData["turf"]; game: GameApi; act:
               )}
             </div>
             <span className="row wrap">
-              {!d.canClaim && <button className="btn btn-primary btn-xs" disabled={game.busy} onClick={() => act({ op: "claim_turf", district: d.id })}>Claim ($1,000)</button>}
+              {!d.canClaim && <button className="btn btn-primary btn-xs" disabled={game.busy} onClick={() => act({ op: "claim_turf", district: d.id })}>Claim ($8,000)</button>}
               {!d.canWar && <button className="btn btn-danger btn-xs" disabled={game.busy} onClick={() => act({ op: "declare_war", district: d.id })}>Declare war</button>}
               {d.war && !d.war.over && !d.war.canJoin && <button className="btn btn-danger btn-xs" disabled={game.busy} onClick={() => act({ op: "join_war", district: d.id })}>Join the fight</button>}
               {d.war && !d.war.over && !d.war.canPeace && <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => act({ op: "peacekeep", district: d.id })}>🪖 Break it up</button>}

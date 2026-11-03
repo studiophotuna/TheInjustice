@@ -1,6 +1,7 @@
 import { acceptAlliance, breakAlliance, declineAlliance, proposeAlliance } from "@/game/batch7";
 import { ceremonyBlock, isMade, makeMember } from "@/game/family";
 import { bringCharges, buyGun, courtMartialBlock, declineGun, offerGun, sellableGear } from "@/game/military";
+import { torchBusiness, torchTargets } from "@/game/arson";
 import { canUseForum, closeForum, createForum, forumChannel, inviteToForum, removeFromForum } from "@/game/forum";
 import { buildLab, flagLaundering, flagsView, frisk, friskBlock, isBankStaff, labCook, labTips, labView, launderWithBanker, probeLaundering, raidLab, setLaunderService } from "@/game/batch6";
 import { isDrug } from "@/game/drugs";
@@ -361,7 +362,7 @@ export async function GET(req: Request) {
           const lawyerFee = o.path === "courts" && o.rank >= BALANCE.justice.lawyerRank ? retainerFee(o) : null;
           const canCrime = Object.fromEntries(CRIME_KINDS.map((k) => [k, crimeBlock(p, o, k, now)]));
           const canFrisk = p.path === "police" ? friskBlock(p, o, now) : "n/a";
-          return { ...prof, crewTag: prof.crewId ? crewTags.get(prof.crewId) ?? null : null, canInvite, canForum, canCourtMartial, canSellGun, canCrime, lawyerFee, canFrisk };
+          return { ...prof, crewTag: prof.crewId ? crewTags.get(prof.crewId) ?? null : null, canInvite, canForum, canCourtMartial, canSellGun, canCrime, lawyerFee, canFrisk, torch: torchTargets(p, o, now) };
         }),
       invites: p.crewInvites ?? [],
       foundBlock: crewFoundBlock(p),
@@ -1037,6 +1038,24 @@ export async function POST(req: Request) {
         const target = str(b.targetId);
         const amount = Number(b.amount);
         events = await store.transaction((tx) => withPair(tx, playerId, target, now, (a, t) => postBounty(a, t, amount, now)));
+        break;
+      }
+      case "torch": {
+        const targetId = str(b.targetId);
+        const propertyId = str(b.propertyId);
+        events = await store.transaction(async (tx) => {
+          const [a, owner] = await tx.getPlayers([playerId, targetId]);
+          if (!a) throw new GameError("Create a character first.");
+          if (!owner) throw new GameError("That player doesn't exist.");
+          tick(a, now);
+          tick(owner, now);
+          const city = await tx.getCity(countryOf(a));
+          const out = torchBusiness(a, owner, propertyId, city, now, Math.random);
+          await tx.putPlayer(a);
+          await tx.putPlayer(owner);
+          if (city) await tx.putCity(city);
+          return out;
+        });
         break;
       }
       case "court_martial": {

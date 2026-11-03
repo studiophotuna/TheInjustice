@@ -131,7 +131,7 @@ describe("players vouching for players", () => {
 describe("crews", () => {
   it("create, request, accept, share a vault, leave and hand over leadership", () => {
     const { a: boss, t: rookie } = pair();
-    boss.cash = 600;
+    boss.cash = 100 + BALANCE.crew.createCost;
     boss.path = "enforcer";
     boss.rank = 4;
     const crew = createCrew(boss, "c1", "Night Shift", "NS", T0);
@@ -171,7 +171,7 @@ describe("crews", () => {
 describe("properties", () => {
   it("buy in the country you're in, collect income later, capped at a day", () => {
     const p = createPlayer("p", "Owner", T0);
-    p.bank = 1000;
+    p.bank = PROPERTY_BY_ID.laundromat.price + 100;
     expect(() => applyAction(p, { type: "buy_property", id: "beach_kiosk" }, T0, always(0.5))).toThrow(/in the country/);
     applyAction(p, { type: "buy_property", id: "laundromat" }, T0, always(0.5));
     expect(p.bank).toBe(100);
@@ -204,12 +204,13 @@ describe("crew founding and join policies", () => {
     p.rank = 3;
     expect(() => createCrew(p, "c", "Iron", "IR", T0)).toThrow(/Capo/);
     p.rank = 4;
+    p.cash = BALANCE.crew.createCost;
     expect(createCrew(p, "c", "Iron", "IR", T0, "open").policy).toBe("open");
   });
 
   function crewWithBoss(policy: "open" | "request" | "invite") {
     const boss = createPlayer("b", "Boss", T0);
-    boss.cash = 1000;
+    boss.cash = 1000 + BALANCE.crew.createCost;
     boss.path = "enforcer";
     boss.rank = 5;
     return { boss, crew: createCrew(boss, "c", "Iron Row Boys", "IRB", T0, policy) };

@@ -74,7 +74,7 @@ function tryAct(p: Player, action: Record<string, unknown>, now: number): boolea
 }
 
 /** Plays one career for `days` and returns the day (fractional) each rank was reached. */
-export function simulate(path: PathId, schedule: Schedule, days = 120, seed = 1): { reached: Record<number, number>; playMinutes: number; actions: number; days: number; worth: Record<number, number> } {
+export function simulate(path: PathId, schedule: Schedule, days = 120, seed = 1): { reached: Record<number, number>; playMinutes: number; actions: number; days: number; worth: Record<number, number>; final: Record<string, unknown> } {
   let s = seed;
   const rand = () => {
     s = (s * 16807) % 2147483647;
@@ -111,7 +111,7 @@ export function simulate(path: PathId, schedule: Schedule, days = 120, seed = 1)
           playMinutes += 1;
           // Housing first: better regen and a bigger energy bar.
           if (!p.hasBankAccount && p.cash >= BALANCE.bankOpenCost + 5) tryAct(p, { type: "bank", op: "open" }, now);
-          for (const h of ["room", "sleeping_bag"]) {
+          for (const h of ["penthouse", "townhouse", "apartment", "room", "sleeping_bag"]) {
             const item = ITEMS.find((i) => i.id === h)!;
             if (p.housing < (item.housing ?? 0) && p.cash + p.bank >= item.price + 10) {
               if (p.bank) tryAct(p, { type: "bank", op: "withdraw", amount: p.bank }, now);
@@ -140,13 +140,15 @@ export function simulate(path: PathId, schedule: Schedule, days = 120, seed = 1)
             if (!did) break;
             if (!reached[p.rank]) reached[p.rank] = day + (start + m) / 1440;
           }
+          // Dirty money is cleaned at the laundromat (30% fee) before it can buy anything legal.
+          if ((p.dirty ?? 0) >= 300) tryAct(p, { type: "launder", method: "laundromat", amount: Math.floor(p.dirty ?? 0) }, now);
           if (p.hasBankAccount && p.cash > 60) tryAct(p, { type: "bank", op: "deposit", amount: p.cash - 30 }, now);
         }
       }
       if ([7, 30, 60].includes(day + 1)) worth[day + 1] = Math.round(p.cash + p.bank + (p.dirty ?? 0));
       if (p.rank >= PATHS[path].ranks.length && day >= 60) break;
     }
-    return { reached, playMinutes, actions, days: played, worth };
+    return { reached, playMinutes, actions, days: played, worth, final: { housing: p.housing, cash: Math.round(p.cash), bank: Math.round(p.bank), dirty: Math.round(p.dirty ?? 0), jobs: p.jobCounts } };
   } finally {
     Math.random = oldRandom;
   }

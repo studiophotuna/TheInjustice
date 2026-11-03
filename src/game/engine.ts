@@ -1,6 +1,7 @@
 // Server-side game rules. Pure functions over a Player: no I/O, so they can run in an
 // API route today and a database function (or worker) later without changes.
 
+import { ensureEquipped, equip, equippedId, repair, unequip, usesLeft, wearGear } from "./gear";
 import { BALANCE, maxEnergy, regenMs } from "./balance";
 import { gutRead, npcFighter, playerFighter, power, resolveFight } from "./combat";
 import { DISTRICT_BY_ID, totalJobs } from "./content/districts";
@@ -124,6 +125,7 @@ export function tick(p: Player, now: number): void {
   arrive(p);
   ensureDaily(p, now);
   issueGear(p);
+  ensureEquipped(p);
 }
 
 /**
@@ -138,6 +140,10 @@ export function issueGear(p: Player): string[] {
     if (entitled && !p.inventory[item.id]) {
       p.inventory[item.id] = 1;
       issued.push(`${item.icon} ${item.name}`);
+      // Issued gear goes straight on if it beats what you carry.
+      const slot = item.kind as "weapon" | "armor";
+      const current = p.equipped?.[slot] ? ITEM_BY_ID[p.equipped[slot]!] : null;
+      if (p.equipped && (!current || (current.power ?? 0) < (item.power ?? 0))) p.equipped = { ...p.equipped, [slot]: item.id };
     } else if (!entitled && p.inventory[item.id]) {
       delete p.inventory[item.id];
     }
@@ -619,6 +625,7 @@ function fightNpc(p: Player, npc: NpcDef, now: number, rng: Rng, events: GameEve
   const them = npcFighter(npc);
   const res = resolveFight(me, them, rng);
   p.hp = res.playerHp;
+  events.push(...wearGear(p, ["weapon", "armor"]));
   const summary: FightSummary = { opponent: npc.name, icon: npc.icon, won: res.won, lines: res.lines, outcome: "win" };
   events.push({ tone: res.won ? "good" : "bad", text: `Fight: ${npc.name}`, fight: summary });
   grantXp(p, { toughness: 0.8, strength: res.won ? 1 : 0.4, agility: 0.5, nerve: 0.6 }, 1, events);
@@ -716,6 +723,7 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
       if (job.path) p.jobsSinceRank += jobMerit(p, job, false);
       events.push({ tone: "bad", text: job.risk.failText });
       if (job.risk.failHp) {
+        events.push(...wearGear(p, ["armor"]));
         p.hp -= job.risk.failHp;
         if (p.hp <= 0) hospitalize(p, now, rng, events);
       }
@@ -784,8 +792,12 @@ function buy(p: Player, itemId: string, events: GameEvent[]) {
     p.housing = item.housing!;
     p.homes = { ...(p.homes ?? {}), [countryOf(p)]: p.housing };
   } else if (item.kind === "weapon" || item.kind === "armor") {
-    if (p.inventory[item.id]) throw new GameError("You already own one.");
+    // A broken one can be replaced; a working one should be repaired instead.
+    if (p.inventory[item.id] && usesLeft(p, item.id) > 0) throw new GameError("You already own one. Repair it when it wears out.");
     p.inventory[item.id] = 1;
+    if (p.wear) delete p.wear[item.id];
+    ensureEquipped(p);
+    if (!equippedId(p, item.kind)) p.equipped = { ...p.equipped, [item.kind]: item.id };
   } else {
     p.inventory[item.id] = (p.inventory[item.id] ?? 0) + 1;
   }
@@ -1041,6 +1053,15 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng, ct
     case "use":
       useItem(p, action.itemId, now, events);
       break;
+    case "equip":
+      events.push(...equip(p, action.itemId));
+      break;
+    case "unequip":
+      events.push(...unequip(p, action.slot));
+      break;
+    case "repair":
+      events.push(...repair(p, action.itemId, now, (base) => itemPrice(p, base)));
+      break;
     case "bank":
       bank(p, action.op, action.amount, now, events);
       break;
@@ -1087,6 +1108,7 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng, ct
       const prop = PROPERTY_BY_ID[action.id];
       const since = prop && p.properties?.[prop.id];
       if (!prop || !since) throw new GameError("You don't own that.");
+      if ((p.closed?.[prop.id] ?? 0) > now) throw new GameError(`${prop.name} is a burned-out shell. It reopens in ${Math.ceil(((p.closed![prop.id]) - now) / 3_600_000)} hours.`);
       const income = propertyIncome(prop.id, since, now);
       if (income < 1) throw new GameError("Nothing to collect yet.");
       p.properties![prop.id] = now;

@@ -29,6 +29,28 @@ Mafia's family rules (being made, crew jobs, leading a crew, holding turf) slow 
 
 Careers should stay within about 15% of each other.
 
+## v1.2.0 (gear, prices, new housing)
+
+The simulator now also buys the new homes and launders dirty money at the laundromat. Bigger
+homes rest faster, so Mafia and Military requirements were set back near the others (9.5 and
+8.2) and the merit scale went from 7 to 8. All careers are within about 5% of each other.
+
+```
+Regular (3 sessions a day)
+career          r2    r3    r4    r5    r6    r7    r8   actions/day   $ day 7 / 30 / 60
+Police         1.3   3.3   6.2  12.2  22.2  35.6  63.9       48        8,273 / 45,677 / 56,568
+Mafia          0.8   3.0   5.6  10.6  20.0  33.8  62.1       48        7,596 / 45,008 / 15,491
+Courts         1.3   3.3   5.8  10.5  20.2  33.5  61.6       49        2,614 / 72,824 / 100,967
+Vigilante      1.5   3.5   6.8  11.5  21.3  34.8  63.2       48        7,998 / 50,189 / 52,653
+Medicine       1.3   3.3   6.0  12.0  25.7  39.2  66.7       51        2,049 / 49,488 / 74,765
+Banking        1.3   3.5   6.5  11.2  21.0  34.8  64.2       49        7,513 / 37,089 / 102,911
+Military       1.3   3.3   6.2  11.2  17.6  31.2  65.7       45        8,202 / 62,501 / 229,802
+```
+
+A regular player affords a studio apartment in about a week, a townhouse in about a month and
+the penthouse in about two months (the simulator spends only on homes and food, so real players
+who also buy gear and businesses get there later).
+
 ## v1.1.0 (after the balance pass)
 
 ```

@@ -27,6 +27,7 @@ type Profile = {
   canForum?: boolean;
   canCourtMartial?: string | null;
   canSellGun?: boolean;
+  torch?: { id: string; name: string; odds: number; block: string | null }[];
   rat?: boolean;
   streetTitle: string | null;
   canCrime: Record<CrimeKind, string | null>;
@@ -380,6 +381,17 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
                     🪖 Sell army gear
                   </button>
                 )}
+                {(p.torch ?? []).map((t) => (
+                  <button
+                    key={t.id}
+                    className="btn btn-danger btn-sm"
+                    disabled={game.busy || !!t.block}
+                    title={t.block ?? `About ${t.odds}% chance it catches.`}
+                    onClick={() => confirm(`Torch ${p.name}'s ${t.name}? If you're caught, you go to a cell.`) && social({ op: "torch", targetId: p.id, propertyId: t.id })}
+                  >
+                    🔥 Torch {t.name}
+                  </button>
+                ))}
                 {p.canForum && (
                   <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: "forum_invite", playerId: p.id })}>
                     <MessagesSquare size={14} /> Invite to forum
@@ -494,7 +506,7 @@ function ForumCreate({ game, social }: { game: GameApi; social: (b: Record<strin
   return (
     <section className="card">
       <h3 className="card-title"><MessagesSquare size={16} /> Secret forum</h3>
-      <p className="muted fine">A private board for your crew and anyone you invite: a cop on the payroll, a doctor who doesn&apos;t ask, a banker who cleans. Guests don&apos;t join the crew. $200 from the vault.</p>
+      <p className="muted fine">A private board for your crew and anyone you invite: a cop on the payroll, a doctor who doesn&apos;t ask, a banker who cleans. Guests don&apos;t join the crew. $1,000 from the vault.</p>
       <form className="row" onSubmit={(e) => { e.preventDefault(); social({ op: "forum_create", name }).then(() => setName("")); }}>
         <input maxLength={30} placeholder="Forum name" value={name} onChange={(e) => setName(e.target.value)} />
         <button className="btn btn-primary btn-sm" disabled={game.busy || name.trim().length < 3}>Open it</button>
@@ -673,7 +685,7 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
                 <p className="fine muted">The lab cooks twice as much, but every batch makes the neighbors more suspicious. Hot labs get raided.</p>
               </>
             ) : (
-              <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: "lab_build" })}>Set up a lab ($2,000 from the vault)</button>
+              <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: "lab_build" })}>Set up a lab ($15,000 from the vault)</button>
             )}
           </section>
         )}
@@ -788,7 +800,7 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
         {c.isLeader && hub.ceremony.length > 0 && (
           <section className="card">
             <h3 className="card-title"><Flame size={16} /> The making ceremony</h3>
-            <p className="muted fine">Swear a soldier in: a candle, a saint&apos;s card, an oath. Costs $500 from the vault. Only made men rise to Made Man and beyond.</p>
+            <p className="muted fine">Swear a soldier in: a candle, a saint&apos;s card, an oath. Costs $2,500 from the vault. Only made men rise to Made Man and beyond.</p>
             {hub.ceremony.map((m) => (
               <div key={m.id} className="row between inv-row">
                 <span>{m.name} {m.made && <span className="chip chip-gold">Made</span>}</span>
@@ -902,7 +914,7 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
         <h3 className="card-title"><Crown size={16} /> Found a crew</h3>
         {(
           <>
-            <p className="muted">$500 cash. Crew members earn 5% more on every job, share a vault and a private chat.</p>
+            <p className="muted">$5,000 cash. Crew members earn 5% more on every job, share a vault and a private chat.</p>
             <div className="row">
               <input maxLength={24} placeholder="Crew name" value={name} onChange={(e) => setName(e.target.value)} />
               <input className="tag-input" maxLength={4} placeholder="TAG" value={tag} onChange={(e) => setTag(e.target.value.toUpperCase())} />
@@ -920,7 +932,7 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
               disabled={game.busy || name.trim().length < 3 || tag.length < 2 || view.cash < 500}
               onClick={() => social({ op: "crew_create", name, tag, policy })}
             >
-              <Crown size={15} /> Found · $500
+              <Crown size={15} /> Found · $5,000
             </button>
           </>
         )}

@@ -19,10 +19,12 @@ export type SceneKind =
   | "lab"
   | "casino"
   | "crimescene"
-  | "interrogation";
+  | "interrogation"
+  | "academy"
+  | "station";
 
 /** Every scene has a looping clip in public/scenes/<kind>.mp4 and a poster <kind>.jpg. */
-const VIDEO_SCENES = new Set<SceneKind>(["street", "city", "highrise", "police", "hospital", "court", "bank", "prison", "lab", "casino", "crimescene", "interrogation"]);
+const VIDEO_SCENES = new Set<SceneKind>(["street", "city", "highrise", "police", "hospital", "court", "bank", "prison", "lab", "casino", "crimescene", "interrogation", "academy", "station"]);
 export type CharacterKind = "bum" | "thug" | "detective" | "lawyer" | "doctor" | "banker" | "vigilante";
 
 const rnd = (seed: number) => () => {
@@ -263,6 +265,8 @@ const SCENES: Record<SceneKind, () => ReactNode> = {
   casino: City,
   crimescene: Street,
   interrogation: Police,
+  academy: City,
+  station: Highrise,
 };
 
 /** Plays the scene's clip on a loop; still poster for reduced motion; hidden if it fails. */

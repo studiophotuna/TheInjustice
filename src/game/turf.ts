@@ -2,6 +2,7 @@
 // outsiders earn there goes to the crew vault. A rival crew can declare war on held turf: for
 // a while, members of both crews join their side, then team strength decides who holds it.
 
+import { wearGear } from "./gear";
 import { peaceBlock } from "./military";
 import { BALANCE } from "./balance";
 import { playerFighter, power } from "./combat";
@@ -112,6 +113,7 @@ export function settleWar(c: City, d: DistrictId, attackers: Player[], defenders
   const attackersWin = attackers.length > 0 && atk > def;
   const district = DISTRICT_BY_ID[d].name;
   for (const p of [...attackers, ...defenders]) {
+    wearGear(p, ["weapon", "armor"], 2);
     p.heat += T.heat;
     p.hp = Math.max(5, p.hp - T.damage);
   }

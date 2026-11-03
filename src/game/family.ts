@@ -20,7 +20,7 @@ export const FAMILY = {
   /** Rank you must hold to be made, and to perform the ceremony. */
   madeFrom: 2,
   ceremonyRank: 4,
-  ceremonyCost: 500,
+  ceremonyCost: 2500,
 };
 
 export function family(p: Player) {

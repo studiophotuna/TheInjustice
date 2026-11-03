@@ -33,9 +33,9 @@ const boss = (id: string, name: string, tag: string) => {
   const b = mk(id, name);
   b.path = "enforcer";
   b.rank = 4;
-  b.cash = 1000;
+  b.cash = 1000 + BALANCE.crew.createCost;
   const crew = createCrew(b, `crew-${id}`, `${name} Crew`, tag, LATER);
-  crew.vault = 5000;
+  crew.vault = 50000;
   return { b, crew };
 };
 /** The first moment of the month after `t`. */

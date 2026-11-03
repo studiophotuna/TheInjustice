@@ -20,9 +20,9 @@ const boss = (id: string, name: string, tag: string) => {
   const b = mk(id, name);
   b.path = "enforcer";
   b.rank = 4;
-  b.cash = 1000;
+  b.cash = 1000 + BALANCE.crew.createCost;
   const crew = createCrew(b, `crew-${id}`, `${name} Crew`, tag, LATER);
-  crew.vault = 5000;
+  crew.vault = 50000;
   return { b, crew };
 };
 
@@ -31,7 +31,7 @@ describe("crew wars", () => {
     const { b, crew } = boss("a", "Alma", "ALM");
     const c = newCity("varrow", LATER);
     claimTurf(c, crew, b, "gutter", LATER);
-    expect(crew.vault).toBe(5000 - BALANCE.turf.claimCost);
+    expect(crew.vault).toBe(50000 - BALANCE.turf.claimCost);
     expect(() => claimTurf(c, crew, b, "gutter", LATER)).toThrow(/already runs/);
     const worker = mk("w", "Worker");
     applyAction(worker, { type: "job", jobId: "cans" }, LATER, always(0.99), { turf: turfCuts(c) });

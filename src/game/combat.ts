@@ -1,4 +1,4 @@
-import { ITEM_BY_ID } from "./content/items";
+import { gearPower } from "./gear";
 import type { NpcDef } from "./content/npcs";
 import { sv } from "./stats";
 import type { Player, Rng } from "./types";
@@ -20,19 +20,11 @@ export interface FightResult {
   lines: string[];
 }
 
-function bestGear(p: Player, kind: "weapon" | "armor"): number {
-  let best = 0;
-  for (const [id, n] of Object.entries(p.inventory)) {
-    const def = ITEM_BY_ID[id];
-    if (n > 0 && def?.kind === kind && (def.power ?? 0) > best) best = def.power ?? 0;
-  }
-  return best;
-}
 
 export function playerFighter(p: Player, maxHp: number): Fighter {
   return {
-    strength: sv(p, "strength") + bestGear(p, "weapon"),
-    toughness: sv(p, "toughness") + bestGear(p, "armor"),
+    strength: sv(p, "strength") + gearPower(p, "weapon"),
+    toughness: sv(p, "toughness") + gearPower(p, "armor"),
     agility: sv(p, "agility"),
     hp: p.hp,
     maxHp,

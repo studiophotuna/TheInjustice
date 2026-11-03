@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.2.0: gear, prices, arson, portraits
+
+- **Equipment.** One weapon slot and one armor slot; only equipped gear counts in a fight. Gear
+  wears out with every fight (and armor on rough jobs that go wrong). Worn gear hits softer,
+  broken gear does nothing until it's repaired at the shop (cost grows with the wear) or
+  replaced. Issued police and military gear is serviced free at the armory once a day.
+- **Prices and things worth saving for.** A price ladder for weapons ($150 to $45,000) and armor
+  ($200 to $40,000); three new homes (studio apartment $9,000, townhouse $38,000, penthouse
+  $160,000) with bigger energy bars and faster rest; a steak dinner; two new top-end businesses
+  (a nightclub and a steel-mill share). Businesses cost 2.5× more and earn 2× more (pay back in
+  about three weeks). Crews, turf, labs, forums and the making ceremony cost more; tuition is up
+  by half; the gym costs $12.
+- **Torching a business.** A crew member (Mafia) can torch a rival's business in their city from
+  the People list. Success depends on their nerve, agility and wits against the business's
+  security (bigger places are harder). A burned business earns nothing for 12 hours and the
+  takings in the register are lost; the city news reports the fire. A failed attempt can land the
+  arsonist in a cell. Not against crewmates.
+- **Career portraits.** Each career has a short looping clip of a real person (police officer,
+  gangster, lawyer, doctor, banker, soldier, vigilante, a drifter for no career) on the home
+  screen and the profile. The Academy and Station buildings have their own footage. Drawn
+  avatars breathe and blink.
+- **Whacking**: design analysis in WHACK.md, waiting for a decision before it's built.
+- Pacing re-checked with the new housing and laundering in the simulator (PACING.md).
+
 ## 1.1.0: balance pass
 
 Pacing and economy, measured with the new pacing simulator (`npm run pacing`, see PACING.md).

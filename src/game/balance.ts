@@ -12,6 +12,9 @@ export const BALANCE = {
     { name: "Cardboard box", regenMult: 1, bonusMax: 0 },
     { name: "Sleeping bag under the overpass", regenMult: 1.15, bonusMax: 15 },
     { name: "Rented room", regenMult: 1.35, bonusMax: 40 },
+    { name: "Studio apartment", regenMult: 1.45, bonusMax: 55 },
+    { name: "Townhouse", regenMult: 1.55, bonusMax: 70 },
+    { name: "Penthouse", regenMult: 1.65, bonusMax: 85 },
   ],
   hp: { max: 100, regenMs: 30_000, hospitalMinMs: 10 * 60_000, hospitalMaxMs: 25 * 60_000 },
   /** Heat cools down by one point every this many ms. */
@@ -49,7 +52,7 @@ export const BALANCE = {
     /** Extra time held by customs when flying with heat. */
     customsDelayMs: 20 * 60_000,
   },
-  gym: { fee: 5, energy: 10, xp: 2.2 },
+  gym: { fee: 12, energy: 10, xp: 2.2 },
   pvp: {
     energy: 15,
     /** New characters can't be attacked for this long. */
@@ -73,7 +76,7 @@ export const BALANCE = {
   },
   /** Crew wars over districts. */
   turf: {
-    claimCost: 1000,
+    claimCost: 8000,
     maxPerCrew: 3,
     /** Share of outsiders' job pay in a district that goes to the crew running it. */
     cut: 0.05,
@@ -91,7 +94,7 @@ export const BALANCE = {
   /** Police stop-and-frisk for drugs. */
   drugBust: { minRank: 2, minHeat: 10, energy: 10, cooldownMs: 60 * 60_000, baseJailMin: 10, maxJailMin: 60 },
   /** Crew drug labs. */
-  lab: { cost: 2000, heatPerBatch: 8, tipHeat: 30, raidEnergy: 20, fineShare: 0.5 },
+  lab: { cost: 15000, heatPerBatch: 8, tipHeat: 30, raidEnergy: 20, fineShare: 0.5 },
   /** Drugs: dealers pay this share of the street price; the more you deal, the more heat. */
   drugs: {
     sellShare: 0.8,
@@ -137,7 +140,7 @@ export const BALANCE = {
   },
   vouch: { minRank: 5, cooldownMs: 24 * 60 * 60_000 },
   /** Only street bosses can found crews: Mafia at Capo (rank 4) or above. */
-  crew: { createCost: 500, maxMembers: 12, path: "enforcer", minRank: 4 },
+  crew: { createCost: 5000, maxMembers: 12, path: "enforcer", minRank: 4 },
   crime: {
     /** Cases stop accepting tips after this long (shortened for testing). */
     coldMs: 6 * 60 * 60_000,
@@ -243,7 +246,7 @@ export const BALANCE = {
     xpPerEnergy: 0.2,
     careerXpPerEnergy: 0.26,
     meritGrowth: 2.2,
-    meritScale: 7,
+    meritScale: 8,
     /** The first promotion comes quicker, so the first day feels like progress. */
     firstRankMult: 0.5,
   },

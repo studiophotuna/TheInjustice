@@ -90,7 +90,7 @@ describe("heists", () => {
     const boss = mk("b", "Boss");
     boss.path = "enforcer";
     boss.rank = 4;
-    boss.cash = 1000;
+    boss.cash = 1000 + BALANCE.crew.createCost;
     const c = createCrew(boss, "c1", "Iron Row", "IR", LATER);
     const team: Player[] = [boss];
     for (const n of ["Wheels", "Fingers", "Eyes"]) {

@@ -84,9 +84,9 @@ describe("drug busts", () => {
 describe("crew labs", () => {
   it("cooks double, gets hotter, and hot labs can be raided", () => {
     const boss = career(mk("b", "Boss"), "enforcer", 4);
-    boss.cash = 1000;
+    boss.cash = 1000 + BALANCE.crew.createCost;
     const crew = createCrew(boss, "c1", "Iron Row", "IR", LATER);
-    crew.vault = 5000;
+    crew.vault = 5000 + BALANCE.lab.cost - 2000;
     buildLab(crew, boss, LATER, always(0));
     expect(crew.vault).toBe(3000);
     const doc = career(mk("m", "Mercy"), "medicine", 4);

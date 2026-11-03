@@ -17,11 +17,11 @@ const BUILDINGS: { id: Building; name: string; scene: SceneKind; poster: string;
   { id: "court", name: "Courthouse", scene: "court", poster: "court", Icon: Scale, tagline: "Trials, bail, lawyers, the court record." },
   { id: "hospital", name: "Hospital", scene: "hospital", poster: "hospital", Icon: HeartPulse, tagline: "Patients, check-ups, and a quiet back door." },
   { id: "bank", name: "Bank", scene: "bank", poster: "bank", Icon: Landmark, tagline: "Your account, loans, and cleaning dirty money." },
-  { id: "academy", name: "Academy", scene: "lab", poster: "lab", Icon: GraduationCap, tagline: "Enroll to earn the degree a career needs." },
+  { id: "academy", name: "Academy", scene: "academy", poster: "academy", Icon: GraduationCap, tagline: "Enroll to earn the degree a career needs." },
   { id: "cityhall", name: "City Hall", scene: "city", poster: "city", Icon: Building2, tagline: "The mayor, the vote, the paper, the turf." },
   { id: "prison", name: "Prison", scene: "prison", poster: "prison", Icon: Lock, tagline: "The yard, and anyone doing time." },
   { id: "street", name: "The Street", scene: "street", poster: "street", Icon: Shield, tagline: "Dealers, rackets, contracts, cold cases." },
-  { id: "station", name: "Station", scene: "highrise", poster: "highrise", Icon: Train, tagline: "Bus, train or plane to another country." },
+  { id: "station", name: "Station", scene: "station", poster: "station", Icon: Train, tagline: "Bus, train or plane to another country." },
 ];
 
 /** The City tab: buildings you walk into. Each one holds everything that happens there. */

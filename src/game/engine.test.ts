@@ -1,3 +1,4 @@
+import { SCHOOL_BY_ID } from "./content/schools";
 import { meritNeeded } from "./content/paths";
 import { describe, expect, it } from "vitest";
 import { BALANCE, maxEnergy } from "./balance";
@@ -146,7 +147,7 @@ describe("bank", () => {
 describe("shop", () => {
   it("housing raises max energy", () => {
     const p = fresh();
-    p.cash = 50;
+    p.cash = 100;
     applyAction(p, { type: "buy", itemId: "sleeping_bag" }, T0, always(0.5));
     expect(p.housing).toBe(1);
     expect(toView(p, T0).maxEnergy).toBeGreaterThan(maxEnergy(0));
@@ -384,7 +385,7 @@ describe("schools", () => {
     expect(() => applyAction(a, { type: "apply", school: "grayhaven_academy" }, T0, always(0.5))).toThrow(/Tuition/);
     a.bank = 1000;
     applyAction(a, { type: "apply", school: "grayhaven_academy" }, T0, always(0.5));
-    expect(a.bank).toBe(600);
+    expect(a.bank).toBe(1000 - SCHOOL_BY_ID.grayhaven_academy.tuition);
     expect(a.application?.status).toBe("pending");
     expect(() => applyAction(a, { type: "apply", school: "halloway_law" }, T0, always(0.5))).toThrow(/review/);
   });
@@ -395,7 +396,7 @@ describe("schools", () => {
     tick(p, p.application!.decideAt + 1);
     expect(p.application?.status).toBe("rejected");
     expect(p.application?.reason).toMatch(/sharper|more persuasive|more observant/);
-    expect(p.bank).toBe(400 + 450);
+    expect(p.bank).toBe(1000 - SCHOOL_BY_ID.halloway_law.tuition + SCHOOL_BY_ID.halloway_law.tuition * BALANCE.school.refundShare);
     expect(() => applyAction(p, { type: "apply", school: "halloway_law" }, p.tickAt, always(0.5))).toThrow(/so soon/);
     applyAction(p, { type: "dismiss_application" }, p.tickAt, always(0.5));
     expect(p.application).toBeNull();
@@ -562,7 +563,7 @@ describe("countries and travel", () => {
     expect(() => applyAction(p, { type: "apply", school: "halcyon_med" }, T0, always(0.5))).toThrow(/Travel there/);
     p.country = "meridian";
     applyAction(p, { type: "apply", school: "halcyon_med" }, T0, always(0.5));
-    expect(p.bank).toBe(3500);
+    expect(p.bank).toBe(5000 - SCHOOL_BY_ID.halcyon_med.tuition);
   });
 
   it("country laws change pay and heat", () => {
@@ -607,7 +608,7 @@ describe("medicine", () => {
 describe("housing per country", () => {
   it("each country has its own home, kept while you're away", () => {
     const p = fresh();
-    p.cash = 1000;
+    p.cash = 2000;
     applyAction(p, { type: "buy", itemId: "room" }, T0, always(0.5));
     expect(p.housing).toBe(2);
     applyAction(p, { type: "travel", to: "solmarra", mode: "plane" }, T0, always(0.99));
@@ -691,7 +692,7 @@ describe("daily reward, contracts and gym", () => {
     applyAction(p, { type: "train", stat: "agility" }, T0, always(0.5));
     expect(p.stats.agility).toBeGreaterThan(2);
     expect(p.stats.strength).toBe(0);
-    expect(p.cash).toBe(15);
+    expect(p.cash).toBe(20 - BALANCE.gym.fee);
     expect(p.energy).toBe(maxEnergy(0) - 10);
   });
 });

@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { BALANCE } from "./balance";
 import { newCity } from "./city";
 import { applyAction, createPlayer, issueGear, tick } from "./engine";
-import { ceremonyBlock, crewJob, family, familyGate, makeMember } from "./family";
-import { canUseForum, closeForum, createForum, inviteToForum, removeFromForum } from "./forum";
+import { ceremonyBlock, crewJob, family, familyGate, FAMILY, makeMember } from "./family";
+import { canUseForum, closeForum, createForum, FORUM, inviteToForum, removeFromForum } from "./forum";
 import { runHeist } from "./heist";
 import { standGuard } from "./military";
 import { addMember, createCrew, joinCrew, leaveCrew } from "./social";
@@ -40,9 +40,9 @@ describe("the family's rules for Mafia promotions", () => {
 
   it("a crew leader can swear in a soldier who has done a crew job", () => {
     const boss = mafia("b", "Boss Bea", 4);
-    boss.cash = 1000;
+    boss.cash = 1000 + BALANCE.crew.createCost;
     const crew = createCrew(boss, "c", "Iron Row", "IRW", LATER);
-    crew.vault = 1000;
+    crew.vault = 500 + FAMILY.ceremonyCost;
     const sal = mafia("s", "Soldier Sal", 2);
     addMember(crew, sal, LATER);
     expect(ceremonyBlock(crew, boss, sal)).toMatch(/haven't done a job/);
@@ -82,7 +82,7 @@ describe("the family's rules for Mafia promotions", () => {
 
   it("only the Mafia joins crews, and leaving hands leadership on", () => {
     const boss = mafia("b", "Boss Bea", 4);
-    boss.cash = 1000;
+    boss.cash = 1000 + BALANCE.crew.createCost;
     const crew = createCrew(boss, "c", "Iron Row", "IRW", LATER, "open");
     expect(boss.family?.leads).toBe(true);
     expect(() => joinCrew(crew, mk("d", "Doctor Dee"), LATER)).toThrow(/Only the Mafia/);
@@ -96,10 +96,10 @@ describe("the family's rules for Mafia promotions", () => {
 describe("the secret forum", () => {
   it("the leader opens it and invites anyone; guests can post without joining the crew", () => {
     const boss = mafia("b", "Boss Bea", 4);
-    boss.cash = 1000;
+    boss.cash = 1000 + BALANCE.crew.createCost;
     const crew = createCrew(boss, "c", "Iron Row", "IRW", LATER);
     expect(() => createForum(crew, boss, "Back Room", LATER)).toThrow(/vault/);
-    crew.vault = 500;
+    crew.vault = FORUM.cost;
     createForum(crew, boss, "Back Room", LATER);
     const cop = mk("p", "Officer Pike");
     cop.path = "police";
@@ -162,7 +162,7 @@ describe("soldiers on guard", () => {
 
     // The same rolls that would succeed without guards fail with three of them.
     const boss = mafia("b2", "Boss Bea", 4);
-    boss.cash = 1000;
+    boss.cash = 1000 + BALANCE.crew.createCost;
     const crew = createCrew(boss, "cr", "Iron Row", "IRW", LATER);
     const driver = mafia("d", "Driver Dan", 2);
     addMember(crew, driver, LATER);

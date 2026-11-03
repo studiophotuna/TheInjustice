@@ -1,3 +1,4 @@
+import { gearView, usesLeft } from "./gear";
 import { marketView } from "./drugs";
 import { tutorialView } from "./tutorial";
 import { launderOptions } from "./money";
@@ -59,6 +60,7 @@ export interface PublicView {
   reputation: number;
   housing: string;
   inventory: { id: string; name: string; icon: string; count: number; usable: boolean }[];
+  gear: ReturnType<typeof import("./gear").gearView>;
   feel: ReturnType<typeof describe> & { conscience: string };
   path: {
     id: PathId;
@@ -170,6 +172,7 @@ export interface PublicView {
     /** Income waiting to be collected. */
     waiting: number;
     buyable: boolean;
+    closedUntil: number | null;
   }[];
   crewId: string | null;
   location: { country: CountryId; countryName: string; city: string; color: string; laws: string };
@@ -301,11 +304,13 @@ export function toView(p: Player, now: number): PublicView {
       city: COUNTRY_BY_ID[pr.country].capital,
       owned: !!p.properties?.[pr.id],
       waiting: p.properties?.[pr.id] ? propertyIncome(pr.id, p.properties[pr.id], now) : 0,
+      closedUntil: (p.closed?.[pr.id] ?? 0) > now ? p.closed![pr.id] : null,
       buyable: pr.country === here && !p.properties?.[pr.id],
     })),
     crewId: p.crewId ?? null,
+    gear: gearView(p, now, (base) => Math.round(base * COUNTRY_BY_ID[countryOf(p)].priceMult)),
     inventory: Object.entries(p.inventory)
-      .filter(([, n]) => n > 0)
+      .filter(([id, n]) => n > 0 && ITEM_BY_ID[id].kind !== "weapon" && ITEM_BY_ID[id].kind !== "armor")
       .map(([id, count]) => {
         const it = ITEM_BY_ID[id];
         return { id, name: it.name, icon: it.icon, count, usable: it.kind === "food" || it.kind === "medical" };
@@ -353,7 +358,7 @@ export function toView(p: Player, now: number): PublicView {
       owned:
         i.kind === "housing"
           ? p.housing >= (i.housing ?? 0)
-          : (i.kind === "weapon" || i.kind === "armor") && !!p.inventory[i.id],
+          : (i.kind === "weapon" || i.kind === "armor") && !!p.inventory[i.id] && usesLeft(p, i.id) > 0,
     })),
     fights: NPCS.filter((n) => localDistrict(n.district)).map((n) => ({
       id: n.id,

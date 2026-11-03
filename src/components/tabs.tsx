@@ -1,5 +1,6 @@
 "use client";
 
+import { CareerPortrait } from "./art/CareerPortrait";
 import { CityHall } from "./cityhall";
 import { motion } from "motion/react";
 import {
@@ -281,7 +282,9 @@ export function ShopTab({ game }: { game: GameApi }) {
                 <p className="muted">{pr.description}</p>
                 <p className="property-income">≈ ${pr.incomePerHour}/hour</p>
               </div>
-              {pr.owned ? (
+              {pr.owned && pr.closedUntil ? (
+                <p className="fine text-red">🔥 Burned out. Reopens in {Math.ceil((pr.closedUntil - Date.now()) / 3_600_000)}h.</p>
+              ) : pr.owned ? (
                 <button className="btn btn-primary btn-sm" disabled={game.busy || pr.waiting < 1} onClick={() => game.act({ type: "collect_property", id: pr.id })}>
                   Collect ${pr.waiting}
                 </button>
@@ -305,12 +308,76 @@ export function ShopTab({ game }: { game: GameApi }) {
             <p className="muted">{i.description}</p>
           </div>
           <motion.button whileTap={{ scale: 0.94 }} className="btn btn-primary btn-sm" disabled={game.busy || i.owned || view.cash < i.price} onClick={() => game.act({ type: "buy", itemId: i.id })}>
-            {i.owned ? "Owned" : `$${i.price}`}
+            {i.owned ? "Owned" : view.gear.some((g) => g.id === i.id && g.broken) ? `Replace $${i.price}` : `$${i.price}`}
           </motion.button>
         </motion.article>
       ))}
     </motion.div>
       </div>
+  );
+}
+
+// ─── Gear ──────────────────────────────────────────────────────────────────
+
+/** Weapon and armor slots: only what's equipped counts, and it wears out with every fight. */
+export function GearCard({ game }: { game: GameApi }) {
+  const view = game.view!;
+  const gear = view.gear;
+  const slot = (s: "weapon" | "armor") => gear.find((g) => g.slot === s && g.equipped) ?? null;
+  return (
+    <section className="card gear">
+      <h3 className="card-title"><Swords size={16} /> Gear</h3>
+      <div className="gear-slots">
+        {(["weapon", "armor"] as const).map((s) => {
+          const g = slot(s);
+          return (
+            <div key={s} className={`gear-slot ${g?.broken ? "broken" : ""}`}>
+              <span className="crime-label">{s === "weapon" ? "Weapon" : "Armor"}</span>
+              {g ? (
+                <>
+                  <b>{g.icon} {g.name}</b>
+                  <div className="wear-bar" title={`${g.condition}% condition`}><span style={{ width: `${g.condition}%` }} className={g.condition <= 25 ? "low" : ""} /></div>
+                  <span className="fine">{g.broken ? "Broken: useless until repaired" : `${g.condition}% condition`}</span>
+                </>
+              ) : (
+                <span className="muted">Nothing. Fists{s === "armor" ? " and luck" : ""}.</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {gear.length === 0 ? (
+        <p className="muted fine">Buy weapons and armor in the Shop. Only what you equip counts in a fight, and everything wears out.</p>
+      ) : (
+        <ul className="officials gear-list">
+          {gear.map((g) => (
+            <li key={g.id}>
+              <span>
+                {g.icon} {g.name} <span className="muted">· {g.broken ? "broken" : `${g.condition}%`}{g.issued ? " · issued" : ""}</span>
+              </span>
+              <span className="row">
+                {!g.equipped && (
+                  <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => game.act({ type: "equip", itemId: g.id })}>Equip</button>
+                )}
+                {g.equipped && (
+                  <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => game.act({ type: "unequip", slot: g.slot })}>Take off</button>
+                )}
+                {g.condition < 100 && (
+                  <button
+                    className="btn btn-primary btn-xs"
+                    disabled={game.busy || !g.canRepair || (g.repairCost ?? 0) > view.cash}
+                    title={g.issued && !g.canRepair ? "The armory services issued gear once a day." : ""}
+                    onClick={() => game.act({ type: "repair", itemId: g.id })}
+                  >
+                    {g.issued ? (g.canRepair ? "Armory (free)" : "Armory: tomorrow") : `Repair $${g.repairCost}`}
+                  </button>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 
@@ -323,7 +390,7 @@ export function ProfileTab({ game }: { game: GameApi }) {
   return (
     <div className="profile">
       <section className="card profile-hero">
-        <PlayerAvatar name={view.name} path={view.path?.id} className="avatar-xl" />
+        <CareerPortrait path={view.path?.id} name={view.name} className="profile-portrait" />
         <div>
           <h2>{view.name}</h2>
           <p className="muted">{view.path ? `${view.path.rank} · ${view.path.name}` : `Bum · ${view.location.city}`}{view.deaths ? ` · Life #${view.deaths + 1}` : ""}</p>
@@ -379,6 +446,8 @@ export function ProfileTab({ game }: { game: GameApi }) {
           ))}
         </ul>
       </section>
+
+      <GearCard game={game} />
 
       <section className="card">
         <h3 className="card-title"><Backpack size={16} /> Pockets</h3>
