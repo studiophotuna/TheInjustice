@@ -96,12 +96,23 @@ export function suspectProfile(p: Player, crewTag: string | null): Record<ClueTr
   };
 }
 
-export function clueText(trait: ClueTrait, value: string): string {
+const ADVERB: Record<string, string> = { Clumsy: "clumsily", Slow: "slowly", Steady: "steadily", Quick: "quickly", Sharp: "sharply", Lightning: "like lightning" };
+
+export function clueText(trait: ClueTrait, value: string, source?: Tip["source"]): string {
+  if (source === "doctor") {
+    if (trait === "build") return `The bruising points to an attacker who's ${value.toLowerCase()}.`;
+    if (trait === "reflexes") return `The injuries came fast: the attacker moved ${ADVERB[value] ?? value.toLowerCase()}.`;
+  }
+  if (source === "bank") {
+    if (trait === "nameStart") return `The account holder's name starts with "${value}…".`;
+    if (trait === "nameEnd") return `The account holder's name ends in "…${value}".`;
+    if (trait === "nameLength") return `The account holder has a ${value} name.`;
+  }
   switch (trait) {
     case "build":
       return `Body type: ${value.toLowerCase()}.`;
     case "reflexes":
-      return `Moved ${{ Clumsy: "clumsily", Slow: "slowly", Steady: "steadily", Quick: "quickly", Sharp: "sharply", Lightning: "like lightning" }[value] ?? value.toLowerCase()}.`;
+      return `Moved ${ADVERB[value] ?? value.toLowerCase()}.`;
     case "nameStart":
       return `Their name seems to start with "${value}…".`;
     case "nameEnd":
@@ -132,10 +143,19 @@ function decoyValue(trait: ClueTrait, truth: string, rng: Rng): string {
 }
 
 /** Adds one clue to the case. Accuracy depends on who saw it; traits not yet reported come first. */
-export function addTip(c: CaseFile, source: Tip["source"], accuracy: number, now: number, rng: Rng, byId?: string, label?: string): Tip {
+export function addTip(
+  c: CaseFile,
+  source: Tip["source"],
+  accuracy: number,
+  now: number,
+  rng: Rng,
+  byId?: string,
+  label?: string,
+  traits: ClueTrait[] = TRAITS,
+): Tip {
   const seen = new Set(c.tips.map((t) => t.trait));
-  const fresh = TRAITS.filter((t) => !seen.has(t));
-  const trait = pick(fresh.length ? fresh : TRAITS, rng);
+  const fresh = traits.filter((t) => !seen.has(t));
+  const trait = pick(fresh.length ? fresh : traits, rng);
   const correct = rng() < accuracy;
   const value = correct ? c.suspect[trait] : decoyValue(trait, c.suspect[trait], rng);
   const tip: Tip = {
@@ -143,7 +163,7 @@ export function addTip(c: CaseFile, source: Tip["source"], accuracy: number, now
     source,
     trait,
     value,
-    text: `${label ? `${label}: ` : ""}${clueText(trait, value)}`,
+    text: `${label ? `${label}: ` : ""}${clueText(trait, value, source)}`,
     at: now,
     correct,
     ...(byId ? { byId } : {}),
@@ -293,6 +313,7 @@ export function commitCrime(
     text: amount ? `You ${def.verb.replace(/ from$/, "")} ${kind === "mug" ? t.name : `from ${t.name}`} and get away with $${amount}.` : `Empty pockets. You got away with nothing.`,
   });
 
+  a.lastCrime = { caseId: ctx.caseId, at: now };
   const c: CaseFile = {
     id: ctx.caseId,
     country: countryOf(a),

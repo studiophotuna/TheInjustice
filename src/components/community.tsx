@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { Ban, Crown, Eye, EyeOff, FileSearch, Footprints, Gavel, Hand, Inbox, Lock, MessageSquare, Search, Send, Shield, Siren, Swords, UserCheck, Users, Vault } from "lucide-react";
+import { Ban, Crown, Eye, EyeOff, FileSearch, Footprints, Gavel, Hand, Landmark, Moon, Stethoscope, Inbox, Lock, MessageSquare, Search, Send, Shield, Siren, Swords, UserCheck, Users, Vault } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 import type { GameApi } from "./useGame";
@@ -38,7 +38,7 @@ type CaseCard = {
   victimName: string;
   amount: number;
   open: boolean;
-  tips: { id: string; source: "witness" | "victim" | "bystander" | "detective"; text: string; at: number }[];
+  tips: { id: string; source: "witness" | "victim" | "bystander" | "detective" | "doctor" | "bank"; text: string; at: number }[];
   canInvestigate: string | null;
   suspects: { id: string; name: string; matches: number }[] | null;
   arrested: { suspectName: string; officerName: string } | null;
@@ -68,7 +68,32 @@ type TrialCard = {
   canJudge: string | null;
   overdue: boolean;
 };
-type JusticeData = { cases: CaseCard[]; court: TrialCard[]; block: string | null; detective: boolean; lawyer: boolean; judge: boolean };
+type Patient = { caseId: string; crime: string; victimName: string; district: string; at: number; canExamine: string | null };
+type Deposit = { caseId: string; account: string; amount: number; at: number; minutesAfter: number; crime: string; district: string; canReview: string | null };
+type ColdCase = {
+  caseId: string;
+  crime: string;
+  victimName: string;
+  district: string;
+  at: number;
+  amount: number;
+  clues: string[];
+  suspects: { id: string; name: string; matches: number }[];
+  canHunt: string | null;
+  hunt: { hunterName: string; suspectName: string; won: boolean } | null;
+};
+type JusticeData = {
+  cases: CaseCard[];
+  court: TrialCard[];
+  block: string | null;
+  detective: boolean;
+  lawyer: boolean;
+  judge: boolean;
+  roles: { medic: boolean; banker: boolean; vigilante: boolean };
+  patients: Patient[];
+  deposits: Deposit[];
+  coldCases: ColdCase[];
+};
 type CrewView = {
   id: string;
   name: string;
@@ -558,6 +583,8 @@ const SOURCE_LABEL: Record<CaseCard["tips"][number]["source"], string> = {
   victim: "Victim",
   bystander: "Bystander",
   detective: "Detective",
+  doctor: "Doctor",
+  bank: "Bank",
 };
 
 function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
@@ -596,6 +623,11 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
             Only the police can read case files. Every report adds one clue: a body type, how they moved, part of a name,
             a crew patch. Some clues are wrong. Detectives put them together and make arrests.
           </p>
+          <ul className="how-cases">
+            <li><b>Doctors</b> examine victims and read the attacker from the bruises.</li>
+            <li><b>Bankers</b> catch cash deposited right after a robbery.</li>
+            <li><b>Vigilantes</b> hunt down suspects on cases the police let go cold.</li>
+          </ul>
         </section>
       )}
       {hub?.readsCases && (
@@ -646,6 +678,89 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
                   <p className="fine muted">Detectives can work the scene, see who fits and make arrests.</p>
                 ))}
                 {data.detective && c.canInvestigate && !c.arrested && <p className="job-lock"><Lock size={11} /> {c.canInvestigate}</p>}
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {data?.roles.medic && (
+        <section className="card">
+          <h3 className="card-title"><Stethoscope size={16} /> Clinic · patients</h3>
+          {data.patients.length === 0 && <p className="muted">No crime victims waiting to be seen.</p>}
+          <div className="case-list">
+            {data.patients.map((x) => (
+              <article key={x.caseId} className="case">
+                <header>
+                  <b>{x.victimName}</b>
+                  <span className="chip">#{x.caseId}</span>
+                </header>
+                <p className="muted">Victim of a {x.crime.toLowerCase()} in {x.district} · {ago(x.at)}</p>
+                <button className="btn btn-primary btn-sm" disabled={game.busy || !!x.canExamine} title={x.canExamine ?? ""} onClick={() => act({ op: "examine", caseId: x.caseId })}>
+                  <Stethoscope size={14} /> Examine injuries
+                </button>
+                {x.canExamine && <p className="job-lock"><Lock size={11} /> {x.canExamine}</p>}
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {data?.roles.banker && (
+        <section className="card">
+          <h3 className="card-title"><Landmark size={16} /> Compliance desk · flagged deposits</h3>
+          {data.deposits.length === 0 && <p className="muted">No suspicious deposits. Clean money today. Probably.</p>}
+          <div className="case-list">
+            {data.deposits.map((x) => (
+              <article key={x.caseId} className="case">
+                <header>
+                  <b>Account {x.account}</b>
+                  <span className="chip chip-gold">${x.amount} cash</span>
+                </header>
+                <p className="muted">Deposited {x.minutesAfter} min after a reported {x.crime.toLowerCase()} in {x.district}.</p>
+                <div className="row wrap">
+                  <button className="btn btn-primary btn-sm" disabled={game.busy || !!x.canReview} onClick={() => act({ op: "review_deposit", caseId: x.caseId, choice: "report" })}>
+                    <Siren size={14} /> Report to police
+                  </button>
+                  <button className="btn btn-ghost btn-sm" disabled={game.busy || !!x.canReview} onClick={() => act({ op: "review_deposit", caseId: x.caseId, choice: "bury" })}>
+                    Bury it (take a fee)
+                  </button>
+                </div>
+                {x.canReview && <p className="job-lock"><Lock size={11} /> {x.canReview}</p>}
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {data?.roles.vigilante && (
+        <section className="card">
+          <h3 className="card-title"><Moon size={16} /> Cold cases · the police gave up</h3>
+          {data.coldCases.length === 0 && <p className="muted">No cold cases. The police are doing their job, for once.</p>}
+          <div className="case-list">
+            {data.coldCases.map((x) => (
+              <article key={x.caseId} className={`case ${x.hunt ? "cold" : ""}`}>
+                <header>
+                  <b>#{x.caseId} · {x.crime}</b>
+                  <span className="chip">{x.hunt ? (x.hunt.won ? "Handled" : "Got away") : "Cold"}</span>
+                </header>
+                <p className="muted">{x.victimName} · {x.district} · {ago(x.at)}{x.amount ? ` · $${x.amount} taken` : ""}</p>
+                <ul className="tips">{x.clues.map((t, i) => <li key={i}>{t}</li>)}</ul>
+                {x.hunt && <p className="fine">{x.hunt.hunterName} went after {x.hunt.suspectName}{x.hunt.won ? " and won." : ", who fought them off."}</p>}
+                {!x.hunt && x.suspects.length > 0 && (
+                  <div className="suspects">
+                    <span className="crime-label">People who fit</span>
+                    {x.suspects.map((sus) => (
+                      <span key={sus.id} className="suspect">
+                        <span className="chip">{sus.name} · {sus.matches}/{x.clues.length}</span>
+                        <button className="btn btn-danger btn-xs" disabled={game.busy || !!x.canHunt} onClick={() => act({ op: "hunt", caseId: x.caseId, suspectId: sus.id })}>
+                          <Swords size={12} /> Hunt
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {!x.hunt && <p className="fine muted">No badge, no court. Win and the victim gets paid back. Lose and you&apos;re hurt. Either way, you draw heat.</p>}
               </article>
             ))}
           </div>

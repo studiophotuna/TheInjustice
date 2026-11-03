@@ -88,6 +88,12 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
     Suspects can send the judge an envelope from their bank; a judge who takes it lets them
     walk and loses integrity. Wrongful convictions are possible, and only the real criminal
     ever knows. Every verdict goes on the public court record.
+  - **Every career helps**: Doctors (Intern+) examine victims of snatches and muggings for a
+    reliable clue about the attacker's build or speed, and speed up their recovery. Bankers
+    (Loan Officer+) see cash deposited within 2 hours of a crime by account number only: report
+    it (bank records give a name clue) or bury it for a 10% fee and lose integrity. Vigilantes
+    (Night Patroller+) hunt suspects on cold cases: win and the victim is paid back, lose and
+    you're hurt; either way you draw heat.
   - **Crews**: only street bosses (Mafia at Capo, rank 4, or higher) can found one,
     for $500. The leader picks who can join: **Open** (anyone joins), **On request** (the
     leader approves) or **Invite only** (the leader invites from the People list). Shared

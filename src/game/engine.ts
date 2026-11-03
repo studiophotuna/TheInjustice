@@ -684,7 +684,7 @@ function useItem(p: Player, itemId: string, now: number, events: GameEvent[]) {
   if (p.inventory[itemId] <= 0) delete p.inventory[itemId];
 }
 
-function bank(p: Player, op: "open" | "deposit" | "withdraw", amount: number | undefined, events: GameEvent[]) {
+function bank(p: Player, op: "open" | "deposit" | "withdraw", amount: number | undefined, now: number, events: GameEvent[]) {
   if (op === "open") {
     if (p.hasBankAccount) throw new GameError("You already have an account.");
     if (p.cash < BALANCE.bankOpenCost) throw new GameError(`Opening an account costs $${BALANCE.bankOpenCost}.`);
@@ -701,6 +701,12 @@ function bank(p: Player, op: "open" | "deposit" | "withdraw", amount: number | u
     p.cash -= amt;
     p.bank += amt;
     events.push({ tone: "good", text: `Deposited $${amt}.` });
+    // A big cash deposit right after a robbery gets the compliance desk's attention.
+    const { windowMs, minDeposit } = BALANCE.casework.bank;
+    if (p.lastCrime && now - p.lastCrime.at < windowMs && amt >= minDeposit && !p.pendingDeposit) {
+      p.pendingDeposit = { caseId: p.lastCrime.caseId, amount: amt, at: now };
+      p.lastCrime = null;
+    }
   } else {
     if (amt > p.bank) throw new GameError("You don't have that much in the bank.");
     p.bank -= amt;
@@ -902,7 +908,7 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng): G
       useItem(p, action.itemId, now, events);
       break;
     case "bank":
-      bank(p, action.op, action.amount, events);
+      bank(p, action.op, action.amount, now, events);
       break;
     case "offer":
       answerOffer(p, action.path, action.accept, now, events);

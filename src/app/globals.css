@@ -700,3 +700,6 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 .jail-card p { margin: 0 0 8px; }
 .bribe { align-items: center; }
 .bribe input { width: 96px; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--border); background: rgba(0, 0, 0, 0.35); color: var(--text); }
+.how-cases { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); font-size: 0.92rem; }
+.tip-src.doctor { color: #ff8fb1; }
+.tip-src.bank { color: #9b7bff; }

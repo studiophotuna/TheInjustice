@@ -23,6 +23,7 @@ import {
 } from "@/game/social";
 import {
   canReadCases,
+  caseCold,
   caseView,
   commitCrime,
   crimeBlock,
@@ -36,6 +37,17 @@ import {
 } from "@/game/crime";
 import { arrest, isDetective, isJudge, isLawyer, joinTrial, offerBribe, trialView } from "@/game/justice";
 import { settleTrial } from "@/server/justice";
+import {
+  coldCaseView,
+  depositView,
+  examine,
+  hunt,
+  isBanker,
+  isMedic,
+  isVigilante,
+  patientView,
+  reviewDeposit,
+} from "@/game/casework";
 import { GameError, type Crew, type CrewPolicy, type GameEvent, type Player } from "@/game/types";
 import { toView } from "@/game/view";
 import { assertJson } from "@/server/auth";
@@ -101,8 +113,11 @@ export async function GET(req: Request) {
       }
       const block = canReadCases(p);
       const detective = isDetective(p);
+      const medic = isMedic(p);
+      const banker = isBanker(p);
+      const vigilante = isVigilante(p);
       let pool: { player: Player; crewTag: string | null }[] = [];
-      if (detective) {
+      if (detective || vigilante) {
         const [people, crews] = await Promise.all([store.listPlayers(country, 200), store.listCrews(200)]);
         const tags = new Map(crews.map((c) => [c.id, c.tag]));
         pool = people.filter((o) => o.id !== p.id).map((o) => ({ player: o, crewTag: o.crewId ? tags.get(o.crewId) ?? null : null }));
@@ -119,6 +134,14 @@ export async function GET(req: Request) {
               .slice(0, 20)
               .map((c) => caseView(c, p, now, detective && !c.trial ? suspectsFor(c, pool) : undefined)),
         court: cases.filter((c) => c.trial).slice(0, 20).map((c) => trialView(c, p, now)),
+        roles: { medic, banker, vigilante },
+        patients: medic
+          ? cases.filter((c) => c.kind !== "pickpocket" && !c.examinedBy && !c.trial?.verdict && !c.hunt && !caseCold(c, now)).slice(0, 10).map((c) => patientView(c, p, now))
+          : [],
+        deposits: banker ? cases.filter((c) => c.deposit && !c.deposit.review && !caseCold(c, now) && !c.trial?.verdict).slice(0, 10).map((c) => depositView(c, p, now)) : [],
+        coldCases: vigilante
+          ? cases.filter((c) => !c.trial && caseCold(c, now)).slice(0, 10).map((c) => coldCaseView(c, p, now, c.hunt ? [] : suspectsFor(c, pool)))
+          : [],
       });
     }
     const channel = url.searchParams.get("channel");
@@ -368,6 +391,69 @@ export async function POST(req: Request) {
         const verdict = b.verdict === "guilty" || b.verdict === "not_guilty" ? b.verdict : undefined;
         if (!takeBribe && !verdict) throw new GameError("Guilty or not guilty?");
         events = await settleTrial(store, caseId, now, { judgeId: playerId, verdict, takeBribe });
+        break;
+      }
+      case "examine": {
+        const caseId = str(b.caseId);
+        events = await store.transaction(async (tx) => {
+          const c = await tx.getCase(caseId);
+          if (!c) throw new GameError("That case doesn't exist.");
+          const [d, victim] = await tx.getPlayers([playerId, c.victimId]);
+          if (!d) throw new GameError("Create a character first.");
+          tick(d, now);
+          const v = victim && victim.id !== d.id ? victim : null;
+          if (v) tick(v, now);
+          const out = examine(d, c, v, now, Math.random);
+          await tx.putPlayer(d);
+          if (v) await tx.putPlayer(v);
+          await tx.putCase(c);
+          return out;
+        });
+        break;
+      }
+      case "review_deposit": {
+        const caseId = str(b.caseId);
+        const choice = b.choice === "bury" ? "bury" : b.choice === "report" ? "report" : null;
+        if (!choice) throw new GameError("Bad request.");
+        events = await store.transaction(async (tx) => {
+          const c = await tx.getCase(caseId);
+          if (!c) throw new GameError("That case doesn't exist.");
+          const [banker, depositor] = await tx.getPlayers([playerId, c.culpritId]);
+          if (!banker) throw new GameError("Create a character first.");
+          const dep = depositor && depositor.id !== banker.id ? depositor : null;
+          const out = reviewDeposit(banker, c, dep, choice, now, Math.random);
+          await tx.putPlayer(banker);
+          if (dep) await tx.putPlayer(dep);
+          await tx.putCase(c);
+          return out;
+        });
+        break;
+      }
+      case "hunt": {
+        const caseId = str(b.caseId);
+        const suspectId = str(b.suspectId);
+        const self = await store.get(playerId);
+        if (!self) throw new GameError("Create a character first.");
+        const [people, crews] = await Promise.all([store.listPlayers(countryOf(self), 200), store.listCrews(200)]);
+        const tags = new Map(crews.map((c) => [c.id, c.tag]));
+        const tagOf = (o: Player) => (o.crewId ? tags.get(o.crewId) ?? null : null);
+        events = await store.transaction(async (tx) => {
+          const c = await tx.getCase(caseId);
+          if (!c) throw new GameError("That case doesn't exist.");
+          const [v, suspect, victim] = await tx.getPlayers([playerId, suspectId, c.victimId]);
+          if (!v) throw new GameError("Create a character first.");
+          if (!suspect) throw new GameError("That player doesn't exist.");
+          tick(v, now);
+          tick(suspect, now);
+          const vic = victim && victim.id !== v.id && victim.id !== suspect.id ? victim : null;
+          const pool = people.filter((x) => x.id !== v.id).map((x) => ({ player: x, crewTag: tagOf(x) }));
+          const out = hunt(v, suspect, vic, c, pool, tagOf(suspect), now, Math.random);
+          await tx.putPlayer(v);
+          await tx.putPlayer(suspect);
+          if (vic) await tx.putPlayer(vic);
+          await tx.putCase(c);
+          return out.events;
+        });
         break;
       }
       case "vouch": {

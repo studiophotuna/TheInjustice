@@ -89,6 +89,15 @@ export const BALANCE = {
     sentenceMs: { pickpocket: 10 * 60_000, snatch: 15 * 60_000, mug: 25 * 60_000 },
     minBribe: 50,
   },
+  /** Other careers that help solve crimes. */
+  casework: {
+    /** Interns and up examine victims of snatches and muggings. */
+    clinic: { minRank: 2, fee: 20, feePerRank: 5 },
+    /** Loan Officers and up review cash deposits made soon after a crime. */
+    bank: { minRank: 3, windowMs: 2 * 60 * 60_000, minDeposit: 50, buryShare: 0.1 },
+    /** Night Patrollers and up hunt suspects on cold cases. */
+    vigilante: { minRank: 2, energy: 15, heat: 6 },
+  },
   chat: { cooldownMs: 3_000, maxLength: 280 },
   banking: {
     /** Bankers' interest per hour on savings (shortened for testing). */

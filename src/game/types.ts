@@ -137,6 +137,10 @@ export interface Player {
   jailReason?: string | null;
   /** Case the player is held for while awaiting trial. */
   custodyCase?: string | null;
+  /** The player's latest successful crime (bankers watch for deposits right after one). */
+  lastCrime?: { caseId: string; at: number } | null;
+  /** A deposit the bank flagged; the server files it on the case, then clears this. */
+  pendingDeposit?: { caseId: string; amount: number; at: number } | null;
 }
 
 // ── Street crime and case files ────────────────────────────────────────────
@@ -154,7 +158,7 @@ export interface Sighting {
 
 export interface Tip {
   id: string;
-  source: "witness" | "victim" | "bystander" | "detective";
+  source: "witness" | "victim" | "bystander" | "detective" | "doctor" | "bank";
   trait: ClueTrait;
   value: string;
   text: string;
@@ -184,6 +188,12 @@ export interface CaseFile {
   /** Officers who already searched the scene. */
   investigatedBy: string[];
   trial?: Trial;
+  /** A doctor examined the victim's injuries. */
+  examinedBy?: { id: string; name: string; at: number };
+  /** Cash the criminal deposited soon after the crime; bankers review it. */
+  deposit?: { amount: number; at: number; account: string; review?: "reported" | "buried"; reviewerName?: string };
+  /** A vigilante went after a suspect on a cold case. */
+  hunt?: { hunterId: string; hunterName: string; suspectId: string; suspectName: string; won: boolean; at: number; restitution: number };
 }
 
 export interface CourtParty {

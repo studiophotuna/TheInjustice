@@ -5,6 +5,7 @@ import { toView } from "@/game/view";
 import { parseAction } from "@/server/actions";
 import { assertJson } from "@/server/auth";
 import { resolveIdentity } from "@/server/identity";
+import { fileDeposit } from "@/game/casework";
 import { settleTrial } from "@/server/justice";
 import { getStore, StoreConfigError } from "@/server/store";
 
@@ -70,7 +71,9 @@ export async function POST(req: Request) {
     const action = parseAction(await req.json().catch(() => null));
     const { playerId } = await resolveIdentity(true);
     const now = Date.now();
-    const out = await getStore().update(playerId!, (p) => {
+    const store = getStore();
+    let flag: { caseId: string; amount: number; at: number } | null = null;
+    const out = await store.update(playerId!, (p) => {
       if (action.type === "create") {
         if (p) throw new GameError("You already have a character.");
         const fresh = createPlayer(playerId!, action.name, now, action.country);
@@ -78,8 +81,22 @@ export async function POST(req: Request) {
       }
       if (!p) throw new GameError("Create a character first.");
       const events = applyAction(p, action, now, Math.random);
+      if (p.pendingDeposit) {
+        flag = p.pendingDeposit;
+        p.pendingDeposit = null;
+      }
       return { player: p, result: { view: toView(p, now), events } };
     });
+    // A suspicious deposit lands on the compliance desk: file it on the case it followed.
+    const f = flag as { caseId: string; amount: number; at: number } | null;
+    if (f) {
+      await store
+        .transaction(async (tx) => {
+          const c = await tx.getCase(f.caseId);
+          if (c && fileDeposit(c, { id: playerId! }, f)) await tx.putCase(c);
+        })
+        .catch((e) => console.error(e));
+    }
     return NextResponse.json(out);
   } catch (e) {
     return failure(e);
