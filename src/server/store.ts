@@ -4,7 +4,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import postgres from "postgres";
 import { rankTitle } from "@/game/content/paths";
-import type { CaseFile, Crew, Player } from "@/game/types";
+import type { CaseFile, City, Crew, Player } from "@/game/types";
 import { LOCKOUT_MS, MAX_FAILED_LOGINS } from "./auth";
 
 export interface LeaderRow {
@@ -41,6 +41,9 @@ export interface Tx {
   /** Locks and returns a case file. */
   getCase(id: string): Promise<CaseFile | null>;
   putCase(c: CaseFile): Promise<void>;
+  /** Locks and returns a city (null if it has never been saved). */
+  getCity(country: string): Promise<City | null>;
+  putCity(c: City): Promise<void>;
 }
 
 /**
@@ -77,6 +80,8 @@ export interface PlayerStore {
   listMessages(channel: string, limit: number): Promise<ChatMessage[]>;
   /** Newest case files in a country. */
   listCases(country: string, limit: number): Promise<CaseFile[]>;
+  getCity(country: string): Promise<City | null>;
+  listCities(): Promise<City[]>;
 }
 
 export class StoreConfigError extends Error {}
@@ -95,6 +100,7 @@ interface FileData {
   crews: Record<string, Crew>;
   messages: ChatMessage[];
   cases: Record<string, CaseFile>;
+  cities: Record<string, City>;
 }
 
 export class FileStore implements PlayerStore {
@@ -116,11 +122,12 @@ export class FileStore implements PlayerStore {
             crews: raw.crews ?? {},
             messages: raw.messages ?? [],
             cases: raw.cases ?? {},
+            cities: raw.cities ?? {},
           }
-        : { players: raw, accounts: {}, sessions: {}, crews: {}, messages: [], cases: {} };
+        : { players: raw, accounts: {}, sessions: {}, crews: {}, messages: [], cases: {}, cities: {} };
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
-      this.data = { players: {}, accounts: {}, sessions: {}, crews: {}, messages: [], cases: {} };
+      this.data = { players: {}, accounts: {}, sessions: {}, crews: {}, messages: [], cases: {}, cities: {} };
     }
     return this.data!;
   }
@@ -251,6 +258,7 @@ export class FileStore implements PlayerStore {
       const players = new Map<string, Player>();
       const crews = new Map<string, Crew | null>();
       const cases = new Map<string, CaseFile>();
+      const cities = new Map<string, City>();
       const tx: Tx = {
         getPlayers: async (ids) => ids.map((id) => (d.players[id] ? structuredClone(d.players[id]) : null)),
         putPlayer: async (p) => void players.set(p.id, structuredClone(p)),
@@ -259,6 +267,8 @@ export class FileStore implements PlayerStore {
         deleteCrew: async (id) => void crews.set(id, null),
         getCase: async (id) => (d.cases[id] ? structuredClone(d.cases[id]) : null),
         putCase: async (c) => void cases.set(c.id, structuredClone(c)),
+        getCity: async (country) => (d.cities[country] ? structuredClone(d.cities[country]) : null),
+        putCity: async (c) => void cities.set(c.country, structuredClone(c)),
       };
       const result = await fn(tx);
       for (const [id, p] of players) d.players[id] = p;
@@ -267,6 +277,7 @@ export class FileStore implements PlayerStore {
         else delete d.crews[id];
       }
       for (const [id, c] of cases) d.cases[id] = c;
+      for (const [id, c] of cities) d.cities[id] = c;
       // Keep the local file small: drop the oldest cases.
       const all = Object.values(d.cases).sort((a, b) => b.at - a.at);
       for (const c of all.slice(300)) delete d.cases[c.id];
@@ -304,6 +315,15 @@ export class FileStore implements PlayerStore {
 
   async listMessages(channel: string, limit: number) {
     return (await this.load()).messages.filter((m) => m.channel === channel).slice(-limit);
+  }
+
+  async getCity(country: string) {
+    const c = (await this.load()).cities[country];
+    return c ? structuredClone(c) : null;
+  }
+
+  async listCities() {
+    return Object.values((await this.load()).cities).map((c) => structuredClone(c));
   }
 
   async listCases(country: string, limit: number) {
@@ -474,6 +494,15 @@ class PostgresStore implements PlayerStore {
             insert into injustice.cases (id, country, data) values (${c.id}, ${c.country}, ${q.json(c as unknown as postgres.JSONValue)})
             on conflict (id) do update set data = excluded.data`;
         },
+        getCity: async (country) => {
+          const rows = await q<{ data: City }[]>`select data from injustice.cities where country = ${country} for update`;
+          return rows[0]?.data ?? null;
+        },
+        putCity: async (c) => {
+          await q`
+            insert into injustice.cities (country, data, updated_at) values (${c.country}, ${q.json(c as unknown as postgres.JSONValue)}, now())
+            on conflict (country) do update set data = excluded.data, updated_at = now()`;
+        },
       };
       return fn(tx);
     })) as T;
@@ -511,6 +540,16 @@ class PostgresStore implements PlayerStore {
     return rows
       .reverse()
       .map((r) => ({ id: Number(r.id), channel: r.channel, authorId: r.author_id, authorName: r.author_name, body: r.body, at: r.created_at.getTime() }));
+  }
+
+  async getCity(country: string) {
+    const rows = await this.sql<{ data: City }[]>`select data from injustice.cities where country = ${country}`;
+    return rows[0]?.data ?? null;
+  }
+
+  async listCities() {
+    const rows = await this.sql<{ data: City }[]>`select data from injustice.cities`;
+    return rows.map((r) => r.data);
   }
 
   async listCases(country: string, limit: number) {

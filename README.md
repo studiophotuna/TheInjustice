@@ -113,6 +113,17 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
     for $500. The leader picks who can join: **Open** (anyone joins), **On request** (the
     leader approves) or **Invite only** (the leader invites from the People list). Shared
     vault, crew chat, +5% job pay.
+- **City hall**: every country elects a mayor for a two-week term. The ballot opens for the
+  last three days of each term (right away if the office is empty). Running costs $500 and
+  needs 25 reputation; every resident who isn't brand new gets one secret vote. The mayor:
+  sets the city tax (0–10%, withheld from job pay and business income into the treasury),
+  pays police a bounty per conviction from the treasury, orders a one-hour crackdown once a
+  day (crime is harder, hotter and draws more bystanders), pardons one prisoner per term, and
+  draws a daily salary. Mayors can also quietly skim the treasury; internal affairs can audit
+  the mayor, and a caught mayor is fined, held and removed from office. Lives in the Map tab.
+- **Reputation** is your public standing, separate from career rank: it unlocks districts and
+  schools, protects weaker players from you, decides who can run for mayor, and ranks the
+  leaderboard. Promotions don't use it.
 - **Businesses**: buy one in any country (paid from the bank) and collect hourly income.
 - **Account recovery**: a one-time recovery code is shown at sign-up; use it with
   "Forgot password?" to set a new password. Players can generate a new code in the Me tab.

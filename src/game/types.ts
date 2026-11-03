@@ -144,6 +144,8 @@ export interface Player {
   lastCrime?: { caseId: string; at: number } | null;
   /** A deposit the bank flagged; the server files it on the case, then clears this. */
   pendingDeposit?: { caseId: string; amount: number; at: number } | null;
+  /** City tax withheld from this player's pay, waiting to reach the city treasury. */
+  taxOwed?: { country: CountryId; amount: number } | null;
   /** The player's own recent crimes (criminals know what they did). */
   myCases?: { caseId: string; at: number; kind: CrimeKind; district: string; victimName: string }[];
 }
@@ -386,3 +388,31 @@ export type Action =
   | { type: "dismiss_application" };
 
 export class GameError extends Error {}
+
+// ── City hall ──────────────────────────────────────────────────────────────
+
+/** One per country: an elected mayor, a treasury and city policies. */
+export interface City {
+  country: CountryId;
+  /** Index of the current two-week term. */
+  term: number;
+  mayor: { id: string; name: string; since: number } | null;
+  /** Share of job pay and business income withheld for the treasury. */
+  taxRate: number;
+  /** Paid from the treasury to the arresting officer for each conviction. */
+  policeBounty: number;
+  treasury: number;
+  crackdownUntil: number;
+  lastCrackdownAt: number;
+  /** Term in which the mayor last used their pardon. */
+  pardonTerm: number;
+  lastSalaryAt: number;
+  candidates: { id: string; name: string; title: string; reputation: number; pitch: string; at: number }[];
+  /** Server-only: who voted for whom (secret ballot). */
+  votes: Record<string, string>;
+  history: { term: number; name: string | null; votes: number; turnout: number; at: number }[];
+  /** Public announcements from city hall. */
+  log: { at: number; text: string }[];
+  /** Server-only: money the mayor quietly took from the treasury. */
+  skims: { mayorId: string; amount: number; at: number; exposed?: boolean }[];
+}

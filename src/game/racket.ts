@@ -12,7 +12,7 @@ import { addMerit, countryOf, inJail, shiftIntegrity } from "./engine";
 import { PATHS } from "./content/paths";
 import { notify } from "./social";
 import { sv } from "./stats";
-import { GameError, type CaseFile, type GameEvent, type Player, type Rng } from "./types";
+import { GameError, type CaseFile, type City, type GameEvent, type Player, type Rng } from "./types";
 
 const R = BALANCE.racket;
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -159,11 +159,11 @@ export function isOfficial(p: Player): boolean {
   );
 }
 
-export function auditBlock(a: Player, target: Player | null, now: number): string | null {
+export function auditBlock(a: Player, target: Player | null, now: number, isMayor = false): string | null {
   if (!isInternalAffairs(a)) return `Only internal affairs can audit (Police ${PATHS.police.ranks[R.audit.minRank - 1]} and up).`;
   if (!target || target.dead) return "They're not around anymore.";
   if (target.id === a.id) return "You can't audit yourself.";
-  if (!isOfficial(target)) return "They're not an official.";
+  if (!isOfficial(target) && !isMayor) return "They're not an official.";
   if (countryOf(target) !== countryOf(a)) return "They work in another country.";
   if (now - (a.attackLog?.[`audit:${target.id}`] ?? 0) < R.audit.cooldownMs) return "You audited them recently.";
   if (a.energy < R.audit.energy) return "You're too tired.";
@@ -183,45 +183,62 @@ export function corruptionIn(c: CaseFile, targetId: string): { role: string; amo
  * Internal affairs digs through the target's cases. `cases` are the country's recent case
  * files; any that show corruption are marked as exposed and returned for saving.
  */
-export function audit(a: Player, target: Player, cases: CaseFile[], now: number): { events: GameEvent[]; changed: CaseFile[] } {
-  const block = auditBlock(a, target, now);
+export function audit(
+  a: Player,
+  target: Player,
+  cases: CaseFile[],
+  now: number,
+  city: City | null = null,
+): { events: GameEvent[]; changed: CaseFile[]; cityChanged: boolean } {
+  const block = auditBlock(a, target, now, city?.mayor?.id === target.id || !!city?.skims.some((x) => x.mayorId === target.id));
   if (block) throw new GameError(block);
   a.energy -= R.audit.energy;
   a.attackLog = { ...(a.attackLog ?? {}), [`audit:${target.id}`]: now };
   a.stats.wits += 0.4;
 
   const found = cases.map((c) => ({ c, hit: corruptionIn(c, target.id) })).filter((x) => x.hit);
-  if (!found.length) {
+  const skims = city ? city.skims.filter((x) => x.mayorId === target.id && !x.exposed) : [];
+  const skimmed = skims.reduce((s, x) => s + x.amount, 0);
+  if (!found.length && !skims.length) {
     target.reputation += 1;
     notify(target, "Internal affairs went through your files. They found nothing. +1 reputation.", "good", undefined, now);
-    return { events: [{ tone: "info", text: `${target.name} comes up clean. Or careful.` }], changed: [] };
+    return { events: [{ tone: "info", text: `${target.name} comes up clean. Or careful.` }], changed: [], cityChanged: false };
   }
-  const total = found.reduce((s, x) => s + x.hit!.amount, 0);
+  const total = found.reduce((s, x) => s + x.hit!.amount, 0) + skimmed;
   const fine = Math.min(target.cash + target.bank, total * 2);
   const fromCash = Math.min(target.cash, fine);
   target.cash -= fromCash;
   target.bank -= fine - fromCash;
-  target.rank = Math.max(1, target.rank - 1);
+  if (target.path) target.rank = Math.max(1, target.rank - 1);
   target.reputation = Math.max(0, target.reputation - 5);
   target.jailUntil = Math.max(target.jailUntil ?? 0, now + R.audit.jailMs);
-  target.jailReason = `Suspended and held by internal affairs (${found.length} case${found.length > 1 ? "s" : ""}).`;
+  target.jailReason = `Held by internal affairs${skimmed ? " for skimming the city treasury" : ""}.`;
   shiftIntegrity(target, -5);
   for (const { c, hit } of found) {
     c.exposed = [...(c.exposed ?? []), { id: target.id, name: target.name, role: hit!.role, at: now, by: a.name }];
   }
-  a.reputation += Math.min(10, 5 * found.length);
-  addMerit(a, "police", 3 * found.length);
-  const ids = found.map((x) => `#${x.c.id}`).join(", ");
+  for (const x of skims) x.exposed = true;
+  if (city && skimmed) {
+    // The skimmed money goes back to the city, and the mayor is removed from office.
+    city.treasury += Math.min(fine, skimmed);
+    if (city.mayor?.id === target.id) city.mayor = null;
+    city.log = [{ at: now, text: `Internal affairs caught Mayor ${target.name} skimming $${skimmed} from the treasury. City hall is empty until the next vote.` }, ...city.log].slice(0, 20);
+  }
+  const hits = found.length + (skims.length ? 1 : 0);
+  a.reputation += Math.min(10, 5 * hits);
+  addMerit(a, "police", 3 * hits);
+  const ids = [...found.map((x) => `#${x.c.id}`), ...(skimmed ? ["the city treasury"] : [])].join(", ");
   notify(
     target,
-    `Internal affairs caught you (${ids}). Fined $${fine}, demoted to ${PATHS[target.path!].ranks[target.rank - 1]}, and held for ${Math.round(R.audit.jailMs / 60_000)} minutes.`,
+    `Internal affairs caught you (${ids}). Fined $${fine}${target.path ? `, demoted to ${PATHS[target.path].ranks[target.rank - 1]}` : ""}${skimmed ? ", removed from office" : ""}, and held for ${Math.round(R.audit.jailMs / 60_000)} minutes.`,
     "bad",
     a,
     now,
   );
   return {
-    events: [{ tone: "good", text: `Got them. ${target.name} was dirty on ${ids}. Fined $${fine} and demoted.` }],
+    events: [{ tone: "good", text: `Got them. ${target.name} was dirty on ${ids}. Fined $${fine}${target.path ? " and demoted" : ""}${skimmed ? ", and removed from office" : ""}.` }],
     changed: found.map((x) => x.c),
+    cityChanged: skims.length > 0,
   };
 }
 

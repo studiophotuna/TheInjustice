@@ -139,11 +139,11 @@ export function useGame() {
 
   /** Actions that involve other players (attacks, chat, crews). */
   const social = useCallback(
-    async (body: Record<string, unknown>) => {
+    async (body: Record<string, unknown>, endpoint = "/api/community") => {
       if (busy) return null;
       setBusy(true);
       try {
-        const res = await fetch("/api/community", {
+        const res = await fetch(endpoint, {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify(body),

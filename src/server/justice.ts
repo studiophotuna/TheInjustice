@@ -1,6 +1,8 @@
 import "server-only";
 import { tick } from "@/game/engine";
+import { advanceCity } from "@/game/city";
 import { decideTrial, trialPartyIds } from "@/game/justice";
+import { notify } from "@/game/social";
 import { GameError, type GameEvent, type Player, type Verdict } from "@/game/types";
 import type { PlayerStore } from "./store";
 
@@ -47,6 +49,21 @@ export async function settleTrial(
       now,
       Math.random,
     );
+    // City hall pays the arresting officer a bounty for each conviction, if it can afford it.
+    const officer = get(t.officerId);
+    if (t.verdict === "guilty" && officer) {
+      const city = await tx.getCity(c.country);
+      if (city) {
+        advanceCity(city, now);
+        const bounty = Math.min(city.policeBounty, city.treasury);
+        if (bounty > 0) {
+          city.treasury -= bounty;
+          officer.cash += bounty;
+          notify(officer, `City hall pays you a $${bounty} bounty for the conviction in case #${c.id}.`, "good", undefined, now);
+        }
+        await tx.putCity(city);
+      }
+    }
     for (const p of byId.values()) await tx.putPlayer(p);
     await tx.putCase(c);
     return events;

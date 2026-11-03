@@ -709,3 +709,23 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 .envelope-card { border-color: rgba(255, 194, 75, 0.5); }
 .officials { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
 .officials li { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+/* City hall */
+.hall-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 6px 0 4px; }
+.hall-stats > div { display: grid; gap: 2px; padding: 10px 12px; border-radius: 12px; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border); }
+.hall-stats b { font-size: 1.05rem; }
+@media (min-width: 700px) { .hall-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.hall-block { margin-top: 14px; display: grid; gap: 8px; }
+.hall-block h4 { display: flex; align-items: center; gap: 6px; margin: 0; }
+.hall-block p { margin: 0; }
+.ballot { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ballot li { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(0, 0, 0, 0.2); }
+.pitch { margin: 4px 0 0; font-style: italic; color: var(--muted); }
+.run input, .skim input, .mayor-office input { padding: 7px 10px; border-radius: 10px; border: 1px solid var(--border); background: rgba(0, 0, 0, 0.35); color: var(--text); }
+.run input { flex: 1; min-width: 0; }
+.skim input, .mayor-office input[type=number] { width: 80px; }
+.mayor-office { border-top: 1px dashed var(--border); padding-top: 12px; }
+.mayor-office label.inline { display: inline-flex; align-items: center; gap: 6px; }
+.pardons { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.crackdown { display: flex; align-items: center; gap: 6px; color: var(--red); font-weight: 600; margin: 6px 0 0; }
+.mayor-office input[type=number], .skim input { flex: 0 0 88px; width: 88px; }

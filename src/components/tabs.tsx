@@ -1,5 +1,6 @@
 "use client";
 
+import { CityHall } from "./cityhall";
 import { motion } from "motion/react";
 import {
   Backpack,
@@ -429,6 +430,7 @@ export function CityTab({ game, onRead }: { game: GameApi; onRead: (id: string) 
   const view = game.view!;
   return (
     <div className="stack">
+      <CityHall game={game} />
       <section className="card">
         <h3 className="card-title"><BookOpen size={16} /> The Ledger · Your story</h3>
         <div className="chapters">

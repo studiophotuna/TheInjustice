@@ -52,6 +52,7 @@ import {
   withdrawPayoff,
 } from "@/game/racket";
 import { rankTitle } from "@/game/content/paths";
+import { crackdownOn } from "@/game/city";
 import {
   coldCaseView,
   depositView,
@@ -137,6 +138,7 @@ export async function GET(req: Request) {
       let pool: { player: Player; crewTag: string | null }[] = [];
       const mafia = isMafia(p);
       const ia = isInternalAffairs(p);
+      const city = ia ? await store.getCity(country) : null;
       let people: Player[] = [];
       if (detective || vigilante || mafia || ia) people = await store.listPlayers(country, 200);
       if (detective || vigilante) {
@@ -175,9 +177,12 @@ export async function GET(req: Request) {
           .map((c) => ({ caseId: c.id, amount: c.payoff!.amount, crime: c.kind, district: c.district, victimName: c.victimName })),
         officials: ia
           ? people
-              .filter((o) => o.id !== p.id && !o.dead && isOfficial(o))
+              .filter((o) => o.id !== p.id && !o.dead && (isOfficial(o) || city?.mayor?.id === o.id))
               .slice(0, 30)
-              .map((o) => ({ id: o.id, name: o.name, title: rankTitle(o) ?? "", path: o.path, canAudit: auditBlock(p, o, now) }))
+              .map((o) => {
+                const mayor = city?.mayor?.id === o.id;
+                return { id: o.id, name: o.name, title: mayor ? "Mayor" : rankTitle(o) ?? "", path: o.path, canAudit: auditBlock(p, o, now, mayor) };
+              })
           : [],
         scandals: all
           .flatMap((c) => (c.exposed ?? []).map((e) => ({ caseId: c.id, name: e.name, role: e.role, at: e.at, by: e.by })))
@@ -309,6 +314,8 @@ export async function POST(req: Request) {
           .slice(0, BALANCE.crime.maxWitnesses)
           .map((o) => o.id);
         const crewTag = self.crewId ? (await store.getCrew(self.crewId))?.tag ?? null : null;
+        const city = await store.getCity(country);
+        const crack = crackdownOn(city, now);
         const caseId = randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase();
         events = await store.transaction(async (tx) => {
           const [a, t, ...rest] = await tx.getPlayers([playerId, target, ...nearby]);
@@ -318,7 +325,7 @@ export async function POST(req: Request) {
           tick(t, now);
           const witnesses = rest.filter((w): w is Player => !!w && countryOf(w) === country);
           witnesses.forEach((w) => tick(w, now));
-          const out = commitCrime(a, t, kind, now, Math.random, { caseId, district: crimeDistrict(a, Math.random), crewTag, witnesses });
+          const out = commitCrime(a, t, kind, now, Math.random, { caseId, district: crimeDistrict(a, Math.random), crewTag, witnesses, crackdown: crack });
           await tx.putPlayer(a);
           await tx.putPlayer(t);
           if (out.caseFile) {
@@ -586,10 +593,12 @@ export async function POST(req: Request) {
             const c = await tx.getCase(id);
             if (c) locked.push(c);
           }
-          const out = audit(a, t!, locked, now);
+          const city = await tx.getCity(countryOf(a));
+          const out = audit(a, t!, locked, now, city);
           await tx.putPlayer(a);
           if (t) await tx.putPlayer(t);
           for (const c of out.changed) await tx.putCase(c);
+          if (city && out.cityChanged) await tx.putCity(city);
           return out.events;
         });
         break;

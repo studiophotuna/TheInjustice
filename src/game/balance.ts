@@ -107,6 +107,24 @@ export const BALANCE = {
     /** Sergeants and up audit officials. */
     audit: { minRank: 5, energy: 20, cooldownMs: 24 * 60 * 60_000, jailMs: 20 * 60_000 },
   },
+  city: {
+    /** Mayors serve two weeks; the ballot opens for the last three days of a term. */
+    termMs: 14 * 24 * 60 * 60_000,
+    electionMs: 3 * 24 * 60 * 60_000,
+    /** Reputation and filing fee (from the bank) to run for mayor. */
+    runReputation: 25,
+    runFee: 500,
+    maxTax: 0.1,
+    defaultTax: 0.03,
+    maxBounty: 200,
+    crackdownMs: 60 * 60_000,
+    crackdownCooldownMs: 24 * 60 * 60_000,
+    /** During a crackdown, crimes succeed less often and draw more heat. */
+    crackdownOdds: 0.8,
+    crackdownHeat: 1.5,
+    salary: 150,
+    salaryEveryMs: 24 * 60 * 60_000,
+  },
   chat: { cooldownMs: 3_000, maxLength: 280 },
   banking: {
     /** Bankers' interest per hour on savings (shortened for testing). */

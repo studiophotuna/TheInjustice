@@ -226,6 +226,8 @@ export interface CrimeContext {
   crewTag: string | null;
   /** Players nearby who will be asked to report. */
   witnesses: Player[];
+  /** The mayor ordered a crackdown: harder, hotter, more eyes on the street. */
+  crackdown?: boolean;
 }
 
 /** A random district of the country where the crime happens. */
@@ -258,7 +260,8 @@ export function commitCrime(
   const def = CRIMES[kind];
   a.energy -= def.energy;
   a.attackLog = { ...(a.attackLog ?? {}), [`crime:${t.id}`]: now };
-  a.heat += def.heat * COUNTRY_BY_ID[countryOf(a)].heatMult;
+  const crack = ctx.crackdown ? BALANCE.city.crackdownHeat : 1;
+  a.heat += def.heat * COUNTRY_BY_ID[countryOf(a)].heatMult * crack;
   shiftIntegrity(a, def.integrity);
   a.jobCounts[`crime:${kind}`] = (a.jobCounts[`crime:${kind}`] ?? 0) + 1;
 
@@ -282,7 +285,7 @@ export function commitCrime(
     a.stats.strength += 0.5;
     a.stats.nerve += 0.4;
   } else {
-    success = rng() < crimeOdds(a, t, kind);
+    success = rng() < crimeOdds(a, t, kind) * (ctx.crackdown ? BALANCE.city.crackdownOdds : 1);
     a.stats.agility += 0.5;
     a.stats.nerve += 0.3;
     if (kind === "pickpocket") a.stats.wits += 0.3;
@@ -339,7 +342,8 @@ export function commitCrime(
   // The victim saw something too, unless it was a clean lift.
   if (kind !== "pickpocket") addTip(c, "victim", eyeAccuracy(t), now, rng, t.id, "Victim");
   // Stand-in bystanders keep quiet streets from being crime-free zones.
-  for (let i = ctx.witnesses.length; i < BALANCE.crime.minWitnesses; i++) addTip(c, "bystander", 0.6, now, rng, undefined, pick(BYSTANDERS, rng));
+  const minWitnesses = BALANCE.crime.minWitnesses + (ctx.crackdown ? 1 : 0);
+  for (let i = ctx.witnesses.length; i < minWitnesses; i++) addTip(c, "bystander", 0.6, now, rng, undefined, pick(BYSTANDERS, rng));
 
   const lost = amount ? `$${amount} gone` : "Nothing taken";
   const what = { pickpocket: "Someone picked your pocket", snatch: "Someone snatched your bag", mug: "Someone mugged you" }[kind];

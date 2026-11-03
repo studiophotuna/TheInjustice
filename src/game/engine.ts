@@ -602,7 +602,24 @@ function maybeMugging(p: Player, job: JobDef, now: number, rng: Rng, events: Gam
   });
 }
 
-function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEvent[]) {
+/** City hall policies that affect a single player's action (loaded by the server). */
+export interface ActionContext {
+  /** City tax rate in each country. */
+  taxRates?: Partial<Record<CountryId, number>>;
+}
+
+/** Withholds city tax from income earned in `country`. Returns what's left. */
+function withholdTax(p: Player, country: CountryId, amount: number, ctx: ActionContext): { net: number; tax: number } {
+  const rate = ctx.taxRates?.[country] ?? 0;
+  const tax = Math.floor(amount * rate);
+  if (tax > 0) {
+    const owed = p.taxOwed?.country === country ? p.taxOwed.amount : 0;
+    p.taxOwed = { country, amount: owed + tax };
+  }
+  return { net: amount - tax, tax };
+}
+
+function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEvent[], ctx: ActionContext = {}) {
   const job = JOB_BY_ID[jobId];
   if (!job) throw new GameError("That job doesn't exist.");
   const lock = jobLock(p, job);
@@ -633,11 +650,12 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
   const crewBonus = p.crewId ? 1.05 : 1;
   let pay = Math.round(randInt(rng, job.pay[0], job.pay[1]) * COUNTRY_BY_ID[countryOf(p)].payMult * crewBonus);
   if (job.payStat) pay = Math.round(pay * (1 + (sv(p, job.payStat) - 10) / 40));
-  p.cash += pay;
+  const { net, tax } = withholdTax(p, countryOf(p), pay, ctx);
+  p.cash += net;
   p.heat += (job.heat ?? 0) * COUNTRY_BY_ID[countryOf(p)].heatMult;
   p.reputation += job.reputation ?? 0;
   shiftIntegrity(p, job.integrity);
-  events.push({ tone: "good", text: `${pick(rng, job.lines)} +$${pay}` });
+  events.push({ tone: "good", text: `${pick(rng, job.lines)} +$${net}${tax ? ` (city tax $${tax})` : ""}` });
   bumpContract(p, "jobs");
   bumpContract(p, "earn", pay);
   if (job.path) p.jobsSinceRank += jobMerit(p, job, true);
@@ -894,7 +912,7 @@ function assess(p: Player, now: number, events: GameEvent[]) {
   });
 }
 
-export function applyAction(p: Player, action: Action, now: number, rng: Rng): GameEvent[] {
+export function applyAction(p: Player, action: Action, now: number, rng: Rng, ctx: ActionContext = {}): GameEvent[] {
   tick(p, now);
   const events: GameEvent[] = [];
   if (isDead(p) && action.type !== "rebirth" && action.type !== "flag") {
@@ -909,7 +927,7 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng): G
 
   switch (action.type) {
     case "job":
-      doJob(p, action.jobId, now, rng, events);
+      doJob(p, action.jobId, now, rng, events, ctx);
       break;
     case "fight": {
       const npc = NPC_BY_ID[action.npcId];
@@ -979,8 +997,9 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng): G
       const income = propertyIncome(prop.id, since, now);
       if (income < 1) throw new GameError("Nothing to collect yet.");
       p.properties![prop.id] = now;
-      p.bank += income;
-      events.push({ tone: "good", text: `${prop.name}: $${income} deposited to your bank.` });
+      const { net, tax } = withholdTax(p, prop.country, income, ctx);
+      p.bank += net;
+      events.push({ tone: "good", text: `${prop.name}: $${net} deposited to your bank.${tax ? ` (City tax: $${tax}.)` : ""}` });
       break;
     }
     case "read_inbox":

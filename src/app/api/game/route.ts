@@ -7,6 +7,7 @@ import { assertJson } from "@/server/auth";
 import { resolveIdentity } from "@/server/identity";
 import { fileDeposit } from "@/game/casework";
 import { settleTrial } from "@/server/justice";
+import { payTax, taxRates } from "@/server/city";
 import { getStore, StoreConfigError } from "@/server/store";
 
 export const dynamic = "force-dynamic";
@@ -73,6 +74,8 @@ export async function POST(req: Request) {
     const now = Date.now();
     const store = getStore();
     let flag: { caseId: string; amount: number; at: number } | null = null;
+    let owed: { country: import("@/game/types").CountryId; amount: number } | null = null;
+    const rates = action.type === "job" || action.type === "collect_property" ? await taxRates(store) : {};
     const out = await store.update(playerId!, (p) => {
       if (action.type === "create") {
         if (p) throw new GameError("You already have a character.");
@@ -80,13 +83,20 @@ export async function POST(req: Request) {
         return { player: fresh, result: { view: toView(fresh, now), events: [] as GameEvent[] } };
       }
       if (!p) throw new GameError("Create a character first.");
-      const events = applyAction(p, action, now, Math.random);
+      const events = applyAction(p, action, now, Math.random, { taxRates: rates });
+      if (p.taxOwed) {
+        owed = p.taxOwed;
+        p.taxOwed = null;
+      }
       if (p.pendingDeposit) {
         flag = p.pendingDeposit;
         p.pendingDeposit = null;
       }
       return { player: p, result: { view: toView(p, now), events } };
     });
+    // Withheld city tax goes to the treasury.
+    const o = owed as { country: import("@/game/types").CountryId; amount: number } | null;
+    if (o) await payTax(store, o, now).catch((e) => console.error(e));
     // A suspicious deposit lands on the compliance desk: file it on the case it followed.
     const f = flag as { caseId: string; amount: number; at: number } | null;
     if (f) {
