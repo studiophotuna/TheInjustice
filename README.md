@@ -74,7 +74,10 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
     can't bully much weaker players, and there's a cooldown per target. Revenge in one tap.
   - **Players vouch for players**: rank 5+ in a school career can vouch once a day; the dean
     still decides.
-  - **Crews**: found one for $500, accept members, shared vault, crew chat, +5% job pay.
+  - **Crews**: only street bosses (Enforcer at Crew Chief, rank 4, or higher) can found one,
+    for $500. The leader picks who can join: **Open** (anyone joins), **On request** (the
+    leader approves) or **Invite only** (the leader invites from the People list). Shared
+    vault, crew chat, +5% job pay.
 - **Businesses**: buy one in any country (paid from the bank) and collect hourly income.
 - **Account recovery**: a one-time recovery code is shown at sign-up; use it with
   "Forgot password?" to set a new password. Players can generate a new code in the Me tab.
@@ -83,12 +86,16 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
 - **Medicine** career (8 ranks, Doc Mercy vouches) at St. Brigid's in Grayhaven or Halcyon
   University of Medicine; medics heal twice as fast. Kestrova also has its own Police college.
 - **Story**: the mystery of who framed you, told in comic chapters that unlock as you play
-  (one for everyone, two per career), replayable from the City tab. Story progress survives
+  (one for everyone, two per career), replayable from the Map tab. Story progress survives
   death.
 - **Death**: being knocked out by someone far stronger can kill you. Hidden stats are halved,
   cash, gear, housing and career are lost, bank savings survive. You continue as a new life,
   keeping your name or choosing a new one, and the game tells you that you feel weak.
 - **Doc Mercy** assessment after a hospital stay (rough comparison, never numbers).
+- **Layout**: a Home tab (greeting scene, your next move, career progress, daily reward, story,
+  inbox), Jobs grouped by district chips, Fight, Shop, People and Map. Illustrated comic
+  scenes (streets, city, high rises, police station, hospital) and characters (bum, thug,
+  detective, lawyer, doctor, banker, vigilante) are drawn as SVG in `src/components/art/`.
 - Leaderboard and event log.
 - Installable as a web app on phones (Add to Home Screen).
 

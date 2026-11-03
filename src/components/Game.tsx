@@ -2,6 +2,8 @@
 
 import { AnimatePresence, animate, motion, useMotionValue, useTransform } from "motion/react";
 import {
+  House,
+  Map as MapIcon,
   Users,
   KeyRound,
   Copy,
@@ -30,18 +32,21 @@ import { Vehicle } from "./art/Vehicles";
 import { AuthForm, ChapterViewer, DeathScreen, Landing, Logo, Prologue } from "./screens";
 import { CityTab, DeanLetter, FightTab, JobsTab, ProfileTab, ShopTab } from "./tabs";
 import { CommunityTab } from "./community";
+import { HomeTab } from "./home";
 import { fmt, useGame, type GameApi } from "./useGame";
 
-type Tab = "jobs" | "fight" | "shop" | "people" | "profile" | "city";
+type Tab = "home" | "jobs" | "fight" | "shop" | "people" | "map" | "profile";
 
 const TABS: { id: Tab; label: string; Icon: typeof Briefcase }[] = [
+  { id: "home", label: "Home", Icon: House },
   { id: "jobs", label: "Jobs", Icon: Briefcase },
   { id: "fight", label: "Fight", Icon: Swords },
   { id: "shop", label: "Shop", Icon: ShoppingBag },
   { id: "people", label: "People", Icon: Users },
-  { id: "profile", label: "Me", Icon: UserRound },
-  { id: "city", label: "City", Icon: Building2 },
+  { id: "map", label: "Map", Icon: MapIcon },
 ];
+/** The desktop sidebar also lists your profile; on phones it opens from the avatar. */
+const SIDE_TABS = [...TABS, { id: "profile" as Tab, label: "Me", Icon: UserRound }];
 
 export default function Game() {
   const game = useGame();
@@ -109,7 +114,7 @@ function Splash() {
 }
 
 function Shell({ game, view }: { game: GameApi; view: PublicView }) {
-  const [tab, setTab] = useState<Tab>("jobs");
+  const [tab, setTab] = useState<Tab>("home");
   const [highlight, setHighlight] = useState<string | null>(null);
   const [saveOpen, setSaveOpen] = useState(false);
   const [reading, setReading] = useState<string | null>(null);
@@ -168,7 +173,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
     <div className="shell">
       <nav className="sidenav glass" aria-label="Main">
         <Logo small />
-        {TABS.map(({ id, label, Icon }) => (
+        {SIDE_TABS.map(({ id, label, Icon }) => (
           <button key={id} className={tab === id ? "on" : ""} onClick={() => go(`tab:${id}`)}>
             <Icon size={20} /> <span>{label}</span>
             {id === "people" && view.inbox.unread > 0 && <span className="badge-dot">{view.inbox.unread}</span>}
@@ -178,7 +183,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
       </nav>
 
       <div className="main">
-        <Hud view={view} live={live} />
+        <Hud view={view} live={live} onProfile={() => go("tab:profile")} />
 
         {!game.account && (
           <button className="save-banner" onClick={() => setSaveOpen(true)}>
@@ -212,12 +217,13 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
 
         <AnimatePresence mode="wait">
           <motion.main key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.22 }}>
+            {tab === "home" && <HomeTab game={game} go={go} onRead={setReading} />}
             {tab === "jobs" && <JobsTab game={game} highlight={highlight} />}
             {tab === "fight" && <FightTab game={game} />}
             {tab === "shop" && <ShopTab game={game} />}
             {tab === "people" && <CommunityTab game={game} />}
             {tab === "profile" && <ProfileTab game={game} />}
-            {tab === "city" && <CityTab game={game} onRead={setReading} />}
+            {tab === "map" && <CityTab game={game} onRead={setReading} />}
           </motion.main>
         </AnimatePresence>
       </div>
@@ -292,12 +298,14 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
   );
 }
 
-function Hud({ view, live }: { view: PublicView; live: NonNullable<GameApi["live"]> }) {
+function Hud({ view, live, onProfile }: { view: PublicView; live: NonNullable<GameApi["live"]>; onProfile: () => void }) {
   const heatTone = { Clean: "ok", Noticed: "warn", Wanted: "hot", "Most wanted": "hot" }[view.heatLabel];
   return (
     <header className="hud glass">
       <div className="hud-id">
-        <PlayerAvatar name={view.name} path={view.path?.id} className="avatar-sm" />
+        <button className="avatar-btn" onClick={onProfile} aria-label="Open your profile">
+          <PlayerAvatar name={view.name} path={view.path?.id} className="avatar-sm" />
+        </button>
         <div>
           <div className="hud-name">{view.name}</div>
           <div className="hud-title">{view.path ? `${view.path.rank} · ${view.path.name}` : `Bum · ${view.location.city}`}</div>

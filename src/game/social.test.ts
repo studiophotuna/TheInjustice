@@ -6,6 +6,11 @@ import {
   attackBlock,
   attackPlayer,
   createCrew,
+  crewFoundBlock,
+  declineInvite,
+  inviteToCrew,
+  joinCrew,
+  setPolicy,
   depositToVault,
   leaveCrew,
   profileFor,
@@ -108,6 +113,8 @@ describe("crews", () => {
   it("create, request, accept, share a vault, leave and hand over leadership", () => {
     const { a: boss, t: rookie } = pair();
     boss.cash = 600;
+    boss.path = "enforcer";
+    boss.rank = 4;
     const crew = createCrew(boss, "c1", "Night Shift", "NS", T0);
     expect(boss.cash).toBe(100);
     expect(boss.crewId).toBe("c1");
@@ -161,5 +168,69 @@ describe("properties", () => {
     applyAction(p, { type: "read_inbox" }, T0, always(0.5));
     expect(p.inbox[0].read).toBe(true);
     expect(toView(p, T0)).toBeTruthy();
+  });
+});
+
+describe("crew founding and join policies", () => {
+  it("only Enforcers at Crew Chief or above can found a crew", () => {
+    const p = createPlayer("p", "Founder", T0);
+    p.cash = 1000;
+    expect(crewFoundBlock(p)).toMatch(/Crew Chief/);
+    p.path = "police";
+    p.rank = 8;
+    expect(() => createCrew(p, "c", "Blue Line", "BL", T0)).toThrow(/street bosses/);
+    p.path = "enforcer";
+    p.rank = 3;
+    expect(() => createCrew(p, "c", "Iron", "IR", T0)).toThrow(/Crew Chief/);
+    p.rank = 4;
+    expect(createCrew(p, "c", "Iron", "IR", T0, "open").policy).toBe("open");
+  });
+
+  function crewWithBoss(policy: "open" | "request" | "invite") {
+    const boss = createPlayer("b", "Boss", T0);
+    boss.cash = 1000;
+    boss.path = "enforcer";
+    boss.rank = 5;
+    return { boss, crew: createCrew(boss, "c", "Iron Row Boys", "IRB", T0, policy) };
+  }
+
+  it("open crews take anyone straight away", () => {
+    const { crew } = crewWithBoss("open");
+    const p = createPlayer("p", "Walker", T0);
+    expect(joinCrew(crew, p, T0)).toBe("joined");
+    expect(p.crewId).toBe("c");
+  });
+
+  it("request crews put you on a waiting list", () => {
+    const { crew } = crewWithBoss("request");
+    const p = createPlayer("p", "Asker", T0);
+    expect(joinCrew(crew, p, T0)).toBe("requested");
+    expect(p.crewId ?? null).toBeNull();
+    expect(crew.requests.map((r) => r.id)).toEqual(["p"]);
+  });
+
+  it("invite-only crews refuse strangers but let invited players in", () => {
+    const { boss, crew } = crewWithBoss("invite");
+    const stranger = createPlayer("s", "Stranger", T0);
+    expect(() => joinCrew(crew, stranger, T0)).toThrow(/invite only/);
+    const friend = createPlayer("f", "Friend", T0);
+    inviteToCrew(crew, boss, friend, T0);
+    expect(friend.crewInvites?.[0].tag).toBe("IRB");
+    expect(friend.inbox?.[0].text).toMatch(/invited you/);
+    expect(joinCrew(crew, friend, T0)).toBe("joined");
+    expect(friend.crewInvites).toEqual([]);
+    expect(crew.invites).toEqual([]);
+  });
+
+  it("invites can be declined, and only the leader sets the policy", () => {
+    const { boss, crew } = crewWithBoss("invite");
+    const p = createPlayer("p", "Maybe", T0);
+    inviteToCrew(crew, boss, p, T0);
+    declineInvite(crew, p, crew.id);
+    expect(p.crewInvites).toEqual([]);
+    expect(() => joinCrew(crew, p, T0)).toThrow(/invite only/);
+    expect(() => setPolicy(crew, p, "open", T0)).toThrow(/leader/);
+    setPolicy(crew, boss, "open", T0);
+    expect(joinCrew(crew, p, T0)).toBe("joined");
   });
 });

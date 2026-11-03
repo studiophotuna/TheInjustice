@@ -128,7 +128,11 @@ export interface Player {
   lastChatAt?: number;
   /** Businesses owned: property id → when income was last collected. */
   properties?: Record<string, number>;
+  /** Crews that invited this player. */
+  crewInvites?: { crewId: string; name: string; tag: string; by: string; at: number }[];
 }
+
+export type CrewPolicy = "open" | "request" | "invite";
 
 export interface Notice {
   id: string;
@@ -148,6 +152,9 @@ export interface Crew {
   leaderId: string;
   members: { id: string; name: string; role: "leader" | "member"; joinedAt: number }[];
   requests: { id: string; name: string; at: number }[];
+  /** How new members get in. Older crews default to "request". */
+  policy?: CrewPolicy;
+  invites?: { id: string; name: string; at: number }[];
   vault: number;
   log: { at: number; text: string }[];
   createdAt: number;

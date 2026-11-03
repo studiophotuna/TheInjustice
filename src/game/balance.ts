@@ -60,7 +60,8 @@ export const BALANCE = {
     heat: 8,
   },
   vouch: { minRank: 5, cooldownMs: 24 * 60 * 60_000 },
-  crew: { createCost: 500, maxMembers: 12 },
+  /** Only street bosses can found crews: Enforcer at Crew Chief (rank 4) or above. */
+  crew: { createCost: 500, maxMembers: 12, path: "enforcer", minRank: 4 },
   chat: { cooldownMs: 3_000, maxLength: 280 },
   banking: {
     /** Bankers' interest per hour on savings (shortened for testing). */

@@ -6,7 +6,7 @@ import { gutRead, GUT_READS, playerFighter, resolveFight } from "./combat";
 import { PATHS, rankTitle } from "./content/paths";
 import { COUNTRY_BY_ID } from "./content/world";
 import { countryOf, inHospital } from "./engine";
-import { GameError, type Crew, type FightSummary, type GameEvent, type GameEventTone, type Player, type Rng } from "./types";
+import { GameError, type Crew, type CrewPolicy, type FightSummary, type GameEvent, type GameEventTone, type Player, type Rng } from "./types";
 
 export function notify(p: Player, text: string, tone: GameEventTone, from?: Player, now = Date.now()) {
   p.inbox = [
@@ -150,8 +150,19 @@ export function validateCrew(name: unknown, tag: unknown): { name: string; tag: 
   return { name: n, tag: t };
 }
 
-export function createCrew(p: Player, id: string, name: string, tag: string, now: number): Crew {
-  if (p.crewId) throw new GameError("Leave your crew first.");
+/** Why this player can't found a crew, or null. */
+export function crewFoundBlock(p: Player): string | null {
+  const { path, minRank } = BALANCE.crew;
+  if (p.path !== path || p.rank < minRank) {
+    return `Only street bosses found crews: reach ${PATHS[path].ranks[minRank - 1]} as an ${PATHS[path].name}.`;
+  }
+  if (p.crewId) return "Leave your crew first.";
+  return null;
+}
+
+export function createCrew(p: Player, id: string, name: string, tag: string, now: number, policy: CrewPolicy = "request"): Crew {
+  const block = crewFoundBlock(p);
+  if (block) throw new GameError(block);
   if (p.cash < BALANCE.crew.createCost) throw new GameError(`Starting a crew costs $${BALANCE.crew.createCost} cash.`);
   p.cash -= BALANCE.crew.createCost;
   p.crewId = id;
@@ -162,6 +173,8 @@ export function createCrew(p: Player, id: string, name: string, tag: string, now
     leaderId: p.id,
     members: [{ id: p.id, name: p.name, role: "leader", joinedAt: now }],
     requests: [],
+    policy,
+    invites: [],
     vault: 0,
     log: [{ at: now, text: `${p.name} founded the crew.` }],
     createdAt: now,
@@ -170,6 +183,60 @@ export function createCrew(p: Player, id: string, name: string, tag: string, now
 
 export function crewLog(c: Crew, text: string, now: number) {
   c.log = [{ at: now, text }, ...c.log].slice(0, 30);
+}
+
+export const policyOf = (c: Crew): CrewPolicy => c.policy ?? "request";
+
+function addMember(c: Crew, p: Player, now: number) {
+  if (c.members.length >= BALANCE.crew.maxMembers) throw new GameError("That crew is full.");
+  p.crewId = c.id;
+  p.crewInvites = (p.crewInvites ?? []).filter((i) => i.crewId !== c.id);
+  c.requests = c.requests.filter((r) => r.id !== p.id);
+  c.invites = (c.invites ?? []).filter((i) => i.id !== p.id);
+  c.members.push({ id: p.id, name: p.name, role: "member", joinedAt: now });
+  crewLog(c, `${p.name} joined.`, now);
+}
+
+/**
+ * Joining depends on the crew's policy: open crews take anyone, invited players walk in,
+ * request crews add you to the waiting list. Returns "joined" or "requested".
+ */
+export function joinCrew(c: Crew, p: Player, now: number): "joined" | "requested" {
+  if (p.crewId) throw new GameError("You're already in a crew.");
+  const invited = (c.invites ?? []).some((i) => i.id === p.id);
+  const policy = policyOf(c);
+  if (invited || policy === "open") {
+    addMember(c, p, now);
+    return "joined";
+  }
+  if (policy === "invite") throw new GameError("That crew is invite only.");
+  requestJoin(c, p, now);
+  return "requested";
+}
+
+export function setPolicy(c: Crew, leader: Player, policy: CrewPolicy, now: number) {
+  if (c.leaderId !== leader.id) throw new GameError("Only the leader can change that.");
+  if (!["open", "request", "invite"].includes(policy)) throw new GameError("Unknown setting.");
+  c.policy = policy;
+  crewLog(c, `${leader.name} made the crew ${policy === "open" ? "open to everyone" : policy === "invite" ? "invite only" : "join on request"}.`, now);
+}
+
+export function inviteToCrew(c: Crew, leader: Player, target: Player, now: number) {
+  if (c.leaderId !== leader.id) throw new GameError("Only the leader can invite people.");
+  if (target.crewId) throw new GameError(`${target.name} is already in a crew.`);
+  if ((c.invites ?? []).some((i) => i.id === target.id)) throw new GameError("Already invited.");
+  if (c.members.length >= BALANCE.crew.maxMembers) throw new GameError("The crew is full.");
+  c.invites = [...(c.invites ?? []), { id: target.id, name: target.name, at: now }].slice(-30);
+  target.crewInvites = [
+    ...(target.crewInvites ?? []).filter((i) => i.crewId !== c.id),
+    { crewId: c.id, name: c.name, tag: c.tag, by: leader.name, at: now },
+  ].slice(-10);
+  notify(target, `${leader.name} invited you to join ${c.name} [${c.tag}].`, "story", leader, now);
+}
+
+export function declineInvite(c: Crew | null, p: Player, crewId: string) {
+  p.crewInvites = (p.crewInvites ?? []).filter((i) => i.crewId !== crewId);
+  if (c) c.invites = (c.invites ?? []).filter((i) => i.id !== p.id);
 }
 
 export function requestJoin(c: Crew, p: Player, now: number) {
@@ -184,10 +251,7 @@ export function acceptJoin(c: Crew, leader: Player, recruit: Player, now: number
   if (!c.requests.some((r) => r.id === recruit.id)) throw new GameError("They didn't ask to join.");
   c.requests = c.requests.filter((r) => r.id !== recruit.id);
   if (recruit.crewId) throw new GameError(`${recruit.name} joined another crew.`);
-  if (c.members.length >= BALANCE.crew.maxMembers) throw new GameError("The crew is full.");
-  recruit.crewId = c.id;
-  c.members.push({ id: recruit.id, name: recruit.name, role: "member", joinedAt: now });
-  crewLog(c, `${recruit.name} joined.`, now);
+  addMember(c, recruit, now);
   notify(recruit, `You're in. Welcome to ${c.name} [${c.tag}]. Crew members earn 5% more on every job.`, "good", leader, now);
 }
 

@@ -8,6 +8,7 @@ import { COUNTRIES } from "@/game/content/world";
 import type { CountryId } from "@/game/types";
 import type { PublicView } from "@/game/view";
 import { Skyline } from "./art/Skyline";
+import { Scene } from "./art/Scenes";
 import { ComicPanel, LightsOut } from "./Comic";
 import type { GameApi } from "./useGame";
 
@@ -135,7 +136,15 @@ export function Landing({ game }: { game: GameApi }) {
   const [tab, setTab] = useState<"play" | "account">("play");
   return (
     <div className="landing">
-      <Skyline district="title" className="landing-bg" />
+      <Scene
+        kind="street"
+        className="landing-scene"
+        characters={[
+          { kind: "thug", x: 70, scale: 0.9 },
+          { kind: "detective", x: 86, scale: 1 },
+          { kind: "bum", x: 12, scale: 0.75 },
+        ]}
+      />
       <motion.div className="landing-card glass" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease }}>
         <Logo />
         <p className="landing-pitch">

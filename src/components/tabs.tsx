@@ -45,9 +45,21 @@ import {
   UserRound,
   Zap,
 } from "lucide-react";
-import { useState, type ComponentType } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import type { JobView, PublicView } from "@/game/view";
 import { Skyline } from "./art/Skyline";
+import { Scene, type CharacterKind, type SceneKind } from "./art/Scenes";
+
+/** Districts drawn as full illustrated scenes (the rest use their animated skyline). */
+const DISTRICT_SCENES: Partial<Record<string, { scene: SceneKind; chars: { kind: CharacterKind; x: number; scale?: number }[] }>> = {
+  gutter: { scene: "street", chars: [{ kind: "bum", x: 82, scale: 0.8 }] },
+  southside: { scene: "street", chars: [{ kind: "thug", x: 70 }, { kind: "thug", x: 86, scale: 0.9 }] },
+  precinct_square: { scene: "police", chars: [{ kind: "detective", x: 16 }] },
+  st_brigids: { scene: "hospital", chars: [{ kind: "doctor", x: 14 }] },
+  glass_quarter: { scene: "highrise", chars: [{ kind: "banker", x: 84 }] },
+  exchange: { scene: "highrise", chars: [{ kind: "banker", x: 18 }] },
+  courthouse_hill: { scene: "city", chars: [{ kind: "lawyer", x: 84 }] },
+};
 import { Vehicle } from "./art/Vehicles";
 import { NpcPortrait, PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 
@@ -92,13 +104,25 @@ export function JobsTab({ game, highlight }: { game: GameApi; highlight: string 
   const energy = game.live!.energy;
   const blocked = game.busy || game.live!.hospital > 0 || !!view.travel;
   const careerJobs = view.jobs.filter((j) => j.pathJob);
+  // One district at a time keeps the page short; default to the best open one.
+  const [district, setDistrict] = useState<string | null>(null);
+  const best = view.jobs.find((j) => j.id === view.recommendedJobId)?.district;
+  const shown =
+    view.districts.find((d) => d.id === district) ??
+    view.districts.find((d) => d.id === best && !d.locked) ??
+    view.districts.find((d) => !d.locked) ??
+    view.districts[0];
+  // A job deep link (pop-up "Go") opens its district.
+  useEffect(() => {
+    const target = highlight ? view.jobs.find((j) => j.id === highlight) : null;
+    if (target && !target.pathJob) setDistrict(target.district);
+  }, [highlight, view.jobs]);
   const card = (j: JobView) => (
     <JobCard key={j.id} job={j} energy={energy} blocked={blocked} best={j.id === view.recommendedJobId} flash={j.id === highlight} onWork={() => game.act({ type: "job", jobId: j.id })} />
   );
 
   return (
     <div className="stack">
-      <DailyCard game={game} />
       {view.path && careerJobs.length > 0 && (
         <section className="district career-jobs" style={{ ["--path" as string]: PATH_LOOKS[view.path.id].rim }}>
           <div className="career-head">
@@ -113,12 +137,23 @@ export function JobsTab({ game, highlight }: { game: GameApi; highlight: string 
           </motion.div>
         </section>
       )}
-      {view.districts.map((d) => {
+      <div className="district-chips" role="tablist">
+        {view.districts.map((d) => (
+          <button key={d.id} role="tab" aria-selected={d.id === shown?.id} className={`chip-btn ${d.id === shown?.id ? "on" : ""}`} onClick={() => setDistrict(d.id)}>
+            {d.locked && <Lock size={11} />} {d.name}
+          </button>
+        ))}
+      </div>
+      {shown && [shown].map((d) => {
         const jobs = view.jobs.filter((j) => j.district === d.id && !j.pathJob && !d.locked);
         return (
           <section key={d.id} className={`district ${d.locked ? "is-locked" : ""}`}>
             <div className="district-hero">
-              <Skyline district={d.id} rain={d.id === "gutter" || d.id === "rail_yards"} />
+              {DISTRICT_SCENES[d.id] ? (
+                <Scene kind={DISTRICT_SCENES[d.id]!.scene} characters={DISTRICT_SCENES[d.id]!.chars} />
+              ) : (
+                <Skyline district={d.id} rain={d.id === "gutter" || d.id === "rail_yards"} />
+              )}
               <div className="district-title">
                 <h2>{d.name}</h2>
                 <p>{d.locked ? <><Lock size={13} /> {d.locked}</> : d.tagline}</p>
@@ -601,7 +636,7 @@ export function WorldCard({ game }: { game: GameApi }) {
 
 // ─── Daily reward & contracts ──────────────────────────────────────────────
 
-function DailyCard({ game }: { game: GameApi }) {
+export function DailyCard({ game }: { game: GameApi }) {
   const d = game.view!.daily;
   return (
     <section className="card daily">

@@ -21,12 +21,14 @@ type Profile = {
   lastSeen: number;
   canAttack: string | null;
   canVouch: string | null;
+  canInvite: boolean;
 };
 type CrewView = {
   id: string;
   name: string;
   tag: string;
   size: number;
+  policy: "open" | "request" | "invite";
   leader: string;
   members: { id: string; name: string; role: string }[];
   vault?: number;
@@ -34,8 +36,25 @@ type CrewView = {
   requests?: { id: string; name: string; at: number }[];
   isLeader?: boolean;
   requested?: boolean;
+  invited?: boolean;
 };
-type Hub = { players: Profile[]; crews: CrewView[]; myCrew: CrewView | null; channels: string[]; blocked: string[] };
+type Invite = { crewId: string; name: string; tag: string; by: string; at: number };
+type Hub = {
+  players: Profile[];
+  crews: CrewView[];
+  myCrew: CrewView | null;
+  channels: string[];
+  blocked: string[];
+  invites: Invite[];
+  /** Why the viewer can't found a crew, or null. */
+  foundBlock: string | null;
+};
+
+const POLICIES = [
+  { id: "open", name: "Open", note: "Anyone can join" },
+  { id: "request", name: "On request", note: "You approve each request" },
+  { id: "invite", name: "Invite only", note: "Only people you invite" },
+] as const;
 type Message = { id: number; channel: string; authorId: string; authorName: string; body: string; at: number };
 
 const DANGER = ["Easy", "Favorable", "Even", "Risky", "Deadly"];
@@ -151,6 +170,11 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
                     <UserCheck size={14} /> Vouch
                   </button>
                 )}
+                {p.canInvite && (
+                  <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: "crew_invite", playerId: p.id })}>
+                    <Shield size={14} /> Invite to crew
+                  </button>
+                )}
                 <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: blocked ? "unblock" : "block", targetId: p.id })}>
                   <Ban size={14} /> {blocked ? "Unblock" : "Block"}
                 </button>
@@ -236,6 +260,7 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
   const [tag, setTag] = useState("");
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
+  const [policy, setPolicy] = useState<"open" | "request" | "invite">("request");
   if (!hub) return <p className="muted">Loading crews…</p>;
   const c = hub.myCrew;
 
@@ -263,6 +288,20 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
             )}
           </div>
         </section>
+        {c.isLeader && (
+          <section className="card">
+            <h3 className="card-title"><Lock size={16} /> Who can join</h3>
+            <div className="policy-pick">
+              {POLICIES.map((po) => (
+                <button key={po.id} className={c.policy === po.id ? "on" : ""} disabled={game.busy} onClick={() => social({ op: "crew_policy", policy: po.id })}>
+                  <b>{po.name}</b>
+                  <span>{po.note}</span>
+                </button>
+              ))}
+            </div>
+            <p className="fine">Invite people from the People list. Invited players can join whatever the setting.</p>
+          </section>
+        )}
         {c.isLeader && (c.requests?.length ?? 0) > 0 && (
           <section className="card">
             <h3 className="card-title"><UserCheck size={16} /> Join requests</h3>
@@ -314,34 +353,79 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
     );
   }
 
+  const joinLabel = (cr: CrewView) =>
+    cr.invited ? "Accept invite" : cr.policy === "open" ? "Join" : cr.policy === "invite" ? "Invite only" : cr.requested ? "Requested" : "Ask to join";
+
   return (
     <div className="stack">
+      {hub.invites.length > 0 && (
+        <section className="card invites">
+          <h3 className="card-title"><UserCheck size={16} /> Invitations</h3>
+          {hub.invites.map((i) => (
+            <div key={i.crewId} className="crew-row">
+              <span className="crew-badge sm">{i.tag}</span>
+              <div className="crew-row-body">
+                <b>{i.name}</b>
+                <span className="muted">Invited by {i.by} · {ago(i.at)}</span>
+              </div>
+              <span className="row">
+                <button className="btn btn-primary btn-sm" disabled={game.busy} onClick={() => social({ op: "crew_join", crewId: i.crewId })}>Join</button>
+                <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: "crew_decline_invite", crewId: i.crewId })}>No thanks</button>
+              </span>
+            </div>
+          ))}
+        </section>
+      )}
+
       <section className="card">
-        <h3 className="card-title"><Shield size={16} /> Start a crew</h3>
-        <p className="muted">$500 cash. Crew members earn 5% more on every job, share a vault and a private chat.</p>
-        <div className="row">
-          <input maxLength={24} placeholder="Crew name" value={name} onChange={(e) => setName(e.target.value)} />
-          <input className="tag-input" maxLength={4} placeholder="TAG" value={tag} onChange={(e) => setTag(e.target.value.toUpperCase())} />
-          <button className="btn btn-primary btn-sm" disabled={game.busy || name.trim().length < 3 || tag.length < 2 || view.cash < 500} onClick={() => social({ op: "crew_create", name, tag })}>
-            Found · $500
-          </button>
-        </div>
-      </section>
-      <section className="card">
-        <h3 className="card-title"><Users size={16} /> Crews</h3>
-        {hub.crews.length === 0 && <p className="muted">No crews yet. Be the first.</p>}
+        <h3 className="card-title"><Shield size={16} /> Crews</h3>
+        {hub.crews.length === 0 && <p className="muted">No crews yet. Only street bosses can start one.</p>}
         {hub.crews.map((cr) => (
           <div key={cr.id} className="crew-row">
             <span className="crew-badge sm">{cr.tag}</span>
             <div className="crew-row-body">
               <b>{cr.name}</b>
-              <span className="muted">{cr.size} members · led by {cr.leader}</span>
+              <span className="muted">{cr.size} members · led by {cr.leader} · {POLICIES.find((po) => po.id === cr.policy)?.name}</span>
             </div>
-            <button className="btn btn-ghost btn-sm" disabled={game.busy || cr.requested} onClick={() => social({ op: "crew_request", crewId: cr.id })}>
-              {cr.requested ? "Requested" : "Ask to join"}
+            <button
+              className={`btn btn-sm ${cr.invited || cr.policy === "open" ? "btn-primary" : "btn-ghost"}`}
+              disabled={game.busy || cr.requested || (cr.policy === "invite" && !cr.invited)}
+              onClick={() => social({ op: "crew_join", crewId: cr.id })}
+            >
+              {joinLabel(cr)}
             </button>
           </div>
         ))}
+      </section>
+
+      <section className="card">
+        <h3 className="card-title"><Crown size={16} /> Found a crew</h3>
+        {hub.foundBlock ? (
+          <p className="muted"><Lock size={13} /> {hub.foundBlock}</p>
+        ) : (
+          <>
+            <p className="muted">$500 cash. Crew members earn 5% more on every job, share a vault and a private chat.</p>
+            <div className="row">
+              <input maxLength={24} placeholder="Crew name" value={name} onChange={(e) => setName(e.target.value)} />
+              <input className="tag-input" maxLength={4} placeholder="TAG" value={tag} onChange={(e) => setTag(e.target.value.toUpperCase())} />
+            </div>
+            <div className="policy-pick">
+              {POLICIES.map((po) => (
+                <button key={po.id} className={policy === po.id ? "on" : ""} onClick={() => setPolicy(po.id)}>
+                  <b>{po.name}</b>
+                  <span>{po.note}</span>
+                </button>
+              ))}
+            </div>
+            <button
+              className="btn btn-primary"
+              disabled={game.busy || name.trim().length < 3 || tag.length < 2 || view.cash < 500}
+              onClick={() => social({ op: "crew_create", name, tag, policy })}
+            >
+              <Crown size={15} /> Found · $500
+            </button>
+          </>
+        )}
       </section>
     </div>
   );

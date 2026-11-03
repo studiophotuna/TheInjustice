@@ -6,17 +6,22 @@ import {
   acceptJoin,
   attackPlayer,
   createCrew,
+  crewFoundBlock,
   crewLog,
+  declineInvite,
+  inviteToCrew,
+  joinCrew,
+  policyOf,
+  setPolicy,
   depositToVault,
   leaveCrew,
   notify,
   profileFor,
-  requestJoin,
   validateCrew,
   vouchFor,
   withdrawFromVault,
 } from "@/game/social";
-import { GameError, type Crew, type GameEvent, type Player } from "@/game/types";
+import { GameError, type Crew, type CrewPolicy, type GameEvent, type Player } from "@/game/types";
 import { toView } from "@/game/view";
 import { assertJson } from "@/server/auth";
 import { resolveIdentity } from "@/server/identity";
@@ -51,11 +56,15 @@ function crewView(c: Crew, viewer: Player) {
     name: c.name,
     tag: c.tag,
     size: c.members.length,
+    policy: policyOf(c),
     leader: c.members.find((m) => m.id === c.leaderId)?.name ?? "",
     members: c.members.map((m) => ({ id: m.id, name: m.name, role: m.role })),
     ...(member
       ? { vault: c.vault, log: c.log, requests: viewer.id === c.leaderId ? c.requests : [], isLeader: viewer.id === c.leaderId }
-      : { requested: c.requests.some((r) => r.id === viewer.id) }),
+      : {
+          requested: c.requests.some((r) => r.id === viewer.id),
+          invited: (c.invites ?? []).some((i) => i.id === viewer.id),
+        }),
   };
 }
 
@@ -80,14 +89,18 @@ export async function GET(req: Request) {
     ]);
     const crewTags = new Map(crews.map((c) => [c.id, c.tag]));
     if (myCrew) crewTags.set(myCrew.id, myCrew.tag);
+    const leading = myCrew && myCrew.leaderId === p.id ? myCrew : null;
     return NextResponse.json({
       players: players
         .filter((o) => o.id !== p.id && !o.dead)
         .map((o) => {
           tick(o, now);
           const prof = profileFor(p, o, now);
-          return { ...prof, crewTag: prof.crewId ? crewTags.get(prof.crewId) ?? null : null };
+          const canInvite = !!leading && !o.crewId && !(leading.invites ?? []).some((i) => i.id === o.id);
+          return { ...prof, crewTag: prof.crewId ? crewTags.get(prof.crewId) ?? null : null, canInvite };
         }),
+      invites: p.crewInvites ?? [],
+      foundBlock: crewFoundBlock(p),
       crews: crews.map((c) => crewView(c, p)),
       myCrew: myCrew ? crewView(myCrew, p) : null,
       channels: channelsFor(p),
@@ -174,34 +187,80 @@ export async function POST(req: Request) {
       }
       case "crew_create": {
         const { name, tag } = validateCrew(b.name, b.tag);
+        const policy = (["open", "request", "invite"].includes(b.policy as string) ? b.policy : "request") as CrewPolicy;
         const taken = (await store.listCrews(500)).some((c) => c.tag === tag);
         if (taken) throw new GameError("That crew tag is taken.");
         await store.transaction(async (tx) => {
           const [p] = await tx.getPlayers([playerId]);
           if (!p) throw new GameError("Create a character first.");
           tick(p, now);
-          const crew = createCrew(p, randomUUID().slice(0, 12), name, tag, now);
+          const crew = createCrew(p, randomUUID().slice(0, 12), name, tag, now, policy);
           await tx.putCrew(crew);
           await tx.putPlayer(p);
         });
         events = [{ tone: "good", text: `${name} [${tag}] is on the map. Invite people to join.` }];
         break;
       }
-      case "crew_request": {
+      case "crew_request":
+      case "crew_join": {
         const crewId = str(b.crewId);
-        await store.transaction(async (tx) => {
+        const outcome = await store.transaction(async (tx) => {
           const crew = await tx.getCrew(crewId);
           if (!crew) throw new GameError("That crew doesn't exist.");
           const [p, leader] = await tx.getPlayers([playerId, crew.leaderId]);
           if (!p) throw new GameError("Create a character first.");
-          requestJoin(crew, p, now);
-          if (leader) {
-            notify(leader, `${p.name} wants to join ${crew.name}.`, "info", p, now);
+          const result = joinCrew(crew, p, now);
+          if (leader && leader.id !== p.id) {
+            notify(leader, result === "joined" ? `${p.name} joined ${crew.name}.` : `${p.name} wants to join ${crew.name}.`, "info", p, now);
             await tx.putPlayer(leader);
           }
           await tx.putCrew(crew);
+          await tx.putPlayer(p);
+          return { result, name: crew.name };
         });
-        events = [{ tone: "info", text: "Request sent. The crew leader decides." }];
+        events = [
+          outcome.result === "joined"
+            ? { tone: "good", text: `You're in ${outcome.name}. Crew members earn 5% more on every job.` }
+            : { tone: "info", text: "Request sent. The crew leader decides." },
+        ];
+        break;
+      }
+      case "crew_decline_invite": {
+        const crewId = str(b.crewId);
+        await store.transaction(async (tx) => {
+          const [p] = await tx.getPlayers([playerId]);
+          if (!p) throw new GameError("Create a character first.");
+          const crew = await tx.getCrew(crewId);
+          declineInvite(crew, p, crewId);
+          if (crew) await tx.putCrew(crew);
+          await tx.putPlayer(p);
+        });
+        break;
+      }
+      case "crew_invite": {
+        const targetId = str(b.playerId);
+        await store.transaction(async (tx) => {
+          const [leader, target] = await tx.getPlayers([playerId, targetId]);
+          if (!leader?.crewId) throw new GameError("You're not in a crew.");
+          if (!target) throw new GameError("That player doesn't exist.");
+          const crew = await tx.getCrew(leader.crewId);
+          if (!crew) throw new GameError("Your crew is gone.");
+          inviteToCrew(crew, leader, target, now);
+          await tx.putCrew(crew);
+          await tx.putPlayer(target);
+        });
+        events = [{ tone: "good", text: "Invite sent." }];
+        break;
+      }
+      case "crew_policy": {
+        const policy = str(b.policy) as CrewPolicy;
+        await store.transaction(async (tx) => {
+          const [p] = await tx.getPlayers([playerId]);
+          const crew = p?.crewId ? await tx.getCrew(p.crewId) : null;
+          if (!p || !crew) throw new GameError("You're not in a crew.");
+          setPolicy(crew, p, policy, now);
+          await tx.putCrew(crew);
+        });
         break;
       }
       case "crew_accept":
