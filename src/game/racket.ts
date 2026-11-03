@@ -8,7 +8,7 @@
 
 import { BALANCE } from "./balance";
 import { CRIMES, addTip, caseCold, eyeAccuracy, fileLost } from "./crime";
-import { countryOf, inJail, shiftIntegrity } from "./engine";
+import { addMerit, countryOf, inJail, shiftIntegrity } from "./engine";
 import { PATHS } from "./content/paths";
 import { notify } from "./social";
 import { sv } from "./stats";
@@ -76,7 +76,7 @@ export function intimidate(m: Player, c: CaseFile, witnesses: Player[], now: num
       notify(w, `Someone threatened you over case #${c.id}. You didn't flinch, and you told the police even more. +1 reputation.`, "good", undefined, now);
     }
   }
-  const events: GameEvent[] = [];
+  const events: GameEvent[] = [...addMerit(m, "enforcer", 1)];
   if (folded) events.push({ tone: "good", text: `${folded === 1 ? "A witness" : `${folded} witnesses`} suddenly can't remember a thing.` });
   if (stood) events.push({ tone: "bad", text: `${stood === 1 ? "One witness" : `${stood} witnesses`} didn't scare. The police know more now.` });
   return events;
@@ -130,7 +130,10 @@ export function answerPayoff(cop: Player, c: CaseFile, briber: Player | null, vi
     cop.cash += po.amount;
     shiftIntegrity(cop, -8);
     if (victim) notify(victim, `The police say the file on case #${c.id} was lost. Nobody is looking anymore.`, "bad", undefined, now);
-    if (briber) notify(briber, `Case #${c.id} is gone. The file walked out of the station.`, "good", undefined, now);
+    if (briber) {
+      notify(briber, `Case #${c.id} is gone. The file walked out of the station.`, "good", undefined, now);
+      addMerit(briber, "enforcer", 2);
+    }
     return [{ tone: "info", text: `You pocket $${po.amount}. Case #${c.id} goes into the shredder.` }];
   }
   po.status = "refused";
@@ -207,6 +210,7 @@ export function audit(a: Player, target: Player, cases: CaseFile[], now: number)
     c.exposed = [...(c.exposed ?? []), { id: target.id, name: target.name, role: hit!.role, at: now, by: a.name }];
   }
   a.reputation += Math.min(10, 5 * found.length);
+  addMerit(a, "police", 3 * found.length);
   const ids = found.map((x) => `#${x.c.id}`).join(", ");
   notify(
     target,
@@ -249,6 +253,7 @@ export function myCaseView(c: CaseFile | null, mine: NonNullable<Player["myCases
     statements: c && status === "open" ? c.tips.filter((t) => t.source === "witness" && t.byId).length : null,
     canIntimidate: c ? intimidateBlock(m, c, now) : "That case is closed.",
     canPayoff: c ? payoffBlock(m, c, null, R.payoff.minAmount, now)?.replace("Pick an officer.", "") || null : "That case is closed.",
+    payoffAllowed: isMafia(m, R.payoff.minRank),
     payoff: c?.payoff && c.payoff.fromId === m.id ? { copName: c.payoff.copName, amount: c.payoff.amount, status: c.payoff.status } : null,
   };
 }

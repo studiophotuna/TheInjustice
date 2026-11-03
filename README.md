@@ -57,6 +57,12 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
 - Six career paths with **8 ranks** each: **Police**, **Courts** and **Vigilante** (law),
   **Medicine**, **Banking**, and **Mafia** (street: Associate, Soldier, Made Man, Capo, Consigliere, Underboss, Boss, Don). Each has a contact who approaches you when your hidden stats and
   habits fit, its own jobs, and a corrupt option that quietly lowers Integrity.
+- **Promotion is earned, not counted.** Harder work counts more toward your next review
+  (higher-rank jobs, risky jobs, demanding jobs); easy work well below your rank barely counts,
+  and casework counts too (arrests, verdicts, exams, bank reports, hunts, rackets). Your key
+  hidden stats must also be good enough. No numbers are shown: your boss's attitude tells you
+  how close you are. Work above your rank stays hidden until you get there, and actions your
+  rank or career can't do aren't shown.
 - **Four countries, all open**: choose where to live when you create your character —
   Grayhaven (Varrow), Port Solace (Solmarra), Ironmoor (Kestrova) or Halcyon (Meridian).
   Each has its own districts, jobs, enemies and laws (pay, heat and prices differ).

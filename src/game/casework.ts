@@ -7,7 +7,7 @@
 import { BALANCE } from "./balance";
 import { playerFighter, resolveFight } from "./combat";
 import { CRIMES, addTip, caseCold, suspectsFor, type SuspectMatch } from "./crime";
-import { countryOf, inHospital, inJail, shiftIntegrity } from "./engine";
+import { addMerit, countryOf, inHospital, inJail, shiftIntegrity } from "./engine";
 import { notify, protectedUntil } from "./social";
 import { COUNTRY_BY_ID } from "./content/world";
 import { GameError, type CaseFile, type FightSummary, type GameEvent, type Player, type Rng } from "./types";
@@ -41,7 +41,7 @@ export function examine(d: Player, c: CaseFile, victim: Player | null, now: numb
   d.cash += fee;
   d.reputation += 1;
   d.stats.perception += 0.4;
-  const events: GameEvent[] = [{ tone: "good", text: `You examine ${c.victimName}. ${tip.text.replace(/^Doctor: /, "")} The city pays $${fee}.` }];
+  const events: GameEvent[] = [...addMerit(d, "medicine", 2), { tone: "good", text: `You examine ${c.victimName}. ${tip.text.replace(/^Doctor: /, "")} The city pays $${fee}.` }];
   if (victim) {
     if (inHospital(victim, now)) victim.hospitalUntil = now + Math.round((victim.hospitalUntil - now) / 2);
     notify(victim, `Dr. ${d.name} examined your injuries${inHospital(victim, now) ? " and sped up your recovery" : ""}. The report went into case #${c.id}.`, "good", d, now);
@@ -91,7 +91,7 @@ export function reviewDeposit(b: Player, c: CaseFile, depositor: Player | null, 
     b.reputation += 1;
     shiftIntegrity(b, 1);
     b.stats.wits += 0.4;
-    return [{ tone: "good", text: `You file a report on account ${dep.account}. ${tip.text.replace(/^Bank records: /, "")}` }];
+    return [{ tone: "good", text: `You file a report on account ${dep.account}. ${tip.text.replace(/^Bank records: /, "")}` }, ...addMerit(b, "banking", 2)];
   }
   const fee = depositor ? Math.min(depositor.bank, Math.floor(dep.amount * C.bank.buryShare)) : 0;
   if (depositor) {
@@ -100,6 +100,7 @@ export function reviewDeposit(b: Player, c: CaseFile, depositor: Player | null, 
   }
   b.cash += fee;
   shiftIntegrity(b, -5);
+  addMerit(b, "banking", 0.5);
   return [{ tone: "info", text: `The flag on account ${dep.account} quietly disappears. $${fee} finds its way into your pocket.` }];
 }
 
@@ -172,6 +173,7 @@ export function hunt(
     notify(suspect, `A masked vigilante jumped you over the ${crime} in ${c.district}. You fought them off.`, "good", undefined, now);
     events.push({ tone: "bad", text: `${suspect.name} fought you off.${v.hp <= 0 ? " You wake up in the clinic." : ""}` });
   }
+  events.push(...addMerit(v, "vigilante", res.won ? 3 : 1));
   c.hunt = { hunterId: v.id, hunterName: v.name, suspectId: suspect.id, suspectName: suspect.name, won: res.won, at: now, restitution };
 
   // Only the real criminal knows if the vigilante got it wrong.

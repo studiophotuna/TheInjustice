@@ -79,7 +79,10 @@ export interface Player {
   offers: PathId[];
   /** Completed jobs per job id (for diminishing returns and promotions). */
   jobCounts: Record<string, number>;
-  /** Jobs completed since the last promotion. */
+  /**
+   * Merit earned since the last promotion (named for old saves). Grows with how demanding
+   * the work is and with casework; hidden from players.
+   */
   jobsSinceRank: number;
   flags: string[];
 

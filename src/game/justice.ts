@@ -6,7 +6,7 @@
 import { BALANCE } from "./balance";
 import { CRIMES, caseCold, suspectsFor, type SuspectMatch } from "./crime";
 import { COUNTRY_BY_ID } from "./content/world";
-import { countryOf, inJail, shiftIntegrity } from "./engine";
+import { addMerit, countryOf, inJail, shiftIntegrity } from "./engine";
 import { notify } from "./social";
 import { sv } from "./stats";
 import { GameError, type CaseFile, type CourtParty, type GameEvent, type Player, type Rng, type Trial, type Verdict } from "./types";
@@ -77,7 +77,7 @@ export function arrest(o: Player, suspect: Player, c: CaseFile, pool: { player: 
     now,
   );
   o.stats.wits += 0.4;
-  return [{ tone: "good", text: `You arrest ${suspect.name}. Case #${c.id} goes to court.` }];
+  return [{ tone: "good", text: `You arrest ${suspect.name}. Case #${c.id} goes to court.` }, ...addMerit(o, "police", 2)];
 }
 
 export function joinBlock(l: Player, c: CaseFile, side: "prosecutor" | "defender"): string | null {
@@ -97,7 +97,10 @@ export function joinTrial(l: Player, c: CaseFile, side: "prosecutor" | "defender
   const party: CourtParty = { id: l.id, name: l.name, power: lawyerPower(l) };
   c.trial![side] = party;
   if (side === "defender" && suspect) notify(suspect, `${l.name} took your case. You have a defense attorney.`, "good", l, now);
-  return [{ tone: "good", text: side === "prosecutor" ? `You take the prosecution of ${c.trial!.suspectName}.` : `You take ${c.trial!.suspectName}'s defense.` }];
+  return [
+    { tone: "good", text: side === "prosecutor" ? `You take the prosecution of ${c.trial!.suspectName}.` : `You take ${c.trial!.suspectName}'s defense.` },
+    ...addMerit(l, "courts", 1),
+  ];
 }
 
 /** The suspect slips money into an envelope for the judge. Held until the verdict. */
@@ -224,24 +227,27 @@ export function decideTrial(
   const o = parties.officer;
   if (o) {
     o.reputation = Math.max(0, o.reputation + (verdict === "guilty" ? 3 : -1));
+    if (verdict === "guilty") addMerit(o, "police", 3);
     notify(o, `Case #${c.id}: ${verdict === "guilty" ? "your arrest stuck. Guilty. +3 reputation." : "the court let your suspect go."}`, verdict === "guilty" ? "good" : "bad", undefined, now);
   }
   const pr = parties.prosecutor;
   if (pr && verdict === "guilty") {
     pr.reputation += 2;
+    addMerit(pr, "courts", 3);
     pr.stats.wits += 0.4;
     notify(pr, `Case #${c.id}: you won the prosecution. +2 reputation.`, "good", undefined, now);
   }
   const df = parties.defender;
   if (df && verdict === "not_guilty") {
     df.reputation += 2;
+    addMerit(df, "courts", 3);
     df.stats.charisma += 0.4;
     notify(df, `Case #${c.id}: your client walked. +2 reputation.`, "good", undefined, now);
   }
   if (judge) {
     judge.reputation += 1;
     judge.stats.wits += 0.3;
-    events.push({ tone: "good", text: `Case #${c.id}: ${verdict === "guilty" ? "guilty" : "not guilty"}.` });
+    events.push({ tone: "good", text: `Case #${c.id}: ${verdict === "guilty" ? "guilty" : "not guilty"}.` }, ...addMerit(judge, "courts", 2));
   }
 
   // The real criminal learns someone else is doing their time. Nobody else ever knows.

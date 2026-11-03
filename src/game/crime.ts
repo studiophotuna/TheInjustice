@@ -6,7 +6,7 @@ import { BALANCE } from "./balance";
 import { playerFighter, resolveFight } from "./combat";
 import { DISTRICTS } from "./content/districts";
 import { COUNTRY_BY_ID } from "./content/world";
-import { countryOf, inHospital, inJail, shiftIntegrity } from "./engine";
+import { addMerit, countryOf, inHospital, inJail, shiftIntegrity } from "./engine";
 import { notify, protectedUntil } from "./social";
 import { DESCRIPTORS, describe, sv } from "./stats";
 import {
@@ -349,6 +349,7 @@ export function commitCrime(
   for (const w of ctx.witnesses) {
     w.sightings = [{ caseId: c.id, text, at: now, until: now + BALANCE.crime.sightingMs }, ...(w.sightings ?? []).filter((s) => s.until > now)].slice(0, 5);
   }
+  events.push(...addMerit(a, "enforcer", { pickpocket: 0.6, snatch: 1, mug: 1.5 }[kind]));
   if (ctx.witnesses.length) events.push({ tone: "info", text: `${ctx.witnesses.length === 1 ? "Someone" : "People"} saw it happen.` });
   return { events, caseFile: c, fight };
 }
@@ -398,7 +399,7 @@ export function investigate(o: Player, c: CaseFile, now: number, rng: Rng): Game
   const tip = addTip(c, "detective", eyeAccuracy(o, 0.1 + o.rank * 0.02), now, rng, o.id, "Detective");
   o.stats.perception += 0.5;
   o.stats.wits += 0.3;
-  return [{ tone: "good", text: `You work the scene in ${c.district}. ${tip.text.replace(/^Detective: /, "")}` }];
+  return [{ tone: "good", text: `You work the scene in ${c.district}. ${tip.text.replace(/^Detective: /, "")}` }, ...addMerit(o, "police", 1.5)];
 }
 
 /** Players who fit the tips, best match first. Never says who did it. */

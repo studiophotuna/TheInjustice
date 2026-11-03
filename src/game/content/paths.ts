@@ -208,8 +208,13 @@ export function rankTitle(p: Player): string | null {
 }
 
 /** Jobs needed at the given rank before the next promotion review. */
-export function jobsNeeded(path: PathId, rank: number): number {
-  return PATHS[path].jobsPerRank + 2 * (rank - 1);
+/**
+ * Merit needed for the next review. Merit comes from how hard the work was (see
+ * `jobMerit` in the engine) and from casework, not from how many jobs were done.
+ * Roughly `jobsPerRank` jobs at your own level; easy work below your rank barely counts.
+ */
+export function meritNeeded(path: PathId, rank: number): number {
+  return PATHS[path].jobsPerRank * (1 + 0.5 * (rank - 1));
 }
 
 export function isGraduation(path: PathId, newRank: number): boolean {
@@ -235,8 +240,11 @@ export function promotionHint(p: Player): string | null {
   if (!p.path) return null;
   const def = PATHS[p.path];
   if (p.rank >= def.ranks.length) return "You've reached the top rank available for now.";
-  const left = jobsNeeded(p.path, p.rank) - p.jobsSinceRank;
-  if (left > 0) return `Put in ${left} more job${left === 1 ? "" : "s"} before your next review.`;
+  // Never a number: only how the people above you talk about you.
+  const progress = p.jobsSinceRank / meritNeeded(p.path, p.rank);
+  if (progress < 0.35) return `${def.contact} hasn't noticed you yet. Harder work gets noticed; easy work doesn't.`;
+  if (progress < 0.75) return `People mention your name around ${def.contact}. Keep taking on tougher work.`;
+  if (progress < 1) return `${def.contact} has been asking about you.`;
   const weakest = [...def.keyStats].sort((a, b) => sv(p, a) - sv(p, b))[0];
   return `${def.contact} says you're not ready yet. You need to get ${NEEDS[weakest]}. Try different kinds of work.`;
 }

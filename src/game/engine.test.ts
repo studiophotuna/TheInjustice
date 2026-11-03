@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { BALANCE, maxEnergy } from "./balance";
 import { resolveFight } from "./combat";
-import { applyAction, createPlayer, deathChance, tick } from "./engine";
+import { addMerit, applyAction, createPlayer, deathChance, jobMerit, tick } from "./engine";
+import { JOB_BY_ID, JOBS } from "./content/jobs";
 import { GameError, type Player } from "./types";
 import { toView } from "./view";
 
@@ -418,7 +419,8 @@ describe("schools", () => {
     const ev = applyAction(p, { type: "job", jobId: "study_law" }, T0, always(0.5));
     expect(p.rank).toBe(2);
     expect(ev.some((e) => /Graduation day/.test(e.text))).toBe(true);
-    expect(toView(p, T0).jobs.find((j) => j.id === "city_agenda")?.locked).toMatch(/Commissioner/);
+    // Work above your rank stays hidden until you get there.
+    expect(toView(p, T0).jobs.find((j) => j.id === "city_agenda")).toBeUndefined();
     for (let r = 2; r < 8; r++) {
       p.jobsSinceRank = 100;
       p.energy = 100;
@@ -427,6 +429,30 @@ describe("schools", () => {
     expect(p.rank).toBe(8);
     expect(toView(p, T0).path?.rank).toBe("Commissioner");
     expect(toView(p, T0).jobs.find((j) => j.id === "city_agenda")?.locked).toBeNull();
+  });
+
+  it("promotion merit depends on how demanding the work is, and hints never show numbers", () => {
+    const p = applicant();
+    p.path = "police";
+    p.rank = 6;
+    const easy = JOB_BY_ID.walk_beat;
+    const hard = JOBS.filter((j) => j.path === "police" && (j.minRank ?? 1) === 6)[0];
+    expect(jobMerit(p, hard, true)).toBeGreaterThan(jobMerit(p, easy, true) * 3);
+    expect(jobMerit(p, hard, false)).toBeLessThan(jobMerit(p, hard, true));
+    for (let i = 0; i < 4; i++) {
+      p.jobsSinceRank = i * 6;
+      const hint = toView(p, T0).path?.promotion ?? "";
+      expect(hint).not.toMatch(/\d/);
+    }
+  });
+
+  it("casework earns merit in your own career only", () => {
+    const p = applicant();
+    p.path = "medicine";
+    p.rank = 3;
+    addMerit(p, "medicine", 2);
+    addMerit(p, "police", 5);
+    expect(p.jobsSinceRank).toBe(2);
   });
 
   it("street careers stay invitation-only", () => {

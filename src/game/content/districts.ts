@@ -35,7 +35,7 @@ export const DISTRICTS: DistrictDef[] = [
     locked: (p) =>
       p.reputation >= 5 || totalJobs(p) >= 20
         ? null
-        : `Locals don't know your face yet. (Work ${20 - totalJobs(p)} more jobs, or earn Reputation.)`,
+        : "Locals don't know your face yet. Keep working the streets, or earn some reputation.",
   },
   {
     id: "southside",

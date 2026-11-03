@@ -175,7 +175,10 @@ export function toView(p: Player, now: number): PublicView {
 
   const here = countryOf(p);
   const localDistrict = (id: DistrictId) => DISTRICT_BY_ID[id].country === here;
-  const jobs: JobView[] = JOBS.filter((j) => (j.path ? j.path === p.path : localDistrict(j.district))).map((j) => ({
+  // Work above your rank isn't shown at all: you find out about it when you get there.
+  const jobs: JobView[] = JOBS.filter(
+    (j) => (j.path ? j.path === p.path && (j.minRank ?? 1) <= p.rank : localDistrict(j.district)),
+  ).map((j) => ({
     id: j.id,
     name: j.name,
     district: j.district,

@@ -8,7 +8,7 @@ import { CHAPTER_BY_ID } from "./content/story";
 import { ITEM_BY_ID } from "./content/items";
 import { JOB_BY_ID, type JobDef } from "./content/jobs";
 import { mugger, NPC_BY_ID, roadGang, type NpcDef } from "./content/npcs";
-import { isGraduation, jobsNeeded, keyStatAvg, PATHS } from "./content/paths";
+import { isGraduation, keyStatAvg, meritNeeded, PATHS } from "./content/paths";
 import { SCHOOL_BY_ID } from "./content/schools";
 import { PROPERTY_BY_ID, PROPERTY_MAX_HOURS } from "./content/properties";
 import { COUNTRY_BY_ID, MODE_BY_ID, tripCost, tripMs } from "./content/world";
@@ -470,6 +470,28 @@ function checkProgress(p: Player, events: GameEvent[]) {
   unlockChapters(p, events);
 }
 
+/**
+ * How much a career job counts toward promotion: harder work (higher-rank, risky, more
+ * demanding) counts more; work well below your rank barely counts; a botched job counts little.
+ */
+export function jobMerit(p: Player, job: JobDef, success: boolean): number {
+  const level = job.minRank ?? 1;
+  const complexity = 1 + 0.5 * (level - 1) + (job.risk ? job.risk.difficulty / 40 : 0) + job.energy / 40;
+  const relevance = level >= p.rank - 1 ? 1 : 0.25;
+  return complexity * relevance * (success ? 1 : 0.3);
+}
+
+/** Casework (arrests, exams, verdicts, hunts…) also earns merit in the player's own career. */
+export function addMerit(p: Player, path: PathId, amount: number): GameEvent[] {
+  if (p.path !== path || amount <= 0) return [];
+  p.jobsSinceRank += amount;
+  const events: GameEvent[] = [];
+  checkCareer(p, events);
+  for (const e of events) p.log.unshift({ at: Date.now(), text: e.text, tone: e.tone });
+  p.log = p.log.slice(0, BALANCE.logSize);
+  return events;
+}
+
 function checkCareer(p: Player, events: GameEvent[]) {
   if (!p.path) {
     if (p.application?.status === "pending") return;
@@ -487,7 +509,7 @@ function checkCareer(p: Player, events: GameEvent[]) {
     return;
   }
   const def = PATHS[p.path];
-  if (p.rank >= def.ranks.length || p.jobsSinceRank < jobsNeeded(p.path, p.rank)) return;
+  if (p.rank >= def.ranks.length || p.jobsSinceRank < meritNeeded(p.path, p.rank)) return;
   if (keyStatAvg(p, p.path) < def.promotionThresholds[p.rank - 1]) return;
   p.rank += 1;
   p.jobsSinceRank = 0;
@@ -588,7 +610,6 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
   if (p.energy < job.energy) throw new GameError("You're too tired. Rest or eat something.");
   p.energy -= job.energy;
   p.jobCounts[job.id] = (p.jobCounts[job.id] ?? 0) + 1;
-  if (job.path) p.jobsSinceRank += 1;
   const falloff = 1 / (1 + (p.jobCounts[job.id] - 1) / BALANCE.repeatFalloff);
 
   if (job.risk) {
@@ -597,6 +618,7 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
     if (rng() >= chance) {
       p.heat += (job.risk.failHeat ?? 0) * COUNTRY_BY_ID[countryOf(p)].heatMult;
       grantXp(p, job.xp, falloff * 0.5, events);
+      if (job.path) p.jobsSinceRank += jobMerit(p, job, false);
       events.push({ tone: "bad", text: job.risk.failText });
       if (job.risk.failHp) {
         p.hp -= job.risk.failHp;
@@ -618,6 +640,7 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
   events.push({ tone: "good", text: `${pick(rng, job.lines)} +$${pay}` });
   bumpContract(p, "jobs");
   bumpContract(p, "earn", pay);
+  if (job.path) p.jobsSinceRank += jobMerit(p, job, true);
   grantXp(p, job.xp, falloff, events);
 
   if (job.find && rng() < job.find.chance) {

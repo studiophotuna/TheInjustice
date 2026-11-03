@@ -106,6 +106,7 @@ type JusticeData = {
       canIntimidate: string | null;
       canPayoff: string | null;
       payoff: { copName: string; amount: number; status: string } | null;
+      payoffAllowed: boolean;
     }[];
     cops: { id: string; name: string; title: string }[];
   } | null;
@@ -489,7 +490,7 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
 
       <section className="card">
         <h3 className="card-title"><Shield size={16} /> Crews</h3>
-        {hub.crews.length === 0 && <p className="muted">No crews yet. Only street bosses can start one.</p>}
+        {hub.crews.length === 0 && <p className="muted">No crews in town yet.</p>}
         {hub.crews.map((cr) => (
           <div key={cr.id} className="crew-row">
             <span className="crew-badge sm">{cr.tag}</span>
@@ -508,11 +509,10 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
         ))}
       </section>
 
+      {!hub.foundBlock && (
       <section className="card">
         <h3 className="card-title"><Crown size={16} /> Found a crew</h3>
-        {hub.foundBlock ? (
-          <p className="muted"><Lock size={13} /> {hub.foundBlock}</p>
-        ) : (
+        {(
           <>
             <p className="muted">$500 cash. Crew members earn 5% more on every job, share a vault and a private chat.</p>
             <div className="row">
@@ -537,6 +537,7 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
           </>
         )}
       </section>
+      )}
     </div>
   );
 }
@@ -804,9 +805,7 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
                   <button className="btn btn-primary btn-sm" disabled={game.busy || !!c.canInvestigate} title={c.canInvestigate ?? ""} onClick={() => act({ op: "investigate", caseId: c.id })}>
                     <Search size={14} /> Work the scene
                   </button>
-                ) : (
-                  <p className="fine muted">Detectives can work the scene, see who fits and make arrests.</p>
-                ))}
+                ) : null)}
                 {data.detective && c.canInvestigate && !c.arrested && <p className="job-lock"><Lock size={11} /> {c.canInvestigate}</p>}
               </article>
             ))}
@@ -832,9 +831,6 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
         <h3 className="card-title"><Gavel size={16} /> Courthouse · {view.location.city}</h3>
         {!data && <p className="muted">Checking the docket…</p>}
         {data && docket.length === 0 && <p className="muted">No trials today.</p>}
-        {data && !data.lawyer && !data.judge && docket.length > 0 && (
-          <p className="fine muted">Attorneys (Courts, rank 2+) can prosecute or defend. Judges rule. If no judge rules in time, the court clerk decides on the evidence.</p>
-        )}
         <div className="case-list">
           {docket.map((t) => (
             <article key={t.caseId} className="case trial">
@@ -952,7 +948,7 @@ function Racket({ game, racket, act }: { game: GameApi; racket: NonNullable<Just
                   </button>
                 </div>
                 {x.canIntimidate && <p className="job-lock"><Lock size={11} /> {x.canIntimidate}</p>}
-                {!x.canPayoff ? (
+                {!x.payoffAllowed ? null : !x.canPayoff ? (
                   <form
                     className="row wrap payoff"
                     onSubmit={(e) => {
