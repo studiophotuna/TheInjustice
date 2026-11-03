@@ -461,7 +461,8 @@ describe("schools", () => {
     const t6 = sv(p, "toughness");
     careerBonus(p);
     expect(sv(p, "toughness") - t6).toBeCloseTo(BALANCE.careerBonus.base + 5 * BALANCE.careerBonus.perRank, 5);
-    expect(JSON.stringify(toView(p, T0))).not.toMatch(/"stats"|toughness/);
+    // No stat values anywhere in the view (the word can appear in hints, the numbers can't).
+    expect(JSON.stringify(toView(p, T0))).not.toMatch(/"stats"|"toughness":/);
   });
 
   it("repeating the same work teaches less, but rest restores it", () => {

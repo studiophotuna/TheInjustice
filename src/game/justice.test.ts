@@ -99,7 +99,7 @@ describe("trials", () => {
     expect(c.trial!.verdict).toBe("guilty");
     expect(thief.custodyCase).toBeNull();
     expect(thief.jailUntil).toBe(LATER + 1000 + BALANCE.justice.sentenceMs.snatch);
-    expect(thief.cash).toBe(0);
+    expect(thief.dirty).toBe(0); // restitution comes out of the dirty loot first
     expect(victim.bank).toBe(20);
     expect(det.reputation).toBe(3);
     expect(inJail(thief, LATER + 2000)).toBe(true);
@@ -134,14 +134,16 @@ describe("trials", () => {
     thief.bank = 500;
     arrest(det, thief, c, pool(thief), null, LATER);
     offerBribe(thief, c, 200);
-    expect(thief.bank).toBe(300);
+    // Dirty money first ($20 of loot), then the bank.
+    expect(thief.dirty).toBe(0);
+    expect(thief.bank).toBe(320);
     const judge = career(mk("j", "Judge Ruth"), "courts", BALANCE.justice.judgeRank);
     expect(trialView(c, judge, LATER).envelope).toBe(200);
     expect(trialView(c, det, LATER).envelope).toBe(0);
     decideTrial(c, parties(c, [thief, victim, det]), { judge, takeBribe: true }, LATER, always(0));
     expect(c.trial!.verdict).toBe("not_guilty");
     expect(c.trial!.bribed).toBe(true);
-    expect(judge.cash).toBe(200);
+    expect(judge.dirty).toBe(200);
     expect(judge.stats.integrity).toBeLessThan(0);
 
     const s2 = scene();
@@ -150,9 +152,9 @@ describe("trials", () => {
     offerBribe(s2.thief, s2.c, 200);
     decideTrial(s2.c, parties(s2.c, [s2.thief, s2.victim, s2.det]), { judge: null }, s2.c.trial!.deadline, always(0));
     expect(s2.c.trial!.verdict).toBe("guilty");
-    // 500 − 200 envelope + 200 refunded; restitution came out of the $20 cash on hand.
-    expect(s2.thief.bank).toBe(500);
-    expect(s2.thief.cash).toBe(0);
+    // The envelope comes back as dirty cash ($200); restitution takes $20 of it.
+    expect(s2.thief.bank).toBe(320);
+    expect(s2.thief.dirty).toBe(180);
   });
 
   it("judges can't rule on their own cases", () => {

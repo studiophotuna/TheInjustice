@@ -7,6 +7,7 @@ import { BALANCE } from "./balance";
 import { CRIMES, caseCold, suspectsFor, type SuspectMatch } from "./crime";
 import { COUNTRY_BY_ID } from "./content/world";
 import { addMerit, countryOf, inJail, shiftIntegrity } from "./engine";
+import { canPayIllegal, earnDirty, payIllegal } from "./money";
 import { bumpSeason } from "./season";
 import { notify } from "./social";
 import { sv } from "./stats";
@@ -120,8 +121,8 @@ export function offerBribe(s: Player, c: CaseFile, amount: number): GameEvent[] 
   if (t.bribe) throw new GameError("The envelope is already on the judge's desk.");
   if (!Number.isFinite(amount) || amount < BALANCE.justice.minBribe) throw new GameError(`At least $${BALANCE.justice.minBribe}, or nobody will take you seriously.`);
   const a = Math.floor(amount);
-  if (s.bank < a) throw new GameError("You don't have that much in the bank.");
-  s.bank -= a;
+  if (!canPayIllegal(s, a, true)) throw new GameError("You don't have that much.");
+  payIllegal(s, a, true);
   t.bribe = a;
   shiftIntegrity(s, -3);
   return [{ tone: "info", text: `Your lawyer's cousin delivers an envelope with $${a}. If no judge takes it, it comes back.` }];
@@ -214,7 +215,7 @@ export function decideTrial(
   if (judge && opts.takeBribe) {
     if (!t.bribe) throw new GameError("There's no envelope.");
     verdict = "not_guilty";
-    judge.cash += t.bribe;
+    earnDirty(judge, t.bribe);
     shiftIntegrity(judge, -8);
     t.bribed = true;
     events.push({ tone: "info", text: `You slide the envelope into your robe. $${t.bribe}. Not guilty.` });
@@ -226,7 +227,7 @@ export function decideTrial(
     verdict = rng() < trialStrength(t) ? "guilty" : "not_guilty";
   }
   // An unopened envelope goes back to the suspect.
-  if (t.bribe && parties.suspect) parties.suspect.bank += t.bribe;
+  if (t.bribe && parties.suspect) earnDirty(parties.suspect, t.bribe);
   t.bribe = 0;
 
   t.verdict = verdict;
@@ -247,11 +248,13 @@ export function decideTrial(
       s.jailReason = `Serving ${minutes(sentence)} for the ${crime} in ${c.district}.`;
       s.heat = Math.max(0, s.heat - 10);
       // Pay the victim back from cash first, then savings.
-      const fromCash = Math.min(s.cash, c.amount);
-      const fromBank = Math.min(s.bank, c.amount - fromCash);
+      const fromDirty = Math.min(s.dirty ?? 0, c.amount);
+      s.dirty = (s.dirty ?? 0) - fromDirty;
+      const fromCash = Math.min(s.cash, c.amount - fromDirty);
+      const fromBank = Math.min(s.bank, c.amount - fromDirty - fromCash);
       s.cash -= fromCash;
       s.bank -= fromBank;
-      t.restitution = fromCash + fromBank;
+      t.restitution = fromDirty + fromCash + fromBank;
       notify(s, `Guilty, says ${t.decidedBy}. ${minutes(sentence)} in a cell${t.restitution ? `, and $${t.restitution} goes back to ${c.victimName}` : ""}.`, "bad", undefined, now);
     } else {
       s.jailUntil = now;

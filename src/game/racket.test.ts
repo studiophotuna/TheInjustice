@@ -79,9 +79,9 @@ describe("paying off a cop", () => {
     boss.cash = 300;
     const cop = career(mk("c", "Bent"), "police", 2);
     offerPayoff(boss, c, cop, 150, LATER);
-    expect(boss.cash).toBe(150);
+    expect(boss.cash + (boss.dirty ?? 0)).toBe(320 - 150);
     answerPayoff(cop, c, boss, victim, true, LATER, always(0));
-    expect(cop.cash).toBe(150);
+    expect(cop.dirty).toBe(150);
     expect(caseOpen(c, LATER)).toBe(false);
     expect(victim.inbox![0].text).toMatch(/lost/);
     expect(myCaseView(c, boss.myCases![0], boss, LATER).status).toBe("file lost");
@@ -94,7 +94,7 @@ describe("paying off a cop", () => {
     offerPayoff(boss, c, cop, 150, LATER);
     const n = c.tips.length;
     answerPayoff(cop, c, boss, null, false, LATER, always(0));
-    expect(boss.cash).toBe(300);
+    expect(boss.cash + (boss.dirty ?? 0)).toBe(320);
     expect(c.tips).toHaveLength(n + 1);
     expect(c.tips.at(-1)!.correct).toBe(true);
     expect(() => offerPayoff(boss, c, cop, 150, LATER)).toThrow(/Word got around/);
@@ -106,11 +106,12 @@ describe("paying off a cop", () => {
     expect(() => offerPayoff(career(mk("s", "Soldier"), "enforcer", 2), c, cop, 150, LATER)).toThrow(/Capo/);
     expect(() => offerPayoff(boss, c, mk("n", "Nobody"), 150, LATER)).toThrow(/can't make a file disappear/);
     boss.cash = 50;
+    boss.dirty = 0;
     expect(() => offerPayoff(boss, c, cop, 150, LATER)).toThrow(/don't have/);
     boss.cash = 200;
     offerPayoff(boss, c, cop, 150, LATER);
     withdrawPayoff(boss, c);
-    expect(boss.cash).toBe(200);
+    expect(boss.cash + (boss.dirty ?? 0)).toBe(200);
   });
 });
 

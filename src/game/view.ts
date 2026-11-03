@@ -1,3 +1,6 @@
+import { marketView } from "./drugs";
+import { tutorialView } from "./tutorial";
+import { launderOptions } from "./money";
 import { cityEvent } from "./events";
 import { streetTitle } from "./titles";
 // The only shape of player data that ever leaves the server.
@@ -131,6 +134,13 @@ export interface PublicView {
   onBail: string | null;
   /** Nobody can attack or mug you until then (survived a fight). */
   immuneUntil: number;
+  /** The drug market here (prices, what you carry, what you can cook). */
+  market: ReturnType<typeof marketView>;
+  /** First-day checklist, until it's finished or hidden. */
+  tutorial: ReturnType<typeof tutorialView>;
+  /** Dirty money on hand (from crime) and ways to clean it. */
+  dirty: number;
+  launder: ReturnType<typeof launderOptions>;
   /** What's going on in your city this hour. */
   event: { name: string; text: string; endsAt: number } | null;
   /** What the street calls you. */
@@ -257,6 +267,10 @@ export function toView(p: Player, now: number): PublicView {
         ? { until: p.jailUntil ?? now, reason: p.jailReason ?? "Behind bars.", custodyCase: p.custodyCase ?? null, bail: p.bailAmount ?? 0 }
         : null,
     onBail: p.onBail ?? null,
+    dirty: p.dirty ?? 0,
+    market: marketView(p, now),
+    tutorial: tutorialView(p),
+    launder: launderOptions(p, now),
     event: (() => {
       const e = cityEvent(countryOf(p), now);
       return e ? { name: e.name, text: e.text, endsAt: e.endsAt } : null;

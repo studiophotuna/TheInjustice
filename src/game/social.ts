@@ -6,6 +6,7 @@ import { gutRead, GUT_READS, playerFighter, resolveFight } from "./combat";
 import { PATHS, rankTitle } from "./content/paths";
 import { COUNTRY_BY_ID } from "./content/world";
 import { countryOf, inHospital, inJail } from "./engine";
+import { canPayIllegal, earnDirty, payIllegal, takeCarried } from "./money";
 import { bumpSeason } from "./season";
 import { streetTitle } from "./titles";
 import { GameError, type Crew, type CrewPolicy, type FightSummary, type GameEvent, type GameEventTone, type Player, type Rng } from "./types";
@@ -28,8 +29,8 @@ export function postBounty(poster: Player, t: Player, amount: number, now: numbe
   if (t.dead) throw new GameError("They're not around anymore.");
   const a = Math.floor(amount);
   if (!Number.isFinite(a) || a < BALANCE.bounty.min) throw new GameError(`Bounties start at $${BALANCE.bounty.min}.`);
-  if (!poster.hasBankAccount || poster.bank < a) throw new GameError("You don't have that much in the bank.");
-  poster.bank -= a;
+  if (!canPayIllegal(poster, a, true)) throw new GameError("You don't have that much.");
+  payIllegal(poster, a, true);
   t.bounties = [...(t.bounties ?? []), { byId: poster.id, byName: poster.name, amount: a, at: now }];
   notify(t, `Someone put a $${a} price on your head. Watch your back.`, "bad", undefined, now);
   return [{ tone: "good", text: `$${a} on ${t.name}'s head. Whoever beats them in a fight collects.` }];
@@ -84,9 +85,9 @@ export function attackPlayer(a: Player, t: Player, now: number, rng: Rng): { eve
 
   // The defender takes roughly the damage the attacker dealt.
   if (res.won) {
-    const taken = Math.floor(t.cash * BALANCE.pvp.cashShare);
-    t.cash -= taken;
-    a.cash += taken;
+    // Whatever they carry (dirty money included) is fair game; it all comes away dirty.
+    const taken = takeCarried(t, Math.floor((t.cash + (t.dirty ?? 0)) * BALANCE.pvp.cashShare));
+    earnDirty(a, taken);
     a.reputation += 2;
     bumpSeason(a, "wins", 1, now);
     t.hp = Math.max(0, t.hp - Math.max(30, t.hp * 0.6));
@@ -96,7 +97,7 @@ export function attackPlayer(a: Player, t: Player, now: number, rng: Rng): { eve
     // Collect every bounty on their head.
     const bounty = bountyOn(t);
     if (bounty > 0) {
-      a.cash += bounty;
+      earnDirty(a, bounty);
       t.bounties = [];
       events.push({ tone: "good", text: `You collect the $${bounty} bounty on ${t.name}.` });
       notify(t, `${a.name} collected the $${bounty} bounty on your head.`, "bad", a, now);

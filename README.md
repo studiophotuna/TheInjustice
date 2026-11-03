@@ -177,6 +177,22 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
   witnesses for an hour.
 - **Street titles** earned by what you do, and **anonymous season leaderboards** each month:
   entries never show names ("Someone in the Mafia"); you only learn your own place.
+- **Dirty and clean money**: crime pays dirty money (loot, criminal jobs, drug sales, heist
+  shares, bribes and payoffs taken). Dirty money pays for anything illegal (dealers, bribes,
+  bought votes, bounties, back-alley doctors) and is spent first, but the bank and the shops
+  won't take it. Launder it in the Shop: the laundromat (30% fee), your own business in this
+  country (10%, limited per day), or, for bank officers, their own back office (5%).
+- **Drugs**: buy and sell on the street (Shop tab); prices differ by city and change every hour,
+  so smuggling pays, but a trip can get your stash seized (planes most, buses least). People
+  with science (Doctors most, sharp minds a little) cook drugs from lab supplies; better
+  chemists make more and blow up the lab less.
+- **Bank heists**: a crew leader plans a bank job; members take the roles of driver
+  (agility), safecracker (wits), lookout (perception) and muscle (strength). Each role rolls
+  on its member: no driver means everyone is caught, no safecracker means no money, no
+  lookout means double heat, no muscle means everyone gets hurt. The take is dirty money.
+- **Your first day**: a checklist on Home walks new players through jobs, food, the daily
+  reward, the bank, the gym, fights, the story, People, city hall and careers, with $15 a
+  step and a bonus at the end.
 - **Businesses**: buy one in any country (paid from the bank) and collect hourly income.
 - **Account recovery**: a one-time recovery code is shown at sign-up; use it with
   "Forgot password?" to set a new password. Players can generate a new code in the Me tab.

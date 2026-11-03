@@ -5,6 +5,7 @@ import { playerFighter, resolveFight } from "./combat";
 import { CRIMES, caseCold } from "./crime";
 import { countryOf, inHospital, inJail, shiftIntegrity } from "./engine";
 import { notify } from "./social";
+import { canPayIllegal, earnDirty, payIllegal, takeCarried } from "./money";
 import { sv } from "./stats";
 import { GameError, type CaseFile, type City, type FightSummary, type GameEvent, type Loan, type Player, type Rng } from "./types";
 
@@ -44,9 +45,9 @@ export function buyVote(c: City, candidate: Player, voter: Player, amount: numbe
   if (c.votes[voter.id]) throw new GameError("They already voted.");
   const a = Math.floor(amount);
   if (!Number.isFinite(a) || a < C.minBribe) throw new GameError(`Nobody sells their vote for less than $${C.minBribe}.`);
-  if (candidate.cash < a) throw new GameError("You don't have that much cash on you.");
-  candidate.cash -= a;
-  voter.cash += a;
+  if (!canPayIllegal(candidate, a)) throw new GameError("You don't have that much on you.");
+  payIllegal(candidate, a);
+  earnDirty(voter, a);
   shiftIntegrity(candidate, -4);
   c.voteBuys = [...(c.voteBuys ?? []), { candidateId: candidate.id, voterId: voter.id, amount: a, at: now }];
   notify(voter, `${candidate.name} pressed $${a} into your hand. "For your vote." The ballot is still secret.`, "info", candidate, now);
@@ -154,11 +155,10 @@ export function collectLoan(lender: Player, borrower: Player, id: string, now: n
     notify(borrower, `${lender.name} came to collect and you sent them packing. The debt is still there.`, "good", lender, now);
     return { events: [{ tone: "bad", text: `${borrower.name} fights you off. The debt stands.`, fight }], fight };
   }
-  const fromCash = Math.min(borrower.cash, loan.owed);
+  const fromCash = takeCarried(borrower, loan.owed);
   const fromBank = Math.min(borrower.bank, loan.owed - fromCash);
-  borrower.cash -= fromCash;
   borrower.bank -= fromBank;
-  lender.cash += fromCash + fromBank;
+  earnDirty(lender, fromCash + fromBank);
   borrower.hp = Math.max(5, borrower.hp - 40);
   closeLoan(borrower, lender, id, "collected");
   notify(borrower, `${lender.name} came to collect. You paid $${fromCash + fromBank}, and then some.`, "bad", lender, now);
@@ -222,14 +222,13 @@ export function workContract(m: Player, c: CaseFile, culprit: Player | null, vic
     return { events: [{ tone: "bad", text: "You found the robber, but they were too much for you.", fight }], fight };
   }
   const want = c.amount;
-  const fromCash = Math.min(culprit.cash, want);
+  const fromCash = takeCarried(culprit, want);
   const fromBank = Math.min(culprit.bank, want - fromCash);
-  culprit.cash -= fromCash;
   culprit.bank -= fromBank;
   culprit.hp = Math.max(5, culprit.hp - 35);
   const recovered = fromCash + fromBank;
   if (victim) victim.cash += recovered;
-  m.cash += k.reward;
+  earnDirty(m, k.reward);
   k.done = true;
   notify(culprit, `Someone came to collect for the ${what} in ${c.district}. You paid back $${recovered}.`, "bad", undefined, now);
   if (victim) notify(victim, `Your contract on case #${c.id} is done. $${recovered} came back to you.`, "good", undefined, now);

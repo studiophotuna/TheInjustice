@@ -13,6 +13,9 @@ import { SCHOOL_BY_ID } from "./content/schools";
 import { PROPERTY_BY_ID, PROPERTY_MAX_HOURS } from "./content/properties";
 import { COUNTRY_BY_ID, MODE_BY_ID, tripCost, tripMs } from "./content/world";
 import { cityEvent } from "./events";
+import { buyDrugs, buySupplies, cook, sellDrugs, smugglingCheck } from "./drugs";
+import { launder } from "./money";
+import { claimTutorial } from "./tutorial";
 import { bumpSeason } from "./season";
 import { emptyStats, statValue, sv, tierOf, TIER_UP_LINES } from "./stats";
 import {
@@ -33,7 +36,7 @@ import {
   type StatKey,
 } from "./types";
 
-const ALLOWED_FLAGS = new Set(["seen_prologue"]);
+const ALLOWED_FLAGS = new Set(["seen_prologue", "visited:people", "visited:map", "tut:hidden"]);
 const FIGHT_ENERGY = 10;
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -315,6 +318,8 @@ function startTrip(p: Player, to: CountryId, mode: TravelMode, now: number, rng:
   if (p.cash < cost) throw new GameError(`A ${MODE_BY_ID[mode].name.toLowerCase()} ticket costs $${cost}. Cash only.`);
   p.cash -= cost;
   const incident = rollIncident(p, mode, rng, now);
+  const seized = smugglingCheck(p, mode, rng);
+  if (seized) events.push({ tone: "bad", text: seized });
   p.travel = { from, to, mode, departAt: now, arriveAt: now + tripMs(from, to, mode) + (incident?.delayMs ?? 0), incident };
   p.arrival = null;
   events.push({
@@ -420,6 +425,7 @@ function die(p: Player, now: number, cause: string, events: GameEvent[]) {
   for (const k of STAT_KEYS) p.stats[k] *= keep;
   p.stats.integrity *= keep;
   p.cash = 0;
+  p.dirty = 0;
   p.hp = 0;
   p.hospitalUntil = 0;
   p.dead = { at: now, cause };
@@ -685,18 +691,24 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
   const event = cityEvent(countryOf(p), now);
   let pay = Math.round(randInt(rng, job.pay[0], job.pay[1]) * COUNTRY_BY_ID[countryOf(p)].payMult * crewBonus * (event?.payMult ?? 1));
   if (job.payStat) pay = Math.round(pay * (1 + (sv(p, job.payStat) - 10) / 40));
-  const { net: afterTax, tax } = withholdTax(p, countryOf(p), pay, ctx);
+  const criminal = (job.integrity ?? 0) < 0 || (job.heat ?? 0) > 0;
+  const { net: afterTax, tax } = criminal ? { net: pay, tax: 0 } : withholdTax(p, countryOf(p), pay, ctx);
   // Protection money: the crew that runs this district takes a cut from outsiders.
   const turfCrew = ctx.turf?.[job.district];
   const cut = turfCrew && turfCrew !== p.crewId ? Math.floor(afterTax * BALANCE.turf.cut) : 0;
   if (cut > 0) p.turfOwed = { crewId: turfCrew!, amount: (p.turfOwed?.crewId === turfCrew ? p.turfOwed?.amount ?? 0 : 0) + cut };
   const net = afterTax - cut;
   bumpSeason(p, "earned", net, now);
-  p.cash += net;
+  // Criminal pay is dirty money: it has to be laundered before the bank or shops take it.
+  if (criminal) p.dirty = (p.dirty ?? 0) + net;
+  else p.cash += net;
   p.heat += (job.heat ?? 0) * COUNTRY_BY_ID[countryOf(p)].heatMult;
   p.reputation += job.reputation ?? 0;
   shiftIntegrity(p, job.integrity);
-  events.push({ tone: "good", text: `${pick(rng, job.lines)} +$${net}${tax ? ` (city tax $${tax})` : ""}${cut ? ` (protection money $${cut})` : ""}` });
+  events.push({
+    tone: "good",
+    text: `${pick(rng, job.lines)} +$${net}${criminal ? " dirty" : ""}${tax ? ` (city tax $${tax})` : ""}${cut ? ` (protection money $${cut})` : ""}`,
+  });
   bumpContract(p, "jobs");
   bumpContract(p, "earn", pay);
   if (job.path) p.jobsSinceRank += jobMerit(p, job, true);
@@ -962,7 +974,7 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng, ct
   }
   const blockedInHospital = action.type === "job" || action.type === "fight" || action.type === "bank" || action.type === "travel";
   if (blockedInHospital && inHospital(p, now)) throw new GameError("You're in the hospital. Rest up.");
-  const blockedOnTheRoad = ["job", "fight", "bank", "buy", "apply", "travel", "enroll", "train"].includes(action.type);
+  const blockedOnTheRoad = ["job", "fight", "bank", "buy", "apply", "travel", "enroll", "train", "launder", "drug_buy", "drug_sell", "buy_supplies", "cook"].includes(action.type);
   if (action.type === "train" && inHospital(p, now)) throw new GameError("You're in the hospital. Rest up.");
   if (blockedOnTheRoad && traveling(p)) throw new GameError("You're still on the road. Wait until you arrive.");
   if (blockedOnTheRoad && inJail(p, now)) throw new GameError(p.custodyCase ? "You're held for trial. Wait for the verdict." : "You're in a cell. Serve your time.");
@@ -1060,6 +1072,24 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng, ct
     case "dismiss_application":
       if (p.application?.status !== "rejected") throw new GameError("Nothing to dismiss.");
       p.application = null;
+      break;
+    case "launder":
+      events.push(...launder(p, action.method, action.amount, now));
+      break;
+    case "drug_buy":
+      events.push(...buyDrugs(p, action.drug, action.qty, now));
+      break;
+    case "drug_sell":
+      events.push(...sellDrugs(p, action.drug, action.qty, now));
+      break;
+    case "buy_supplies":
+      events.push(...buySupplies(p, action.qty));
+      break;
+    case "cook":
+      events.push(...cook(p, action.drug, rng));
+      break;
+    case "tutorial":
+      events.push(...claimTutorial(p, action.step));
       break;
     case "create":
       throw new GameError("You already have a character.");

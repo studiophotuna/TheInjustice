@@ -40,7 +40,8 @@ describe("street crime", () => {
     const { a, t, witnesses } = setup();
     const out = commitCrime(a, t, "snatch", LATER, always(0), ctx(witnesses));
     expect(out.caseFile).not.toBeNull();
-    expect(a.cash).toBe(20); // 10% at the low end of the range
+    expect(a.dirty).toBe(20); // 10% at the low end of the range, and it's dirty money
+    expect(a.cash).toBe(0);
     expect(t.cash).toBe(180);
     // The victim is told a case exists but not who did it.
     expect(t.inbox![0].text).toMatch(/case #C1/);

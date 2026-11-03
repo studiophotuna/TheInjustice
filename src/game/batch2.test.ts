@@ -79,7 +79,7 @@ describe("bounties", () => {
     const hunter = mk("h", "Hunter");
     hunter.stats.strength = hunter.stats.toughness = hunter.stats.agility = 400;
     attackPlayer(hunter, target, LATER, always(0.5));
-    expect(hunter.cash).toBeGreaterThanOrEqual(200);
+    expect(hunter.dirty ?? 0).toBeGreaterThanOrEqual(200);
     expect(bountyOn(target)).toBe(0);
   });
 });

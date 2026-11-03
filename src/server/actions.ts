@@ -55,6 +55,20 @@ export function parseAction(body: unknown): Action {
       return { type: "assess" };
     case "flag":
       return { type: "flag", flag: str(b.flag) };
+    case "launder":
+      if (b.method !== "laundromat" && b.method !== "business" && b.method !== "bank") throw new GameError("Bad request.");
+      return { type: "launder", method: b.method, amount: Number(b.amount) };
+    case "drug_buy":
+    case "drug_sell":
+      if (!["herb", "pills", "powder"].includes(b.drug as string)) throw new GameError("Bad request.");
+      return { type: b.type, drug: b.drug as "herb", qty: Number(b.qty) };
+    case "buy_supplies":
+      return { type: "buy_supplies", qty: Number(b.qty) };
+    case "cook":
+      if (!["herb", "pills", "powder"].includes(b.drug as string)) throw new GameError("Bad request.");
+      return { type: "cook", drug: b.drug as "herb" };
+    case "tutorial":
+      return { type: "tutorial", step: str(b.step) };
     case "bank": {
       const op = b.op;
       if (op !== "open" && op !== "deposit" && op !== "withdraw") throw new GameError("Bad request.");

@@ -44,7 +44,7 @@ describe("campaigns and vote buying", () => {
     runForMayor(c, a, "", LATER);
     const voter = mk("v", "Vic");
     buyVote(c, a, voter, 50, LATER);
-    expect(voter.cash).toBe(50);
+    expect(voter.dirty).toBe(50);
     expect(JSON.stringify(cityView(c, voter, LATER))).not.toMatch(/voteBuys|"amount":50/);
     const ia = mk("i", "Ines");
     ia.path = "police";
@@ -121,7 +121,7 @@ describe("revenge contracts", () => {
     const before = victim.cash;
     workContract(muscle, c, thief, victim, LATER, always(0.1));
     expect(c.contract?.done).toBe(true);
-    expect(muscle.cash).toBe(100);
+    expect(muscle.dirty).toBe(100);
     expect(victim.cash).toBe(before + c.amount);
     expect(() => workContract(mk("x", "Other"), c, thief, victim, LATER, always(0.1))).toThrow(/Mafia|done/);
   });

@@ -63,7 +63,7 @@ describe("player vs player", () => {
     const { fight } = attackPlayer(a, t, LATER, seeded(4));
     expect(fight.won).toBe(true);
     expect(t.cash).toBe(180);
-    expect(a.cash).toBe(20);
+    expect(a.dirty).toBe(20);
     expect(t.bank).toBe(500);
     expect(t.inbox?.[0].text).toMatch(/Attacker attacked you/);
     expect(t.inbox?.[0].fromId).toBe("a");

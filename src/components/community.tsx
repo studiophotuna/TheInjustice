@@ -158,6 +158,15 @@ type Hub = {
   foundBlock: string | null;
   readsCases: boolean;
   lender: "bank" | "shark" | null;
+  heist: {
+    canPlan: string | null;
+    plan: {
+      city: string;
+      isLeader: boolean;
+      roles: { id: string; name: string; job: string; who: string | null; canTake: string | null }[];
+      ready: boolean;
+    } | null;
+  } | null;
   breakout: {
     jailed: { id: string; name: string; until: number; reason: string; canPlan: string | null }[];
     plan: {
@@ -454,6 +463,37 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
             </div>
           </div>
         </section>
+        {hub.heist && (hub.heist.plan || !hub.heist.canPlan) && (
+          <section className="card heist">
+            <h3 className="card-title">🏦 Bank job</h3>
+            {hub.heist.plan ? (
+              <>
+                <p className="muted">A bank in {hub.heist.plan.city}. Every role that goes right makes it safer and richer.</p>
+                <ul className="officials">
+                  {hub.heist.plan.roles.map((r) => (
+                    <li key={r.id}>
+                      <span><b>{r.name}</b> <span className="muted">· {r.job}</span>{r.who && <span className="chip chip-green"> {r.who}</span>}</span>
+                      {!r.who && !r.canTake && (
+                        <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => social({ op: "heist_role", role: r.id })}>Take it</button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+                {hub.heist.plan.isLeader && (
+                  <div className="row wrap">
+                    <button className="btn btn-danger btn-sm" disabled={game.busy || !hub.heist.plan.ready} title={hub.heist.plan.ready ? "" : "You need at least a driver and a safecracker."} onClick={() => social({ op: "heist_go" })}>
+                      Give the word
+                    </button>
+                    <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: "heist_cancel" })}>Call it off</button>
+                  </div>
+                )}
+                <p className="fine muted">Driver: no getaway, everyone's caught. Safecracker: no vault, no money. Lookout: double heat. Muscle: everyone gets hurt, less money.</p>
+              </>
+            ) : (
+              <button className="btn btn-danger btn-sm" disabled={game.busy} onClick={() => social({ op: "heist_plan" })}>Plan a bank job</button>
+            )}
+          </section>
+        )}
         {hub.breakout && (hub.breakout.plan || hub.breakout.jailed.length > 0) && (
           <section className="card breakout">
             <h3 className="card-title"><Lock size={16} /> Prison break</h3>

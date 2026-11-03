@@ -775,3 +775,25 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 .campaign { display: grid; gap: 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
 .campaign input, .campaign select { padding: 7px 10px; border-radius: 10px; border: 1px solid var(--border); background: rgba(0, 0, 0, 0.35); color: var(--text); max-width: 100%; }
 .campaign input { width: 100px; }
+
+/* Dirty money, the street market, the lab, heists, the first day */
+.dirty { display: block; font-size: 11px; color: #9be37a; letter-spacing: 0.02em; }
+.launder { border-color: rgba(155, 227, 122, 0.35); }
+.launder input, .market-table input { padding: 6px 8px; border-radius: 10px; border: 1px solid var(--border); background: rgba(0, 0, 0, 0.35); color: var(--text); width: 80px; }
+.market-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.market-table th { text-align: left; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 4px 4px; }
+.market-table td { padding: 6px 4px; border-top: 1px solid var(--border); }
+.market-table input { width: 52px; }
+.lab-title { display: flex; align-items: center; gap: 6px; margin: 14px 0 6px; }
+.heist { border-color: rgba(255, 194, 75, 0.4); }
+.tutorial { border-color: rgba(56, 225, 255, 0.35); }
+.tut-bar { height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; margin: 4px 0 10px; }
+.tut-bar span { display: block; height: 100%; background: linear-gradient(90deg, var(--cyan, #38e1ff), var(--green, #3ee08f)); }
+.tut-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.tut-steps li { display: flex; align-items: center; gap: 10px; }
+.tut-steps li.claimed { opacity: 0.55; }
+.tut-check { width: 20px; height: 20px; border-radius: 999px; display: grid; place-items: center; font-size: 12px; border: 1px solid var(--border); flex: 0 0 auto; }
+.tut-steps li.ready .tut-check { border-color: var(--gold, #ffc24b); color: var(--gold, #ffc24b); }
+.tut-steps li.claimed .tut-check { border-color: var(--green, #3ee08f); color: var(--green, #3ee08f); }
+.tut-text { flex: 1; min-width: 0; }
+@media (max-width: 460px) { .market-table th:nth-child(4), .market-table td:nth-child(4) { display: none; } }

@@ -4,6 +4,7 @@ import { BALANCE } from "./balance";
 import { CRIMES, caseCold, suspectsFor, type SuspectMatch } from "./crime";
 import { countryOf, inHospital, inJail, shiftIntegrity } from "./engine";
 import { notify } from "./social";
+import { canPayIllegal, earnDirty, payIllegal } from "./money";
 import { sv } from "./stats";
 import { GameError, type CaseFile, type GameEvent, type Player, type Rng } from "./types";
 
@@ -102,7 +103,7 @@ export function backAlleyBlock(patient: Player, doctor: Player | null, now: numb
   if (doctor.id === patient.id) return "You can't treat yourself.";
   if (countryOf(doctor) !== countryOf(patient)) return "They work in another country.";
   if (inJail(doctor, now)) return "They're behind bars.";
-  if (patient.cash < backAlleyFee(doctor)) return `It's $${backAlleyFee(doctor)}, cash only.`;
+  if (!canPayIllegal(patient, backAlleyFee(doctor))) return `It's $${backAlleyFee(doctor)}, cash only.`;
   return null;
 }
 
@@ -111,8 +112,8 @@ export function backAlleyTreat(patient: Player, doctor: Player, now: number): Ga
   const block = backAlleyBlock(patient, doctor, now);
   if (block) throw new GameError(block);
   const fee = backAlleyFee(doctor);
-  patient.cash -= fee;
-  doctor.cash += fee;
+  payIllegal(patient, fee);
+  earnDirty(doctor, fee);
   patient.hospitalUntil = now;
   patient.hp = Math.max(patient.hp, 60);
   shiftIntegrity(doctor, -3);

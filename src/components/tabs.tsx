@@ -1,6 +1,7 @@
 "use client";
 
 import { CityHall } from "./cityhall";
+import { LaunderCard, StreetMarket } from "./underworld";
 import { motion } from "motion/react";
 import {
   Backpack,
@@ -258,6 +259,8 @@ export function ShopTab({ game }: { game: GameApi }) {
   const view = game.view!;
   return (
     <div className="stack">
+      <LaunderCard game={game} />
+      <StreetMarket game={game} />
       <section className="card">
         <h3 className="card-title"><Building size={16} /> Businesses</h3>
         <p className="muted">Buy a business with money from your bank. It earns every hour (up to a day's worth waits for you). You must be in its country to buy it.</p>

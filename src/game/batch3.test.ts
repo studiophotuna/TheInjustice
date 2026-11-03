@@ -79,7 +79,7 @@ describe("doctors' black market", () => {
     patient.cash = 500;
     backAlleyTreat(patient, doc, LATER);
     expect(inHospital(patient, LATER + 1)).toBe(false);
-    expect(doc.cash).toBeGreaterThan(0);
+    expect(doc.dirty ?? 0).toBeGreaterThan(0);
     const ia = career(mk("i", "Ines"), "police", BALANCE.racket.audit.minRank);
     const out = audit(ia, doc, [], LATER);
     expect(out.events[0].text).toMatch(/back-alley/);

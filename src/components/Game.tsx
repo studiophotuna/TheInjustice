@@ -223,6 +223,8 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
             {tab === "fight" && <FightTab game={game} />}
             {tab === "shop" && <ShopTab game={game} />}
             {tab === "people" && <CommunityTab game={game} />}
+            {tab === "people" && <Visited game={game} flag="visited:people" />}
+            {tab === "map" && <Visited game={game} flag="visited:map" />}
             {tab === "profile" && <ProfileTab game={game} />}
             {tab === "map" && <CityTab game={game} onRead={setReading} />}
           </motion.main>
@@ -314,6 +316,7 @@ function Hud({ view, live, onProfile }: { view: PublicView; live: NonNullable<Ga
         <div className="hud-money">
           <Counter value={view.cash} className="cash" prefix="$" />
           <span className="bank"><Home size={11} /> bank ${view.bank.toLocaleString()}</span>
+          {view.dirty > 0 && <span className="dirty" title="Dirty money: launder it before the bank or shops will take it">dirty ${view.dirty.toLocaleString()}</span>}
         </div>
       </div>
       <div className="hud-bars">
@@ -516,4 +519,14 @@ function Floaters({ game }: { game: GameApi }) {
       </AnimatePresence>
     </div>
   );
+}
+
+/** Marks a place as visited once (for the first-day checklist). */
+function Visited({ game, flag }: { game: GameApi; flag: string }) {
+  const seen = game.view!.flags.includes(flag);
+  useEffect(() => {
+    if (!seen && game.view?.tutorial) game.act({ type: "flag", flag });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seen]);
+  return null;
 }

@@ -51,6 +51,14 @@ export interface Player {
   createdAt: number;
 
   cash: number;
+  /** Drugs carried, by kind. */
+  drugs?: Partial<Record<"herb" | "pills" | "powder", number>>;
+  /** Boxes of lab supplies (for cooking). */
+  supplies?: number;
+  /** Dirty money from crime: must be laundered before the bank or shops will take it. */
+  dirty?: number;
+  /** Business laundering used today (daily cap). */
+  laundered?: { day: string; amount: number };
   bank: number;
   hasBankAccount: boolean;
 
@@ -306,6 +314,9 @@ export interface Crew {
   vault: number;
   log: { at: number; text: string }[];
   createdAt: number;
+  /** A bank job being planned. */
+  heist?: { country: CountryId; plannerId: string; roles: Partial<Record<HeistRole, { id: string; name: string }>>; createdAt: number } | null;
+  lastHeistAt?: number;
   /** A planned prison break for a jailed member (one at a time). */
   breakout?: Breakout | null;
 }
@@ -338,6 +349,8 @@ export interface TurfHold {
     defenders: { id: string; name: string }[];
   } | null;
 }
+
+export type HeistRole = "driver" | "safecracker" | "lookout" | "muscle";
 
 export interface Breakout {
   targetId: string;
@@ -463,7 +476,13 @@ export type Action =
   | { type: "collect_property"; id: string }
   | { type: "read_inbox" }
   | { type: "enroll" }
-  | { type: "dismiss_application" };
+  | { type: "dismiss_application" }
+  | { type: "launder"; method: "laundromat" | "business" | "bank"; amount: number }
+  | { type: "drug_buy"; drug: "herb" | "pills" | "powder"; qty: number }
+  | { type: "drug_sell"; drug: "herb" | "pills" | "powder"; qty: number }
+  | { type: "buy_supplies"; qty: number }
+  | { type: "cook"; drug: "herb" | "pills" | "powder" }
+  | { type: "tutorial"; step: string };
 
 export class GameError extends Error {}
 

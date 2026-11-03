@@ -135,7 +135,7 @@ describe("vigilantes", () => {
 
   it("a winning hunt pays the victim back and closes the case", () => {
     const { thief, victim, c, vig } = cold();
-    const cash = thief.cash;
+    const cash = thief.cash + (thief.dirty ?? 0); // dirty loot counts: it's what they carry
     hunt(vig, thief, victim, c, pool(c, victim), null, COLD, always(0));
     expect(c.hunt?.won).toBe(true);
     expect(c.hunt?.restitution).toBe(cash);

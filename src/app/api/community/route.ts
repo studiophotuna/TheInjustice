@@ -1,3 +1,4 @@
+import { cancelHeist, heistView, planHeist, runHeist, takeRole } from "@/game/heist";
 import { cityEvent } from "@/game/events";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
@@ -70,7 +71,7 @@ import {
   patientView,
   reviewDeposit,
 } from "@/game/casework";
-import { GameError, type Crew, type CrewPolicy, type GameEvent, type Player } from "@/game/types";
+import { GameError, type HeistRole, type Crew, type CrewPolicy, type GameEvent, type Player } from "@/game/types";
 import { toView } from "@/game/view";
 import { assertJson } from "@/server/auth";
 import { resolveIdentity } from "@/server/identity";
@@ -328,6 +329,7 @@ export async function GET(req: Request) {
       crews: crews.map((c) => crewView(c, p)),
       myCrew: myCrew ? crewView(myCrew, p) : null,
       breakout: myCrew ? await crewJailView(store, myCrew, p, now) : null,
+      heist: myCrew ? heistView(myCrew, p, now) : null,
       channels: channelsFor(p),
       blocked: p.blocked ?? [],
       readsCases: !canReadCases(p) || (!!hubCity && (isCityMayor(hubCity, p) || isChief(hubCity, p))),
@@ -1037,6 +1039,44 @@ export async function POST(req: Request) {
           }
           for (const r of byId.values()) await tx.putPlayer(r);
           await tx.putCrew(crew);
+          return out;
+        });
+        break;
+      }
+      case "heist_plan":
+      case "heist_role":
+      case "heist_cancel":
+      case "heist_go": {
+        const self = await store.get(playerId);
+        if (!self?.crewId) throw new GameError("You're not in a crew.");
+        const crewNow = await store.getCrew(self.crewId);
+        if (!crewNow) throw new GameError("Your crew is gone.");
+        const teamIds = Object.values(crewNow.heist?.roles ?? {}).map((x) => x!.id);
+        events = await store.transaction(async (tx) => {
+          const rows = await tx.getPlayers([...new Set([playerId, ...teamIds])]);
+          const byId = new Map(rows.filter((r): r is Player => !!r).map((r) => [r.id, r]));
+          byId.forEach((r) => tick(r, now));
+          const me = byId.get(playerId);
+          if (!me) throw new GameError("Create a character first.");
+          const crew = await tx.getCrew(crewNow.id);
+          if (!crew) throw new GameError("Your crew is gone.");
+          let out: GameEvent[];
+          let city = null;
+          if (b.op === "heist_plan") out = planHeist(crew, me, now);
+          else if (b.op === "heist_role") {
+            const role = b.role as HeistRole;
+            if (!["driver", "safecracker", "lookout", "muscle"].includes(role)) throw new GameError("Bad request.");
+            out = takeRole(crew, me, role, now);
+          } else if (b.op === "heist_cancel") out = cancelHeist(crew, me);
+          else {
+            const roles = crew.heist?.roles ?? {};
+            const team = Object.fromEntries(Object.entries(roles).map(([r, x]) => [r, byId.get(x!.id)]).filter(([, v]) => !!v));
+            city = crew.heist ? await tx.getCity(crew.heist.country) : null;
+            out = runHeist(crew, me, team, city, now, Math.random);
+          }
+          for (const r of byId.values()) await tx.putPlayer(r);
+          await tx.putCrew(crew);
+          if (city) await tx.putCity(city);
           return out;
         });
         break;

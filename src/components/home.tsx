@@ -7,6 +7,7 @@ import { PATH_LOOKS } from "./art/Portraits";
 import { Scene, type CharacterKind, type SceneKind } from "./art/Scenes";
 import { BackAlleyCard, JailCard, Sightings } from "./community";
 import { OnlineNow } from "./online";
+import { TutorialCard } from "./underworld";
 import { DailyCard } from "./tabs";
 import { fmt, type GameApi } from "./useGame";
 
@@ -62,6 +63,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
         </p>
       </Scene>
 
+      <TutorialCard game={game} go={go} />
       {view.event && (
         <section className="card city-event">
           <b>{view.event.name} in {view.location.city}</b>

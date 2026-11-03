@@ -9,6 +9,7 @@ import { COUNTRY_BY_ID } from "./content/world";
 import { addMerit, countryOf, inHospital, inJail, shiftIntegrity } from "./engine";
 import { notify, protectedUntil } from "./social";
 import { cityEvent } from "./events";
+import { earnDirty } from "./money";
 import { DESCRIPTORS, describe, sv } from "./stats";
 import {
   GameError,
@@ -322,7 +323,7 @@ export function commitCrime(
   const share = def.share[0] + rng() * (def.share[1] - def.share[0]);
   const amount = Math.floor(t.cash * share);
   t.cash -= amount;
-  a.cash += amount;
+  earnDirty(a, amount);
   a.reputation += 1;
   events.push({
     tone: "good",

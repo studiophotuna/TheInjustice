@@ -10,6 +10,7 @@ import { CRIMES, addTip, caseCold, suspectsFor, type SuspectMatch } from "./crim
 import { addMerit, countryOf, inHospital, inJail, shiftIntegrity } from "./engine";
 import { notify, protectedUntil } from "./social";
 import { COUNTRY_BY_ID } from "./content/world";
+import { takeCarried } from "./money";
 import { GameError, type CaseFile, type FightSummary, type GameEvent, type Player, type Rng } from "./types";
 
 const C = BALANCE.casework;
@@ -156,8 +157,7 @@ export function hunt(
 
   if (res.won) {
     suspect.hp = Math.max(1, suspect.hp - Math.max(30, suspect.hp * 0.6));
-    restitution = Math.min(suspect.cash, c.amount);
-    suspect.cash -= restitution;
+    restitution = takeCarried(suspect, c.amount);
     if (victim && victim.id !== suspect.id) {
       victim.cash += restitution;
       notify(victim, `A masked figure left an envelope at your door: $${restitution}, and a note: "Case #${c.id}. Handled."`, "good", undefined, now);

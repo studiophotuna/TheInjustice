@@ -12,6 +12,7 @@ import { addMerit, countryOf, inJail, shiftIntegrity } from "./engine";
 import { PATHS } from "./content/paths";
 import { notify } from "./social";
 import { sv } from "./stats";
+import { canPayIllegal, earnDirty, payIllegal } from "./money";
 import { GameError, type CaseFile, type City, type GameEvent, type Player, type Rng } from "./types";
 
 const R = BALANCE.racket;
@@ -96,7 +97,7 @@ export function payoffBlock(m: Player, c: CaseFile, cop: Player | null, amount: 
   if (cop.id === m.id) return "Nice try.";
   if (countryOf(cop) !== c.country) return "They work in another country.";
   if (!Number.isFinite(amount) || amount < R.payoff.minAmount) return `At least $${R.payoff.minAmount}. Cops aren't cheap.`;
-  if (m.cash + m.bank < Math.floor(amount)) return "You don't have that much.";
+  if (!canPayIllegal(m, Math.floor(amount), true)) return "You don't have that much.";
   return null;
 }
 
@@ -105,9 +106,7 @@ export function offerPayoff(m: Player, c: CaseFile, cop: Player, amount: number,
   const block = payoffBlock(m, c, cop, amount, now);
   if (block) throw new GameError(block);
   const a = Math.floor(amount);
-  const fromCash = Math.min(m.cash, a);
-  m.cash -= fromCash;
-  m.bank -= a - fromCash;
+  payIllegal(m, a, true);
   shiftIntegrity(m, -2);
   c.payoff = { fromId: m.id, copId: cop.id, copName: cop.name, amount: a, at: now, status: "pending" };
   notify(cop, `A man in a camel coat left an envelope on your desk: $${a}, and a case number, #${c.id}. Check your case files.`, "story", undefined, now);
@@ -118,7 +117,7 @@ export function withdrawPayoff(m: Player, c: CaseFile): GameEvent[] {
   const po = c.payoff;
   if (!po || po.fromId !== m.id || po.status !== "pending") throw new GameError("There's no envelope to take back.");
   po.status = "withdrawn";
-  m.cash += po.amount;
+  earnDirty(m, po.amount);
   return [{ tone: "info", text: `You take the $${po.amount} back.` }];
 }
 
@@ -128,7 +127,7 @@ export function answerPayoff(cop: Player, c: CaseFile, briber: Player | null, vi
   if (!po || po.copId !== cop.id || po.status !== "pending") throw new GameError("There's no envelope for you.");
   if (take) {
     po.status = "taken";
-    cop.cash += po.amount;
+    earnDirty(cop, po.amount);
     shiftIntegrity(cop, -8);
     if (victim) notify(victim, `The police say the file on case #${c.id} was lost. Nobody is looking anymore.`, "bad", undefined, now);
     if (briber) {
@@ -141,7 +140,7 @@ export function answerPayoff(cop: Player, c: CaseFile, briber: Player | null, vi
   cop.reputation += 2;
   shiftIntegrity(cop, 3);
   if (briber) {
-    briber.cash += po.amount;
+    earnDirty(briber, po.amount);
     notify(briber, `${cop.name} sent your envelope back. And they took notes.`, "bad", undefined, now);
   }
   // Refusing hands the police something solid about who tried.

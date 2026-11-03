@@ -83,6 +83,19 @@ export const BALANCE = {
     heat: 6,
     damage: 25,
   },
+  /** Drugs: dealers pay this share of the street price; the more you deal, the more heat. */
+  drugs: {
+    sellShare: 0.8,
+    heat: 1,
+    maxCarry: 50,
+    supplyPrice: 15,
+    /** Chance a trip finds your stash. */
+    seizeChance: { bus: 0.05, train: 0.15, plane: 0.35 },
+  },
+  /** Bank heists. */
+  heist: { energy: 20, cooldownMs: 24 * 60 * 60_000, baseTake: 3000, perRole: 0.25, heat: 15, caughtMs: 30 * 60_000 },
+  /** Cleaning dirty money: fees by method; businesses can only take so much a day. */
+  laundering: { laundromatFee: 0.3, businessFee: 0.1, bankerFee: 0.05, businessCapPerDay: 300 },
   /** Campaigns: money spent shows on the ballot (and breaks ties); a share pays for permits. */
   campaign: { min: 50, permitShare: 0.2, minBribe: 20 },
   /** Loans: bankers at legal rates, loan sharks at any rate; three days to pay. */
