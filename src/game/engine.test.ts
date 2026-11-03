@@ -1,3 +1,4 @@
+import { meritNeeded } from "./content/paths";
 import { describe, expect, it } from "vitest";
 import { BALANCE, maxEnergy } from "./balance";
 import { resolveFight } from "./combat";
@@ -289,7 +290,7 @@ describe("paths", () => {
     p.stats.toughness = 30;
     p.stats.perception = 30;
     p.stats.strength = 30;
-    p.jobsSinceRank = 9;
+    p.jobsSinceRank = meritNeeded(p.path!, 1) - 0.1;
     applyAction(p, { type: "job", jobId: "study_law" }, T0, always(0.5));
     expect(p.rank).toBe(2);
   });
@@ -353,7 +354,7 @@ describe("story chapters", () => {
 
     p.path = "courts";
     p.rank = 1;
-    p.jobsSinceRank = 9;
+    p.jobsSinceRank = meritNeeded(p.path!, 1) - 0.1;
     p.stats.wits = p.stats.charisma = p.stats.perception = 30;
     applyAction(p, { type: "job", jobId: "study_precedent" }, T0, always(0.5));
     expect(p.rank).toBe(2);
@@ -415,7 +416,7 @@ describe("schools", () => {
     const p = applicant();
     p.path = "police";
     p.rank = 1;
-    p.jobsSinceRank = 9;
+    p.jobsSinceRank = meritNeeded(p.path!, 1) - 0.1;
     p.stats.toughness = p.stats.perception = p.stats.strength = 400;
     const ev = applyAction(p, { type: "job", jobId: "study_law" }, T0, always(0.5));
     expect(p.rank).toBe(2);
@@ -423,7 +424,7 @@ describe("schools", () => {
     // Work above your rank stays hidden until you get there.
     expect(toView(p, T0).jobs.find((j) => j.id === "city_agenda")).toBeUndefined();
     for (let r = 2; r < 8; r++) {
-      p.jobsSinceRank = 100;
+      p.jobsSinceRank = meritNeeded("police", p.rank);
       p.energy = 100;
       applyAction(p, { type: "job", jobId: "walk_beat" }, T0, always(0.5));
     }

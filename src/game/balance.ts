@@ -1,24 +1,25 @@
-// Tunable numbers in one place. Timers are shortened for the first playable build
-// so a play session shows every system; raise them for the real game.
+// Tunable numbers in one place. Pacing is checked with the simulator in pacing.ts
+// (`npm run pacing`): see PACING.md for the targets and the latest table.
 
 export const BALANCE = {
   energy: {
-    base: 50,
-    /** Milliseconds to regenerate one point of energy with no housing. */
-    regenMs: 60_000,
+    /** A full bar is about a session's worth of work. */
+    base: 100,
+    /** Milliseconds to regenerate one point of energy with no housing (a full bar in ~5 hours). */
+    regenMs: 3 * 60_000,
   },
   housing: [
     { name: "Cardboard box", regenMult: 1, bonusMax: 0 },
-    { name: "Sleeping bag under the overpass", regenMult: 1.25, bonusMax: 10 },
-    { name: "Rented room", regenMult: 1.6, bonusMax: 25 },
+    { name: "Sleeping bag under the overpass", regenMult: 1.15, bonusMax: 15 },
+    { name: "Rented room", regenMult: 1.35, bonusMax: 40 },
   ],
-  hp: { max: 100, regenMs: 30_000, hospitalMinMs: 3 * 60_000, hospitalMaxMs: 8 * 60_000 },
+  hp: { max: 100, regenMs: 30_000, hospitalMinMs: 10 * 60_000, hospitalMaxMs: 25 * 60_000 },
   /** Heat cools down by one point every this many ms. */
-  heatDecayMs: 60_000,
+  heatDecayMs: 2 * 60_000,
   /** Heat at or above this blocks law jobs and draws police attention. */
   cleanRecordHeat: 10,
   /** How long food keeps you "full" before you can eat again. */
-  foodCooldownMs: 10 * 60_000,
+  foodCooldownMs: 3 * 60 * 60_000,
   bankOpenCost: 20,
   /** Chance of being mugged after a job when carrying more than `muggingMinCash`. */
   muggingChance: 0.1,
@@ -35,24 +36,24 @@ export const BALANCE = {
     reputationKept: 0.5,
   },
   school: {
-    /** Time the dean takes to review an application (shortened for testing). */
-    reviewMs: 10 * 60_000,
+    /** Time the dean takes to review an application. */
+    reviewMs: 60 * 60_000,
     /** Vouched applications are reviewed faster and judged more kindly. */
     vouchedReviewMult: 0.5,
     vouchBonus: 6,
     /** Share of tuition refunded to the bank after a rejection. */
     refundShare: 0.75,
-    reapplyCooldownMs: 30 * 60_000,
+    reapplyCooldownMs: 6 * 60 * 60_000,
   },
   travel: {
-    /** Extra time held by customs when flying with heat (shortened for testing). */
-    customsDelayMs: 5 * 60_000,
+    /** Extra time held by customs when flying with heat. */
+    customsDelayMs: 20 * 60_000,
   },
   gym: { fee: 5, energy: 10, xp: 2.2 },
   pvp: {
     energy: 15,
-    /** New characters can't be attacked for this long (shortened for testing). */
-    protectionMs: 2 * 60 * 60_000,
+    /** New characters can't be attacked for this long. */
+    protectionMs: 24 * 60 * 60_000,
     /** Wait before attacking the same player again. */
     cooldownMs: 30 * 60_000,
     /** Share of the loser's cash on hand the winner takes. */
@@ -218,11 +219,13 @@ export const BALANCE = {
   onlineMs: 5 * 60_000,
   chat: { cooldownMs: 3_000, maxLength: 280 },
   banking: {
-    /** Bankers' interest per hour on savings (shortened for testing). */
-    baseRatePerHour: 0.002,
-    ratePerRank: 0.001,
-    /** Never more than this share of the balance in one update. */
-    maxGainShare: 0.05,
+    /**
+     * Bankers earn interest on savings: a daily rate (base + per rank) on the first
+     * `capPerRank × rank` dollars only, so it's a perk, not a money printer.
+     */
+    baseRatePerDay: 0.005,
+    ratePerRankPerDay: 0.001,
+    capPerRank: 5000,
   },
   /**
    * Diminishing returns on repeating the same work: XP multiplier is 1 / (1 + recent / this),
@@ -231,6 +234,19 @@ export const BALANCE = {
    */
   repeatFalloff: 20,
   practiceHalfLifeMs: 12 * 60 * 60_000,
+  /**
+   * Progression speed. Every job teaches the same amount per point of energy (its own mix of
+   * stats), so cheap jobs can't be farmed; career work teaches a little more. Promotion merit is
+   * also per energy spent, and each rank needs `meritGrowth` times more than the one before.
+   */
+  progress: {
+    xpPerEnergy: 0.2,
+    careerXpPerEnergy: 0.26,
+    meritGrowth: 2.2,
+    meritScale: 7,
+    /** The first promotion comes quicker, so the first day feels like progress. */
+    firstRankMult: 0.5,
+  },
   /** Hidden stat points (effective value) given to a career's key stats on joining and on
    * each promotion: base + perRank × (new rank − 1). */
   careerBonus: { base: 1, perRank: 0.25 },

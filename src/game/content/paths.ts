@@ -74,7 +74,7 @@ export const PATHS: Record<PathId, PathDef> = {
     ranks: ["Associate", "Soldier", "Made Man", "Capo", "Consigliere", "Underboss", "Boss", "Don"],
     keyStats: ["strength", "nerve", "toughness"],
     promotionThresholds: [20, 27, 34, 42, 50, 59, 68],
-    jobsPerRank: 10,
+    jobsPerRank: 7,
     contact: "Mr. Kozak",
     contactId: "kozak",
     blurb: "Muscle for a loan shark. Get strong enough that no one can touch you.",
@@ -207,7 +207,7 @@ export const PATHS: Record<PathId, PathDef> = {
     ranks: ["Recruit", "Private", "Corporal", "Sergeant", "Lieutenant", "Captain", "Colonel", "General"],
     keyStats: ["strength", "toughness", "agility"],
     promotionThresholds: [22, 29, 36, 44, 52, 61, 70],
-    jobsPerRank: 13,
+    jobsPerRank: 7.5,
     school: "ironmoor_military",
     graduationRank: 2,
     contact: "Sergeant Major Brann",
@@ -242,7 +242,8 @@ export function rankTitle(p: Player): string | null {
  * Roughly `jobsPerRank` jobs at your own level; easy work below your rank barely counts.
  */
 export function meritNeeded(path: PathId, rank: number): number {
-  return PATHS[path].jobsPerRank * (1 + 0.5 * (rank - 1));
+  const { meritGrowth, meritScale, firstRankMult } = BALANCE.progress;
+  return (PATHS[path].jobsPerRank / 10) * meritScale * 10 * Math.pow(meritGrowth, rank - 1) * (rank === 1 ? firstRankMult : 1);
 }
 
 export function isGraduation(path: PathId, newRank: number): boolean {

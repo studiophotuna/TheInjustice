@@ -1,3 +1,4 @@
+import { PROPERTY_BY_ID } from "./content/properties";
 import { describe, expect, it } from "vitest";
 import { BALANCE } from "./balance";
 import { applyAction, createPlayer, tick } from "./engine";
@@ -175,10 +176,11 @@ describe("properties", () => {
     applyAction(p, { type: "buy_property", id: "laundromat" }, T0, always(0.5));
     expect(p.bank).toBe(100);
     expect(() => applyAction(p, { type: "collect_property", id: "laundromat" }, T0 + 1000, always(0.5))).toThrow(/Nothing/);
+    const perHour = PROPERTY_BY_ID.laundromat.incomePerHour;
     applyAction(p, { type: "collect_property", id: "laundromat" }, T0 + 2 * 3_600_000, always(0.5));
-    expect(p.bank).toBe(100 + 24);
+    expect(p.bank).toBe(100 + 2 * perHour);
     applyAction(p, { type: "collect_property", id: "laundromat" }, T0 + 100 * 3_600_000, always(0.5));
-    expect(p.bank).toBe(124 + 12 * 24);
+    expect(p.bank).toBe(100 + 2 * perHour + perHour * 24);
   });
 
   it("the inbox can be marked read", () => {

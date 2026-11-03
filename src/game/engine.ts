@@ -148,9 +148,10 @@ export function issueGear(p: Player): string[] {
 /** Bankers earn interest on their savings (rate grows with rank, capped per update). */
 function accrueInterest(p: Player, elapsed: number) {
   if (p.path !== "banking" || p.bank <= 0 || elapsed <= 0) return;
-  const { baseRatePerHour, ratePerRank, maxGainShare } = BALANCE.banking;
-  const rate = baseRatePerHour + ratePerRank * p.rank;
-  const gain = Math.min(p.bank * rate * (elapsed / 3_600_000), p.bank * maxGainShare);
+  const { baseRatePerDay, ratePerRankPerDay, capPerRank } = BALANCE.banking;
+  const rate = baseRatePerDay + ratePerRankPerDay * p.rank;
+  const earning = Math.min(p.bank, capPerRank * p.rank);
+  const gain = earning * rate * (Math.min(elapsed, 86_400_000) / 86_400_000);
   p.bank = Math.round((p.bank + gain) * 100) / 100;
 }
 
@@ -527,9 +528,19 @@ function checkProgress(p: Player, events: GameEvent[]) {
  */
 export function jobMerit(p: Player, job: JobDef, success: boolean): number {
   const level = job.minRank ?? 1;
-  const complexity = 1 + 0.5 * (level - 1) + (job.risk ? job.risk.difficulty / 40 : 0) + job.energy / 40;
+  // Per energy spent: a cheap errand counts for little, a long hard shift for a lot.
+  const complexity = (job.energy / 10) * (1 + 0.5 * (level - 1)) * (1 + (job.risk ? job.risk.difficulty / 80 : 0));
   const relevance = level >= p.rank - 1 ? 1 : 0.25;
   return complexity * relevance * (success ? 1 : 0.3);
+}
+
+/** A job's XP, scaled so every job teaches the same amount per energy (career work a bit more). */
+export function jobXp(job: JobDef): Partial<Record<StatKey, number>> {
+  const total = Object.values(job.xp).reduce((s, v) => s + (v ?? 0), 0);
+  if (total <= 0) return job.xp;
+  const rate = job.path ? BALANCE.progress.careerXpPerEnergy : BALANCE.progress.xpPerEnergy;
+  const scale = (rate * job.energy) / total;
+  return Object.fromEntries(Object.entries(job.xp).map(([k, v]) => [k, (v ?? 0) * scale]));
 }
 
 /** Casework (arrests, exams, verdicts, hunts…) also earns merit in the player's own career. */
@@ -701,7 +712,7 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
     const chance = clamp(0.5 + (avg - job.risk.difficulty) / 30, 0.15, 0.95);
     if (rng() >= chance) {
       p.heat += (job.risk.failHeat ?? 0) * COUNTRY_BY_ID[countryOf(p)].heatMult;
-      grantXp(p, job.xp, falloff * 0.5, events);
+      grantXp(p, jobXp(job), falloff * 0.5, events);
       if (job.path) p.jobsSinceRank += jobMerit(p, job, false);
       events.push({ tone: "bad", text: job.risk.failText });
       if (job.risk.failHp) {
@@ -739,7 +750,7 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
   bumpContract(p, "jobs");
   bumpContract(p, "earn", pay);
   if (job.path) p.jobsSinceRank += jobMerit(p, job, true);
-  grantXp(p, job.xp, falloff, events);
+  grantXp(p, jobXp(job), falloff, events);
   if (job.id === "make_bones") events.push(...passTest(p, now));
 
   if (job.find && rng() < job.find.chance) {
