@@ -193,6 +193,17 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
 - **Your first day**: a checklist on Home walks new players through jobs, food, the daily
   reward, the bank, the gym, fights, the story, People, city hall and careers, with $15 a
   step and a bonus at the end.
+- **Bankers launder for clients**: Bank Tellers and up open a laundering service at a fee they
+  set (5–50%); clients see them in the Shop. The banker keeps the fee and a ledger internal
+  affairs can find.
+- **Money-laundering investigations**: launderings of $500+ (any method) are flagged
+  anonymously; detectives follow the money, and if they find who, it's a fine and a cell.
+- **Drug busts**: police can frisk anyone with heat; drugs found are seized and mean a cell
+  (longer for more). Frisking someone clean costs the officer reputation.
+- **Crew drug labs**: a crew leader sets one up ($2,000 from the vault) in a random district;
+  members with chemistry cook twice as much there, but every batch makes the neighbors more
+  suspicious. Hot labs show up as tips for detectives, who can raid them (lab gone, half the
+  vault fined).
 - **Businesses**: buy one in any country (paid from the bank) and collect hourly income.
 - **Account recovery**: a one-time recovery code is shown at sign-up; use it with
   "Forgot password?" to set a new password. Players can generate a new code in the Me tab.

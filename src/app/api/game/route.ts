@@ -7,7 +7,9 @@ import { assertJson } from "@/server/auth";
 import { resolveIdentity } from "@/server/identity";
 import { fileDeposit } from "@/game/casework";
 import { settleTrial } from "@/server/justice";
-import { payTax, payTurf, taxRates, turfMap } from "@/server/city";
+import { payTax, payTurf, taxRates, turfMap, withCity } from "@/server/city";
+import { flagLaundering } from "@/game/batch6";
+import { countryOf } from "@/game/engine";
 import { getStore, StoreConfigError } from "@/server/store";
 
 export const dynamic = "force-dynamic";
@@ -90,6 +92,7 @@ export async function POST(req: Request) {
     const rates = action.type === "job" || action.type === "collect_property" ? await taxRates(store) : {};
     const turf = action.type === "job" ? await turfMap(store) : {};
     let turfOwed: { crewId: string; amount: number } | null = null;
+    let launderFlag: { amount: number; method: string } | null = null;
     const out = await store.update(playerId!, (p) => {
       if (action.type === "create") {
         if (p) throw new GameError("You already have a character.");
@@ -98,6 +101,10 @@ export async function POST(req: Request) {
       }
       if (!p) throw new GameError("Create a character first.");
       const events = applyAction(p, action, now, Math.random, { taxRates: rates, turf });
+      if (p.launderFlag) {
+        launderFlag = p.launderFlag;
+        p.launderFlag = null;
+      }
       if (p.turfOwed) {
         turfOwed = p.turfOwed;
         p.turfOwed = null;
@@ -113,6 +120,12 @@ export async function POST(req: Request) {
       }
       return { player: p, result: { view: toView(p, now), events } };
     });
+    // A big laundering gets flagged for detectives.
+    const lf = launderFlag as { amount: number; method: string } | null;
+    if (lf) {
+      const self = await store.get(playerId!);
+      if (self) await withCity(store, countryOf(self), now, (c) => flagLaundering(c, playerId!, lf.amount, lf.method, now)).catch((e) => console.error(e));
+    }
     // Protection money goes to the crew that runs the district.
     const t = turfOwed as { crewId: string; amount: number } | null;
     if (t) await payTurf(store, t).catch((e) => console.error(e));

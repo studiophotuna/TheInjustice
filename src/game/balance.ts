@@ -83,6 +83,14 @@ export const BALANCE = {
     heat: 6,
     damage: 25,
   },
+  /** Bankers' laundering service: tellers and up, fee set by the banker. */
+  launderService: { minRank: 2, minFee: 0.05, maxFee: 0.5 },
+  /** Launderings this big get flagged for detectives. */
+  launderProbe: { threshold: 500, energy: 15, fineShare: 0.5, jailMs: 15 * 60_000, windowMs: 3 * 24 * 60 * 60_000 },
+  /** Police stop-and-frisk for drugs. */
+  drugBust: { minRank: 2, minHeat: 10, energy: 10, cooldownMs: 60 * 60_000, baseJailMin: 10, maxJailMin: 60 },
+  /** Crew drug labs. */
+  lab: { cost: 2000, heatPerBatch: 8, tipHeat: 30, raidEnergy: 20, fineShare: 0.5 },
   /** Drugs: dealers pay this share of the street price; the more you deal, the more heat. */
   drugs: {
     sellShare: 0.8,

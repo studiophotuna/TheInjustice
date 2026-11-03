@@ -51,6 +51,12 @@ export interface Player {
   createdAt: number;
 
   cash: number;
+  /** Bankers: open for laundering, at this fee. */
+  launderService?: { fee: number } | null;
+  /** Server-only: money this banker laundered for clients (internal affairs can find it). */
+  launderLog?: { at: number; amount: number; exposed?: boolean }[];
+  /** A big laundering the city should flag (set by the engine, filed by the server). */
+  launderFlag?: { amount: number; method: string } | null;
   /** Drugs carried, by kind. */
   drugs?: Partial<Record<"herb" | "pills" | "powder", number>>;
   /** Boxes of lab supplies (for cooking). */
@@ -314,6 +320,8 @@ export interface Crew {
   vault: number;
   log: { at: number; text: string }[];
   createdAt: number;
+  /** The crew's drug lab. */
+  lab?: { country: CountryId; district: DistrictId; districtName: string; builtAt: number; heat: number; heatAt: number; batches: number } | null;
   /** A bank job being planned. */
   heist?: { country: CountryId; plannerId: string; roles: Partial<Record<HeistRole, { id: string; name: string }>>; createdAt: number } | null;
   lastHeistAt?: number;
@@ -516,6 +524,8 @@ export interface City {
   turf?: Partial<Record<DistrictId, TurfHold>>;
   /** Server-only: residents who signed the recall petition against the current mayor. */
   recall?: string[];
+  /** Big launderings for detectives to investigate (the launderer is server-only). */
+  launderFlags?: { id: string; playerId: string; amount: number; method: string; at: number; tried: string[]; solved?: boolean }[];
   /** Police officer the mayor appointed to run the department. */
   chief?: { id: string; name: string; since: number } | null;
   chiefPaidAt?: number;

@@ -83,6 +83,7 @@ export function launder(p: Player, method: LaunderMethod, amount: number, now: n
   const fee = Math.ceil(a * option.fee);
   p.dirty = dirtyOf(p) - a;
   p.cash += a - fee;
+  if (a >= BALANCE.launderProbe.threshold) p.launderFlag = { amount: a, method: option.name };
   if (method === "business") {
     const day = dayKey(now);
     p.laundered = { day, amount: (p.laundered?.day === day ? p.laundered.amount : 0) + a };

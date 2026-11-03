@@ -1,15 +1,48 @@
 "use client";
 
 import { FlaskConical, Pill, ShieldAlert, WashingMachine } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { GameApi } from "./useGame";
 
 /** Dirty money and the ways to clean it. */
 export function LaunderCard({ game }: { game: GameApi }) {
   const view = game.view!;
   const [amount, setAmount] = useState("100");
-  if (!view.dirty) return null;
+  const [bankers, setBankers] = useState<{ id: string; name: string; fee: number }[]>([]);
+  const [mine, setMine] = useState<{ fee: number } | null>(null);
+  const [staff, setStaff] = useState(false);
+  const [myFee, setMyFee] = useState("15");
+  const load = () =>
+    fetch("/api/community?bankers=1", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d) return;
+        setBankers(d.bankers ?? []);
+        setMine(d.mine ?? null);
+        setStaff(!!d.staff);
+      })
+      .catch(() => undefined);
+  useEffect(() => {
+    load();
+  }, [view.location.country]);
+  const service = staff ? (
+    <section className="card launder">
+      <h3 className="card-title"><WashingMachine size={16} /> Your laundering service</h3>
+      <p className="muted fine">Clients bring dirty money; you hand back clean cash and keep your fee. Internal affairs keeps an eye on bankers&apos; books.</p>
+      <div className="row wrap">
+        <input type="number" min={5} max={50} value={myFee} onChange={(e) => setMyFee(e.target.value)} aria-label="Fee percent" />%
+        <button className="btn btn-primary btn-xs" disabled={game.busy} onClick={async () => { await game.social({ op: "launder_service", open: true, fee: Number(myFee) / 100 }); load(); }}>
+          {mine ? "Change fee" : "Open for clients"}
+        </button>
+        {mine && <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={async () => { await game.social({ op: "launder_service", open: false }); load(); }}>Close</button>}
+      </div>
+      {mine && <p className="fine">Open at {Math.round(mine.fee * 100)}%.</p>}
+    </section>
+  ) : null;
+  if (!view.dirty) return service;
   return (
+    <>
+    {service}
     <section className="card launder">
       <h3 className="card-title"><WashingMachine size={16} /> Dirty money: ${view.dirty.toLocaleString()}</h3>
       <p className="muted">
@@ -35,8 +68,18 @@ export function LaunderCard({ game }: { game: GameApi }) {
             </button>
           </li>
         ))}
+        {bankers.map((bk) => (
+          <li key={bk.id}>
+            <span><b>{bk.name}&apos;s bank</b> <span className="muted">· {Math.round(bk.fee * 100)}% fee</span></span>
+            <button className="btn btn-primary btn-xs" disabled={game.busy} onClick={async () => { await game.social({ op: "launder_with", bankerId: bk.id, amount: Number(amount) }); }}>
+              Clean it
+            </button>
+          </li>
+        ))}
       </ul>
+      <p className="fine muted">Big amounts ($500+) get noticed: detectives may follow the money.</p>
     </section>
+    </>
   );
 }
 

@@ -27,6 +27,7 @@ type Profile = {
   canCrime: Record<CrimeKind, string | null>;
   bounty: number;
   lawyerFee: number | null;
+  canFrisk: string | null;
 };
 type CrimeKind = "pickpocket" | "snatch" | "mug";
 const CRIME_BUTTONS: { id: CrimeKind; label: string; Icon: typeof Hand; note: string }[] = [
@@ -96,6 +97,8 @@ type ColdCase = {
 type ContractCard = { caseId: string; crime: string; district: string; victimName: string; reward: number; clues: string[]; canTake: string | null };
 type Robbery = { caseId: string; amount: number; district: string; at: number; contract: { reward: number; done: boolean } | null; closed: boolean };
 type JusticeData = {
+  labTips: { crewId: string; district: string; heat: number }[];
+  launderFlags: { id: string; amount: number; method: string; at: number; canProbe: string | null }[];
   contracts: ContractCard[];
   robbed: Robbery[];
   cases: CaseCard[];
@@ -158,6 +161,9 @@ type Hub = {
   foundBlock: string | null;
   readsCases: boolean;
   lender: "bank" | "shark" | null;
+  lab: { district: string; city: string; batches: number; suspicion: string; cook: { id: string; name: string; block: string | null }[] } | null;
+  labBuild: boolean;
+  police: boolean;
   heist: {
     canPlan: string | null;
     plan: {
@@ -328,6 +334,11 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
                     {hub.lender === "bank" ? "Offer a loan" : "Offer a loan (shark)"}
                   </button>
                 )}
+                {p.canFrisk !== "n/a" && (
+                  <button className="btn btn-ghost btn-sm" disabled={game.busy || !!p.canFrisk} title={p.canFrisk ?? "Stop and search them for drugs"} onClick={() => social({ op: "frisk", targetId: p.id })}>
+                    <Search size={13} /> Frisk
+                  </button>
+                )}
                 {p.lawyerFee !== null && (
                   <button className="btn btn-ghost btn-sm" disabled={game.busy} title="A week on retainer: if you're arrested, they defend you automatically" onClick={() => social({ op: "hire_lawyer", lawyerId: p.id })}>
                     Hire as lawyer (${p.lawyerFee}/wk)
@@ -463,6 +474,30 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
             </div>
           </div>
         </section>
+        {(hub.lab || hub.labBuild) && (
+          <section className="card lab">
+            <h3 className="card-title">⚗️ Crew lab</h3>
+            {hub.lab ? (
+              <>
+                <p className="muted">In {hub.lab.district}, {hub.lab.city}. {hub.lab.batches} batches so far. Word on the street: <b>{hub.lab.suspicion}</b>.</p>
+                {hub.lab.cook.length > 0 ? (
+                  <div className="row wrap">
+                    {hub.lab.cook.map((d) => (
+                      <button key={d.id} className="btn btn-primary btn-sm" disabled={game.busy || !!d.block} title={d.block ?? ""} onClick={() => social({ op: "lab_cook", drug: d.id })}>
+                        Cook {d.name} (×2)
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="fine muted">You don&apos;t know enough chemistry to cook. Doctors and sharp minds do.</p>
+                )}
+                <p className="fine muted">The lab cooks twice as much, but every batch makes the neighbors more suspicious. Hot labs get raided.</p>
+              </>
+            ) : (
+              <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: "lab_build" })}>Set up a lab ($2,000 from the vault)</button>
+            )}
+          </section>
+        )}
         {hub.heist && (hub.heist.plan || !hub.heist.canPlan) && (
           <section className="card heist">
             <h3 className="card-title">🏦 Bank job</h3>
@@ -801,6 +836,26 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
       )}
 
       {data?.racket && <Racket game={game} racket={data.racket} act={act} />}
+
+      {data && (data.labTips.length > 0 || data.launderFlags.length > 0) && (
+        <section className="card">
+          <h3 className="card-title"><FileSearch size={16} /> Narcotics & financial crimes</h3>
+          <ul className="officials">
+            {data.labTips.map((t) => (
+              <li key={t.crewId}>
+                <span>Neighbors in <b>{t.district}</b> complain about a chemical smell.</span>
+                <button className="btn btn-danger btn-xs" disabled={game.busy} onClick={() => act({ op: "raid_lab", crewId: t.crewId })}>Raid</button>
+              </li>
+            ))}
+            {data.launderFlags.map((f) => (
+              <li key={f.id}>
+                <span>${f.amount} laundered through {f.method.toLowerCase()} · {ago(f.at)}</span>
+                <button className="btn btn-ghost btn-xs" disabled={game.busy || !!f.canProbe} title={f.canProbe ?? ""} onClick={() => act({ op: "probe", flagId: f.id })}>Follow the money</button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {data && data.contracts.length > 0 && (
         <section className="card">

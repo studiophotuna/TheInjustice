@@ -1,3 +1,5 @@
+import { buildLab, flagLaundering, flagsView, frisk, friskBlock, isBankStaff, labCook, labTips, labView, launderWithBanker, probeLaundering, raidLab, setLaunderService } from "@/game/batch6";
+import { isDrug } from "@/game/drugs";
 import { cancelHeist, heistView, planHeist, runHeist, takeRole } from "@/game/heist";
 import { cityEvent } from "@/game/events";
 import { randomUUID } from "node:crypto";
@@ -57,7 +59,7 @@ import {
   withdrawPayoff,
 } from "@/game/racket";
 import { rankTitle } from "@/game/content/paths";
-import { advanceCity, crackdownOn, isChief, isMayor as isCityMayor, protectWitnesses } from "@/game/city";
+import { advanceCity, newCity, crackdownOn, isChief, isMayor as isCityMayor, protectWitnesses } from "@/game/city";
 import { inmateView, prisonWork, yardChannel, yardFight } from "@/game/prison";
 import { breakoutView, cancelBreakout, executeBreakout, joinBreakout, planBlock, planBreakout, serving } from "@/game/breakout";
 import {
@@ -193,6 +195,8 @@ export async function GET(req: Request) {
               .slice(0, 20)
               .map((c) => caseView(c, p, now, detective && !c.trial ? suspectsFor(c, pool) : undefined)),
         court: cases.filter((c) => c.trial).slice(0, 20).map((c) => trialView(c, p, now)),
+        labTips: detective ? labTips(await store.listCrews(200), country, now) : [],
+        launderFlags: detective && cityHall ? flagsView(cityHall, p, now) : [],
         roles: { medic, banker, vigilante },
         patients: medic
           ? cases.filter((c) => c.kind !== "pickpocket" && !c.examinedBy && !c.trial?.verdict && !c.hunt && !caseCold(c, now)).slice(0, 10).map((c) => patientView(c, p, now))
@@ -261,6 +265,13 @@ export async function GET(req: Request) {
         });
       return NextResponse.json({ inmates, open: true, channel: yardChannel(p) });
     }
+    if (url.searchParams.get("bankers")) {
+      const bankers = (await store.listPlayers(countryOf(p), 200))
+        .filter((o) => o.id !== p.id && o.launderService && !o.dead && !inJail(o, now))
+        .slice(0, 10)
+        .map((o) => ({ id: o.id, name: o.name, fee: o.launderService!.fee }));
+      return NextResponse.json({ bankers, mine: p.launderService ?? null, staff: isBankStaff(p) });
+    }
     if (url.searchParams.get("backalley")) {
       // Doctors in this city who'll patch you up off the books (only shown to patients).
       if (!inHospital(p, now)) return NextResponse.json({ doctors: [] });
@@ -322,7 +333,8 @@ export async function GET(req: Request) {
           const canInvite = !!leading && !o.crewId && !(leading.invites ?? []).some((i) => i.id === o.id);
           const lawyerFee = o.path === "courts" && o.rank >= BALANCE.justice.lawyerRank ? retainerFee(o) : null;
           const canCrime = Object.fromEntries(CRIME_KINDS.map((k) => [k, crimeBlock(p, o, k, now)]));
-          return { ...prof, crewTag: prof.crewId ? crewTags.get(prof.crewId) ?? null : null, canInvite, canCrime, lawyerFee };
+          const canFrisk = p.path === "police" ? friskBlock(p, o, now) : "n/a";
+          return { ...prof, crewTag: prof.crewId ? crewTags.get(prof.crewId) ?? null : null, canInvite, canCrime, lawyerFee, canFrisk };
         }),
       invites: p.crewInvites ?? [],
       foundBlock: crewFoundBlock(p),
@@ -330,6 +342,9 @@ export async function GET(req: Request) {
       myCrew: myCrew ? crewView(myCrew, p) : null,
       breakout: myCrew ? await crewJailView(store, myCrew, p, now) : null,
       heist: myCrew ? heistView(myCrew, p, now) : null,
+      lab: myCrew ? labView(myCrew, p, now) : null,
+      labBuild: myCrew && myCrew.leaderId === p.id && !myCrew.lab,
+      police: p.path === "police" && p.rank >= BALANCE.drugBust.minRank,
       channels: channelsFor(p),
       blocked: p.blocked ?? [],
       readsCases: !canReadCases(p) || (!!hubCity && (isCityMayor(hubCity, p) || isChief(hubCity, p))),
@@ -589,6 +604,97 @@ export async function POST(req: Request) {
           for (const r of byId.values()) await tx.putPlayer(r);
           await tx.putCase(c);
           return out.events;
+        });
+        break;
+      }
+      case "launder_service": {
+        events = await store.update(playerId, (p) => {
+          if (!p) throw new GameError("Create a character first.");
+          return { player: p, result: setLaunderService(p, b.open === true, Number(b.fee)) };
+        });
+        break;
+      }
+      case "launder_with": {
+        const bankerId = str(b.bankerId);
+        events = await store.transaction(async (tx) => {
+          const [client, banker] = await tx.getPlayers([playerId, bankerId]);
+          if (!client) throw new GameError("Create a character first.");
+          if (!banker) throw new GameError("That banker isn't taking clients.");
+          tick(client, now);
+          const out = launderWithBanker(client, banker, Number(b.amount), now);
+          await tx.putPlayer(client);
+          await tx.putPlayer(banker);
+          if (out.flag) {
+            const city = (await tx.getCity(countryOf(client))) ?? newCity(countryOf(client), now);
+            flagLaundering(city, client.id, Math.floor(Number(b.amount)), `${banker.name}'s bank`, now);
+            await tx.putCity(city);
+          }
+          return out.events;
+        });
+        break;
+      }
+      case "frisk": {
+        const target = str(b.targetId);
+        events = await store.transaction((tx) => withPair(tx, playerId, target, now, (o, t) => frisk(o, t, now, Math.random)));
+        break;
+      }
+      case "lab_build":
+      case "lab_cook": {
+        const self = await store.get(playerId);
+        if (!self?.crewId) throw new GameError("You're not in a crew.");
+        const crewId = self.crewId;
+        events = await store.transaction(async (tx) => {
+          const [me] = await tx.getPlayers([playerId]);
+          if (!me) throw new GameError("Create a character first.");
+          tick(me, now);
+          const crew = await tx.getCrew(crewId);
+          if (!crew) throw new GameError("Your crew is gone.");
+          const out =
+            b.op === "lab_build"
+              ? buildLab(crew, me, now, Math.random)
+              : (() => {
+                  if (!isDrug(b.drug)) throw new GameError("Bad request.");
+                  return labCook(crew, me, b.drug, now, Math.random);
+                })();
+          await tx.putPlayer(me);
+          await tx.putCrew(crew);
+          return out;
+        });
+        break;
+      }
+      case "raid_lab": {
+        const crewId = str(b.crewId);
+        events = await store.transaction(async (tx) => {
+          const [o] = await tx.getPlayers([playerId]);
+          if (!o) throw new GameError("Create a character first.");
+          tick(o, now);
+          const crew = await tx.getCrew(crewId);
+          if (!crew) throw new GameError("There's nothing there anymore.");
+          const out = raidLab(o, crew, now, Math.random);
+          await tx.putPlayer(o);
+          await tx.putCrew(crew);
+          return out;
+        });
+        break;
+      }
+      case "probe": {
+        const flagId = str(b.flagId);
+        const self = await store.get(playerId);
+        if (!self) throw new GameError("Create a character first.");
+        const pre = await store.getCity(countryOf(self));
+        const suspectId = pre?.launderFlags?.find((f) => f.id === flagId)?.playerId;
+        events = await store.transaction(async (tx) => {
+          const [o, launderer] = await tx.getPlayers([playerId, suspectId ?? playerId]);
+          if (!o) throw new GameError("Create a character first.");
+          tick(o, now);
+          const city = await tx.getCity(countryOf(o));
+          if (!city) throw new GameError("That trail is closed.");
+          const l = launderer && launderer.id !== o.id ? launderer : null;
+          const out = probeLaundering(o, city, flagId, l, now, Math.random);
+          await tx.putPlayer(o);
+          if (l) await tx.putPlayer(l);
+          await tx.putCity(city);
+          return out;
         });
         break;
       }
