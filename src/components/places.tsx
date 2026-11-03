@@ -2,7 +2,7 @@
 
 import { motion } from "motion/react";
 import { ArrowLeft, Building2, GraduationCap, HeartPulse, Landmark, Lock, Scale, Shield, Siren, Train } from "lucide-react";
-import { useEffect, useState, type ComponentType } from "react";
+import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { Scene, type SceneKind } from "./art/Scenes";
 import { CityHall } from "./cityhall";
 import { BackAlleyCard, CasesPanel, JailCard, Sightings, useHub, Yard } from "./community";
@@ -110,6 +110,7 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
       return (
         <div className="stack">
           <BankAccountCard game={game} />
+          <GuardCard game={game} />
           <LaunderCard game={game} />
           <LoansCard game={game} />
           <CasesPanel game={game} hub={hub} place="bank" />
@@ -144,6 +145,46 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
     case "station":
       return <TravelContent game={game} onRead={onRead} />;
   }
+}
+
+/** Soldiers on guard outside the bank: every one makes a bank job here harder. */
+function GuardCard({ game }: { game: GameApi }) {
+  const view = game.view!;
+  const [info, setInfo] = useState<{ guards: number; canGuard: string | null } | null>(null);
+  const load = useCallback(async () => {
+    const res = await fetch("/api/city", { cache: "no-store" });
+    if (res.ok) {
+      const d = await res.json();
+      setInfo({ guards: d.city.guards ?? 0, canGuard: d.city.canGuard ?? null });
+    }
+  }, []);
+  useEffect(() => {
+    load();
+  }, [load]);
+  const soldier = view.path?.id === "military";
+  if (!info || (!soldier && info.guards === 0)) return null;
+  return (
+    <section className="card">
+      <h3 className="card-title"><Shield size={16} /> Guard post</h3>
+      <p className="muted">
+        {info.guards ? `${info.guards} soldier${info.guards === 1 ? "" : "s"} on guard outside the bank right now. Bank jobs in this city are harder while they're here.` : "Nobody is on guard at the bank."}
+      </p>
+      {soldier && (
+        <>
+          <button
+            className="btn btn-primary btn-sm"
+            disabled={game.busy || !!info.canGuard}
+            onClick={async () => {
+              if (await game.social({ op: "guard_bank" }, "/api/city")) load();
+            }}
+          >
+            <Shield size={14} /> Stand guard (1 hour, 15 energy)
+          </button>
+          {info.canGuard && <p className="fine muted">{info.canGuard}</p>}
+        </>
+      )}
+    </section>
+  );
 }
 
 /** Opens a building from anywhere (toasts, Home buttons): "place:police". */

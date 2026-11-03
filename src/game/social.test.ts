@@ -135,6 +135,7 @@ describe("crews", () => {
     boss.rank = 4;
     const crew = createCrew(boss, "c1", "Night Shift", "NS", T0);
     expect(boss.cash).toBe(100);
+    rookie.path = "enforcer";
     expect(boss.crewId).toBe("c1");
     requestJoin(crew, rookie, T0);
     expect(() => requestJoin(crew, rookie, T0)).toThrow(/already asked/);
@@ -211,17 +212,27 @@ describe("crew founding and join policies", () => {
     boss.rank = 5;
     return { boss, crew: createCrew(boss, "c", "Iron Row Boys", "IRB", T0, policy) };
   }
+  const recruit = (id: string, name: string) => {
+    const p = createPlayer(id, name, T0);
+    p.path = "enforcer";
+    return p;
+  };
+
+  it("only the Mafia can join a crew", () => {
+    const { crew } = crewWithBoss("open");
+    expect(() => joinCrew(crew, createPlayer("d", "Doctor", T0), T0)).toThrow(/Only the Mafia/);
+  });
 
   it("open crews take anyone straight away", () => {
     const { crew } = crewWithBoss("open");
-    const p = createPlayer("p", "Walker", T0);
+    const p = recruit("p", "Walker");
     expect(joinCrew(crew, p, T0)).toBe("joined");
     expect(p.crewId).toBe("c");
   });
 
   it("request crews put you on a waiting list", () => {
     const { crew } = crewWithBoss("request");
-    const p = createPlayer("p", "Asker", T0);
+    const p = recruit("p", "Asker");
     expect(joinCrew(crew, p, T0)).toBe("requested");
     expect(p.crewId ?? null).toBeNull();
     expect(crew.requests.map((r) => r.id)).toEqual(["p"]);
@@ -229,9 +240,9 @@ describe("crew founding and join policies", () => {
 
   it("invite-only crews refuse strangers but let invited players in", () => {
     const { boss, crew } = crewWithBoss("invite");
-    const stranger = createPlayer("s", "Stranger", T0);
+    const stranger = recruit("s", "Stranger");
     expect(() => joinCrew(crew, stranger, T0)).toThrow(/invite only/);
-    const friend = createPlayer("f", "Friend", T0);
+    const friend = recruit("f", "Friend");
     inviteToCrew(crew, boss, friend, T0);
     expect(friend.crewInvites?.[0].tag).toBe("IRB");
     expect(friend.inbox?.[0].text).toMatch(/invited you/);
@@ -242,7 +253,7 @@ describe("crew founding and join policies", () => {
 
   it("invites can be declined, and only the leader sets the policy", () => {
     const { boss, crew } = crewWithBoss("invite");
-    const p = createPlayer("p", "Maybe", T0);
+    const p = recruit("p", "Maybe");
     inviteToCrew(crew, boss, p, T0);
     declineInvite(crew, p, crew.id);
     expect(p.crewInvites).toEqual([]);

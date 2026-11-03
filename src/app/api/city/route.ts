@@ -21,6 +21,7 @@ import {
 } from "@/game/city";
 import { BALANCE } from "@/game/balance";
 import { frontPage, weekStories } from "@/game/paper";
+import { standGuard } from "@/game/military";
 import { appointEditor, buryStory, dismissEditor, EDITOR, editorSalary, isEditor, setBuryPrice, toggleStory, writeEditorial } from "@/game/batch7";
 import { buyVote, campaign } from "@/game/batch4";
 import { claimTurf, declareWar, joinWar, settleWar, turfView } from "@/game/turf";
@@ -216,6 +217,9 @@ export async function POST(req: Request) {
           await tx.putPlayer(editor);
           break;
         }
+        case "guard_bank":
+          out = standGuard(c, p, now);
+          break;
         case "recall":
           out = signRecall(c, p, now);
           break;

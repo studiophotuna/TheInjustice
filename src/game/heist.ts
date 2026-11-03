@@ -8,6 +8,7 @@ import { BALANCE } from "./balance";
 import { COUNTRY_BY_ID } from "./content/world";
 import { addMerit, countryOf, inHospital, inJail } from "./engine";
 import { earnDirty } from "./money";
+import { crewJob } from "./family";
 import { notify } from "./social";
 import { sv } from "./stats";
 import { GameError, type City, type Crew, type GameEvent, type HeistRole, type Player, type Rng, type StatKey } from "./types";
@@ -80,9 +81,11 @@ export function runHeist(crew: Crew, leader: Player, team: Partial<Record<HeistR
   if (crew.leaderId !== leader.id) throw new GameError("Only the leader gives the word.");
   if (!team.driver || !team.safecracker) throw new GameError("You need at least a driver and a safecracker.");
   const crackdown = !!city && city.crackdownUntil > now;
+  // Soldiers standing guard at the bank make every part of the job harder.
+  const guards = Math.min(3, (city?.guards ?? []).filter((g) => g.until > now).length);
   const roll = (role: HeistRole) => {
     const p = team[role];
-    return !!p && rng() < roleOdds(p, role) * (crackdown ? 0.8 : 1);
+    return !!p && rng() < roleOdds(p, role) * (crackdown ? 0.8 : 1) * (1 - 0.1 * guards);
   };
   const ok = { driver: roll("driver"), safecracker: roll("safecracker"), lookout: roll("lookout"), muscle: roll("muscle") };
   const members = Object.values(team).filter((x): x is Player => !!x);
@@ -91,12 +94,14 @@ export function runHeist(crew: Crew, leader: Player, team: Partial<Record<HeistR
   crew.heist = null;
   crew.lastHeistAt = now;
   const events: GameEvent[] = [];
+  if (guards) events.push({ tone: "info", text: `There were soldiers on guard at the bank (${guards}).` });
 
   // The take: only if the vault opened. More hands carry more out.
   const take = ok.safecracker
     ? Math.round(H.baseTake * COUNTRY_BY_ID[h.country].payMult * (1 + H.perRole * (members.length - 1)) * (ok.muscle ? 1 : 0.6))
     : 0;
   const share = members.length ? Math.floor(take / members.length) : 0;
+  for (const p of members) crewJob(p, "heist", take > 0);
   for (const p of members) {
     p.heat += H.heat * heatMult * (ok.lookout ? 1 : 2);
     if (!ok.muscle) p.hp = Math.max(5, p.hp - 30);
@@ -111,7 +116,7 @@ export function runHeist(crew: Crew, leader: Player, team: Partial<Record<HeistR
     }
     crew.log = [{ at: now, text: `The bank job in ${capital} went wrong. Everyone got caught.` }, ...crew.log].slice(0, 30);
     if (city) city.log = [{ at: now, text: `Bank robbery foiled in ${capital}: the robbers were caught at the scene.` }, ...city.log].slice(0, 20);
-    return [{ tone: "bad", text: "The getaway car never came. You're all caught." }];
+    return [{ tone: "bad", text: "The getaway car never came. You're all caught." }, ...events];
   }
 
   for (const p of members) {

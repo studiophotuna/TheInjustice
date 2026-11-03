@@ -7,6 +7,7 @@ import { playerFighter, power } from "./combat";
 import { DISTRICT_BY_ID, DISTRICTS } from "./content/districts";
 import { countryOf, inJail } from "./engine";
 import { notify } from "./social";
+import { crewJob, family } from "./family";
 import { GameError, type City, type Crew, type DistrictId, type GameEvent, type Player, type Rng, type TurfHold } from "./types";
 
 const T = BALANCE.turf;
@@ -29,6 +30,7 @@ export function claimTurf(c: City, crew: Crew, p: Player, d: DistrictId, now: nu
   const block = claimBlock(c, crew, p, d);
   if (block) throw new GameError(block);
   crew.vault -= T.claimCost;
+  family(p).turf = true;
   c.turf = { ...(c.turf ?? {}), [d]: { crewId: crew.id, name: crew.name, tag: crew.tag, since: now, lastWarAt: 0, war: null } };
   c.log = [{ at: now, text: `${crew.name} [${crew.tag}] now runs ${DISTRICT_BY_ID[d].name}.` }, ...c.log].slice(0, 20);
   return [{ tone: "good", text: `${DISTRICT_BY_ID[d].name} is yours. Outsiders who work there now pay the crew ${Math.round(T.cut * 100)}%.` }];
@@ -84,6 +86,7 @@ export function joinWar(c: City, p: Player, d: DistrictId, now: number, allies: 
   if (block) throw new GameError(block);
   const h = holdOf(c, d)!;
   p.energy -= T.joinEnergy;
+  crewJob(p, "war");
   const attacking = sideOf(h, p, allies) === "attack";
   (attacking ? h.war!.attackers : h.war!.defenders).push({ id: p.id, name: p.name });
   return [{ tone: "good", text: attacking ? `You're on the attack for ${DISTRICT_BY_ID[d].name}.` : `You're defending ${DISTRICT_BY_ID[d].name}.` }];
@@ -118,6 +121,9 @@ export function settleWar(c: City, d: DistrictId, attackers: Player[], defenders
   }
   for (const p of attackersWin ? defenders : attackers) notify(p, `Your crew lost the war for ${district}.`, "bad", undefined, now);
   if (attackersWin) {
+    // The leader who declared the war now runs streets.
+    const declarer = attackers.find((a) => a.id === war.attackers[0]?.id);
+    if (declarer) family(declarer).turf = true;
     c.turf![d] = { crewId: war.crewId, name: war.name, tag: war.tag, since: now, lastWarAt: now, war: null };
     c.log = [{ at: now, text: `${war.name} [${war.tag}] took ${district} from ${h.name}.` }, ...c.log].slice(0, 20);
     return [{ tone: "good", text: `${war.name} takes ${district}.` }];

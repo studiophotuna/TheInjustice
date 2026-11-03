@@ -280,3 +280,32 @@ Links anywhere in the game can open a building directly with `place:<id>` (for e
   The editor writes a column, pulls or restores stories, draws $60 a day from the treasury, and
   sets a price for burying a story. Anyone can pay that price (dirty money first) to make a story
   vanish from the front page; the envelope goes to the editor as dirty money.
+
+## The family, the secret forum, issued weapons and the Military
+
+- **The family's rules (Mafia promotions).** Hard work alone gets you to Soldier. After that:
+  - **Made Man:** you must be *made*: pass Kozak's test (the one-time "make your bones" contract,
+    Soldier and up), or be sworn in by your crew leader in a making ceremony ($500 from the vault,
+    once you've done a crew job).
+  - **Consigliere / Underboss:** you must be in a crew and have taken part in its organized crime
+    (bank jobs, turf wars, prison breaks): 2 and 5 crew jobs.
+  - **Boss:** you must lead a crew (8 crew jobs).
+  - **Don:** you lead a crew, your crew has taken or claimed a district under you, and it has pulled
+    off a bank job (12 crew jobs).
+  - The career hint says what the family is waiting for. Players already above a gate keep their rank.
+- **Only the Mafia joins crews.** Other careers can't join, request or be invited. Members who joined
+  before this rule keep their place.
+- **Secret forum.** A crew leader opens one ($200 from the vault) and invites anyone, of any career,
+  from the People list. Guests read and post in it from People → Crew without joining the crew. The
+  leader can remove guests or shut it down; guests can leave.
+- **Issued weapons.** Never for sale, handed back if you leave the career:
+  - Police: service pistol on graduation (Patrol Officer), body armor at Detective.
+  - Military: service rifle on graduation (Private), combat armor at Sergeant, light machine gun at
+    Captain, heavy assault armor at Colonel.
+- **The Military** (law career). Enroll at the Ironmoor Military Academy in Kestrova ($300), or get
+  recruited by Sergeant Major Brann (for people who train hard at the gym). Ranks: Recruit, Private,
+  Corporal, Sergeant, Lieutenant, Captain, Colonel, General. Jobs at Checkpoint Row: drills, the
+  obstacle course, the rifle range, border checkpoint duty, convoy escorts, squad patrols, raids on
+  smugglers' depots, war games, running the garrison. Soldiers can **stand guard at the bank**
+  (Bank building, 1 hour, paid by the city): each guard on duty (up to 3) makes bank jobs in that
+  city 10% harder at every role.

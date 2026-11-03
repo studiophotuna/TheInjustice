@@ -3,6 +3,7 @@
 // fund a police bounty per conviction, call crackdowns on crime, pardon one prisoner a term,
 // draw a salary from the treasury... and can quietly skim it, which internal affairs can catch.
 
+import { guardBlock } from "./military";
 import { BALANCE } from "./balance";
 import { rankTitle } from "./content/paths";
 import { COUNTRY_BY_ID } from "./content/world";
@@ -362,6 +363,8 @@ export function cityView(c: City, p: Player, now: number) {
     treasury: c.treasury,
     crackdown: crackdownOn(c, now) ? c.crackdownUntil : null,
     chief: c.chief ? { name: c.chief.name, you: isChief(c, p) } : null,
+    guards: (c.guards ?? []).filter((g) => g.until > now).length,
+    canGuard: guardBlock(c, p, now),
     editor: c.editor ? { name: c.editor.name, you: c.editor.id === p.id, price: c.editor.price } : null,
     editorControls:
       c.editor?.id === p.id

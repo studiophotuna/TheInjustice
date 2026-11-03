@@ -16,6 +16,7 @@ const NPC_LOOKS: Record<string, { rim: string; bg: string; prop: Prop }> = {
   silas: { rim: "#3ee08f", bg: "#08201a", prop: "scarf" },
   mercy: { rim: "#ff7eb6", bg: "#2a0c1c", prop: "headmirror" },
   quell: { rim: "#7ee0a8", bg: "#0a2418", prop: "tie" },
+  brann: { rim: "#b5c96a", bg: "#161c08", prop: "helmet" },
   // Other countries
   beach_hustler: { rim: "#ffd27a", bg: "#2a1a0a", prop: "glasses" },
   casino_bouncer: { rim: "#ff3df2", bg: "#22062a", prop: "none" },
@@ -153,6 +154,7 @@ export const PATH_LOOKS: Record<string, { rim: string; prop: Prop }> = {
   vigilante: { rim: "#3ee08f", prop: "scarf" },
   medicine: { rim: "#ff7eb6", prop: "headmirror" },
   banking: { rim: "#7ee0a8", prop: "tie" },
+  military: { rim: "#b5c96a", prop: "helmet" },
 };
 
 const PLAYER_RIMS = ["#ffc24b", "#38e1ff", "#ff3d5a", "#3ee08f", "#9b7bff", "#ff8a3d"];

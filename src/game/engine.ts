@@ -17,6 +17,7 @@ import { buyDrugs, buySupplies, cook, sellDrugs, smugglingCheck } from "./drugs"
 import { launder } from "./money";
 import { claimTutorial } from "./tutorial";
 import { bumpSeason } from "./season";
+import { familyGate, passTest } from "./family";
 import { emptyStats, statValue, sv, tierOf, TIER_UP_LINES } from "./stats";
 import {
   GameError,
@@ -122,6 +123,26 @@ export function tick(p: Player, now: number): void {
   decideApplication(p);
   arrive(p);
   ensureDaily(p, now);
+  issueGear(p);
+}
+
+/**
+ * Careers hand out gear at certain ranks (a police officer's service pistol, a soldier's rifle).
+ * It's never for sale, and it's handed back if you leave the career.
+ */
+export function issueGear(p: Player): string[] {
+  const issued: string[] = [];
+  for (const item of Object.values(ITEM_BY_ID)) {
+    if (!item.issued) continue;
+    const entitled = p.path === item.issued.path && p.rank >= item.issued.rank;
+    if (entitled && !p.inventory[item.id]) {
+      p.inventory[item.id] = 1;
+      issued.push(`${item.icon} ${item.name}`);
+    } else if (!entitled && p.inventory[item.id]) {
+      delete p.inventory[item.id];
+    }
+  }
+  return issued;
 }
 
 /** Bankers earn interest on their savings (rate grows with rank, capped per update). */
@@ -541,6 +562,8 @@ function checkCareer(p: Player, events: GameEvent[]) {
   const def = PATHS[p.path];
   if (p.rank >= def.ranks.length || p.jobsSinceRank < meritNeeded(p.path, p.rank)) return;
   if (keyStatAvg(p, p.path) < def.promotionThresholds[p.rank - 1]) return;
+  // The family has its own rules about who moves up.
+  if (familyGate(p, p.rank + 1)) return;
   p.rank += 1;
   p.jobsSinceRank = 0;
   p.reputation += 3;
@@ -558,6 +581,8 @@ function checkCareer(p: Player, events: GameEvent[]) {
   if (def.examStats) {
     events.push({ tone: "info", text: `${def.examName}: ${def.examStats.map((k) => band(p, k)).join(" ")}` });
   }
+  const gear = issueGear(p);
+  if (gear.length) events.push({ tone: "good", text: `Issued: ${gear.join(", ")}. It's yours while you serve.` });
 }
 
 /** A vague comparison to the Gutter population. Accuracy grows with Perception. */
@@ -715,6 +740,7 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
   bumpContract(p, "earn", pay);
   if (job.path) p.jobsSinceRank += jobMerit(p, job, true);
   grantXp(p, job.xp, falloff, events);
+  if (job.id === "make_bones") events.push(...passTest(p, now));
 
   if (job.find && rng() < job.find.chance) {
     const item = ITEM_BY_ID[job.find.itemId];
@@ -739,7 +765,7 @@ export function itemPrice(p: Player, base: number): number {
 
 function buy(p: Player, itemId: string, events: GameEvent[]) {
   const item = ITEM_BY_ID[itemId];
-  if (!item) throw new GameError("That item doesn't exist.");
+  if (!item || item.issued) throw new GameError("That item isn't for sale.");
   const price = itemPrice(p, item.price);
   if (p.cash < price) throw new GameError("You can't afford that. (Cash on hand only.)");
   if (item.kind === "housing") {

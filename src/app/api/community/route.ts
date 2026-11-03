@@ -1,4 +1,6 @@
 import { acceptAlliance, breakAlliance, declineAlliance, proposeAlliance } from "@/game/batch7";
+import { ceremonyBlock, isMade, makeMember } from "@/game/family";
+import { canUseForum, closeForum, createForum, forumChannel, inviteToForum, removeFromForum } from "@/game/forum";
 import { buildLab, flagLaundering, flagsView, frisk, friskBlock, isBankStaff, labCook, labTips, labView, launderWithBanker, probeLaundering, raidLab, setLaunderService } from "@/game/batch6";
 import { isDrug } from "@/game/drugs";
 import { cancelHeist, heistView, planHeist, runHeist, takeRole } from "@/game/heist";
@@ -12,6 +14,8 @@ import {
   attackPlayer,
   createCrew,
   crewFoundBlock,
+  crewJoinBlock,
+  setLeads,
   crewLog,
   declineInvite,
   inviteToCrew,
@@ -319,7 +323,9 @@ export async function GET(req: Request) {
     }
     const channel = url.searchParams.get("channel");
     if (channel) {
-      if (!channelsFor(p).includes(channel)) throw new GameError("You can't read that channel.");
+      if (channel.startsWith("forum:")) {
+        if (!canUseForum(await store.getCrew(channel.slice(6)), p)) throw new GameError("You can't read that forum.");
+      } else if (!channelsFor(p).includes(channel)) throw new GameError("You can't read that channel.");
       const blocked = new Set(p.blocked ?? []);
       const messages = (await store.listMessages(channel, 60)).filter((m) => !blocked.has(m.authorId));
       return NextResponse.json({ messages });
@@ -333,20 +339,32 @@ export async function GET(req: Request) {
     const crewTags = new Map(crews.map((c) => [c.id, c.tag]));
     if (myCrew) crewTags.set(myCrew.id, myCrew.tag);
     const leading = myCrew && myCrew.leaderId === p.id ? myCrew : null;
+    // Keep the player's own "leads a crew" record in step (older crews predate it).
+    if (!!leading !== !!p.family?.leads) {
+      await store.update(p.id, (x) => {
+        if (!x) throw new GameError("Create a character first.");
+        setLeads(x, !!leading);
+        return { player: x, result: null };
+      });
+    }
     return NextResponse.json({
       players: players
         .filter((o) => o.id !== p.id && !o.dead)
         .map((o) => {
           tick(o, now);
           const prof = profileFor(p, o, now);
-          const canInvite = !!leading && !o.crewId && !(leading.invites ?? []).some((i) => i.id === o.id);
+          const canInvite = !!leading && !o.crewId && o.path === BALANCE.crew.path && !(leading.invites ?? []).some((i) => i.id === o.id);
+          const canForum = !!leading?.forum && o.crewId !== leading.id && !leading.forum.guests.some((g) => g.id === o.id);
           const lawyerFee = o.path === "courts" && o.rank >= BALANCE.justice.lawyerRank ? retainerFee(o) : null;
           const canCrime = Object.fromEntries(CRIME_KINDS.map((k) => [k, crimeBlock(p, o, k, now)]));
           const canFrisk = p.path === "police" ? friskBlock(p, o, now) : "n/a";
-          return { ...prof, crewTag: prof.crewId ? crewTags.get(prof.crewId) ?? null : null, canInvite, canCrime, lawyerFee, canFrisk };
+          return { ...prof, crewTag: prof.crewId ? crewTags.get(prof.crewId) ?? null : null, canInvite, canForum, canCrime, lawyerFee, canFrisk };
         }),
       invites: p.crewInvites ?? [],
       foundBlock: crewFoundBlock(p),
+      joinBlock: crewJoinBlock(p),
+      forums: await forumsFor(store, p, myCrew),
+      ceremony: leading ? await ceremonyList(store, leading, p) : [],
       crews: crews.map((c) => crewView(c, p)),
       myCrew: myCrew ? crewView(myCrew, p) : null,
       breakout: myCrew ? await crewJailView(store, myCrew, p, now) : null,
@@ -362,6 +380,37 @@ export async function GET(req: Request) {
   } catch (e) {
     return failure(e);
   }
+}
+
+/** The secret forums this player can open: their own crew's, and any they were invited to. */
+async function forumsFor(store: ReturnType<typeof getStore>, p: Player, myCrew: Crew | null) {
+  const out: { crewId: string; name: string; tag: string; channel: string; own: boolean; isLeader: boolean; guests: { id: string; name: string }[] }[] = [];
+  if (myCrew?.forum) {
+    out.push({
+      crewId: myCrew.id,
+      name: myCrew.forum.name,
+      tag: myCrew.tag,
+      channel: forumChannel(myCrew.id),
+      own: true,
+      isLeader: myCrew.leaderId === p.id,
+      guests: myCrew.forum.guests.map((g) => ({ id: g.id, name: g.name })),
+    });
+  }
+  for (const f of p.forums ?? []) {
+    if (f.crewId === myCrew?.id) continue;
+    const crew = await store.getCrew(f.crewId);
+    if (!canUseForum(crew, p)) continue;
+    out.push({ crewId: f.crewId, name: crew!.forum!.name, tag: crew!.tag, channel: forumChannel(f.crewId), own: false, isLeader: false, guests: [] });
+  }
+  return out;
+}
+
+/** For the leader: who in the crew could be made, and why not. */
+async function ceremonyList(store: ReturnType<typeof getStore>, crew: Crew, leader: Player) {
+  const mates = (await Promise.all(crew.members.filter((m) => m.id !== leader.id).map((m) => store.get(m.id)))).filter((m): m is Player => !!m);
+  return mates
+    .filter((m) => m.path === BALANCE.crew.path)
+    .map((m) => ({ id: m.id, name: m.name, made: isMade(m), block: isMade(m) ? null : ceremonyBlock(crew, leader, m) }));
 }
 
 /** Loads the acting player and another player, ticks both, and saves both. */
@@ -403,9 +452,10 @@ export async function POST(req: Request) {
       case "say": {
         const channel = str(b.channel);
         const body = cleanBody(b.body);
+        const forumCrew = channel.startsWith("forum:") ? await store.getCrew(channel.slice(6)) : null;
         const author = await store.update(playerId, (p) => {
           if (!p) throw new GameError("Create a character first.");
-          if (!channelsFor(p).includes(channel)) throw new GameError("You can't post there.");
+          if (channel.startsWith("forum:") ? !canUseForum(forumCrew, p) : !channelsFor(p).includes(channel)) throw new GameError("You can't post there.");
           if (now - (p.lastChatAt ?? 0) < BALANCE.chat.cooldownMs) throw new GameError("Slow down a little.");
           p.lastChatAt = now;
           return { player: p, result: p };
@@ -1099,6 +1149,15 @@ export async function POST(req: Request) {
           } else {
             await tx.putCrew(crew);
           }
+          // Whoever takes over now leads (the family's rules care).
+          const next = crew && crew.members.length ? crew.leaderId : null;
+          if (next && next !== playerId) {
+            const [heir] = await tx.getPlayers([next]);
+            if (heir) {
+              setLeads(heir, true);
+              await tx.putPlayer(heir);
+            }
+          }
           await tx.putPlayer(p);
         });
         events = [{ tone: "info", text: "You left the crew." }];
@@ -1226,6 +1285,67 @@ export async function POST(req: Request) {
           }
           await tx.putCrew(mine);
           if (theirLeader) await tx.putPlayer(theirLeader);
+        });
+        break;
+      }
+      case "crew_make": {
+        // The making ceremony: the leader swears a soldier in.
+        const targetId = str(b.playerId);
+        await store.transaction(async (tx) => {
+          const [leader, target] = await tx.getPlayers([playerId, targetId]);
+          if (!leader?.crewId) throw new GameError("You're not in a crew.");
+          if (!target) throw new GameError("That player doesn't exist.");
+          const crew = await tx.getCrew(leader.crewId);
+          if (!crew) throw new GameError("Your crew is gone.");
+          tick(target, now);
+          events = makeMember(crew, leader, target, now);
+          await tx.putPlayer(target);
+          await tx.putCrew(crew);
+        });
+        break;
+      }
+      case "forum_create":
+      case "forum_invite":
+      case "forum_remove":
+      case "forum_leave":
+      case "forum_close": {
+        const crewId = b.op === "forum_leave" ? str(b.crewId) : null;
+        const pre = crewId ? await store.getCrew(crewId) : null;
+        const self0 = await store.get(playerId);
+        const own = self0?.crewId ? await store.getCrew(self0.crewId) : null;
+        const otherIds =
+          b.op === "forum_invite" || b.op === "forum_remove"
+            ? [str(b.playerId)]
+            : b.op === "forum_close"
+              ? (own?.forum?.guests ?? []).map((g) => g.id)
+              : [];
+        await store.transaction(async (tx) => {
+          const rows = await tx.getPlayers([...new Set([playerId, ...otherIds])]);
+          const byId = new Map(rows.filter((r): r is Player => !!r).map((r) => [r.id, r]));
+          const me = byId.get(playerId);
+          if (!me) throw new GameError("Create a character first.");
+          if (b.op === "forum_leave") {
+            const crew = pre ? await tx.getCrew(pre.id) : null;
+            events = removeFromForum(crew, me, me, crewId!);
+            if (crew) await tx.putCrew(crew);
+            await tx.putPlayer(me);
+            return;
+          }
+          const crew = me.crewId ? await tx.getCrew(me.crewId) : null;
+          if (!crew) throw new GameError("You're not in a crew.");
+          const other = otherIds[0] ? byId.get(otherIds[0]) ?? null : null;
+          if (b.op === "forum_create") events = createForum(crew, me, b.name, now);
+          else if (b.op === "forum_invite") {
+            if (!other) throw new GameError("That player doesn't exist.");
+            events = inviteToForum(crew, me, other, now);
+          } else if (b.op === "forum_remove") {
+            if (!other) throw new GameError("That player doesn't exist.");
+            events = removeFromForum(crew, me, other, crew.id);
+          } else {
+            events = closeForum(crew, me, [...byId.values()].filter((x) => x.id !== playerId), now);
+          }
+          for (const x of byId.values()) await tx.putPlayer(x);
+          await tx.putCrew(crew);
         });
         break;
       }

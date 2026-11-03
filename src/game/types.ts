@@ -19,7 +19,7 @@ export type HiddenStats = Record<StatKey, number> & {
   integrity: number;
 };
 
-export type PathId = "police" | "enforcer" | "courts" | "vigilante" | "medicine" | "banking";
+export type PathId = "police" | "enforcer" | "courts" | "vigilante" | "medicine" | "banking" | "military";
 export type CountryId = "varrow" | "solmarra" | "kestrova" | "meridian";
 export type TravelMode = "bus" | "train" | "plane";
 export type DistrictId =
@@ -103,6 +103,10 @@ export interface Player {
   lastSoupAt?: number;
   /** This month's counters for the anonymous season leaderboard. */
   season?: { id: number; earned: number; wins: number; arrests: number };
+  /** Mafia standing: made or not, crew jobs done, leading a crew, turf held, bank jobs pulled. */
+  family?: { madeAt?: number; madeBy?: string; crewJobs: number; heists: number; leads?: boolean; turf?: boolean };
+  /** Secret forums this player was invited into (by crew id). */
+  forums?: { crewId: string; name: string; tag: string }[];
   /** The season before, frozen when a new one starts (for trophies). */
   lastSeason?: { id: number; earned: number; wins: number; arrests: number };
   /** Last season whose trophies this player has claimed. */
@@ -350,6 +354,8 @@ export interface Crew {
   breakout?: Breakout | null;
   /** Allied crews: they fight in each other's wars and don't pay each other protection. */
   allies?: CrewRef[];
+  /** The leader's secret forum: crew members plus invited guests of any career. */
+  forum?: { name: string; createdAt: number; guests: { id: string; name: string; at: number }[] } | null;
   /** Alliances other crews have proposed to this one. */
   allyOffers?: (CrewRef & { at: number })[];
 }
@@ -559,6 +565,8 @@ export interface City {
   mealsServed?: number;
   /** Server-only: money the mayor quietly took from the treasury. */
   skims: { mayorId: string; amount: number; at: number; exposed?: boolean }[];
+  /** Soldiers standing guard at the city's banks (heists get harder). */
+  guards?: { id: string; name: string; until: number }[];
   /** Editor of the city paper, appointed by the mayor. */
   editor?: { id: string; name: string; since: number; price: number } | null;
   editorPaidAt?: number;

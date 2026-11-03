@@ -205,12 +205,24 @@ export function crewFoundBlock(p: Player): string | null {
   return null;
 }
 
+/** Crews are family business: only the Mafia runs with one. */
+export function crewJoinBlock(p: Player): string | null {
+  if (p.path !== BALANCE.crew.path) return "Crews are family business. Only the Mafia joins a crew.";
+  return null;
+}
+
+/** Keeps the player's own record of whether they lead a crew (the family's rules use it). */
+export function setLeads(p: Player, leads: boolean) {
+  p.family = { crewJobs: 0, heists: 0, ...(p.family ?? {}), leads };
+}
+
 export function createCrew(p: Player, id: string, name: string, tag: string, now: number, policy: CrewPolicy = "request"): Crew {
   const block = crewFoundBlock(p);
   if (block) throw new GameError(block);
   if (p.cash < BALANCE.crew.createCost) throw new GameError(`Starting a crew costs $${BALANCE.crew.createCost} cash.`);
   p.cash -= BALANCE.crew.createCost;
   p.crewId = id;
+  setLeads(p, true);
   return {
     id,
     name,
@@ -248,6 +260,8 @@ export function addMember(c: Crew, p: Player, now: number) {
  */
 export function joinCrew(c: Crew, p: Player, now: number): "joined" | "requested" {
   if (p.crewId) throw new GameError("You're already in a crew.");
+  const block = crewJoinBlock(p);
+  if (block) throw new GameError(block);
   const invited = (c.invites ?? []).some((i) => i.id === p.id);
   const policy = policyOf(c);
   if (invited || policy === "open") {
@@ -269,6 +283,7 @@ export function setPolicy(c: Crew, leader: Player, policy: CrewPolicy, now: numb
 export function inviteToCrew(c: Crew, leader: Player, target: Player, now: number) {
   if (c.leaderId !== leader.id) throw new GameError("Only the leader can invite people.");
   if (target.crewId) throw new GameError(`${target.name} is already in a crew.`);
+  if (crewJoinBlock(target)) throw new GameError(`${target.name} isn't family. Only the Mafia joins crews; invite them to your secret forum instead.`);
   if ((c.invites ?? []).some((i) => i.id === target.id)) throw new GameError("Already invited.");
   if (c.members.length >= BALANCE.crew.maxMembers) throw new GameError("The crew is full.");
   c.invites = [...(c.invites ?? []), { id: target.id, name: target.name, at: now }].slice(-30);
@@ -286,6 +301,8 @@ export function declineInvite(c: Crew | null, p: Player, crewId: string) {
 
 export function requestJoin(c: Crew, p: Player, now: number) {
   if (p.crewId) throw new GameError("You're already in a crew.");
+  const block = crewJoinBlock(p);
+  if (block) throw new GameError(block);
   if (c.requests.some((r) => r.id === p.id)) throw new GameError("You already asked. Wait for an answer.");
   if (c.members.length >= BALANCE.crew.maxMembers) throw new GameError("That crew is full.");
   c.requests = [...c.requests, { id: p.id, name: p.name, at: now }].slice(-20);
@@ -296,6 +313,7 @@ export function acceptJoin(c: Crew, leader: Player, recruit: Player, now: number
   if (!c.requests.some((r) => r.id === recruit.id)) throw new GameError("They didn't ask to join.");
   c.requests = c.requests.filter((r) => r.id !== recruit.id);
   if (recruit.crewId) throw new GameError(`${recruit.name} joined another crew.`);
+  if (crewJoinBlock(recruit)) throw new GameError(`${recruit.name} isn't family anymore.`);
   addMember(c, recruit, now);
   notify(recruit, `You're in. Welcome to ${c.name} [${c.tag}]. Crew members earn 5% more on every job.`, "good", leader, now);
 }
@@ -304,6 +322,7 @@ export function acceptJoin(c: Crew, leader: Player, recruit: Player, now: number
 export function leaveCrew(c: Crew, p: Player, now: number): boolean {
   if (p.crewId !== c.id) throw new GameError("You're not in that crew.");
   p.crewId = null;
+  if (c.leaderId === p.id) setLeads(p, false);
   c.members = c.members.filter((m) => m.id !== p.id);
   crewLog(c, `${p.name} left.`, now);
   if (c.members.length === 0) return true;

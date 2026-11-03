@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { Ban, Crown, Eye, EyeOff, ShieldAlert, ShieldCheck, FileSearch, Footprints, Gavel, Hand, Handshake, Landmark, Moon, Stethoscope, Inbox, Lock, MessageSquare, Search, Send, Shield, Siren, Swords, UserCheck, Users, Vault } from "lucide-react";
+import { Ban, Crown, Eye, EyeOff, ShieldAlert, ShieldCheck, FileSearch, Footprints, Gavel, Flame, Hand, Handshake, Landmark, MessagesSquare, Moon, Stethoscope, Inbox, Lock, MessageSquare, Search, Send, Shield, Siren, Swords, UserCheck, Users, Vault } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 import { OnlineNow } from "./online";
@@ -24,6 +24,7 @@ type Profile = {
   canAttack: string | null;
   canVouch: string | null;
   canInvite: boolean;
+  canForum?: boolean;
   streetTitle: string | null;
   canCrime: Record<CrimeKind, string | null>;
   bounty: number;
@@ -163,6 +164,10 @@ type Hub = {
   invites: Invite[];
   /** Why the viewer can't found a crew, or null. */
   foundBlock: string | null;
+  /** Why the viewer can't join a crew (only the Mafia can), or null. */
+  joinBlock: string | null;
+  forums: { crewId: string; name: string; tag: string; channel: string; own: boolean; isLeader: boolean; guests: { id: string; name: string }[] }[];
+  ceremony: { id: string; name: string; made: boolean; block: string | null }[];
   readsCases: boolean;
   lender: "bank" | "shark" | null;
   lab: { district: string; city: string; batches: number; suspicion: string; cook: { id: string; name: string; block: string | null }[] } | null;
@@ -348,6 +353,11 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
                     <Shield size={14} /> Invite to crew
                   </button>
                 )}
+                {p.canForum && (
+                  <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: "forum_invite", playerId: p.id })}>
+                    <MessagesSquare size={14} /> Invite to forum
+                  </button>
+                )}
                 <button
                   className="btn btn-ghost btn-sm"
                   disabled={game.busy}
@@ -451,6 +461,94 @@ function Chat({ game, hub, initial }: { game: GameApi; hub: Hub; initial?: strin
   );
 }
 
+/** The leader opens the crew's secret forum. */
+function ForumCreate({ game, social }: { game: GameApi; social: (b: Record<string, unknown>) => Promise<unknown> }) {
+  const [name, setName] = useState("");
+  return (
+    <section className="card">
+      <h3 className="card-title"><MessagesSquare size={16} /> Secret forum</h3>
+      <p className="muted fine">A private board for your crew and anyone you invite: a cop on the payroll, a doctor who doesn&apos;t ask, a banker who cleans. Guests don&apos;t join the crew. $200 from the vault.</p>
+      <form className="row" onSubmit={(e) => { e.preventDefault(); social({ op: "forum_create", name }).then(() => setName("")); }}>
+        <input maxLength={30} placeholder="Forum name" value={name} onChange={(e) => setName(e.target.value)} />
+        <button className="btn btn-primary btn-sm" disabled={game.busy || name.trim().length < 3}>Open it</button>
+      </form>
+    </section>
+  );
+}
+
+/** A secret forum: posts from the crew and its invited guests. */
+function ForumBoard({ game, forum, social }: { game: GameApi; forum: Hub["forums"][number]; social: (b: Record<string, unknown>) => Promise<unknown> }) {
+  const view = game.view!;
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [text, setText] = useState("");
+  const [open, setOpen] = useState(true);
+  const load = useCallback(async () => {
+    const res = await fetch(`/api/community?channel=${encodeURIComponent(forum.channel)}`, { cache: "no-store" });
+    if (res.ok) setMessages((await res.json()).messages);
+  }, [forum.channel]);
+  useEffect(() => {
+    load();
+    const t = setInterval(load, 6000);
+    return () => clearInterval(t);
+  }, [load]);
+  return (
+    <section className="card forum">
+      <div className="row between">
+        <h3 className="card-title"><MessagesSquare size={16} /> {forum.name} <span className="crew-tag">[{forum.tag}]</span></h3>
+        <button className="btn btn-ghost btn-xs" onClick={() => setOpen(!open)}>{open ? "Hide" : "Open"}</button>
+      </div>
+      <p className="muted fine">
+        Secret forum. {forum.own ? `Your crew${forum.guests.length ? ` and ${forum.guests.length} guest${forum.guests.length === 1 ? "" : "s"}` : ""}.` : "You're a guest here."}
+      </p>
+      {open && (
+        <>
+          <div className="forum-posts">
+            {messages.length === 0 && <p className="muted">Nothing posted yet.</p>}
+            {[...messages].reverse().map((m) => (
+              <article key={m.id} className={`forum-post ${m.authorId === view.id ? "mine" : ""}`}>
+                <header><b>{m.authorName}</b> <span className="muted">· {ago(m.at)}</span></header>
+                <p>{m.body}</p>
+              </article>
+            ))}
+          </div>
+          <form
+            className="chat-input"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!text.trim()) return;
+              if (await game.social({ op: "say", channel: forum.channel, body: text })) {
+                setText("");
+                load();
+              }
+            }}
+          >
+            <input maxLength={280} placeholder="Post to the forum" value={text} onChange={(e) => setText(e.target.value)} />
+            <button className="btn btn-primary btn-sm" disabled={game.busy || !text.trim()}><Send size={14} /></button>
+          </form>
+          {forum.isLeader && (
+            <div className="forum-admin">
+              {forum.guests.length > 0 && <span className="crime-label">Guests</span>}
+              <div className="row wrap">
+                {forum.guests.map((g) => (
+                  <span key={g.id} className="chip">
+                    {g.name}{" "}
+                    <button className="chip-x" title="Remove" disabled={game.busy} onClick={() => social({ op: "forum_remove", playerId: g.id })}>×</button>
+                  </span>
+                ))}
+              </div>
+              <p className="fine muted">Invite guests from the People list. Anyone can be a guest, whatever their career.</p>
+              <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => confirm("Shut the forum down? Guests lose access.") && social({ op: "forum_close" })}>Shut it down</button>
+            </div>
+          )}
+          {!forum.own && (
+            <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => confirm("Leave this forum?") && social({ op: "forum_leave", crewId: forum.crewId })}>Leave forum</button>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
 /** Allied crews fight in each other's wars and don't charge each other protection. */
 function AlliancesCard({ game, crew, crews, social }: { game: GameApi; crew: CrewView; crews: CrewView[]; social: (b: Record<string, unknown>) => Promise<unknown> }) {
   const allies = crew.allies ?? [];
@@ -511,10 +609,13 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
   const [policy, setPolicy] = useState<"open" | "request" | "invite">("request");
   if (!hub) return <p className="muted">Loading crews…</p>;
   const c = hub.myCrew;
+  const forums = hub.forums.map((f) => <ForumBoard key={f.crewId} game={game} forum={f} social={social} />);
 
   if (c) {
     return (
       <div className="stack">
+        {forums}
+        {c.isLeader && !hub.forums.some((f) => f.own) && <ForumCreate game={game} social={social} />}
         <section className="card crew-hero">
           <div className="crew-banner">
             <span className="crew-badge">{c.tag}</span>
@@ -657,6 +758,23 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
           </section>
         )}
         <AlliancesCard game={game} crew={c} crews={hub.crews} social={social} />
+        {c.isLeader && hub.ceremony.length > 0 && (
+          <section className="card">
+            <h3 className="card-title"><Flame size={16} /> The making ceremony</h3>
+            <p className="muted fine">Swear a soldier in: a candle, a saint&apos;s card, an oath. Costs $500 from the vault. Only made men rise to Made Man and beyond.</p>
+            {hub.ceremony.map((m) => (
+              <div key={m.id} className="row between inv-row">
+                <span>{m.name} {m.made && <span className="chip chip-gold">Made</span>}</span>
+                {!m.made && (
+                  <button className="btn btn-ghost btn-sm" disabled={game.busy || !!m.block} title={m.block ?? ""} onClick={() => social({ op: "crew_make", playerId: m.id })}>
+                    Make them
+                  </button>
+                )}
+              </div>
+            ))}
+            {hub.ceremony.some((m) => !m.made && m.block) && <p className="fine muted">{hub.ceremony.find((m) => !m.made && m.block)?.block}</p>}
+          </section>
+        )}
         <section className="card">
           <h3 className="card-title"><Users size={16} /> Members</h3>
           {c.members.map((m) => (
@@ -697,8 +815,21 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
   const joinLabel = (cr: CrewView) =>
     cr.invited ? "Accept invite" : cr.policy === "open" ? "Join" : cr.policy === "invite" ? "Invite only" : cr.requested ? "Requested" : "Ask to join";
 
+  if (hub.joinBlock) {
+    return (
+      <div className="stack">
+        {forums}
+        <section className="card">
+          <h3 className="card-title"><Shield size={16} /> Crews</h3>
+          <p className="muted">{hub.joinBlock} If a crew trusts you, its leader can still let you into their secret forum.</p>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="stack">
+      {forums}
       {hub.invites.length > 0 && (
         <section className="card invites">
           <h3 className="card-title"><UserCheck size={16} /> Invitations</h3>

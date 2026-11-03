@@ -1,4 +1,4 @@
-import type { HousingTier } from "../types";
+import type { HousingTier, PathId } from "../types";
 
 export type ItemKind = "food" | "housing" | "weapon" | "armor" | "medical";
 
@@ -17,6 +17,8 @@ export interface ItemDef {
   power?: number;
   /** medical: hp restored */
   heal?: number;
+  /** Issued by a career at a rank, never sold. Handed back if you leave the career. */
+  issued?: { path: PathId; rank: number };
 }
 
 export const ITEMS: ItemDef[] = [
@@ -100,6 +102,67 @@ export const ITEMS: ItemDef[] = [
     power: 14,
     icon: "🦺",
     description: "Scuffed and ugly. It still works.",
+  },
+  // ── Issued gear ──
+  {
+    id: "service_pistol",
+    name: "Service pistol",
+    kind: "weapon",
+    price: 0,
+    power: 18,
+    icon: "🔫",
+    description: "Issued to sworn officers on graduation. Every round is accounted for.",
+    issued: { path: "police", rank: 2 },
+  },
+  {
+    id: "police_vest",
+    name: "Police body armor",
+    kind: "armor",
+    price: 0,
+    power: 16,
+    icon: "🦺",
+    description: "Department issue, for officers who go through doors first.",
+    issued: { path: "police", rank: 4 },
+  },
+  {
+    id: "service_rifle",
+    name: "Service rifle",
+    kind: "weapon",
+    price: 0,
+    power: 26,
+    icon: "🪖",
+    description: "Issued when you pass basic training. Heavier than it looks.",
+    issued: { path: "military", rank: 2 },
+  },
+  {
+    id: "combat_armor",
+    name: "Combat armor",
+    kind: "armor",
+    price: 0,
+    power: 22,
+    icon: "🛡️",
+    description: "Plates front and back. Issued to non-commissioned officers.",
+    issued: { path: "military", rank: 4 },
+  },
+  {
+    id: "machine_gun",
+    name: "Light machine gun",
+    kind: "weapon",
+    price: 0,
+    power: 38,
+    icon: "💥",
+    description: "Officers' armory. Signed out to Captains and up.",
+    issued: { path: "military", rank: 6 },
+  },
+  {
+    id: "heavy_armor",
+    name: "Heavy assault armor",
+    kind: "armor",
+    price: 0,
+    power: 30,
+    icon: "🛡️",
+    description: "For colonels and generals, who are not supposed to get shot.",
+    issued: { path: "military", rank: 7 },
   },
 ];
 

@@ -865,3 +865,14 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 .paper-editorial .crime-label { font-style: normal; }
 .editor-desk { display: grid; gap: 8px; margin-top: 10px; }
 .paper-stories { padding-left: 0; list-style: none; } .paper-stories li { padding-left: 10px; border-left: 2px solid var(--border-strong); }
+
+/* ─── Secret forum ─────────────────────────────────────────────────────── */
+.forum { border-color: rgba(155, 123, 255, 0.35); background: linear-gradient(180deg, rgba(155, 123, 255, 0.07), transparent 60%), var(--surface); }
+.forum-posts { display: grid; gap: 8px; max-height: 360px; overflow-y: auto; margin: 8px 0; }
+.forum-post { padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); }
+.forum-post.mine { border-color: rgba(155, 123, 255, 0.4); }
+.forum-post header { font-size: 13px; margin-bottom: 2px; }
+.forum-post p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.forum-admin { display: grid; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+.chip-x { background: none; border: 0; color: var(--muted); cursor: pointer; padding: 0 0 0 4px; font-size: 14px; line-height: 1; }
+.chip-x:hover { color: var(--red); }

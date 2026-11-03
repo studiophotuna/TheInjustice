@@ -3,6 +3,7 @@
 // more people and sharper, bolder, quicker, stronger crews do better. Strict countries and
 // mayoral crackdowns make it harder. Fail and everyone in on it lands in a cell too.
 
+import { crewJob } from "./family";
 import { BALANCE } from "./balance";
 import { COUNTRY_BY_ID } from "./content/world";
 import { addMerit, countryOf, inJail } from "./engine";
@@ -115,6 +116,7 @@ export function executeBreakout(c: Crew, planner: Player, team: Player[], target
   const odds = breakoutOdds(crew, b.country, crackdown);
   const heatMult = COUNTRY_BY_ID[b.country].heatMult;
   const names = crew.map((p) => p.name).join(", ");
+  for (const p of crew) crewJob(p, "breakout");
 
   if (rng() < odds) {
     target.jailUntil = now;

@@ -104,6 +104,19 @@ export const SCHOOLS: SchoolDef[] = [
     entrance: 16,
     requirements: (p) => basics(p, 15),
   },
+  {
+    id: "ironmoor_military",
+    name: "Ironmoor Military Academy",
+    path: "military",
+    country: "kestrova",
+    city: "Ironmoor",
+    district: "checkpoint_row",
+    tuition: 300,
+    dean: "General Piotr Hale",
+    description: "Basic training. Twelve weeks of mud, drills and shouting. Graduates are issued a service rifle.",
+    entrance: 20,
+    requirements: (p) => basics(p, 10),
+  },
 ];
 
 export const SCHOOL_BY_ID = Object.fromEntries(SCHOOLS.map((s) => [s.id, s])) as Record<string, SchoolDef>;

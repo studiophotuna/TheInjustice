@@ -12,6 +12,7 @@ import { ITEMS, ITEM_BY_ID } from "./content/items";
 import { JOBS } from "./content/jobs";
 import { NPCS } from "./content/npcs";
 import { PATHS, promotionHint, rankTitle } from "./content/paths";
+import { familyGate } from "./family";
 import { CHAPTERS } from "./content/story";
 import { SCHOOL_BY_ID, SCHOOLS } from "./content/schools";
 import { COUNTRIES, COUNTRY_BY_ID, TRAVEL_MODES, tripCost, tripMs } from "./content/world";
@@ -66,6 +67,7 @@ export interface PublicView {
     contact: string;
     contactId: string;
     promotion: string | null;
+    family: { made: boolean; madeBy: string | null } | null;
   } | null;
   offers: { id: PathId; name: string; side: string; blurb: string; contact: string; contactId: string; lines: string[] }[];
   districts: { id: DistrictId; name: string; tagline: string; locked: string | null }[];
@@ -310,7 +312,8 @@ export function toView(p: Player, now: number): PublicView {
           rank: rankTitle(p) ?? "",
           contact: PATHS[p.path].contact,
           contactId: PATHS[p.path].contactId,
-          promotion: promotionHint(p),
+          promotion: familyGate(p, p.rank + 1) && p.rank < PATHS[p.path].ranks.length ? `The family: ${familyGate(p, p.rank + 1)}` : promotionHint(p),
+          family: p.path === "enforcer" ? { made: !!p.family?.madeAt, madeBy: p.family?.madeBy ?? null } : null,
         }
       : null,
     offers: p.offers.map((o) => ({
@@ -330,7 +333,7 @@ export function toView(p: Player, now: number): PublicView {
     })),
     jobs,
     recommendedJobId: doable[0]?.id ?? null,
-    shop: ITEMS.map((i) => ({
+    shop: ITEMS.filter((i) => !i.issued).map((i) => ({
       id: i.id,
       name: i.name,
       icon: i.icon,

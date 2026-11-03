@@ -200,6 +200,34 @@ export const PATHS: Record<PathId, PathDef> = {
     accepted: 'Quell writes to the Institute on bank letterhead. "They won\'t say no to me. They might say no to you, so be impressive."',
     promotion: (t) => `Quell raises a glass of something expensive. "To the new ${t}. Don't let them see you count."`,
   },
+  military: {
+    id: "military",
+    name: "Military",
+    side: "law",
+    ranks: ["Recruit", "Private", "Corporal", "Sergeant", "Lieutenant", "Captain", "Colonel", "General"],
+    keyStats: ["strength", "toughness", "agility"],
+    promotionThresholds: [22, 29, 36, 44, 52, 61, 70],
+    jobsPerRank: 13,
+    school: "ironmoor_military",
+    graduationRank: 2,
+    contact: "Sergeant Major Brann",
+    contactId: "brann",
+    blurb: "Pass basic training and the army hands you a rifle. Rise, and it hands you heavier things.",
+    examStats: ["strength", "toughness"],
+    examName: "Fitness report",
+    qualifies: (p) =>
+      p.heat < BALANCE.cleanRecordHeat &&
+      (p.jobCounts["gym:strength"] ?? 0) + (p.jobCounts["gym:toughness"] ?? 0) >= 6 &&
+      sv(p, "strength") + sv(p, "toughness") >= 46,
+    offer: [
+      "A man with a shaved head and a voice like gravel watches you finish a set at the gym.",
+      "\"Sergeant Major Brann. Ironmoor garrison. You train like somebody's coming for you.\"",
+      "\"Basic training is twelve weeks. Pass it and you get a rifle, a bunk and a reason to get up.\"",
+      "He hands you a recruiting card. On the back, in pencil: a Grayhaven case number. Yours.",
+    ],
+    accepted: 'Brann signs your papers with a pen he clearly stole. "Ironmoor, then. Bring boots that fit."',
+    promotion: (t) => `Brann pins the new stripes on your collar himself. "${t}. Don't make me regret it."`,
+  },
 };
 
 export function rankTitle(p: Player): string | null {
