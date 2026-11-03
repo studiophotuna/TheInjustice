@@ -2,6 +2,7 @@
 // outsiders earn there goes to the crew vault. A rival crew can declare war on held turf: for
 // a while, members of both crews join their side, then team strength decides who holds it.
 
+import { peaceBlock } from "./military";
 import { BALANCE } from "./balance";
 import { playerFighter, power } from "./combat";
 import { DISTRICT_BY_ID, DISTRICTS } from "./content/districts";
@@ -151,6 +152,8 @@ export function turfView(c: City, viewer: Player, crew: Crew | null, now: number
             defenders: h.war.defenders.length,
             over: now >= h.war.endsAt,
             canJoin: joinWarBlock(c, viewer, d.id, now, allies),
+            canPeace: peaceBlock(c, viewer, d.id, now),
+            peacekeepers: h.war.peacekeepers?.length ?? 0,
           }
         : null,
       canClaim: claimBlock(c, crew, viewer, d.id),

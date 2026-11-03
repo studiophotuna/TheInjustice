@@ -12,7 +12,8 @@ import { ITEMS, ITEM_BY_ID } from "./content/items";
 import { JOBS } from "./content/jobs";
 import { NPCS } from "./content/npcs";
 import { PATHS, promotionHint, rankTitle } from "./content/paths";
-import { familyGate } from "./family";
+import { familyGate, ratOf } from "./family";
+import { sellableGear } from "./military";
 import { CHAPTERS } from "./content/story";
 import { SCHOOL_BY_ID, SCHOOLS } from "./content/schools";
 import { COUNTRIES, COUNTRY_BY_ID, TRAVEL_MODES, tripCost, tripMs } from "./content/world";
@@ -67,7 +68,7 @@ export interface PublicView {
     contact: string;
     contactId: string;
     promotion: string | null;
-    family: { made: boolean; madeBy: string | null } | null;
+    family: { made: boolean; madeBy: string | null; rat: { crewName: string; until: number } | null } | null;
   } | null;
   offers: { id: PathId; name: string; side: string; blurb: string; contact: string; contactId: string; lines: string[] }[];
   districts: { id: DistrictId; name: string; tagline: string; locked: string | null }[];
@@ -128,6 +129,10 @@ export interface PublicView {
   };
   gym: { fee: number; energy: number };
   inbox: { items: import("./types").Notice[]; unread: number };
+  /** Army gear offered to you on the black market. */
+  gunOffers: { id: string; sellerId: string; sellerName: string; itemId: string; itemName: string; icon: string; price: number }[];
+  /** Soldiers: army gear you could sell. */
+  sellableGear: { id: string; name: string; icon: string }[];
   /** Crimes the player witnessed and can still report. */
   sightings: { caseId: string; text: string; until: number }[];
   /** Held for trial or serving a sentence. */
@@ -264,6 +269,8 @@ export function toView(p: Player, now: number): PublicView {
     })(),
     gym: { fee: itemPrice(p, BALANCE.gym.fee), energy: BALANCE.gym.energy },
     inbox: { items: p.inbox ?? [], unread: (p.inbox ?? []).filter((n) => !n.read).length },
+    gunOffers: (p.gunOffers ?? []).map((o) => ({ ...o, itemName: ITEM_BY_ID[o.itemId]?.name ?? o.itemId, icon: ITEM_BY_ID[o.itemId]?.icon ?? "" })),
+    sellableGear: sellableGear(p).map((i) => ({ id: i.id, name: i.name, icon: i.icon })),
     jail:
       p.custodyCase || (p.jailUntil ?? 0) > now
         ? { until: p.jailUntil ?? now, reason: p.jailReason ?? "Behind bars.", custodyCase: p.custodyCase ?? null, bail: p.bailAmount ?? 0 }
@@ -313,7 +320,10 @@ export function toView(p: Player, now: number): PublicView {
           contact: PATHS[p.path].contact,
           contactId: PATHS[p.path].contactId,
           promotion: familyGate(p, p.rank + 1) && p.rank < PATHS[p.path].ranks.length ? `The family: ${familyGate(p, p.rank + 1)}` : promotionHint(p),
-          family: p.path === "enforcer" ? { made: !!p.family?.madeAt, madeBy: p.family?.madeBy ?? null } : null,
+          family:
+            p.path === "enforcer"
+              ? { made: !!p.family?.madeAt, madeBy: p.family?.madeBy ?? null, rat: ratOf(p, now) ? { crewName: p.family!.rat!.crewName, until: p.family!.rat!.until } : null }
+              : null,
         }
       : null,
     offers: p.offers.map((o) => ({
@@ -333,7 +343,7 @@ export function toView(p: Player, now: number): PublicView {
     })),
     jobs,
     recommendedJobId: doable[0]?.id ?? null,
-    shop: ITEMS.filter((i) => !i.issued).map((i) => ({
+    shop: ITEMS.filter((i) => !i.issued && !i.contraband).map((i) => ({
       id: i.id,
       name: i.name,
       icon: i.icon,

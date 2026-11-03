@@ -19,6 +19,8 @@ export interface ItemDef {
   heal?: number;
   /** Issued by a career at a rank, never sold. Handed back if you leave the career. */
   issued?: { path: PathId; rank: number };
+  /** Stolen army gear: only on the black market, sold by soldiers at this rank or higher. */
+  contraband?: { minRank: number };
 }
 
 export const ITEMS: ItemDef[] = [
@@ -163,6 +165,27 @@ export const ITEMS: ItemDef[] = [
     icon: "🛡️",
     description: "For colonels and generals, who are not supposed to get shot.",
     issued: { path: "military", rank: 7 },
+  },
+  // ── Black market (stolen army gear) ──
+  {
+    id: "army_rifle",
+    name: "Army rifle (stolen)",
+    kind: "weapon",
+    price: 0,
+    power: 24,
+    icon: "🪖",
+    description: "The serial number is filed off. Somebody in Ironmoor is short one rifle.",
+    contraband: { minRank: 3 },
+  },
+  {
+    id: "army_lmg",
+    name: "Machine gun (stolen)",
+    kind: "weapon",
+    price: 0,
+    power: 34,
+    icon: "💥",
+    description: "Off the back of an army truck. Loud, heavy, and very illegal.",
+    contraband: { minRank: 6 },
   },
 ];
 

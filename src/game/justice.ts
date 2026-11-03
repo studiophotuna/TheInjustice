@@ -3,6 +3,7 @@
 // argue, a judge rules (or the court clerk does when no judge shows up), and the guilty
 // serve time and pay the victim back. Nobody is ever told whether the verdict was right.
 
+import { courtMartial } from "./military";
 import { BALANCE } from "./balance";
 import { CRIMES, caseCold, suspectsFor, type SuspectMatch } from "./crime";
 import { COUNTRY_BY_ID } from "./content/world";
@@ -256,6 +257,7 @@ export function decideTrial(
       s.bank -= fromBank;
       t.restitution = fromDirty + fromCash + fromBank;
       notify(s, `Guilty, says ${t.decidedBy}. ${minutes(sentence)} in a cell${t.restitution ? `, and $${t.restitution} goes back to ${c.victimName}` : ""}.`, "bad", undefined, now);
+      if (s.path === "military") courtMartial(s, `convicted of ${crime}`, now);
     } else {
       s.jailUntil = now;
       s.jailReason = null;

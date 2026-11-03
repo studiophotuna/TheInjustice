@@ -104,7 +104,21 @@ export interface Player {
   /** This month's counters for the anonymous season leaderboard. */
   season?: { id: number; earned: number; wins: number; arrests: number };
   /** Mafia standing: made or not, crew jobs done, leading a crew, turf held, bank jobs pulled. */
-  family?: { madeAt?: number; madeBy?: string; crewJobs: number; heists: number; leads?: boolean; turf?: boolean };
+  family?: {
+    madeAt?: number;
+    madeBy?: string;
+    crewJobs: number;
+    heists: number;
+    leads?: boolean;
+    turf?: boolean;
+    /** Broke omertà: walked out on the crew after being made. Fair game for the old crew. */
+    rat?: { crewId: string; crewName: string; at: number; until: number } | null;
+  };
+  /** Soldiers: army gear offered to this player on the black market. */
+  gunOffers?: { id: string; sellerId: string; sellerName: string; itemId: string; price: number; at: number }[];
+  /** Server-only: army gear this soldier sold off the books (internal affairs and court-martials find it). */
+  gunSales?: { at: number; amount: number; exposed?: boolean }[];
+  lastGunSaleAt?: number;
   /** Secret forums this player was invited into (by crew id). */
   forums?: { crewId: string; name: string; tag: string }[];
   /** The season before, frozen when a new one starts (for trophies). */
@@ -386,6 +400,8 @@ export interface TurfHold {
     endsAt: number;
     attackers: { id: string; name: string }[];
     defenders: { id: string; name: string }[];
+    /** Soldiers sent in under martial law to break the war up. */
+    peacekeepers?: { id: string; name: string }[];
   } | null;
 }
 
@@ -565,6 +581,9 @@ export interface City {
   mealsServed?: number;
   /** Server-only: money the mayor quietly took from the treasury. */
   skims: { mayorId: string; amount: number; at: number; exposed?: boolean }[];
+  /** Martial law: the mayor called in the army. Soldiers can break up turf wars. */
+  martialUntil?: number;
+  lastMartialAt?: number;
   /** Soldiers standing guard at the city's banks (heists get harder). */
   guards?: { id: string; name: string; until: number }[];
   /** Editor of the city paper, appointed by the mayor. */

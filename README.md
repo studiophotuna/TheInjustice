@@ -309,3 +309,25 @@ Links anywhere in the game can open a building directly with `place:<id>` (for e
   smugglers' depots, war games, running the garrison. Soldiers can **stand guard at the bank**
   (Bank building, 1 hour, paid by the city): each guard on duty (up to 3) makes bank jobs in that
   city 10% harder at every role.
+
+## Omertà, martial law, court-martials and the black market
+
+- **Omertà.** A made man who walks out on a crew (while others remain) is a **rat** for a week:
+  the family takes back his "made" status, nobody promotes or re-makes him, a 🐀 Rat badge shows
+  next to his name, and his old crew can attack him through fight protection and the "picking on
+  someone small" rule. Beating the rat earns his old crewmates +5 reputation.
+- **Martial law.** The mayor can call in the army for two hours ($300 from the treasury, once a
+  day). Soldiers (Corporal and up) can then march into a turf war ("Break it up"). When the war is
+  settled, if the soldiers outgun both crews the war is called off, the district stays with its
+  holder, every fighter is arrested by military police for 15 minutes, and each soldier is paid
+  $50 by the city. An outgunned squad just gets bruised.
+- **Court-martial.** A soldier convicted in court is court-martialed automatically. Officers
+  (Lieutenant and up) can bring charges against lower-ranked soldiers: they stick if the soldier's
+  record is dirty or they sold army gear, and cost the officer reputation if not. The sentence is
+  two ranks down (gear they no longer rate is taken back), or a dishonorable discharge for a
+  Recruit or Private.
+- **Army gear on the black market.** Corporals and up can offer a stolen army rifle (Captains and
+  up: a machine gun) to a Mafia player from the People list, once a day, at their own price
+  ($100–$5,000). The buyer pays from the Black market card on the Street, dirty money first, and
+  the soldier is paid in dirty money. Each sale goes on a hidden ledger: internal affairs (soldiers
+  Corporal and up are now auditable officials) and court-martials can find it.

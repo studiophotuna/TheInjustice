@@ -25,6 +25,9 @@ type Profile = {
   canVouch: string | null;
   canInvite: boolean;
   canForum?: boolean;
+  canCourtMartial?: string | null;
+  canSellGun?: boolean;
+  rat?: boolean;
   streetTitle: string | null;
   canCrime: Record<CrimeKind, string | null>;
   bounty: number;
@@ -305,6 +308,7 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
                 {p.crewTag && <span className="crew-tag">[{p.crewTag}]</span>}
                 {p.protected && <span className="chip chip-green"><Shield size={11} /> New</span>}
                 {p.bounty > 0 && <span className="chip chip-red">Wanted · ${p.bounty}</span>}
+                {p.rat && <span className="chip chip-red" title="Walked out on the family. Fair game for their old crew.">🐀 Rat</span>}
                 {p.trophies?.map((t, i) => (
                   <span key={i} className="chip chip-gold" title={`${t.label}, ${t.seasonName}`}>🏆 #{t.place} {t.label}</span>
                 ))}
@@ -351,6 +355,29 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
                 {p.canInvite && (
                   <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: "crew_invite", playerId: p.id })}>
                     <Shield size={14} /> Invite to crew
+                  </button>
+                )}
+                {p.canCourtMartial !== undefined && p.canCourtMartial !== "n/a" && (
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    disabled={game.busy || !!p.canCourtMartial}
+                    title={p.canCourtMartial ?? "Bring charges: it sticks if their record is dirty or they sold army gear."}
+                    onClick={() => confirm(`Bring charges against ${p.name}? If their record is clean, it costs you reputation.`) && social({ op: "court_martial", targetId: p.id })}
+                  >
+                    <Gavel size={14} /> Court-martial
+                  </button>
+                )}
+                {p.canSellGun && view.sellableGear.length > 0 && (
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    disabled={game.busy}
+                    onClick={() => {
+                      const item = view.sellableGear[view.sellableGear.length - 1];
+                      const price = prompt(`Sell ${p.name} a ${item.name.toLowerCase()} from the armory. Your price ($100–$5000):`, "800");
+                      if (price) social({ op: "gun_offer", targetId: p.id, itemId: item.id, price: Number(price) });
+                    }}
+                  >
+                    🪖 Sell army gear
                   </button>
                 )}
                 {p.canForum && (

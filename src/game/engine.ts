@@ -765,7 +765,7 @@ export function itemPrice(p: Player, base: number): number {
 
 function buy(p: Player, itemId: string, events: GameEvent[]) {
   const item = ITEM_BY_ID[itemId];
-  if (!item || item.issued) throw new GameError("That item isn't for sale.");
+  if (!item || item.issued || item.contraband) throw new GameError("That item isn't for sale.");
   const price = itemPrice(p, item.price);
   if (p.cash < price) throw new GameError("You can't afford that. (Cash on hand only.)");
   if (item.kind === "housing") {

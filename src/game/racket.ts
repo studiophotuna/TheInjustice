@@ -156,7 +156,8 @@ export function isOfficial(p: Player): boolean {
     (p.path === "police" && p.rank >= 2) ||
     (p.path === "courts" && p.rank >= BALANCE.justice.judgeRank) ||
     (p.path === "banking" && p.rank >= Math.min(BALANCE.casework.bank.minRank, BALANCE.launderService.minRank)) ||
-    (p.path === "medicine" && p.rank >= BALANCE.casework.clinic.minRank)
+    (p.path === "medicine" && p.rank >= BALANCE.casework.clinic.minRank) ||
+    (p.path === "military" && p.rank >= 3)
   );
 }
 
@@ -206,7 +207,7 @@ export function audit(
   const skims = city ? city.skims.filter((x) => x.mayorId === target.id && !x.exposed) : [];
   const bought = city ? (city.voteBuys ?? []).filter((x) => x.candidateId === target.id && !x.exposed) : [];
   // Doctors' secret ledger of back-alley patients counts like a skim.
-  const offBooks = [...(target.offBooks ?? []), ...(target.launderLog ?? [])].filter((x) => !x.exposed);
+  const offBooks = [...(target.offBooks ?? []), ...(target.launderLog ?? []), ...(target.gunSales ?? [])].filter((x) => !x.exposed);
   const skimmed = skims.reduce((s, x) => s + x.amount, 0);
   const backAlley = offBooks.reduce((s, x) => s + x.amount, 0);
   if (!found.length && !skims.length && !offBooks.length && !bought.length) {
@@ -250,7 +251,9 @@ export function audit(
   const ids = [
     ...found.map((x) => `#${x.c.id}`),
     ...(skimmed ? ["the city treasury"] : []),
-    ...(offBooks.length ? [target.path === "banking" ? "laundering for clients" : `${offBooks.length} back-alley patient${offBooks.length > 1 ? "s" : ""}`] : []),
+    ...(offBooks.length
+      ? [target.path === "banking" ? "laundering for clients" : target.path === "military" ? "selling army weapons" : `${offBooks.length} back-alley patient${offBooks.length > 1 ? "s" : ""}`]
+      : []),
     ...(bought.length ? ["buying votes"] : []),
   ].join(", ");
   notify(

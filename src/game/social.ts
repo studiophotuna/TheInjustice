@@ -1,6 +1,7 @@
 // Rules for players interacting with each other. Pure functions over Player/Crew objects:
 // the server loads and saves both sides inside one transaction.
 
+import { breakOmerta, huntsRat, OMERTA, ratOf } from "./family";
 import { BALANCE } from "./balance";
 import { gutRead, GUT_READS, playerFighter, resolveFight } from "./combat";
 import { PATHS, rankTitle } from "./content/paths";
@@ -50,10 +51,12 @@ export function attackBlock(a: Player, t: Player, now: number): string | null {
   if (inJail(t, now)) return "They're behind bars.";
   if (inHospital(a, now)) return "You're in the hospital.";
   if (inHospital(t, now)) return "They're already in the hospital. Even you have limits.";
-  if (now < protectedUntil(t)) return "They're new in town. The street protects newcomers for a while.";
-  if (now < (t.immuneUntil ?? 0)) return "They just survived a fight. The street leaves them alone for a while.";
+  // A rat has no protection from the crew they walked out on.
+  const rat = huntsRat(a, t, now);
+  if (!rat && now < protectedUntil(t)) return "They're new in town. The street protects newcomers for a while.";
+  if (!rat && now < (t.immuneUntil ?? 0)) return "They just survived a fight. The street leaves them alone for a while.";
   if (now < protectedUntil(a)) return "You're still new in town. Attacking now would end your protection... and your reputation.";
-  if (a.reputation > t.reputation * 3 + 15) return "Picking on someone that small would ruin your name.";
+  if (!rat && a.reputation > t.reputation * 3 + 15) return "Picking on someone that small would ruin your name.";
   const last = a.attackLog?.[t.id] ?? 0;
   if (now - last < BALANCE.pvp.cooldownMs) return "You just fought them. Let it cool down.";
   if (a.energy < BALANCE.pvp.energy) return "You're too tired to start a fight.";
@@ -94,6 +97,10 @@ export function attackPlayer(a: Player, t: Player, now: number, rng: Rng): { eve
     if (t.hp <= 0) knockOut(t, now, rng);
     a.hp = res.playerHp;
     events.push({ tone: "good", text: `You beat ${t.name}${taken ? ` and take $${taken}` : ""}.` });
+    if (huntsRat(a, t, now)) {
+      a.reputation += OMERTA.bountyRep;
+      events.push({ tone: "good", text: `The family hears you dealt with the rat. +${OMERTA.bountyRep} reputation.` });
+    }
     // Collect every bounty on their head.
     const bounty = bountyOn(t);
     if (bounty > 0) {
@@ -150,6 +157,8 @@ export interface PublicProfile {
   online: boolean;
   canAttack: string | null;
   canVouch: string | null;
+  /** Walked out on the family: fair game for their old crew. */
+  rat: boolean;
   /** Season trophies, only if the owner chose to show them. */
   trophies: { label: string; place: number; seasonName: string }[];
 }
@@ -181,6 +190,7 @@ export function profileFor(viewer: Player, p: Player, now: number): PublicProfil
     online: now - (p.seenAt ?? 0) < BALANCE.onlineMs,
     canAttack: attackBlock(viewer, p, now),
     canVouch,
+    rat: !!ratOf(p, now),
     trophies: p.trophiesPublic ? (p.trophies ?? []).slice(0, 6).map((t) => ({ label: t.label, place: t.place, seasonName: t.seasonName })) : [],
   };
 }
@@ -323,6 +333,7 @@ export function leaveCrew(c: Crew, p: Player, now: number): boolean {
   if (p.crewId !== c.id) throw new GameError("You're not in that crew.");
   p.crewId = null;
   if (c.leaderId === p.id) setLeads(p, false);
+  if (c.members.length > 1) breakOmerta(p, c, now);
   c.members = c.members.filter((m) => m.id !== p.id);
   crewLog(c, `${p.name} left.`, now);
   if (c.members.length === 0) return true;

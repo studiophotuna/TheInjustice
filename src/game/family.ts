@@ -34,6 +34,7 @@ export const isMade = (p: Player) => !!p.family?.madeAt;
 export function familyGate(p: Player, nextRank: number): string | null {
   if (p.path !== "enforcer") return null;
   const f = p.family ?? { crewJobs: 0, heists: 0 };
+  if (f.rat && f.rat.until > Date.now()) return "Nobody promotes a rat. Wait for it to blow over.";
   if (nextRank === 3 && !f.madeAt)
     return "Nobody gets made without proving themselves. Pass Kozak's test (make your bones), or get sworn in by your crew leader.";
   if (nextRank >= 5 && !p.crewId) return "No promotions for loners past Capo. Join a crew, or found one.";
@@ -57,7 +58,7 @@ export function crewJob(p: Player, kind: "heist" | "war" | "breakout", success =
 /** Kozak's test: a one-time contract that makes you if you pull it off. */
 export function passTest(p: Player, now: number): GameEvent[] {
   const f = family(p);
-  if (f.madeAt) return [];
+  if (f.madeAt || (f.rat && f.rat.until > now)) return [];
   f.madeAt = now;
   f.madeBy = "Kozak";
   return [{ tone: "story", text: "Kozak burns a saint's card in your palm and makes you swear. You're a made man now. Nobody touches you without asking the family first." }];
@@ -69,6 +70,7 @@ export function ceremonyBlock(crew: Crew, leader: Player, target: Player): strin
   if (target.crewId !== crew.id) return "They're not in your crew.";
   if (target.id === leader.id) return "You can't make yourself.";
   if (target.path !== "enforcer") return "Only family can be made.";
+  if (target.family?.rat && target.family.rat.until > Date.now()) return "Nobody makes a rat.";
   if (isMade(target)) return "They're already made.";
   if (target.rank < FAMILY.madeFrom) return "They're still just an Associate. Let them prove themselves first.";
   if ((target.family?.crewJobs ?? 0) < 1) return "They haven't done a job with the crew yet.";
@@ -87,4 +89,27 @@ export function makeMember(crew: Crew, leader: Player, target: Player, now: numb
   crew.log = [{ at: now, text: `${leader.name} made ${target.name}. A candle, a saint's card, an oath.` }, ...crew.log].slice(0, 30);
   notify(target, `${leader.name} swore you in. You're a made man now.`, "story", leader, now);
   return [{ tone: "good", text: `${target.name} is made.` }];
+}
+
+// ── Omertà ─────────────────────────────────────────────────────────────────
+
+export const OMERTA = { ratMs: 7 * 24 * 60 * 60_000, bountyRep: 5 };
+
+export const ratOf = (p: Player, now: number) => (p.family?.rat && p.family.rat.until > now ? p.family.rat : null);
+
+/** A made man walked out on his crew: the family takes back what it gave, and the old crew remembers. */
+export function breakOmerta(p: Player, crew: Crew, now: number) {
+  const f = family(p);
+  if (!f.madeAt) return;
+  f.madeAt = undefined;
+  f.madeBy = undefined;
+  f.rat = { crewId: crew.id, crewName: crew.name, at: now, until: now + OMERTA.ratMs };
+  crew.log = [{ at: now, text: `${p.name} walked out on the family. Omertà is broken. They're fair game for a week.` }, ...crew.log].slice(0, 30);
+  notify(p, `You walked out on ${crew.name} after they made you. The family calls that a rat. Your old crew can come for you any time this week, and nobody will promote you until it blows over.`, "bad", undefined, now);
+}
+
+/** Old crewmates can hunt a rat: no fight protection, no "picking on someone small". */
+export function huntsRat(a: Player, t: Player, now: number): boolean {
+  const rat = ratOf(t, now);
+  return !!rat && a.crewId === rat.crewId;
 }

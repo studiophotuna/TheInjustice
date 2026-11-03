@@ -21,7 +21,7 @@ import {
 } from "@/game/city";
 import { BALANCE } from "@/game/balance";
 import { frontPage, weekStories } from "@/game/paper";
-import { standGuard } from "@/game/military";
+import { declareMartialLaw, joinPeacekeepers, peaceSettle, standGuard } from "@/game/military";
 import { appointEditor, buryStory, dismissEditor, EDITOR, editorSalary, isEditor, setBuryPrice, toggleStory, writeEditorial } from "@/game/batch7";
 import { buyVote, campaign } from "@/game/batch4";
 import { claimTurf, declareWar, joinWar, settleWar, turfView } from "@/game/turf";
@@ -107,7 +107,7 @@ export async function POST(req: Request) {
       const pre = b.op === "settle_war" || b.op === "bury_story" ? await store.getCity(country) : null;
       const editorId = b.op === "bury_story" ? pre?.editor?.id : undefined;
       const war = pre?.turf?.[str(b.district) as DistrictId]?.war;
-      const fighters = war ? [...war.attackers, ...war.defenders].map((x) => x.id) : [];
+      const fighters = war ? [...war.attackers, ...war.defenders, ...(war.peacekeepers ?? [])].map((x) => x.id) : [];
       const ids = [
         playerId,
         ...(b.op === "pardon" || b.op === "appoint_chief" || b.op === "buy_vote" || b.op === "appoint_editor" ? [str(b.playerId)] : []),
@@ -184,7 +184,11 @@ export async function POST(req: Request) {
           const h = c.turf?.[str(b.district) as DistrictId];
           if (!h?.war) throw new GameError("There's no war there.");
           const side = (list: { id: string }[]) => list.map((x) => byId.get(x.id)).filter((x): x is Player => !!x);
-          out = settleWar(c, str(b.district) as DistrictId, side(h.war.attackers), side(h.war.defenders), now, Math.random);
+          if (now < h.war.endsAt) throw new GameError("The fighting isn't over yet.");
+          // Under martial law the army may break it up before anyone wins.
+          out =
+            peaceSettle(c, str(b.district) as DistrictId, side(h.war.attackers), side(h.war.defenders), side(h.war.peacekeepers ?? []), now) ??
+            settleWar(c, str(b.district) as DistrictId, side(h.war.attackers), side(h.war.defenders), now, Math.random);
           for (const f of byId.values()) if (f.id !== playerId) await tx.putPlayer(f);
           break;
         }
@@ -217,6 +221,12 @@ export async function POST(req: Request) {
           await tx.putPlayer(editor);
           break;
         }
+        case "martial_law":
+          out = declareMartialLaw(c, p, now);
+          break;
+        case "peacekeep":
+          out = joinPeacekeepers(c, p, str(b.district) as DistrictId, now);
+          break;
         case "guard_bank":
           out = standGuard(c, p, now);
           break;

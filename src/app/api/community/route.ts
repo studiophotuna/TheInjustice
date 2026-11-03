@@ -1,5 +1,6 @@
 import { acceptAlliance, breakAlliance, declineAlliance, proposeAlliance } from "@/game/batch7";
 import { ceremonyBlock, isMade, makeMember } from "@/game/family";
+import { bringCharges, buyGun, courtMartialBlock, declineGun, offerGun, sellableGear } from "@/game/military";
 import { canUseForum, closeForum, createForum, forumChannel, inviteToForum, removeFromForum } from "@/game/forum";
 import { buildLab, flagLaundering, flagsView, frisk, friskBlock, isBankStaff, labCook, labTips, labView, launderWithBanker, probeLaundering, raidLab, setLaunderService } from "@/game/batch6";
 import { isDrug } from "@/game/drugs";
@@ -355,10 +356,12 @@ export async function GET(req: Request) {
           const prof = profileFor(p, o, now);
           const canInvite = !!leading && !o.crewId && o.path === BALANCE.crew.path && !(leading.invites ?? []).some((i) => i.id === o.id);
           const canForum = !!leading?.forum && o.crewId !== leading.id && !leading.forum.guests.some((g) => g.id === o.id);
+          const canCourtMartial = p.path === "military" && o.path === "military" ? courtMartialBlock(p, o, now) : "n/a";
+          const canSellGun = sellableGear(p).length > 0 && o.path === "enforcer" && !(o.gunOffers ?? []).some((x) => x.sellerId === p.id);
           const lawyerFee = o.path === "courts" && o.rank >= BALANCE.justice.lawyerRank ? retainerFee(o) : null;
           const canCrime = Object.fromEntries(CRIME_KINDS.map((k) => [k, crimeBlock(p, o, k, now)]));
           const canFrisk = p.path === "police" ? friskBlock(p, o, now) : "n/a";
-          return { ...prof, crewTag: prof.crewId ? crewTags.get(prof.crewId) ?? null : null, canInvite, canForum, canCrime, lawyerFee, canFrisk };
+          return { ...prof, crewTag: prof.crewId ? crewTags.get(prof.crewId) ?? null : null, canInvite, canForum, canCourtMartial, canSellGun, canCrime, lawyerFee, canFrisk };
         }),
       invites: p.crewInvites ?? [],
       foundBlock: crewFoundBlock(p),
@@ -1034,6 +1037,31 @@ export async function POST(req: Request) {
         const target = str(b.targetId);
         const amount = Number(b.amount);
         events = await store.transaction((tx) => withPair(tx, playerId, target, now, (a, t) => postBounty(a, t, amount, now)));
+        break;
+      }
+      case "court_martial": {
+        const target = str(b.targetId);
+        events = await store.transaction((tx) => withPair(tx, playerId, target, now, (o, s) => bringCharges(o, s, now)));
+        break;
+      }
+      case "gun_offer": {
+        const target = str(b.targetId);
+        const itemId = str(b.itemId);
+        events = await store.transaction((tx) => withPair(tx, playerId, target, now, (s, buyer) => offerGun(s, buyer, itemId, Number(b.price), now)));
+        break;
+      }
+      case "gun_buy": {
+        const sellerId = str(b.sellerId);
+        const offerId = str(b.offerId);
+        events = await store.transaction((tx) => withPair(tx, playerId, sellerId, now, (buyer, seller) => buyGun(buyer, seller, offerId, now)));
+        break;
+      }
+      case "gun_decline": {
+        const offerId = str(b.offerId);
+        events = await store.update(playerId, (p) => {
+          if (!p) throw new GameError("Create a character first.");
+          return { player: p, result: declineGun(p, offerId) };
+        });
         break;
       }
       case "vouch": {

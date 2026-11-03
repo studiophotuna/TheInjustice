@@ -876,3 +876,5 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 .forum-admin { display: grid; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
 .chip-x { background: none; border: 0; color: var(--muted); cursor: pointer; padding: 0 0 0 4px; font-size: 14px; line-height: 1; }
 .chip-x:hover { color: var(--red); }
+
+.crackdown.martial { color: #c9d98a; border-color: rgba(181, 201, 106, 0.4); background: rgba(181, 201, 106, 0.08); }

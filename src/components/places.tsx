@@ -137,6 +137,7 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
     case "street":
       return (
         <div className="stack">
+          <GunOffers game={game} />
           <StreetMarket game={game} />
           <CasesPanel game={game} hub={hub} place="street" />
           <Sightings game={game} compact />
@@ -145,6 +146,29 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
     case "station":
       return <TravelContent game={game} onRead={onRead} />;
   }
+}
+
+/** Stolen army gear a soldier offered you. */
+function GunOffers({ game }: { game: GameApi }) {
+  const view = game.view!;
+  if (!view.gunOffers.length) return null;
+  return (
+    <section className="card">
+      <h3 className="card-title">🪖 Black market</h3>
+      <p className="muted fine">Army gear, off the back of a truck. Paid in dirty money first.</p>
+      <ul className="officials">
+        {view.gunOffers.map((o) => (
+          <li key={o.id}>
+            <span>{o.icon} {o.itemName} from <b>{o.sellerName}</b> · ${o.price}</span>
+            <span className="row">
+              <button className="btn btn-primary btn-xs" disabled={game.busy} onClick={() => game.social({ op: "gun_buy", offerId: o.id, sellerId: o.sellerId })}>Buy</button>
+              <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => game.social({ op: "gun_decline", offerId: o.id })}>Pass</button>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
 }
 
 /** Soldiers on guard outside the bank: every one makes a bank job here harder. */
