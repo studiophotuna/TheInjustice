@@ -21,6 +21,19 @@ import {
   vouchFor,
   withdrawFromVault,
 } from "@/game/social";
+import {
+  canReadCases,
+  caseView,
+  commitCrime,
+  crimeBlock,
+  crimeDistrict,
+  CRIME_KINDS,
+  ignoreSighting,
+  investigate,
+  isCrimeKind,
+  reportSighting,
+  suspectsFor,
+} from "@/game/crime";
 import { GameError, type Crew, type CrewPolicy, type GameEvent, type Player } from "@/game/types";
 import { toView } from "@/game/view";
 import { assertJson } from "@/server/auth";
@@ -75,6 +88,24 @@ export async function GET(req: Request) {
     const now = Date.now();
     tick(p, now);
     const url = new URL(req.url);
+    if (url.searchParams.get("cases")) {
+      const block = canReadCases(p);
+      if (block) return NextResponse.json({ cases: [], block });
+      const country = countryOf(p);
+      const detective = p.rank >= BALANCE.crime.detectiveRank;
+      const [cases, people, crews] = await Promise.all([
+        store.listCases(country, 20),
+        detective ? store.listPlayers(country, 200) : Promise.resolve([]),
+        detective ? store.listCrews(200) : Promise.resolve([]),
+      ]);
+      const tags = new Map(crews.map((c) => [c.id, c.tag]));
+      const pool = people.filter((o) => o.id !== p.id).map((o) => ({ player: o, crewTag: o.crewId ? tags.get(o.crewId) ?? null : null }));
+      return NextResponse.json({
+        block: null,
+        detective,
+        cases: cases.map((c) => caseView(c, p, now, detective ? suspectsFor(c, pool) : undefined)),
+      });
+    }
     const channel = url.searchParams.get("channel");
     if (channel) {
       if (!channelsFor(p).includes(channel)) throw new GameError("You can't read that channel.");
@@ -97,7 +128,8 @@ export async function GET(req: Request) {
           tick(o, now);
           const prof = profileFor(p, o, now);
           const canInvite = !!leading && !o.crewId && !(leading.invites ?? []).some((i) => i.id === o.id);
-          return { ...prof, crewTag: prof.crewId ? crewTags.get(prof.crewId) ?? null : null, canInvite };
+          const canCrime = Object.fromEntries(CRIME_KINDS.map((k) => [k, crimeBlock(p, o, k, now)]));
+          return { ...prof, crewTag: prof.crewId ? crewTags.get(prof.crewId) ?? null : null, canInvite, canCrime };
         }),
       invites: p.crewInvites ?? [],
       foundBlock: crewFoundBlock(p),
@@ -105,6 +137,7 @@ export async function GET(req: Request) {
       myCrew: myCrew ? crewView(myCrew, p) : null,
       channels: channelsFor(p),
       blocked: p.blocked ?? [],
+      readsCases: !canReadCases(p),
     });
   } catch (e) {
     return failure(e);
@@ -178,6 +211,82 @@ export async function POST(req: Request) {
         events = await store.transaction((tx) =>
           withPair(tx, playerId, target, now, (a, t) => attackPlayer(a, t, now, Math.random).events),
         );
+        break;
+      }
+      case "crime": {
+        const target = str(b.targetId);
+        if (!isCrimeKind(b.kind)) throw new GameError("Bad request.");
+        const kind = b.kind;
+        const self = await store.get(playerId);
+        if (!self) throw new GameError("Create a character first.");
+        const country = countryOf(self);
+        // Anyone active nearby in the last half hour may have seen it.
+        const nearby = (await store.listPlayers(country, 40))
+          .filter((o) => o.id !== playerId && o.id !== target && !o.dead && !o.travel && now - o.tickAt < BALANCE.crime.witnessWindowMs)
+          .sort(() => Math.random() - 0.5)
+          .slice(0, BALANCE.crime.maxWitnesses)
+          .map((o) => o.id);
+        const crewTag = self.crewId ? (await store.getCrew(self.crewId))?.tag ?? null : null;
+        const caseId = randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase();
+        events = await store.transaction(async (tx) => {
+          const [a, t, ...rest] = await tx.getPlayers([playerId, target, ...nearby]);
+          if (!a) throw new GameError("Create a character first.");
+          if (!t) throw new GameError("That player doesn't exist.");
+          tick(a, now);
+          tick(t, now);
+          const witnesses = rest.filter((w): w is Player => !!w && countryOf(w) === country);
+          witnesses.forEach((w) => tick(w, now));
+          const out = commitCrime(a, t, kind, now, Math.random, { caseId, district: crimeDistrict(a, Math.random), crewTag, witnesses });
+          await tx.putPlayer(a);
+          await tx.putPlayer(t);
+          if (out.caseFile) {
+            for (const w of witnesses) await tx.putPlayer(w);
+            await tx.putCase(out.caseFile);
+          }
+          return out.events;
+        });
+        break;
+      }
+      case "report": {
+        const caseId = str(b.caseId);
+        events = await store.transaction(async (tx) => {
+          const c = await tx.getCase(caseId);
+          const [w, culprit] = await tx.getPlayers([playerId, c?.culpritId ?? playerId]);
+          if (!w) throw new GameError("Create a character first.");
+          if (!c) {
+            ignoreSighting(w, caseId);
+            await tx.putPlayer(w);
+            return [{ tone: "info", text: "That case is closed." }] as GameEvent[];
+          }
+          const out = reportSighting(w, c, culprit && culprit.id !== w.id ? culprit : null, now, Math.random);
+          await tx.putPlayer(w);
+          if (culprit && culprit.id !== w.id) await tx.putPlayer(culprit);
+          await tx.putCase(c);
+          return out;
+        });
+        break;
+      }
+      case "ignore": {
+        const caseId = str(b.caseId);
+        events = await store.update(playerId, (p) => {
+          if (!p) throw new GameError("Create a character first.");
+          return { player: p, result: ignoreSighting(p, caseId) };
+        });
+        break;
+      }
+      case "investigate": {
+        const caseId = str(b.caseId);
+        events = await store.transaction(async (tx) => {
+          const c = await tx.getCase(caseId);
+          if (!c) throw new GameError("That case doesn't exist.");
+          const [o] = await tx.getPlayers([playerId]);
+          if (!o) throw new GameError("Create a character first.");
+          tick(o, now);
+          const out = investigate(o, c, now, Math.random);
+          await tx.putPlayer(o);
+          await tx.putCase(c);
+          return out;
+        });
         break;
       }
       case "vouch": {

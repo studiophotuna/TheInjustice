@@ -658,3 +658,26 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 .expect { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 0.86rem; }
 .expect dt { color: var(--path); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem; padding-top: 2px; }
 .expect dd { margin: 0; color: var(--text); }
+
+/* Street crime, witnesses and case files */
+@media (max-width: 460px) {
+  .community-tabs button { padding: 8px 4px; font-size: 13px; gap: 4px; position: relative; }
+  .community-tabs button svg { display: none; }
+}
+.crime-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
+.crime-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
+.sightings { border-color: rgba(255, 194, 75, 0.45); background: linear-gradient(135deg, rgba(255, 194, 75, 0.09), transparent 60%), var(--card, rgba(255,255,255,0.03)); }
+.sighting-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.sighting-list li p { margin: 0 0 8px; font-weight: 600; }
+.sighting-list .row { align-items: center; flex-wrap: wrap; gap: 8px; }
+.case-list { display: grid; gap: 12px; margin-top: 8px; }
+.case { border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; background: rgba(0, 0, 0, 0.25); display: grid; gap: 8px; }
+.case.cold { opacity: 0.6; }
+.case header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.case p { margin: 0; }
+.tips { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 0.92rem; }
+.tip-src { display: inline-block; min-width: 74px; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.tip-src.detective { color: var(--cyan, #38e1ff); }
+.tip-src.victim { color: var(--red); }
+.tip-src.witness { color: var(--gold, #ffc24b); }
+.suspects { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }

@@ -176,7 +176,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
         {SIDE_TABS.map(({ id, label, Icon }) => (
           <button key={id} className={tab === id ? "on" : ""} onClick={() => go(`tab:${id}`)}>
             <Icon size={20} /> <span>{label}</span>
-            {id === "people" && view.inbox.unread > 0 && <span className="badge-dot">{view.inbox.unread}</span>}
+            {id === "people" && view.inbox.unread + view.sightings.length > 0 && <span className="badge-dot">{view.inbox.unread + view.sightings.length}</span>}
             {tab === id && <motion.span layoutId="nav-pill" className="nav-pill" />}
           </button>
         ))}
@@ -234,7 +234,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
             {tab === id && <motion.span layoutId="bottom-pill" className="bottom-pill" />}
             <Icon size={22} />
             <span>{label}</span>
-            {id === "people" && view.inbox.unread > 0 && <span className="badge-dot nav-dot">{view.inbox.unread}</span>}
+            {id === "people" && view.inbox.unread + view.sightings.length > 0 && <span className="badge-dot nav-dot">{view.inbox.unread + view.sightings.length}</span>}
           </button>
         ))}
       </nav>

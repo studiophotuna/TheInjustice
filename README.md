@@ -74,6 +74,14 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
     can't bully much weaker players, and there's a cooldown per target. Revenge in one tap.
   - **Players vouch for players**: rank 5+ in a school career can vouch once a day; the dean
     still decides.
+  - **Street crime and witnesses**: pickpocket, snatch or mug another player. It's anonymous:
+    the victim only gets a case number. Players active nearby get a pop-up to **report it or
+    look away**. A report gives the police one clue (body type, how they moved, part of their
+    name like "…esk", crew patch) and some clues are wrong. Stand-in bystanders leave tips when
+    the streets are empty. The criminal hears that "someone talked", never who.
+  - **Case files**: police (Patrol Officer and up) read the city's cases; Detectives can work
+    a scene once for a reliable clue and see which players fit the clues. Arrests and court
+    cases come next.
   - **Crews**: only street bosses (Mafia at Capo, rank 4, or higher) can found one,
     for $500. The leader picks who can join: **Open** (anyone joins), **On request** (the
     leader approves) or **Invite only** (the leader invites from the People list). Shared

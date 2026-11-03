@@ -121,6 +121,8 @@ export interface PublicView {
   };
   gym: { fee: number; energy: number };
   inbox: { items: import("./types").Notice[]; unread: number };
+  /** Crimes the player witnessed and can still report. */
+  sightings: { caseId: string; text: string; until: number }[];
   properties: {
     id: string;
     name: string;
@@ -229,6 +231,7 @@ export function toView(p: Player, now: number): PublicView {
     })(),
     gym: { fee: itemPrice(p, BALANCE.gym.fee), energy: BALANCE.gym.energy },
     inbox: { items: p.inbox ?? [], unread: (p.inbox ?? []).filter((n) => !n.read).length },
+    sightings: (p.sightings ?? []).filter((s) => s.until > now).map((s) => ({ caseId: s.caseId, text: s.text, until: s.until })),
     properties: PROPERTIES.filter((pr) => pr.country === here || p.properties?.[pr.id]).map((pr) => ({
       id: pr.id,
       name: pr.name,

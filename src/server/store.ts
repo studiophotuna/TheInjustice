@@ -4,7 +4,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import postgres from "postgres";
 import { rankTitle } from "@/game/content/paths";
-import type { Crew, Player } from "@/game/types";
+import type { CaseFile, Crew, Player } from "@/game/types";
 import { LOCKOUT_MS, MAX_FAILED_LOGINS } from "./auth";
 
 export interface LeaderRow {
@@ -38,6 +38,9 @@ export interface Tx {
   getCrew(id: string): Promise<Crew | null>;
   putCrew(c: Crew): Promise<void>;
   deleteCrew(id: string): Promise<void>;
+  /** Locks and returns a case file. */
+  getCase(id: string): Promise<CaseFile | null>;
+  putCase(c: CaseFile): Promise<void>;
 }
 
 /**
@@ -72,6 +75,8 @@ export interface PlayerStore {
   getCrew(id: string): Promise<Crew | null>;
   postMessage(m: Omit<ChatMessage, "id" | "at">): Promise<void>;
   listMessages(channel: string, limit: number): Promise<ChatMessage[]>;
+  /** Newest case files in a country. */
+  listCases(country: string, limit: number): Promise<CaseFile[]>;
 }
 
 export class StoreConfigError extends Error {}
@@ -89,6 +94,7 @@ interface FileData {
   sessions: Record<string, { accountId: string; expiresAt: number }>;
   crews: Record<string, Crew>;
   messages: ChatMessage[];
+  cases: Record<string, CaseFile>;
 }
 
 export class FileStore implements PlayerStore {
@@ -109,11 +115,12 @@ export class FileStore implements PlayerStore {
             sessions: raw.sessions ?? {},
             crews: raw.crews ?? {},
             messages: raw.messages ?? [],
+            cases: raw.cases ?? {},
           }
-        : { players: raw, accounts: {}, sessions: {}, crews: {}, messages: [] };
+        : { players: raw, accounts: {}, sessions: {}, crews: {}, messages: [], cases: {} };
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
-      this.data = { players: {}, accounts: {}, sessions: {}, crews: {}, messages: [] };
+      this.data = { players: {}, accounts: {}, sessions: {}, crews: {}, messages: [], cases: {} };
     }
     return this.data!;
   }
@@ -243,12 +250,15 @@ export class FileStore implements PlayerStore {
       // Work on copies; only commit if fn succeeds.
       const players = new Map<string, Player>();
       const crews = new Map<string, Crew | null>();
+      const cases = new Map<string, CaseFile>();
       const tx: Tx = {
         getPlayers: async (ids) => ids.map((id) => (d.players[id] ? structuredClone(d.players[id]) : null)),
         putPlayer: async (p) => void players.set(p.id, structuredClone(p)),
         getCrew: async (id) => (d.crews[id] ? structuredClone(d.crews[id]) : null),
         putCrew: async (c) => void crews.set(c.id, structuredClone(c)),
         deleteCrew: async (id) => void crews.set(id, null),
+        getCase: async (id) => (d.cases[id] ? structuredClone(d.cases[id]) : null),
+        putCase: async (c) => void cases.set(c.id, structuredClone(c)),
       };
       const result = await fn(tx);
       for (const [id, p] of players) d.players[id] = p;
@@ -256,6 +266,10 @@ export class FileStore implements PlayerStore {
         if (c) d.crews[id] = c;
         else delete d.crews[id];
       }
+      for (const [id, c] of cases) d.cases[id] = c;
+      // Keep the local file small: drop the oldest cases.
+      const all = Object.values(d.cases).sort((a, b) => b.at - a.at);
+      for (const c of all.slice(300)) delete d.cases[c.id];
       return result;
     });
   }
@@ -290,6 +304,14 @@ export class FileStore implements PlayerStore {
 
   async listMessages(channel: string, limit: number) {
     return (await this.load()).messages.filter((m) => m.channel === channel).slice(-limit);
+  }
+
+  async listCases(country: string, limit: number) {
+    return Object.values((await this.load()).cases)
+      .filter((c) => c.country === country)
+      .sort((a, b) => b.at - a.at)
+      .slice(0, limit)
+      .map((c) => structuredClone(c));
   }
 }
 
@@ -443,6 +465,15 @@ class PostgresStore implements PlayerStore {
         deleteCrew: async (id) => {
           await q`delete from injustice.crews where id = ${id}`;
         },
+        getCase: async (id) => {
+          const rows = await q<{ data: CaseFile }[]>`select data from injustice.cases where id = ${id} for update`;
+          return rows[0]?.data ?? null;
+        },
+        putCase: async (c) => {
+          await q`
+            insert into injustice.cases (id, country, data) values (${c.id}, ${c.country}, ${q.json(c as unknown as postgres.JSONValue)})
+            on conflict (id) do update set data = excluded.data`;
+        },
       };
       return fn(tx);
     })) as T;
@@ -480,6 +511,12 @@ class PostgresStore implements PlayerStore {
     return rows
       .reverse()
       .map((r) => ({ id: Number(r.id), channel: r.channel, authorId: r.author_id, authorName: r.author_name, body: r.body, at: r.created_at.getTime() }));
+  }
+
+  async listCases(country: string, limit: number) {
+    const rows = await this.sql<{ data: CaseFile }[]>`
+      select data from injustice.cases where country = ${country} order by created_at desc limit ${limit}`;
+    return rows.map((r) => r.data);
   }
 }
 

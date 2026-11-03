@@ -62,6 +62,23 @@ export const BALANCE = {
   vouch: { minRank: 5, cooldownMs: 24 * 60 * 60_000 },
   /** Only street bosses can found crews: Mafia at Capo (rank 4) or above. */
   crew: { createCost: 500, maxMembers: 12, path: "enforcer", minRank: 4 },
+  crime: {
+    /** Cases stop accepting tips after this long (shortened for testing). */
+    coldMs: 6 * 60 * 60_000,
+    /** Witnesses have this long to decide whether to report. */
+    sightingMs: 30 * 60_000,
+    /** Players active this recently in the same country can witness a crime. */
+    witnessWindowMs: 30 * 60_000,
+    maxWitnesses: 3,
+    /** Below this many player witnesses, stand-in bystanders leave tips. */
+    minWitnesses: 2,
+    cooldownMs: 30 * 60_000,
+    reportRep: 1,
+    /** Police rank needed to read case files (Patrol Officer) and to work them (Detective). */
+    readRank: 2,
+    detectiveRank: 4,
+    investigateEnergy: 10,
+  },
   chat: { cooldownMs: 3_000, maxLength: 280 },
   banking: {
     /** Bankers' interest per hour on savings (shortened for testing). */

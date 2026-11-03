@@ -358,7 +358,7 @@ function grantXp(p: Player, xp: Partial<Record<StatKey, number>>, mult: number, 
   }
 }
 
-function shiftIntegrity(p: Player, delta = 0) {
+export function shiftIntegrity(p: Player, delta = 0) {
   p.stats.integrity = clamp(p.stats.integrity + delta, -100, 100);
 }
 

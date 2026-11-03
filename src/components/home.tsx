@@ -5,6 +5,7 @@ import { ArrowRight, BookOpen, Briefcase, Cross, Inbox, MapPin, Plane, Sparkles,
 import type { CountryId, PathId } from "@/game/types";
 import { PATH_LOOKS } from "./art/Portraits";
 import { Scene, type CharacterKind, type SceneKind } from "./art/Scenes";
+import { Sightings } from "./community";
 import { DailyCard } from "./tabs";
 import { fmt, type GameApi } from "./useGame";
 
@@ -56,6 +57,8 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
                 : "Nobody yet. The street is watching."}
         </p>
       </Scene>
+
+      <Sightings game={game} compact />
 
       <div className="home-grid">
         <section className="card next-move">

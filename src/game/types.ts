@@ -130,6 +130,54 @@ export interface Player {
   properties?: Record<string, number>;
   /** Crews that invited this player. */
   crewInvites?: { crewId: string; name: string; tag: string; by: string; at: number }[];
+  /** Crimes this player saw and hasn't decided about yet (report or look away). */
+  sightings?: Sighting[];
+}
+
+// ── Street crime and case files ────────────────────────────────────────────
+
+export type CrimeKind = "pickpocket" | "snatch" | "mug";
+/** Things a witness can notice about a criminal. */
+export type ClueTrait = "build" | "reflexes" | "nameStart" | "nameEnd" | "nameLength" | "crew";
+
+export interface Sighting {
+  caseId: string;
+  text: string;
+  at: number;
+  until: number;
+}
+
+export interface Tip {
+  id: string;
+  source: "witness" | "victim" | "bystander" | "detective";
+  trait: ClueTrait;
+  value: string;
+  text: string;
+  at: number;
+  /** Server-only: whether the tip matches the real criminal. Never sent to players. */
+  correct: boolean;
+  byId?: string;
+}
+
+/** A crime against a player. The criminal's identity stays on the server. */
+export interface CaseFile {
+  id: string;
+  country: CountryId;
+  district: string;
+  kind: CrimeKind;
+  at: number;
+  victimId: string;
+  victimName: string;
+  amount: number;
+  /** Server-only. */
+  culpritId: string;
+  /** Server-only: the criminal as they looked at the time of the crime. */
+  suspect: Record<ClueTrait, string>;
+  tips: Tip[];
+  /** Players who were asked to report. */
+  witnesses: string[];
+  /** Officers who already searched the scene. */
+  investigatedBy: string[];
 }
 
 export type CrewPolicy = "open" | "request" | "invite";

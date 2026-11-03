@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { Ban, Crown, Inbox, Lock, MessageSquare, Send, Shield, Swords, UserCheck, Users, Vault } from "lucide-react";
+import { Ban, Crown, Eye, EyeOff, FileSearch, Footprints, Hand, Inbox, Lock, MessageSquare, Search, Send, Shield, Siren, Swords, UserCheck, Users, Vault } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 import type { GameApi } from "./useGame";
@@ -22,6 +22,25 @@ type Profile = {
   canAttack: string | null;
   canVouch: string | null;
   canInvite: boolean;
+  canCrime: Record<CrimeKind, string | null>;
+};
+type CrimeKind = "pickpocket" | "snatch" | "mug";
+const CRIME_BUTTONS: { id: CrimeKind; label: string; Icon: typeof Hand; note: string }[] = [
+  { id: "pickpocket", label: "Pickpocket", Icon: Hand, note: "Quiet and small" },
+  { id: "snatch", label: "Snatch", Icon: Footprints, note: "Grab and run" },
+  { id: "mug", label: "Mug", Icon: Swords, note: "Can turn into a fight" },
+];
+type CaseCard = {
+  id: string;
+  crime: string;
+  district: string;
+  at: number;
+  victimName: string;
+  amount: number;
+  open: boolean;
+  tips: { id: string; source: "witness" | "victim" | "bystander" | "detective"; text: string; at: number }[];
+  canInvestigate: string | null;
+  suspects: { name: string; matches: number }[] | null;
 };
 type CrewView = {
   id: string;
@@ -48,6 +67,7 @@ type Hub = {
   invites: Invite[];
   /** Why the viewer can't found a crew, or null. */
   foundBlock: string | null;
+  readsCases: boolean;
 };
 
 const POLICIES = [
@@ -70,7 +90,9 @@ function ago(t: number) {
 
 export function CommunityTab({ game }: { game: GameApi }) {
   const view = game.view!;
-  const [section, setSection] = useState<"people" | "chat" | "crew" | "inbox">("people");
+  const [section, setSection] = useState<"people" | "cases" | "chat" | "crew" | "inbox">(
+    () => (game.view!.sightings.length ? "cases" : "people"),
+  );
   const [hub, setHub] = useState<Hub | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -108,6 +130,7 @@ export function CommunityTab({ game }: { game: GameApi }) {
         {(
           [
             ["people", "People", Users],
+            ["cases", "Cases", Siren],
             ["chat", "Chat", MessageSquare],
             ["crew", "Crew", Shield],
             ["inbox", "Inbox", Inbox],
@@ -116,11 +139,13 @@ export function CommunityTab({ game }: { game: GameApi }) {
           <button key={id} className={section === id ? "on" : ""} onClick={() => setSection(id)}>
             <Icon size={15} /> {label}
             {id === "inbox" && view.inbox.unread > 0 && <span className="badge-dot">{view.inbox.unread}</span>}
+            {id === "cases" && view.sightings.length > 0 && <span className="badge-dot">{view.sightings.length}</span>}
           </button>
         ))}
       </div>
       {error && <p className="form-error">{error}</p>}
       {section === "people" && <People game={game} hub={hub} social={social} />}
+      {section === "cases" && <CasesPanel game={game} hub={hub} />}
       {section === "chat" && hub && <Chat game={game} hub={hub} />}
       {section === "crew" && <CrewPanel game={game} hub={hub} social={social} />}
       {section === "inbox" && <InboxPanel game={game} social={social} />}
@@ -180,6 +205,20 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
                 </button>
               </div>
               {p.canAttack && <p className="job-lock"><Lock size={11} /> {p.canAttack}</p>}
+              <div className="crime-row">
+                <span className="crime-label">Street crime</span>
+                {CRIME_BUTTONS.map(({ id, label, Icon, note }) => (
+                  <button
+                    key={id}
+                    className="btn btn-ghost btn-sm"
+                    disabled={game.busy || !!p.canCrime?.[id]}
+                    title={p.canCrime?.[id] ?? `${note}. Anonymous, but witnesses may talk.`}
+                    onClick={() => social({ op: "crime", kind: id, targetId: p.id })}
+                  >
+                    <Icon size={13} /> {label}
+                  </button>
+                ))}
+              </div>
             </div>
           </motion.article>
         );
@@ -456,5 +495,129 @@ function InboxPanel({ game, social }: { game: GameApi; social: (b: Record<string
         ))}
       </ul>
     </section>
+  );
+}
+
+/** Crimes the player saw: report them or look away. Used on Home and in Cases. */
+export function Sightings({ game, compact = false }: { game: GameApi; compact?: boolean }) {
+  const sightings = game.view!.sightings;
+  if (!sightings.length) return null;
+  return (
+    <section className="card sightings">
+      <h3 className="card-title"><Eye size={16} /> You saw something</h3>
+      {!compact && <p className="muted">Report it and the police get one clue. Your name stays out of it, but the criminal hears that someone talked.</p>}
+      <ul className="sighting-list">
+        {sightings.map((s) => (
+          <li key={s.caseId}>
+            <p>{s.text}</p>
+            <div className="row">
+              <button className="btn btn-primary btn-sm" disabled={game.busy} onClick={() => game.social({ op: "report", caseId: s.caseId })}>
+                <Siren size={14} /> Report it
+              </button>
+              <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.social({ op: "ignore", caseId: s.caseId })}>
+                <EyeOff size={14} /> Look away
+              </button>
+              <span className="muted fine">{Math.max(1, Math.round((s.until - Date.now()) / 60000))}m left</span>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+const SOURCE_LABEL: Record<CaseCard["tips"][number]["source"], string> = {
+  witness: "Witness",
+  victim: "Victim",
+  bystander: "Bystander",
+  detective: "Detective",
+};
+
+function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
+  const view = game.view!;
+  const [data, setData] = useState<{ cases: CaseCard[]; block: string | null; detective?: boolean } | null>(null);
+
+  const load = useCallback(async () => {
+    const res = await fetch("/api/community?cases=1", { cache: "no-store" });
+    if (res.ok) setData(await res.json());
+  }, []);
+
+  useEffect(() => {
+    if (hub?.readsCases) load();
+  }, [hub?.readsCases, load, view.location.country]);
+
+  return (
+    <div className="stack">
+      <Sightings game={game} />
+      {!view.sightings.length && (
+        <section className="card empty">
+          <Eye size={26} />
+          <p>You haven&apos;t seen anything lately. When someone gets robbed near you, you&apos;ll decide here whether to report it.</p>
+        </section>
+      )}
+      {hub && !hub.readsCases && (
+        <section className="card">
+          <h3 className="card-title"><FileSearch size={16} /> Case files</h3>
+          <p className="muted">
+            Only the police can read case files. Every report adds one clue: a body type, how they moved, part of a name,
+            a crew patch. Some clues are wrong. Detectives put them together.
+          </p>
+        </section>
+      )}
+      {hub?.readsCases && (
+        <section className="card">
+          <div className="row between">
+            <h3 className="card-title"><FileSearch size={16} /> Case files · {view.location.city}</h3>
+            <button className="btn btn-ghost btn-sm" onClick={load}>Refresh</button>
+          </div>
+          {!data && <p className="muted">Pulling the files…</p>}
+          {data && data.cases.length === 0 && <p className="muted">No open cases. A quiet night in {view.location.city}.</p>}
+          <div className="case-list">
+            {data?.cases.map((c) => (
+              <article key={c.id} className={`case ${c.open ? "" : "cold"}`}>
+                <header>
+                  <b>#{c.id} · {c.crime}</b>
+                  <span className={`chip ${c.open ? "chip-red" : ""}`}>{c.open ? "Open" : "Cold"}</span>
+                </header>
+                <p className="muted">
+                  {c.victimName} · {c.district} · {ago(c.at)}{c.amount ? ` · $${c.amount} taken` : ""}
+                </p>
+                <ul className="tips">
+                  {c.tips.length === 0 && <li className="muted">No clues yet.</li>}
+                  {c.tips.map((t) => (
+                    <li key={t.id}>
+                      <span className={`tip-src ${t.source}`}>{SOURCE_LABEL[t.source]}</span> {t.text.replace(/^[^:]+: /, "")}
+                    </li>
+                  ))}
+                </ul>
+                {c.suspects && c.suspects.length > 0 && (
+                  <div className="suspects">
+                    <span className="crime-label">People who fit</span>
+                    {c.suspects.map((s) => (
+                      <span key={s.name} className="chip">{s.name} · {s.matches}/{c.tips.length}</span>
+                    ))}
+                  </div>
+                )}
+                {data.detective ? (
+                  <button
+                    className="btn btn-primary btn-sm"
+                    disabled={game.busy || !!c.canInvestigate}
+                    title={c.canInvestigate ?? ""}
+                    onClick={async () => {
+                      if (await game.social({ op: "investigate", caseId: c.id })) load();
+                    }}
+                  >
+                    <Search size={14} /> Work the scene
+                  </button>
+                ) : (
+                  <p className="fine muted">Detectives can work the scene for a reliable clue and see who fits.</p>
+                )}
+                {data.detective && c.canInvestigate && <p className="job-lock"><Lock size={11} /> {c.canInvestigate}</p>}
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
   );
 }
