@@ -5,6 +5,7 @@ import { Ban, Crown, Eye, EyeOff, ShieldAlert, ShieldCheck, FileSearch, Footprin
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 import { OnlineNow } from "./online";
+import { Scene } from "./art/Scenes";
 import type { GameApi } from "./useGame";
 
 type Profile = {
@@ -475,7 +476,8 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
           </div>
         </section>
         {(hub.lab || hub.labBuild) && (
-          <section className="card lab">
+          <section className="card lab has-banner">
+            <Scene kind="lab" className="banner-scene" />
             <h3 className="card-title">⚗️ Crew lab</h3>
             {hub.lab ? (
               <>
@@ -1003,7 +1005,8 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
       )}
 
       {hub?.readsCases && (
-        <section className="card">
+        <section className="card has-banner">
+          <Scene kind="crimescene" className="banner-scene" />
           <div className="row between">
             <h3 className="card-title"><FileSearch size={16} /> Case files · {view.location.city}</h3>
             <button className="btn btn-ghost btn-sm" onClick={load}>Refresh</button>
@@ -1083,7 +1086,8 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
           </ul>
         </section>
       )}
-      <section className="card courthouse">
+      <section className="card courthouse has-banner">
+        <Scene kind="court" className="banner-scene" />
         <h3 className="card-title"><Gavel size={16} /> Courthouse · {view.location.city}</h3>
         {!data && <p className="muted">Checking the docket…</p>}
         {data && docket.length === 0 && <p className="muted">No trials today.</p>}
@@ -1257,8 +1261,8 @@ export function JailCard({ game }: { game: GameApi }) {
   if (!jail) return null;
   const left = Math.max(0, jail.until - Date.now());
   return (
-    <section className="card jail-card">
-      <div className="bars" aria-hidden />
+    <section className="card jail-card has-banner">
+      <Scene kind="interrogation" className="banner-scene" />
       <h3 className="card-title"><Lock size={16} /> {jail.custodyCase ? "In custody" : "In a cell"}</h3>
       <p>{jail.reason}</p>
       <p className="muted">
@@ -1328,8 +1332,8 @@ function Yard({ game, hub, social }: { game: GameApi; hub: Hub | null; social: (
 
   return (
     <div className="stack">
-      <section className="card yard">
-        <div className="bars" aria-hidden />
+      <section className="card yard has-banner">
+        <Scene kind="prison" className="banner-scene" />
         <h3 className="card-title"><Lock size={16} /> The yard · {view.location.city}</h3>
         <p className="muted">
           Everyone doing time in {view.location.city} ends up here. Work a shift for a few dollars and time off your

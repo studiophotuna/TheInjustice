@@ -1,9 +1,28 @@
-// Illustrated noir scenes and full-body characters. Pure SVG: sharp at any size, tiny to load.
-// Scenes are 800×450; characters are 200×400 and can be layered over scenes.
+"use client";
 
-import type { ReactNode } from "react";
+// Scenes: short looping real-world video (public/scenes, from Mixkit's free license) with the
+// illustrated noir SVG underneath as the fallback while loading, on slow connections, and for
+// people who prefer reduced motion (they get the still poster). Characters are SVG and only
+// appear on the illustrated scenes.
 
-export type SceneKind = "street" | "city" | "highrise" | "police" | "hospital";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+
+export type SceneKind =
+  | "street"
+  | "city"
+  | "highrise"
+  | "police"
+  | "hospital"
+  | "court"
+  | "bank"
+  | "prison"
+  | "lab"
+  | "casino"
+  | "crimescene"
+  | "interrogation";
+
+/** Every scene has a looping clip in public/scenes/<kind>.mp4 and a poster <kind>.jpg. */
+const VIDEO_SCENES = new Set<SceneKind>(["street", "city", "highrise", "police", "hospital", "court", "bank", "prison", "lab", "casino", "crimescene", "interrogation"]);
 export type CharacterKind = "bum" | "thug" | "detective" | "lawyer" | "doctor" | "banker" | "vigilante";
 
 const rnd = (seed: number) => () => {
@@ -230,7 +249,60 @@ function Hospital() {
   );
 }
 
-const SCENES: Record<SceneKind, () => ReactNode> = { street: Street, city: City, highrise: Highrise, police: Police, hospital: Hospital };
+const SCENES: Record<SceneKind, () => ReactNode> = {
+  street: Street,
+  city: City,
+  highrise: Highrise,
+  police: Police,
+  hospital: Hospital,
+  // Illustrated stand-ins for scenes that only have footage.
+  court: City,
+  bank: Highrise,
+  prison: Police,
+  lab: Hospital,
+  casino: City,
+  crimescene: Street,
+  interrogation: Police,
+};
+
+/** Plays the scene's clip on a loop; still poster for reduced motion; hidden if it fails. */
+function SceneVideo({ kind }: { kind: SceneKind }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [failed, setFailed] = useState(false);
+  const [still, setStill] = useState(false);
+  useEffect(() => {
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
+    if (reduce || saveData) setStill(true);
+  }, []);
+  // React doesn't write `muted` as an HTML attribute, and browsers only autoplay muted video,
+  // so mute and start it by hand.
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    v.muted = true;
+    v.play().catch(() => undefined);
+  }, [still]);
+  if (failed) return null;
+  if (still) return <img className="scene-video" src={`/scenes/${kind}.jpg`} alt="" aria-hidden />;
+  return (
+    <video
+      ref={ref}
+      className="scene-video"
+      poster={`/scenes/${kind}.jpg`}
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      aria-hidden
+    >
+      {/* WebM (VP9) for browsers without H.264; MP4 for Safari and the rest. */}
+      <source src={`/scenes/${kind}.webm`} type="video/webm" />
+      <source src={`/scenes/${kind}.mp4`} type="video/mp4" onError={() => setFailed(true)} />
+    </video>
+  );
+}
 
 // ─── Characters ────────────────────────────────────────────────────────────
 
@@ -342,12 +414,14 @@ export function Scene({ kind, characters = [], className = "", children }: {
   children?: ReactNode;
 }) {
   const Art = SCENES[kind];
+  const video = VIDEO_SCENES.has(kind);
   return (
-    <div className={`scene ${className}`}>
+    <div className={`scene ${video ? "scene-real" : ""} ${className}`}>
       <svg viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice" aria-hidden>
         <Art />
       </svg>
-      {characters.map((c, i) => (
+      {video && <SceneVideo kind={kind} />}
+      {!video && characters.map((c, i) => (
         <div key={i} className="scene-char" style={{ left: `${c.x}%`, height: `${(c.scale ?? 1) * 78}%` }}>
           <Character kind={c.kind} />
         </div>

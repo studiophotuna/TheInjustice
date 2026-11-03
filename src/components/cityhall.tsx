@@ -2,6 +2,7 @@
 
 import { Building2, Coins, Flag, Gavel, Landmark, Megaphone, Siren, Soup, Vote } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { Scene } from "./art/Scenes";
 import type { GameApi } from "./useGame";
 
 type CityData = {
@@ -98,7 +99,8 @@ export function CityHall({ game }: { game: GameApi }) {
   return (
     <>
     <Paper paper={data.paper} />
-    <section className="card cityhall">
+    <section className="card cityhall has-banner">
+      <Scene kind="city" className="banner-scene" />
       <h3 className="card-title"><Landmark size={16} /> City hall · {c.city}</h3>
 
       <div className="hall-stats">

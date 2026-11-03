@@ -54,13 +54,23 @@ import { Scene, type CharacterKind, type SceneKind } from "./art/Scenes";
 
 /** Districts drawn as full illustrated scenes (the rest use their animated skyline). */
 const DISTRICT_SCENES: Partial<Record<string, { scene: SceneKind; chars: { kind: CharacterKind; x: number; scale?: number }[] }>> = {
-  gutter: { scene: "street", chars: [{ kind: "bum", x: 82, scale: 0.8 }] },
-  southside: { scene: "street", chars: [{ kind: "thug", x: 70 }, { kind: "thug", x: 86, scale: 0.9 }] },
-  precinct_square: { scene: "police", chars: [{ kind: "detective", x: 16 }] },
-  st_brigids: { scene: "hospital", chars: [{ kind: "doctor", x: 14 }] },
-  glass_quarter: { scene: "highrise", chars: [{ kind: "banker", x: 84 }] },
-  exchange: { scene: "highrise", chars: [{ kind: "banker", x: 18 }] },
-  courthouse_hill: { scene: "city", chars: [{ kind: "lawyer", x: 84 }] },
+  gutter: { scene: "street", chars: [] },
+  old_market: { scene: "street", chars: [] },
+  southside: { scene: "street", chars: [] },
+  iron_row: { scene: "crimescene", chars: [] },
+  precinct_square: { scene: "police", chars: [] },
+  st_brigids: { scene: "hospital", chars: [] },
+  courthouse_hill: { scene: "court", chars: [] },
+  boardwalk: { scene: "city", chars: [] },
+  casino_strip: { scene: "casino", chars: [] },
+  marina: { scene: "city", chars: [] },
+  exchange: { scene: "bank", chars: [] },
+  rail_yards: { scene: "street", chars: [] },
+  checkpoint_row: { scene: "prison", chars: [] },
+  foundry: { scene: "lab", chars: [] },
+  undercity: { scene: "street", chars: [] },
+  glass_quarter: { scene: "highrise", chars: [] },
+  tech_park: { scene: "highrise", chars: [] },
 };
 import { Vehicle } from "./art/Vehicles";
 import { NpcPortrait, PATH_LOOKS, PlayerAvatar } from "./art/Portraits";

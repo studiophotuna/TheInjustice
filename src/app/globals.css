@@ -797,3 +797,13 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 .tut-steps li.claimed .tut-check { border-color: var(--green, #3ee08f); color: var(--green, #3ee08f); }
 .tut-text { flex: 1; min-width: 0; }
 @media (max-width: 460px) { .market-table th:nth-child(4), .market-table td:nth-child(4) { display: none; } }
+
+/* Real footage scenes */
+.scene-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(0.85) contrast(1.05); }
+.scene-real .scene-fade { background: linear-gradient(180deg, rgba(7, 8, 12, 0.15) 0%, rgba(7, 8, 12, 0.25) 40%, rgba(7, 8, 12, 0.92) 100%); }
+.scene-real::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55)); }
+/* A short strip of the scene across the top of a card. */
+.card.has-banner { overflow: hidden; }
+.banner-scene { margin: -16px -16px 12px; height: 110px; border-bottom: 1px solid var(--border); }
+.banner-scene .scene-fade { background: linear-gradient(180deg, rgba(7, 8, 12, 0) 30%, rgba(7, 8, 12, 0.85)); }
+@media (min-width: 700px) { .banner-scene { height: 140px; } }

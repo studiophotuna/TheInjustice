@@ -2,6 +2,7 @@
 
 import { FlaskConical, Pill, ShieldAlert, WashingMachine } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Scene } from "./art/Scenes";
 import type { GameApi } from "./useGame";
 
 /** Dirty money and the ways to clean it. */
@@ -43,7 +44,8 @@ export function LaunderCard({ game }: { game: GameApi }) {
   return (
     <>
     {service}
-    <section className="card launder">
+    <section className="card launder has-banner">
+      <Scene kind="bank" className="banner-scene" />
       <h3 className="card-title"><WashingMachine size={16} /> Dirty money: ${view.dirty.toLocaleString()}</h3>
       <p className="muted">
         Money from crime is dirty. Dealers, bent cops and back-alley doctors take it; the bank and the shops don&apos;t. Clean it first.
@@ -91,7 +93,8 @@ export function StreetMarket({ game }: { game: GameApi }) {
   const q = (id: string) => Number(qty[id] ?? "1");
   const knowsAny = m.drugs.some((d) => d.knowHow);
   return (
-    <section className="card market">
+    <section className="card market has-banner">
+      <Scene kind="street" className="banner-scene" />
       <h3 className="card-title"><Pill size={16} /> The street · {view.location.city}</h3>
       <p className="muted fine">
         Prices change every hour and from city to city. Dealers take dirty money or cash, and pay you in dirty money. Carrying drugs on a trip

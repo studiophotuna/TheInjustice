@@ -24,8 +24,8 @@ const CHARACTER_FOR: Record<PathId, CharacterKind> = {
 /** Each city gets its own backdrop. */
 const SCENE_FOR: Record<CountryId, SceneKind> = {
   varrow: "street",
-  solmarra: "city",
-  kestrova: "police",
+  solmarra: "casino",
+  kestrova: "prison",
   meridian: "highrise",
 };
 
@@ -39,7 +39,20 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
   const live = game.live!;
   const best = view.jobs.find((j) => j.id === view.recommendedJobId);
   const character: CharacterKind = view.path ? CHARACTER_FOR[view.path.id] : "bum";
-  const scene: SceneKind = view.path?.id === "police" ? "police" : view.path?.id === "medicine" ? "hospital" : SCENE_FOR[view.location.country];
+  // Locked up or in the clinic, the hero shows it; otherwise your career's world, or your city.
+  const scene: SceneKind = view.jail
+    ? "interrogation"
+    : live.hospital > 0
+      ? "hospital"
+      : view.path?.id === "police"
+        ? "police"
+        : view.path?.id === "medicine"
+          ? "hospital"
+          : view.path?.id === "courts"
+            ? "court"
+            : view.path?.id === "banking"
+              ? "bank"
+              : SCENE_FOR[view.location.country];
   const unreadChapter = view.chapters.find((c) => c.unlocked && !c.read);
   const recent = view.inbox.items.slice(0, 3);
   const nextRank = view.ladder && view.ladder.current < view.ladder.ranks.length ? view.ladder.ranks[view.ladder.current] : null;

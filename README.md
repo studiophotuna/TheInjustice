@@ -204,6 +204,10 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
   members with chemistry cook twice as much there, but every batch makes the neighbors more
   suspicious. Hot labs show up as tips for detectives, who can raid them (lab gone, half the
   vault fined).
+- **Real footage**: scenes (Home, districts, case files, courthouse, prison yard, lab, laundering,
+  the street market, city hall, the jail card) are short silent looping clips from Mixkit's free
+  stock video (see public/scenes/CREDITS.md), with the illustrated scenes as a fallback and a
+  still poster for players who prefer reduced motion or are saving data.
 - **Businesses**: buy one in any country (paid from the bank) and collect hourly income.
 - **Account recovery**: a one-time recovery code is shown at sign-up; use it with
   "Forgot password?" to set a new password. Players can generate a new code in the Me tab.
