@@ -55,6 +55,14 @@ export async function GET() {
         return { player: p, result: p };
       });
     }
+    // Presence: note that the player has the game open (at most once a minute).
+    if (player && now - (player.seenAt ?? 0) > 60_000) {
+      player =
+        (await store.update(id.playerId!, (p) => {
+          if (p) p.seenAt = now;
+          return { player: p, result: p };
+        })) ?? player;
+    }
     if (player) tick(player, now);
     return NextResponse.json({
       view: player ? toView(player, now) : null,
@@ -84,6 +92,7 @@ export async function POST(req: Request) {
       }
       if (!p) throw new GameError("Create a character first.");
       const events = applyAction(p, action, now, Math.random, { taxRates: rates });
+      p.seenAt = now;
       if (p.taxOwed) {
         owed = p.taxOwed;
         p.taxOwed = null;

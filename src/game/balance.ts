@@ -124,7 +124,18 @@ export const BALANCE = {
     crackdownHeat: 1.5,
     salary: 150,
     salaryEveryMs: 24 * 60 * 60_000,
+    /** The police chief (Detective or higher) the mayor appoints; paid daily from the treasury. */
+    chiefRank: 4,
+    chiefSalary: 100,
+    /** Soup kitchen: each meal costs the treasury this much and restores this much energy.
+     * Only for people with less than `soupMaxMoney` (cash + bank), once per `soupEveryMs`. */
+    mealCost: 5,
+    mealEnergy: 15,
+    soupMaxMoney: 100,
+    soupEveryMs: 6 * 60 * 60_000,
   },
+  /** Seen within this long counts as online. */
+  onlineMs: 5 * 60_000,
   chat: { cooldownMs: 3_000, maxLength: 280 },
   banking: {
     /** Bankers' interest per hour on savings (shortened for testing). */
@@ -133,8 +144,16 @@ export const BALANCE = {
     /** Never more than this share of the balance in one update. */
     maxGainShare: 0.05,
   },
-  /** Diminishing returns: XP multiplier is 1 / (1 + timesDone / this). */
-  repeatFalloff: 60,
+  /**
+   * Diminishing returns on repeating the same work: XP multiplier is 1 / (1 + recent / this),
+   * where "recent" repetitions fade by half every `practiceHalfLifeMs`. Grinding one job all
+   * day stops teaching you much; after a rest it's useful again.
+   */
+  repeatFalloff: 20,
+  practiceHalfLifeMs: 12 * 60 * 60_000,
+  /** Hidden stat points (effective value) given to a career's key stats on joining and on
+   * each promotion: base + perRank × (new rank − 1). */
+  careerBonus: { base: 1, perRank: 0.25 },
   logSize: 30,
 } as const;
 

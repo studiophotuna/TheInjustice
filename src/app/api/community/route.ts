@@ -193,6 +193,32 @@ export async function GET(req: Request) {
           : [],
       });
     }
+    if (url.searchParams.get("online")) {
+      // Players in this city with the game open right now, with quick actions.
+      const [people, crews] = await Promise.all([store.listPlayers(countryOf(p), 80), store.listCrews(200)]);
+      const tags = new Map(crews.map((c) => [c.id, c.tag]));
+      const online = people
+        .filter((o) => o.id !== p.id && !o.dead && now - (o.seenAt ?? 0) < BALANCE.onlineMs)
+        .slice(0, 30)
+        .map((o) => {
+          tick(o, now);
+          const prof = profileFor(p, o, now);
+          return {
+            id: o.id,
+            name: o.name,
+            title: prof.title,
+            path: o.path,
+            crewTag: o.crewId ? tags.get(o.crewId) ?? null : null,
+            status: prof.status,
+            protected: prof.protected,
+            read: prof.read,
+            danger: prof.danger,
+            canAttack: prof.canAttack,
+            canCrime: Object.fromEntries(CRIME_KINDS.map((k) => [k, crimeBlock(p, o, k, now)])),
+          };
+        });
+      return NextResponse.json({ online });
+    }
     const channel = url.searchParams.get("channel");
     if (channel) {
       if (!channelsFor(p).includes(channel)) throw new GameError("You can't read that channel.");

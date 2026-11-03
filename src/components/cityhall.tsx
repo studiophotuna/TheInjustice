@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Coins, Gavel, Landmark, Megaphone, Siren, Vote } from "lucide-react";
+import { Building2, Coins, Gavel, Landmark, Megaphone, Siren, Soup, Vote } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { GameApi } from "./useGame";
 
@@ -15,6 +15,11 @@ type CityData = {
     policeBounty: number;
     treasury: number;
     crackdown: number | null;
+    chief: { name: string; you: boolean } | null;
+    soupMeals: number;
+    mealsServed: number;
+    canSoup: string | null;
+    chiefControls: { canCrackdown: boolean; canSalary: boolean; salary: number } | null;
     candidates: { id: string; name: string; title: string; reputation: number; pitch: string }[];
     turnout: number;
     myVote: string | null;
@@ -29,9 +34,11 @@ type CityData = {
       maxTax: number;
       maxBounty: number;
       salary: number;
+      mealCost: number;
     } | null;
   };
   prisoners: { id: string; name: string; reason: string }[];
+  officers: { id: string; name: string; title: string }[];
 };
 
 function until(t: number) {
@@ -48,6 +55,8 @@ export function CityHall({ game }: { game: GameApi }) {
   const [tax, setTax] = useState<string | null>(null);
   const [bounty, setBounty] = useState<string | null>(null);
   const [skimAmt, setSkimAmt] = useState("100");
+  const [soupAmt, setSoupAmt] = useState("100");
+  const [chiefPick, setChiefPick] = useState("");
 
   const load = useCallback(async () => {
     const res = await fetch("/api/city", { cache: "no-store" });
@@ -74,7 +83,20 @@ export function CityHall({ game }: { game: GameApi }) {
         <div><span className="crime-label">City tax</span><b>{Math.round(c.taxRate * 100)}%</b></div>
         <div><span className="crime-label">Treasury</span><b>${c.treasury}</b></div>
         <div><span className="crime-label">Police bounty</span><b>{c.policeBounty ? `$${c.policeBounty}` : "None"}</b></div>
+        <div><span className="crime-label">Police chief</span><b>{c.chief ? `${c.chief.name}${c.chief.you ? " (you)" : ""}` : "None"}</b></div>
+        <div><span className="crime-label">Soup kitchen</span><b>{c.soupMeals ? `${c.soupMeals} meals` : "Empty"}</b></div>
       </div>
+      {!c.canSoup && (
+        <button className="btn btn-primary btn-sm soup-btn" disabled={game.busy} onClick={() => act({ op: "soup" })}>
+          <Soup size={14} /> Get a free meal
+        </button>
+      )}
+      {c.chiefControls && (
+        <div className="row wrap">
+          <button className="btn btn-danger btn-sm" disabled={game.busy || !c.chiefControls.canCrackdown} onClick={() => act({ op: "crackdown" })}><Siren size={14} /> Order a crackdown</button>
+          <button className="btn btn-primary btn-sm" disabled={game.busy || !c.chiefControls.canSalary} onClick={() => act({ op: "chief_salary" })}><Coins size={14} /> Chief&apos;s salary (${c.chiefControls.salary})</button>
+        </div>
+      )}
       {c.crackdown && <p className="crackdown"><Siren size={14} /> Crackdown in effect for {until(c.crackdown)}. Extra patrols everywhere.</p>}
 
       {/* Election */}
@@ -132,6 +154,26 @@ export function CityHall({ game }: { game: GameApi }) {
             <button className="btn btn-danger btn-sm" disabled={game.busy || !ctl.canCrackdown} onClick={() => act({ op: "crackdown" })}><Siren size={14} /> Order a crackdown</button>
             <button className="btn btn-primary btn-sm" disabled={game.busy || !ctl.canSalary} onClick={() => act({ op: "salary" })}><Coins size={14} /> Collect salary (${ctl.salary})</button>
           </div>
+          <form className="row wrap" onSubmit={(e) => { e.preventDefault(); act({ op: "fund_soup", amount: Number(soupAmt) }); }}>
+            <label className="inline">Soup kitchen $
+              <input type="number" min={ctl.mealCost} step={ctl.mealCost} value={soupAmt} onChange={(e) => setSoupAmt(e.target.value)} />
+            </label>
+            <button className="btn btn-ghost btn-sm" disabled={game.busy || c.treasury < ctl.mealCost}><Soup size={14} /> Pay for meals</button>
+          </form>
+          <p className="fine muted">${ctl.mealCost} a meal. Feeds people with nothing; the line remembers who paid. {c.mealsServed ? `${c.mealsServed} served so far.` : ""}</p>
+          {data.officers.length > 0 || c.chief ? (
+            <div className="row wrap">
+              {data.officers.length > 0 && (
+                <>
+                  <select value={chiefPick || data.officers[0].id} onChange={(e) => setChiefPick(e.target.value)} aria-label="Officer">
+                    {data.officers.map((o) => <option key={o.id} value={o.id}>{o.name} · {o.title}</option>)}
+                  </select>
+                  <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => act({ op: "appoint_chief", playerId: chiefPick || data.officers[0].id })}>Appoint police chief</button>
+                </>
+              )}
+              {c.chief && <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => act({ op: "dismiss_chief" })}>Fire {c.chief.name}</button>}
+            </div>
+          ) : null}
           {ctl.canPardon && data.prisoners.length > 0 && (
             <div className="pardons">
               <span className="crime-label"><Gavel size={12} /> Pardon one prisoner this term</span>

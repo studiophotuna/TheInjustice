@@ -6,6 +6,7 @@
 import { BALANCE } from "./balance";
 import { rankTitle } from "./content/paths";
 import { COUNTRY_BY_ID } from "./content/world";
+import { maxEnergy } from "./balance";
 import { countryOf, inJail, shiftIntegrity } from "./engine";
 import { notify, protectedUntil } from "./social";
 import { GameError, type City, type CountryId, type GameEvent, type Player } from "./types";
@@ -80,6 +81,7 @@ export function advanceCity(c: City, now: number): boolean {
 }
 
 export const isMayor = (c: City, p: Player) => c.mayor?.id === p.id;
+export const isChief = (c: City, p: Player) => c.chief?.id === p.id;
 
 // ── Elections ──────────────────────────────────────────────────────────────
 
@@ -147,11 +149,13 @@ export function setBounty(c: City, p: Player, amount: number, now: number): Game
 }
 
 export function crackdown(c: City, p: Player, now: number): GameEvent[] {
-  mayorOnly(c, p);
+  // The mayor or the police chief can order one.
+  if (!isMayor(c, p) && !isChief(c, p)) throw new GameError("Only the mayor or the police chief can do that.");
+  if (countryOf(p) !== c.country) throw new GameError("You have to be in your city.");
   if (now - c.lastCrackdownAt < B.crackdownCooldownMs) throw new GameError("One crackdown a day. The police need sleep too.");
   c.lastCrackdownAt = now;
   c.crackdownUntil = now + B.crackdownMs;
-  announce(c, `Mayor ${p.name} orders a crackdown. Extra patrols on every corner for the next hour.`, now);
+  announce(c, `${isMayor(c, p) ? "Mayor" : "Chief"} ${p.name} orders a crackdown. Extra patrols on every corner for the next hour.`, now);
   return [{ tone: "good", text: "Crackdown ordered. Crime is harder and hotter for the next hour." }];
 }
 
@@ -196,6 +200,73 @@ export function skim(c: City, p: Player, amount: number, now: number): GameEvent
   return [{ tone: "info", text: `$${a} quietly moves from the treasury to your pocket. The books will need some creativity.` }];
 }
 
+// ── Police chief ───────────────────────────────────────────────────────────
+
+export function appointChief(c: City, mayor: Player, officer: Player, now: number): GameEvent[] {
+  mayorOnly(c, mayor);
+  if (officer.path !== "police" || officer.rank < B.chiefRank) throw new GameError("The chief has to be a Detective or higher.");
+  if (countryOf(officer) !== c.country) throw new GameError("They work in another city.");
+  if (officer.id === mayor.id) throw new GameError("You can't be your own chief.");
+  if (c.chief?.id === officer.id) throw new GameError("They're already the chief.");
+  c.chief = { id: officer.id, name: officer.name, since: now };
+  c.chiefPaidAt = 0;
+  notify(officer, `Mayor ${mayor.name} appointed you police chief of ${COUNTRY_BY_ID[c.country].capital}. You can order crackdowns and draw a daily salary.`, "story", mayor, now);
+  announce(c, `Mayor ${mayor.name} appoints ${officer.name} as police chief.`, now);
+  return [{ tone: "good", text: `${officer.name} is your police chief.` }];
+}
+
+export function dismissChief(c: City, mayor: Player, now: number): GameEvent[] {
+  mayorOnly(c, mayor);
+  if (!c.chief) throw new GameError("There's no chief to fire.");
+  announce(c, `Mayor ${mayor.name} fires police chief ${c.chief.name}.`, now);
+  c.chief = null;
+  return [{ tone: "info", text: "The chief's office is empty." }];
+}
+
+export function chiefSalary(c: City, p: Player, now: number): GameEvent[] {
+  if (!isChief(c, p)) throw new GameError("Only the police chief can do that.");
+  if (now - (c.chiefPaidAt ?? 0) < B.salaryEveryMs) throw new GameError("Payday is once a day.");
+  const pay = Math.min(B.chiefSalary, c.treasury);
+  if (pay <= 0) throw new GameError("The treasury is empty.");
+  c.treasury -= pay;
+  c.chiefPaidAt = now;
+  p.cash += pay;
+  return [{ tone: "good", text: `Chief's salary: +$${pay}.` }];
+}
+
+// ── Soup kitchen ───────────────────────────────────────────────────────────
+
+export function fundSoup(c: City, mayor: Player, amount: number, now: number): GameEvent[] {
+  mayorOnly(c, mayor);
+  const meals = Math.floor(amount / B.mealCost);
+  if (!Number.isFinite(meals) || meals < 1) throw new GameError(`Meals cost $${B.mealCost} each.`);
+  const cost = meals * B.mealCost;
+  if (cost > c.treasury) throw new GameError("The treasury doesn't have that much.");
+  c.treasury -= cost;
+  c.soupMeals = (c.soupMeals ?? 0) + meals;
+  mayor.reputation += Math.floor(meals / 10);
+  announce(c, `Mayor ${mayor.name} pays for ${meals} free meals at the soup kitchen.`, now);
+  return [{ tone: "good", text: `${meals} meals paid for. The line out the door will remember your name.` }];
+}
+
+export function soupBlock(c: City, p: Player, now: number): string | null {
+  if (!(c.soupMeals ?? 0)) return "The soup kitchen is out of food.";
+  if (countryOf(p) !== c.country) return "That kitchen is in another city.";
+  if (p.cash + p.bank >= B.soupMaxMoney) return "The soup kitchen is for people with nothing.";
+  if (now - (p.lastSoupAt ?? 0) < B.soupEveryMs) return "You already ate here today. Come back later.";
+  return null;
+}
+
+export function eatSoup(c: City, p: Player, now: number): GameEvent[] {
+  const block = soupBlock(c, p, now);
+  if (block) throw new GameError(block);
+  c.soupMeals = (c.soupMeals ?? 0) - 1;
+  c.mealsServed = (c.mealsServed ?? 0) + 1;
+  p.lastSoupAt = now;
+  p.energy = Math.min(maxEnergy(p.housing), p.energy + B.mealEnergy);
+  return [{ tone: "good", text: `A bowl of hot soup, paid for by city hall. +${B.mealEnergy} energy.` }];
+}
+
 /** Withheld tax on job pay or business income. */
 export function taxOn(amount: number, rate: number): number {
   return Math.floor(amount * rate);
@@ -226,6 +297,13 @@ export function cityView(c: City, p: Player, now: number) {
     policeBounty: c.policeBounty,
     treasury: c.treasury,
     crackdown: crackdownOn(c, now) ? c.crackdownUntil : null,
+    chief: c.chief ? { name: c.chief.name, you: isChief(c, p) } : null,
+    soupMeals: c.soupMeals ?? 0,
+    mealsServed: c.mealsServed ?? 0,
+    canSoup: soupBlock(c, p, now),
+    chiefControls: isChief(c, p)
+      ? { canCrackdown: now - c.lastCrackdownAt >= B.crackdownCooldownMs, canSalary: now - (c.chiefPaidAt ?? 0) >= B.salaryEveryMs && c.treasury > 0, salary: B.chiefSalary }
+      : null,
     candidates: c.candidates.map((x) => ({ id: x.id, name: x.name, title: x.title, reputation: x.reputation, pitch: x.pitch })),
     turnout: Object.keys(c.votes).length,
     myVote: c.votes[p.id] ? c.candidates.find((x) => x.id === c.votes[p.id])?.name ?? null : null,
@@ -242,6 +320,7 @@ export function cityView(c: City, p: Player, now: number) {
           maxTax: B.maxTax,
           maxBounty: B.maxBounty,
           salary: B.salary,
+          mealCost: B.mealCost,
         }
       : null,
     // Tallies stay secret until the ballot closes; during it, only turnout is public.

@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Ban, Crown, Eye, EyeOff, ShieldAlert, FileSearch, Footprints, Gavel, Hand, Landmark, Moon, Stethoscope, Inbox, Lock, MessageSquare, Search, Send, Shield, Siren, Swords, UserCheck, Users, Vault } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
+import { OnlineNow } from "./online";
 import type { GameApi } from "./useGame";
 
 type Profile = {
@@ -216,6 +217,7 @@ export function CommunityTab({ game }: { game: GameApi }) {
         ))}
       </div>
       {error && <p className="form-error">{error}</p>}
+      {section === "people" && <OnlineNow game={game} />}
       {section === "people" && <People game={game} hub={hub} social={social} />}
       {section === "cases" && <CasesPanel game={game} hub={hub} />}
       {section === "chat" && hub && <Chat game={game} hub={hub} />}
@@ -238,7 +240,8 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
   }
   return (
     <div className="people">
-      <p className="muted">People in {view.location.city}, most recently active first. Your gut tells you how a fight would go.</p>
+      <h3 className="card-title list-title"><Users size={16} /> Everyone in {view.location.city}</h3>
+      <p className="muted">Most recently active first. Your gut tells you how a fight would go.</p>
       {hub.players.map((p) => {
         const blocked = hub.blocked.includes(p.id);
         return (

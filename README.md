@@ -57,6 +57,12 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
 - Six career paths with **8 ranks** each: **Police**, **Courts** and **Vigilante** (law),
   **Medicine**, **Banking**, and **Mafia** (street: Associate, Soldier, Made Man, Capo, Consigliere, Underboss, Boss, Don). Each has a contact who approaches you when your hidden stats and
   habits fit, its own jobs, and a corrupt option that quietly lowers Integrity.
+- **Careers make you better at them.** Joining a career and every promotion quietly raise
+  that career's key hidden stats, more at higher ranks. It's never shown.
+- **Practice**: repeating the same job or exercise teaches less and less, but the effect fades
+  with rest (half every 12 hours), so mixing work and coming back tomorrow both pay off.
+- **Random muggings never kill**: they can put you in the clinic and take half your cash, but
+  death only comes from fights you choose.
 - **Promotion is earned, not counted.** Harder work counts more toward your next review
   (higher-rank jobs, risky jobs, demanding jobs); easy work well below your rank barely counts,
   and casework counts too (arrests, verdicts, exams, bank reports, hunts, rackets). Your key
@@ -124,6 +130,11 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
 - **Reputation** is your public standing, separate from career rank: it unlocks districts and
   schools, protects weaker players from you, decides who can run for mayor, and ranks the
   leaderboard. Promotions don't use it.
+- **Online now**: Home and People show who in your city has the game open right now. Tap a
+  name to attack, pickpocket, snatch or mug them in one more tap.
+- **Police chief and soup kitchen**: the mayor appoints a Detective+ as police chief (can
+  order crackdowns, paid daily from the treasury) and pays for free meals that feed players
+  with almost nothing (+energy, once every 6 hours).
 - **Businesses**: buy one in any country (paid from the bank) and collect hourly income.
 - **Account recovery**: a one-time recovery code is shown at sign-up; use it with
   "Forgot password?" to set a new password. Players can generate a new code in the Me tab.

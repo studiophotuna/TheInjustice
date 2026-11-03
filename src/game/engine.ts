@@ -219,7 +219,28 @@ const GYM_LINES: Record<"strength" | "toughness" | "agility", string[]> = {
   agility: ["Jump rope until the floor blurs.", "Footwork drills. Your feet stop tripping over each other.", "You slip a punch you never saw coming."],
 };
 
-function train(p: Player, stat: "strength" | "toughness" | "agility", rng: Rng, events: GameEvent[]) {
+/**
+ * XP multiplier for repeating `key` right now. Recent repetitions fade by half every
+ * `practiceHalfLifeMs`, so variety and rest both help. Counts this repetition.
+ */
+export function practiceFalloff(p: Player, key: string, now: number): number {
+  const prev = p.practice?.[key];
+  const recent = prev ? prev.n * Math.pow(0.5, Math.max(0, now - prev.at) / BALANCE.practiceHalfLifeMs) : 0;
+  p.practice = { ...(p.practice ?? {}), [key]: { n: recent + 1, at: now } };
+  return 1 / (1 + recent / BALANCE.repeatFalloff);
+}
+
+/** Hidden: the career makes you better at what it needs. Never shown as numbers. */
+export function careerBonus(p: Player) {
+  if (!p.path) return;
+  const delta = BALANCE.careerBonus.base + BALANCE.careerBonus.perRank * (p.rank - 1);
+  for (const k of PATHS[p.path].keyStats) {
+    const target = sv(p, k) + delta;
+    p.stats[k] = Math.max(p.stats[k], ((target - 10) / 4) ** 2);
+  }
+}
+
+function train(p: Player, stat: "strength" | "toughness" | "agility", rng: Rng, events: GameEvent[], now: number) {
   const cost = itemPrice(p, BALANCE.gym.fee);
   if (p.energy < BALANCE.gym.energy) throw new GameError("You're too tired to train.");
   if (p.cash < cost) throw new GameError(`The gym fee is $${cost}. Cash only.`);
@@ -227,7 +248,7 @@ function train(p: Player, stat: "strength" | "toughness" | "agility", rng: Rng, 
   p.cash -= cost;
   const key = `gym:${stat}`;
   p.jobCounts[key] = (p.jobCounts[key] ?? 0) + 1;
-  const falloff = 1 / (1 + (p.jobCounts[key] - 1) / BALANCE.repeatFalloff);
+  const falloff = practiceFalloff(p, key, now);
   events.push({ tone: "good", text: `${pick(rng, GYM_LINES[stat])} -$${cost}` });
   grantXp(p, { [stat]: BALANCE.gym.xp }, falloff, events);
   bumpContract(p, "train");
@@ -514,6 +535,7 @@ function checkCareer(p: Player, events: GameEvent[]) {
   p.rank += 1;
   p.jobsSinceRank = 0;
   p.reputation += 3;
+  careerBonus(p);
   const title = def.ranks[p.rank - 1];
   if (isGraduation(p.path, p.rank)) {
     const school = p.school ? SCHOOL_BY_ID[p.school] : null;
@@ -589,7 +611,13 @@ function maybeMugging(p: Player, job: JobDef, now: number, rng: Rng, events: Gam
     return;
   }
   if (p.hp <= 0) {
-    summary.outcome = knockout(p, now, rng, events, m.name, power(them) / power(me)) ? "death" : "ko";
+    // A random mugging can put you in the clinic, but never kill you: death only comes
+    // from fights you choose.
+    summary.outcome = "ko";
+    hospitalize(p, now, rng, events);
+    const lost = Math.floor(p.cash * 0.5);
+    p.cash -= lost;
+    if (lost) events.push({ tone: "bad", text: `You wake up in the clinic. Your wallet is $${lost} lighter.` });
     return;
   }
   summary.outcome = "loss";
@@ -627,7 +655,7 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
   if (p.energy < job.energy) throw new GameError("You're too tired. Rest or eat something.");
   p.energy -= job.energy;
   p.jobCounts[job.id] = (p.jobCounts[job.id] ?? 0) + 1;
-  const falloff = 1 / (1 + (p.jobCounts[job.id] - 1) / BALANCE.repeatFalloff);
+  const falloff = practiceFalloff(p, job.id, now);
 
   if (job.risk) {
     const avg = job.risk.stats.reduce((s, k) => s + sv(p, k), 0) / job.risk.stats.length;
@@ -791,6 +819,7 @@ function joinPath(p: Player, path: PathId) {
   p.path = path;
   p.rank = 1;
   p.jobsSinceRank = 0;
+  careerBonus(p);
   // Choosing one path closes the others in this version.
   for (const o of p.offers) p.flags.push(`declined_${o}`);
   p.offers = [];
@@ -1013,7 +1042,7 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng, ct
       break;
     case "train":
       if (!["strength", "toughness", "agility"].includes(action.stat)) throw new GameError("Unknown exercise.");
-      train(p, action.stat, rng, events);
+      train(p, action.stat, rng, events, now);
       break;
     case "dismiss_application":
       if (p.application?.status !== "rejected") throw new GameError("Nothing to dismiss.");

@@ -111,6 +111,7 @@ export interface PublicProfile {
   read: string;
   danger: number;
   lastSeen: number;
+  online: boolean;
   canAttack: string | null;
   canVouch: string | null;
 }
@@ -136,7 +137,8 @@ export function profileFor(viewer: Player, p: Player, now: number): PublicProfil
     protected: now < protectedUntil(p),
     read,
     danger: GUT_READS.indexOf(read as (typeof GUT_READS)[number]),
-    lastSeen: p.tickAt,
+    lastSeen: p.seenAt ?? p.tickAt,
+    online: now - (p.seenAt ?? 0) < BALANCE.onlineMs,
     canAttack: attackBlock(viewer, p, now),
     canVouch,
   };

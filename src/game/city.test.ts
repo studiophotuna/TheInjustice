@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 import { BALANCE } from "./balance";
 import {
   advanceCity,
+  appointChief,
+  chiefSalary,
+  dismissChief,
+  eatSoup,
+  fundSoup,
   CITY_EPOCH,
   cityView,
   collectSalary,
@@ -157,6 +162,45 @@ describe("the mayor's powers", () => {
     expect(m.cash).toBe(100); // salary capped by the treasury
     expect(c.treasury).toBe(0);
     expect(() => collectSalary(c, m, LATER + 1000)).toThrow(/once a day/);
+  });
+
+  it("appoints a police chief who can order crackdowns and draws a salary", () => {
+    const m = mk("m", "Mayor");
+    const c = cityWithMayor(m);
+    c.treasury = 500;
+    const rookie = mk("r", "Rookie");
+    rookie.path = "police" as PathId;
+    rookie.rank = 2;
+    expect(() => appointChief(c, m, rookie, LATER)).toThrow(/Detective/);
+    const det = mk("d", "Dana");
+    det.path = "police" as PathId;
+    det.rank = 4;
+    appointChief(c, m, det, LATER);
+    expect(det.inbox![0].text).toMatch(/police chief/);
+    crackdown(c, det, LATER);
+    expect(c.crackdownUntil).toBeGreaterThan(LATER);
+    chiefSalary(c, det, LATER);
+    expect(det.cash).toBe(B.chiefSalary);
+    expect(() => crackdown(c, mk("x", "Random"), LATER + B.crackdownCooldownMs)).toThrow(/mayor or the police chief/);
+    dismissChief(c, m, LATER);
+    expect(c.chief).toBeNull();
+  });
+
+  it("funds a soup kitchen that feeds people with nothing, once every few hours", () => {
+    const m = mk("m", "Mayor");
+    const c = cityWithMayor(m);
+    c.treasury = 100;
+    fundSoup(c, m, 50, LATER);
+    expect(c.soupMeals).toBe(50 / B.mealCost);
+    expect(c.treasury).toBe(50);
+    const bum = mk("b", "Bum");
+    bum.energy = 0;
+    eatSoup(c, bum, LATER);
+    expect(bum.energy).toBe(B.mealEnergy);
+    expect(() => eatSoup(c, bum, LATER + 1000)).toThrow(/already ate/);
+    const rich = mk("r", "Rich");
+    rich.cash = 500;
+    expect(() => eatSoup(c, rich, LATER)).toThrow(/nothing/);
   });
 
   it("skimming is invisible until internal affairs audits the mayor", () => {

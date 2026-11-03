@@ -79,6 +79,12 @@ export interface Player {
   offers: PathId[];
   /** Completed jobs per job id (for diminishing returns and promotions). */
   jobCounts: Record<string, number>;
+  /** Last free meal from a city soup kitchen. */
+  lastSoupAt?: number;
+  /** Last time the player had the game open (for "online now"). */
+  seenAt?: number;
+  /** Recent repetitions of each job or exercise (fades over time), for diminishing returns. */
+  practice?: Record<string, { n: number; at: number }>;
   /**
    * Merit earned since the last promotion (named for old saves). Grows with how demanding
    * the work is and with casework; hidden from players.
@@ -413,6 +419,12 @@ export interface City {
   history: { term: number; name: string | null; votes: number; turnout: number; at: number }[];
   /** Public announcements from city hall. */
   log: { at: number; text: string }[];
+  /** Police officer the mayor appointed to run the department. */
+  chief?: { id: string; name: string; since: number } | null;
+  chiefPaidAt?: number;
+  /** Free meals the city has paid for, waiting to be served. */
+  soupMeals?: number;
+  mealsServed?: number;
   /** Server-only: money the mayor quietly took from the treasury. */
   skims: { mayorId: string; amount: number; at: number; exposed?: boolean }[];
 }

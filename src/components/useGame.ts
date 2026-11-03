@@ -205,6 +205,15 @@ export function useGame() {
     return () => clearInterval(t);
   }, []);
 
+  // Heartbeat: keeps you on the "online now" list and picks up what other players did
+  // (inbox, witness pop-ups, arrests) while the game is open.
+  useEffect(() => {
+    const beat = setInterval(() => {
+      if (document.visibilityState === "visible") refresh();
+    }, 120_000);
+    return () => clearInterval(beat);
+  }, [refresh]);
+
   const elapsed = Math.max(0, clock - receivedAt);
 
   const live = useMemo(() => {

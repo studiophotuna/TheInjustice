@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { BALANCE, maxEnergy } from "./balance";
 import { resolveFight } from "./combat";
-import { addMerit, applyAction, createPlayer, deathChance, jobMerit, tick } from "./engine";
+import { addMerit, applyAction, careerBonus, createPlayer, deathChance, jobMerit, practiceFalloff, tick } from "./engine";
+import { sv } from "./stats";
 import { JOB_BY_ID, JOBS } from "./content/jobs";
 import { GameError, type Player } from "./types";
 import { toView } from "./view";
@@ -444,6 +445,34 @@ describe("schools", () => {
       const hint = toView(p, T0).path?.promotion ?? "";
       expect(hint).not.toMatch(/\d/);
     }
+  });
+
+  it("joining a career and each promotion quietly boost that career's key stats", () => {
+    const p = applicant();
+    p.path = "police";
+    p.rank = 1;
+    const before = { t: sv(p, "toughness"), per: sv(p, "perception"), str: sv(p, "strength"), wits: sv(p, "wits") };
+    careerBonus(p);
+    expect(sv(p, "toughness")).toBeCloseTo(before.t + BALANCE.careerBonus.base, 5);
+    expect(sv(p, "strength")).toBeCloseTo(before.str + BALANCE.careerBonus.base, 5);
+    expect(sv(p, "wits")).toBe(before.wits); // not a police stat
+    // Higher ranks give bigger boosts, and nothing about it shows up in the player's view.
+    p.rank = 6;
+    const t6 = sv(p, "toughness");
+    careerBonus(p);
+    expect(sv(p, "toughness") - t6).toBeCloseTo(BALANCE.careerBonus.base + 5 * BALANCE.careerBonus.perRank, 5);
+    expect(JSON.stringify(toView(p, T0))).not.toMatch(/"stats"|toughness/);
+  });
+
+  it("repeating the same work teaches less, but rest restores it", () => {
+    const p = applicant();
+    const first = practiceFalloff(p, "cans", T0);
+    for (let i = 0; i < 30; i++) practiceFalloff(p, "cans", T0);
+    const tired = practiceFalloff(p, "cans", T0);
+    const rested = practiceFalloff(p, "cans", T0 + 4 * BALANCE.practiceHalfLifeMs);
+    expect(first).toBe(1);
+    expect(tired).toBeLessThan(0.5);
+    expect(rested).toBeGreaterThan(0.8);
   });
 
   it("casework earns merit in your own career only", () => {
