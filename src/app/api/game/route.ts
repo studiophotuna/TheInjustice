@@ -29,6 +29,11 @@ export async function GET() {
       store.leaderboard(10),
     ]);
     // Held past the trial deadline with no judge: the court clerk rules now.
+    if (player?.onBail) {
+      // Out on bail: the verdict comes when the trial's time is up.
+      await settleTrial(store, player.onBail, now).catch((e) => console.error(e));
+      player = await store.get(id.playerId!);
+    }
     if (player?.custodyCase && now >= (player.jailUntil ?? 0)) {
       await settleTrial(store, player.custodyCase, now).catch((e) => console.error(e));
       player = await store.get(id.playerId!);

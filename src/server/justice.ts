@@ -44,6 +44,7 @@ export async function settleTrial(
         prosecutor: get(t.prosecutor?.id),
         defender: get(t.defender?.id),
         culprit: get(c.culpritId),
+        bailPayer: get(t.bail?.payerId),
       },
       { judge: ruling ? get(ruling.judgeId) : null, verdict: ruling?.verdict, takeBribe: ruling?.takeBribe },
       now,

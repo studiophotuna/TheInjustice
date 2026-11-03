@@ -30,6 +30,7 @@ export function attackBlock(a: Player, t: Player, now: number): string | null {
   if (inHospital(a, now)) return "You're in the hospital.";
   if (inHospital(t, now)) return "They're already in the hospital. Even you have limits.";
   if (now < protectedUntil(t)) return "They're new in town. The street protects newcomers for a while.";
+  if (now < (t.immuneUntil ?? 0)) return "They just survived a fight. The street leaves them alone for a while.";
   if (now < protectedUntil(a)) return "You're still new in town. Attacking now would end your protection... and your reputation.";
   if (a.reputation > t.reputation * 3 + 15) return "Picking on someone that small would ruin your name.";
   const last = a.attackLog?.[t.id] ?? 0;
@@ -52,6 +53,9 @@ export function attackPlayer(a: Player, t: Player, now: number, rng: Rng): { eve
   if (block) throw new GameError(block);
   a.energy -= BALANCE.pvp.energy;
   a.attackLog = { ...(a.attackLog ?? {}), [t.id]: now };
+  // Starting a fight ends your own protection; surviving one grants it.
+  a.immuneUntil = 0;
+  t.immuneUntil = now + BALANCE.pvp.immunityMs;
   a.heat += BALANCE.pvp.heat * COUNTRY_BY_ID[countryOf(a)].heatMult;
 
   const res = resolveFight(playerFighter(a, BALANCE.hp.max), { ...playerFighter(t, BALANCE.hp.max), hp: t.hp }, rng);
@@ -191,7 +195,7 @@ export function crewLog(c: Crew, text: string, now: number) {
 
 export const policyOf = (c: Crew): CrewPolicy => c.policy ?? "request";
 
-function addMember(c: Crew, p: Player, now: number) {
+export function addMember(c: Crew, p: Player, now: number) {
   if (c.members.length >= BALANCE.crew.maxMembers) throw new GameError("That crew is full.");
   p.crewId = c.id;
   p.crewInvites = (p.crewInvites ?? []).filter((i) => i.crewId !== c.id);

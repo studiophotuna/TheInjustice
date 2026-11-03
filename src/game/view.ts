@@ -124,7 +124,11 @@ export interface PublicView {
   /** Crimes the player witnessed and can still report. */
   sightings: { caseId: string; text: string; until: number }[];
   /** Held for trial or serving a sentence. */
-  jail: { until: number; reason: string; custodyCase: string | null } | null;
+  jail: { until: number; reason: string; custodyCase: string | null; bail: number } | null;
+  /** Out on bail: the case still waiting for a verdict. */
+  onBail: string | null;
+  /** Nobody can attack or mug you until then (survived a fight). */
+  immuneUntil: number;
   properties: {
     id: string;
     name: string;
@@ -238,8 +242,10 @@ export function toView(p: Player, now: number): PublicView {
     inbox: { items: p.inbox ?? [], unread: (p.inbox ?? []).filter((n) => !n.read).length },
     jail:
       p.custodyCase || (p.jailUntil ?? 0) > now
-        ? { until: p.jailUntil ?? now, reason: p.jailReason ?? "Behind bars.", custodyCase: p.custodyCase ?? null }
+        ? { until: p.jailUntil ?? now, reason: p.jailReason ?? "Behind bars.", custodyCase: p.custodyCase ?? null, bail: p.bailAmount ?? 0 }
         : null,
+    onBail: p.onBail ?? null,
+    immuneUntil: (p.immuneUntil ?? 0) > now ? p.immuneUntil! : 0,
     sightings: (p.sightings ?? []).filter((s) => s.until > now).map((s) => ({ caseId: s.caseId, text: s.text, until: s.until })),
     properties: PROPERTIES.filter((pr) => pr.country === here || p.properties?.[pr.id]).map((pr) => ({
       id: pr.id,

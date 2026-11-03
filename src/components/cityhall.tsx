@@ -16,6 +16,7 @@ type CityData = {
     treasury: number;
     crackdown: number | null;
     chief: { name: string; you: boolean } | null;
+    recall: { signatures: number; needed: number; signed: boolean; canSign: string | null } | null;
     soupMeals: number;
     mealsServed: number;
     canSoup: string | null;
@@ -98,6 +99,19 @@ export function CityHall({ game }: { game: GameApi }) {
         </div>
       )}
       {c.crackdown && <p className="crackdown"><Siren size={14} /> Crackdown in effect for {until(c.crackdown)}. Extra patrols everywhere.</p>}
+
+      {c.recall && (c.recall.signatures > 0 || !c.recall.canSign) && (
+        <div className="hall-block recall">
+          <h4 className="crime-label"><Megaphone size={13} /> Recall petition</h4>
+          <p className="muted">
+            {c.recall.signatures} of {c.recall.needed} signatures to remove {c.mayor?.name} before the term ends.
+            {c.recall.signed ? " You signed." : ""}
+          </p>
+          {!c.recall.canSign && (
+            <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => act({ op: "recall" })}>Sign the recall</button>
+          )}
+        </div>
+      )}
 
       {/* Election */}
       <div className="hall-block">

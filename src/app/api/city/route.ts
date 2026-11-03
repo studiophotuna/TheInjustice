@@ -15,6 +15,7 @@ import {
   runForMayor,
   setBounty,
   setTax,
+  signRecall,
   skim,
   vote,
 } from "@/game/city";
@@ -129,6 +130,9 @@ export async function POST(req: Request) {
           break;
         case "fund_soup":
           out = fundSoup(c, p, Number(b.amount), now);
+          break;
+        case "recall":
+          out = signRecall(c, p, now);
           break;
         case "soup":
           out = eatSoup(c, p, now);

@@ -36,7 +36,7 @@ import {
   reportSighting,
   suspectsFor,
 } from "@/game/crime";
-import { arrest, isDetective, isJudge, isLawyer, joinTrial, offerBribe, trialView } from "@/game/justice";
+import { arrest, isDetective, isJudge, isLawyer, joinTrial, offerBribe, postBail, trialView } from "@/game/justice";
 import { settleTrial } from "@/server/justice";
 import {
   answerPayoff,
@@ -53,6 +53,7 @@ import {
 } from "@/game/racket";
 import { rankTitle } from "@/game/content/paths";
 import { crackdownOn } from "@/game/city";
+import { breakoutView, cancelBreakout, executeBreakout, joinBreakout, planBlock, planBreakout, serving } from "@/game/breakout";
 import {
   coldCaseView,
   depositView,
@@ -108,6 +109,24 @@ function crewView(c: Crew, viewer: Player) {
           requested: c.requests.some((r) => r.id === viewer.id),
           invited: (c.invites ?? []).some((i) => i.id === viewer.id),
         }),
+  };
+}
+
+/** Crewmates serving time, and the crew's breakout plan, for a member of that crew. */
+async function crewJailView(store: ReturnType<typeof getStore>, crew: Crew, viewer: Player, now: number) {
+  const mates = (await Promise.all(crew.members.filter((m) => m.id !== viewer.id).map((m) => store.get(m.id)))).filter(
+    (m): m is Player => !!m,
+  );
+  mates.forEach((m) => tick(m, now));
+  const city = await store.getCity(countryOf(viewer));
+  const crack = crackdownOn(city, now);
+  const teamIds = new Set(crew.breakout?.team.map((t) => t.id) ?? []);
+  const team = [viewer, ...mates].filter((m) => teamIds.has(m.id));
+  return {
+    jailed: mates
+      .filter((m) => serving(m, now))
+      .map((m) => ({ id: m.id, name: m.name, until: m.jailUntil ?? now, reason: m.jailReason ?? "", canPlan: planBlock(crew, viewer, m, now) })),
+    plan: breakoutView(crew, viewer, team, now, crack),
   };
 }
 
@@ -248,6 +267,7 @@ export async function GET(req: Request) {
       foundBlock: crewFoundBlock(p),
       crews: crews.map((c) => crewView(c, p)),
       myCrew: myCrew ? crewView(myCrew, p) : null,
+      breakout: myCrew ? await crewJailView(store, myCrew, p, now) : null,
       channels: channelsFor(p),
       blocked: p.blocked ?? [],
       readsCases: !canReadCases(p),
@@ -457,6 +477,24 @@ export async function POST(req: Request) {
           tick(s, now);
           const out = offerBribe(s, c, amount);
           await tx.putPlayer(s);
+          await tx.putCase(c);
+          return out;
+        });
+        break;
+      }
+      case "bail": {
+        const caseId = str(b.caseId);
+        events = await store.transaction(async (tx) => {
+          const c = await tx.getCase(caseId);
+          if (!c?.trial) throw new GameError("There's no one to bail out.");
+          const [payer, suspect] = await tx.getPlayers([playerId, c.trial.suspectId]);
+          if (!payer) throw new GameError("Create a character first.");
+          if (!suspect) throw new GameError("They're not around anymore.");
+          tick(payer, now);
+          const s = suspect.id === payer.id ? payer : suspect;
+          const out = postBail(payer, s, c, now);
+          await tx.putPlayer(payer);
+          if (s !== payer) await tx.putPlayer(s);
           await tx.putCase(c);
           return out;
         });
@@ -760,6 +798,44 @@ export async function POST(req: Request) {
           else withdrawFromVault(crew, p, amount, now);
           await tx.putCrew(crew);
           await tx.putPlayer(p);
+        });
+        break;
+      }
+      case "breakout_plan":
+      case "breakout_join":
+      case "breakout_cancel":
+      case "breakout_go": {
+        const self = await store.get(playerId);
+        if (!self?.crewId) throw new GameError("You're not in a crew.");
+        const crewNow = await store.getCrew(self.crewId);
+        if (!crewNow) throw new GameError("Your crew is gone.");
+        const city = await store.getCity(countryOf(self));
+        const crack = crackdownOn(city, now);
+        // Lock everyone involved: you, the prisoner, and the team.
+        const targetId = b.op === "breakout_plan" ? str(b.playerId) : crewNow.breakout?.targetId;
+        const ids = [playerId, ...(targetId ? [targetId] : []), ...(crewNow.breakout?.team.map((t) => t.id) ?? [])];
+        events = await store.transaction(async (tx) => {
+          const rows = await tx.getPlayers([...new Set(ids)]);
+          const byId = new Map(rows.filter((r): r is Player => !!r).map((r) => [r.id, r]));
+          byId.forEach((r) => tick(r, now));
+          const me = byId.get(playerId);
+          if (!me) throw new GameError("Create a character first.");
+          const crew = await tx.getCrew(crewNow.id);
+          if (!crew) throw new GameError("Your crew is gone.");
+          let out: GameEvent[];
+          if (b.op === "breakout_plan") out = planBreakout(crew, me, byId.get(targetId!) ?? null, now);
+          else if (b.op === "breakout_join") out = joinBreakout(crew, me, now);
+          else if (b.op === "breakout_cancel") out = cancelBreakout(crew, me, now);
+          else {
+            if (!crew.breakout) throw new GameError("There's no plan.");
+            const target = byId.get(crew.breakout.targetId);
+            if (!target) throw new GameError("They're not around anymore.");
+            const team = crew.breakout.team.map((t) => byId.get(t.id)).filter((x): x is Player => !!x);
+            out = executeBreakout(crew, me, team, target, now, Math.random, crack);
+          }
+          for (const r of byId.values()) await tx.putPlayer(r);
+          await tx.putCrew(crew);
+          return out;
         });
         break;
       }

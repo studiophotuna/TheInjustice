@@ -202,6 +202,7 @@ export function crimeBlock(a: Player, t: Player, kind: CrimeKind, now: number): 
   if (inHospital(a, now)) return "You're in the hospital.";
   if (inHospital(t, now)) return "They're in the clinic, behind a security guard.";
   if (now < protectedUntil(t)) return "They're new in town. The street protects newcomers for a while.";
+  if (kind === "mug" && now < (t.immuneUntil ?? 0)) return "They just survived a fight. The street leaves them alone for a while.";
   if (now < protectedUntil(a)) return "You're still new in town. Learn the streets first.";
   if (a.reputation > t.reputation * 3 + 15) return "Robbing someone that small would ruin your name.";
   if (now - (a.attackLog?.[`crime:${t.id}`] ?? 0) < BALANCE.crime.cooldownMs) return "They'd recognize you. Give it time.";
@@ -260,6 +261,11 @@ export function commitCrime(
   const def = CRIMES[kind];
   a.energy -= def.energy;
   a.attackLog = { ...(a.attackLog ?? {}), [`crime:${t.id}`]: now };
+  if (kind === "mug") {
+    // A mugging is an attack: it ends the mugger's protection and protects the survivor.
+    a.immuneUntil = 0;
+    t.immuneUntil = now + BALANCE.pvp.immunityMs;
+  }
   const crack = ctx.crackdown ? BALANCE.city.crackdownHeat : 1;
   a.heat += def.heat * COUNTRY_BY_ID[countryOf(a)].heatMult * crack;
   shiftIntegrity(a, def.integrity);

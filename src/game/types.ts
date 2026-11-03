@@ -79,6 +79,12 @@ export interface Player {
   offers: PathId[];
   /** Completed jobs per job id (for diminishing returns and promotions). */
   jobCounts: Record<string, number>;
+  /** Survived an attack: nobody can attack or mug them until this time. */
+  immuneUntil?: number;
+  /** Out on bail while their trial (this case) is pending. */
+  onBail?: string | null;
+  /** Bail set at the arrest (shown on the custody card). */
+  bailAmount?: number;
   /** Last free meal from a city soup kitchen. */
   lastSoupAt?: number;
   /** Last time the player had the game open (for "online now"). */
@@ -236,6 +242,8 @@ export interface Trial {
   evidence: number;
   prosecutor?: CourtParty;
   defender?: CourtParty;
+  /** Someone posted bail: the suspect waits for the verdict outside. Refunded at the verdict. */
+  bail?: { payerId: string; payerName: string; amount: number };
   /** Money the suspect slipped into an envelope for the judge (held until the verdict). */
   bribe?: number;
   verdict?: Verdict;
@@ -274,6 +282,18 @@ export interface Crew {
   invites?: { id: string; name: string; at: number }[];
   vault: number;
   log: { at: number; text: string }[];
+  createdAt: number;
+  /** A planned prison break for a jailed member (one at a time). */
+  breakout?: Breakout | null;
+}
+
+export interface Breakout {
+  targetId: string;
+  targetName: string;
+  country: CountryId;
+  plannerId: string;
+  /** Crew members in on it (the planner first). */
+  team: { id: string; name: string }[];
   createdAt: number;
 }
 
@@ -419,6 +439,8 @@ export interface City {
   history: { term: number; name: string | null; votes: number; turnout: number; at: number }[];
   /** Public announcements from city hall. */
   log: { at: number; text: string }[];
+  /** Server-only: residents who signed the recall petition against the current mayor. */
+  recall?: string[];
   /** Police officer the mayor appointed to run the department. */
   chief?: { id: string; name: string; since: number } | null;
   chiefPaidAt?: number;

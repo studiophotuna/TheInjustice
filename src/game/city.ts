@@ -75,6 +75,7 @@ export function advanceCity(c: City, now: number): boolean {
     c.history = [{ term: c.term, name: winner?.name ?? null, votes: winner ? counts.get(winner.id)! : 0, turnout, at: ended }, ...c.history].slice(0, 10);
     c.candidates = [];
     c.votes = {};
+    c.recall = [];
     c.term += 1;
   }
   return changed;
@@ -200,6 +201,42 @@ export function skim(c: City, p: Player, amount: number, now: number): GameEvent
   return [{ tone: "info", text: `$${a} quietly moves from the treasury to your pocket. The books will need some creativity.` }];
 }
 
+// ── Recall ─────────────────────────────────────────────────────────────────
+
+/** Signatures needed to remove the mayor: half the last election's turnout, at least a few. */
+export function recallNeeded(c: City): number {
+  return Math.max(B.recallMin, Math.ceil((c.history[0]?.turnout ?? 0) * B.recallShare));
+}
+
+export function recallBlock(c: City, p: Player, now: number): string | null {
+  if (!c.mayor) return "There's no mayor to recall.";
+  if (isMayor(c, p)) return "You can't sign a petition against yourself.";
+  if (countryOf(p) !== c.country) return "Only people who live here can sign.";
+  if (now < protectedUntil(p)) return "You're too new in town to sign.";
+  if (c.recall?.includes(p.id)) return "You already signed.";
+  return null;
+}
+
+/** A resident signs the recall. Enough signatures and the mayor is out; a special election opens. */
+export function signRecall(c: City, p: Player, now: number): GameEvent[] {
+  const block = recallBlock(c, p, now);
+  if (block) throw new GameError(block);
+  c.recall = [...(c.recall ?? []), p.id];
+  const needed = recallNeeded(c);
+  if (c.recall.length >= needed) {
+    const name = c.mayor!.name;
+    announce(c, `The recall petition reached ${needed} signatures. ${name} is out of office; a special election is open.`, now);
+    c.mayor = null;
+    c.chief = null;
+    c.candidates = [];
+    c.votes = {};
+    c.recall = [];
+    return [{ tone: "good", text: `Your signature was the last one needed. ${name} is out.` }];
+  }
+  if (c.recall.length === 1) announce(c, `A recall petition against Mayor ${c.mayor!.name} is going around.`, now);
+  return [{ tone: "good", text: `You signed the recall petition (${c.recall.length} of ${needed}).` }];
+}
+
 // ── Police chief ───────────────────────────────────────────────────────────
 
 export function appointChief(c: City, mayor: Player, officer: Player, now: number): GameEvent[] {
@@ -298,6 +335,7 @@ export function cityView(c: City, p: Player, now: number) {
     treasury: c.treasury,
     crackdown: crackdownOn(c, now) ? c.crackdownUntil : null,
     chief: c.chief ? { name: c.chief.name, you: isChief(c, p) } : null,
+    recall: c.mayor ? { signatures: c.recall?.length ?? 0, needed: recallNeeded(c), signed: !!c.recall?.includes(p.id), canSign: recallBlock(c, p, now) } : null,
     soupMeals: c.soupMeals ?? 0,
     mealsServed: c.mealsServed ?? 0,
     canSoup: soupBlock(c, p, now),

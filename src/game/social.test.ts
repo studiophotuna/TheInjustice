@@ -68,7 +68,25 @@ describe("player vs player", () => {
     expect(t.inbox?.[0].text).toMatch(/Attacker attacked you/);
     expect(t.inbox?.[0].fromId).toBe("a");
     expect(t.dead ?? null).toBeNull();
-    expect(attackBlock(a, t, LATER + 1000)).toMatch(/cool down|hospital/);
+    expect(attackBlock(a, t, LATER + 1000)).toMatch(/cool down|hospital|survived/);
+  });
+
+  it("surviving an attack protects you from attacks for four hours; attacking ends your own protection", () => {
+    const { a, t } = pair();
+    a.stats.strength = a.stats.toughness = a.stats.agility = 400;
+    attackPlayer(a, t, LATER, seeded(4));
+    const third = createPlayer("c", "Third", T0);
+    tick(third, LATER);
+    third.reputation = t.reputation;
+    expect(attackBlock(third, t, LATER + 60_000)).toMatch(/survived a fight/);
+    t.hp = 100;
+    t.hospitalUntil = 0;
+    expect(attackBlock(third, t, LATER + BALANCE.pvp.immunityMs + 1)).toBeNull();
+    // The survivor attacks someone: their protection ends right away.
+    t.stats.strength = t.stats.toughness = t.stats.agility = 400;
+    t.energy = 50;
+    attackPlayer(t, third, LATER + 60_000, seeded(4));
+    expect(t.immuneUntil).toBe(0);
   });
 
   it("losing an attack hurts the attacker and rewards the defender", () => {

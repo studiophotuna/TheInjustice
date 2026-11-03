@@ -135,6 +135,19 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
 - **Police chief and soup kitchen**: the mayor appoints a Detective+ as police chief (can
   order crackdowns, paid daily from the treasury) and pays for free meals that feed players
   with almost nothing (+energy, once every 6 hours).
+- **Prison breaks**: when a crew member is serving a sentence, any crewmate can plan a
+  breakout, others join (up to 5), and the planner gives the signal. The odds depend on the
+  team (more people; bolder, quicker, sharper, stronger members) and drop in strict countries
+  and during crackdowns. The crew only hears the odds as words ("slim", "decent"…). Success
+  frees the prisoner (everyone gains heat); failure puts the whole team in cells and adds time
+  to the sentence.
+- **Protection after a fight**: survive an attack or a mugging and nobody can attack or mug you
+  for 4 hours (the HUD shows "Protected"). Attacking someone ends your own protection.
+- **Bail**: anyone (the suspect too) can post bail for someone held for trial: 3× what was
+  stolen, at least $100, from the bank. The suspect waits outside; the trial still happens,
+  and the money goes back to whoever paid it at the verdict.
+- **Recall**: residents can sign a petition against the mayor; enough signatures (half the
+  last election's turnout, at least 3) remove them and open a special election.
 - **Businesses**: buy one in any country (paid from the bank) and collect hourly income.
 - **Account recovery**: a one-time recovery code is shown at sign-up; use it with
   "Forgot password?" to set a new password. Players can generate a new code in the Me tab.

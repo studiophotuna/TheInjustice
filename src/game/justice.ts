@@ -68,6 +68,7 @@ export function arrest(o: Player, suspect: Player, c: CaseFile, pool: { player: 
   };
   suspect.custodyCase = c.id;
   suspect.jailUntil = deadline;
+  suspect.bailAmount = bailFor(c);
   suspect.jailReason = `Held for trial: the ${CRIMES[c.kind].name.toLowerCase()} in ${c.district} (case #${c.id}).`;
   notify(
     suspect,
@@ -126,7 +127,46 @@ export function judgeBlock(j: Player, c: CaseFile): string | null {
   return null;
 }
 
+/** Bail scales with what was stolen. */
+export function bailFor(c: CaseFile): number {
+  return Math.max(BALANCE.bail.min, c.amount * BALANCE.bail.multiplier);
+}
+
+export function bailBlock(payer: Player, c: CaseFile): string | null {
+  const t = c.trial;
+  if (!t || t.verdict) return "There's no one to bail out.";
+  if (t.bail) return "Bail is already paid.";
+  if (countryOf(payer) !== c.country) return "You have to be at the courthouse.";
+  if (!payer.hasBankAccount || payer.bank < bailFor(c)) return `Bail is $${bailFor(c)}, paid from the bank.`;
+  return null;
+}
+
+/** Anyone (the suspect too) pays bail; the suspect waits for the verdict outside. */
+export function postBail(payer: Player, suspect: Player, c: CaseFile, now: number): GameEvent[] {
+  const block = bailBlock(payer, c);
+  if (block) throw new GameError(block);
+  if (suspect.custodyCase !== c.id) throw new GameError("They're not being held for this case.");
+  const amount = bailFor(c);
+  payer.bank -= amount;
+  c.trial!.bail = { payerId: payer.id, payerName: payer.name, amount };
+  suspect.custodyCase = null;
+  suspect.onBail = c.id;
+  suspect.jailUntil = now;
+  suspect.jailReason = null;
+  if (payer.id !== suspect.id) notify(suspect, `${payer.name} posted your $${amount} bail. You're out until the verdict.`, "good", payer, now);
+  return [
+    {
+      tone: "good",
+      text: payer.id === suspect.id
+        ? `You post $${amount} bail and walk out. The trial still goes on; you'll get the money back at the verdict.`
+        : `You post $${amount} bail for ${suspect.name}. You'll get it back at the verdict.`,
+    },
+  ];
+}
+
 export interface TrialParties {
+  /** Whoever posted bail, to refund. */
+  bailPayer?: Player | null;
   suspect: Player | null;
   victim: Player | null;
   officer: Player | null;
@@ -139,7 +179,7 @@ export interface TrialParties {
 /** Ids of everyone a verdict touches (to load and lock them together). */
 export function trialPartyIds(c: CaseFile): string[] {
   const t = c.trial!;
-  return [...new Set([t.suspectId, c.victimId, t.officerId, t.prosecutor?.id, t.defender?.id, c.culpritId].filter((x): x is string => !!x))];
+  return [...new Set([t.suspectId, c.victimId, t.officerId, t.prosecutor?.id, t.defender?.id, c.culpritId, t.bail?.payerId].filter((x): x is string => !!x))];
 }
 
 /**
@@ -189,6 +229,8 @@ export function decideTrial(
 
   if (s) {
     s.custodyCase = null;
+    s.onBail = null;
+    s.bailAmount = 0;
     if (verdict === "guilty") {
       const sentence = Math.round(BALANCE.justice.sentenceMs[c.kind] * COUNTRY_BY_ID[c.country].heatMult);
       t.sentenceMs = sentence;
@@ -208,6 +250,12 @@ export function decideTrial(
       s.reputation += 1;
       notify(s, `Not guilty, says ${t.decidedBy}. You walk out of the courthouse a free person.`, "good", undefined, now);
     }
+  }
+
+  // Bail goes back to whoever paid it, whatever the verdict.
+  if (t.bail && parties.bailPayer) {
+    parties.bailPayer.bank += t.bail.amount;
+    if (parties.bailPayer.id !== s?.id) notify(parties.bailPayer, `Case #${c.id} is closed. Your $${t.bail.amount} bail comes back to your bank.`, "info", undefined, now);
   }
 
   const v = parties.victim;
@@ -282,6 +330,9 @@ export function trialView(c: CaseFile, viewer: Player, now: number) {
     sentenceMin: t.sentenceMs ? Math.round(t.sentenceMs / 60_000) : null,
     restitution: t.restitution ?? null,
     envelope: !decided && isJudge(viewer) && !judgeBlock(viewer, c) ? t.bribe ?? 0 : 0,
+    bail: t.bail ? { payerName: t.bail.payerName, amount: t.bail.amount } : null,
+    bailAmount: bailFor(c),
+    canBail: decided ? "Closed." : bailBlock(viewer, c),
     canProsecute: decided ? "Closed." : joinBlock(viewer, c, "prosecutor"),
     canDefend: decided ? "Closed." : joinBlock(viewer, c, "defender"),
     canJudge: decided ? "Closed." : judgeBlock(viewer, c),

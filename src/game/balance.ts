@@ -58,6 +58,24 @@ export const BALANCE = {
     /** Share of the loser's cash on hand the winner takes. */
     cashShare: 0.1,
     heat: 8,
+    /** Survive an attack or mugging and the street leaves you alone this long. */
+    immunityMs: 4 * 60 * 60_000,
+  },
+  /** Bail = the stolen amount × this, at least `min`; refunded to whoever paid at the verdict. */
+  bail: { multiplier: 3, min: 100 },
+  /** Crew prison breaks for members serving a sentence. */
+  breakout: {
+    joinEnergy: 15,
+    /** Base odds, plus each member's skill, plus a bonus per extra member, capped. */
+    base: 0.15,
+    perMember: 0.06,
+    maxTeam: 5,
+    maxOdds: 0.85,
+    /** Strict countries and crackdowns make it harder. */
+    crackdownPenalty: 0.15,
+    failJailMs: 20 * 60_000,
+    failExtraMs: 10 * 60_000,
+    heat: 15,
   },
   vouch: { minRank: 5, cooldownMs: 24 * 60 * 60_000 },
   /** Only street bosses can found crews: Mafia at Capo (rank 4) or above. */
@@ -133,6 +151,9 @@ export const BALANCE = {
     mealEnergy: 15,
     soupMaxMoney: 100,
     soupEveryMs: 6 * 60 * 60_000,
+    /** Recall: signatures needed = max(min, share × last election's turnout). */
+    recallMin: 3,
+    recallShare: 0.5,
   },
   /** Seen within this long counts as online. */
   onlineMs: 5 * 60_000,

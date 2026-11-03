@@ -747,3 +747,5 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 .mayor-office select { padding: 7px 10px; border-radius: 10px; border: 1px solid var(--border); background: rgba(0, 0, 0, 0.35); color: var(--text); max-width: 100%; }
 .soup-btn { justify-self: start; margin-top: 4px; }
 @media (min-width: 700px) { .hall-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.breakout { border-color: rgba(255, 61, 90, 0.35); }
+.breakout p { margin: 0 0 6px; }

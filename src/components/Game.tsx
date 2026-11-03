@@ -22,6 +22,7 @@ import {
   UserRound,
   X,
   Zap,
+  ShieldCheck,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { FightSummary } from "@/game/types";
@@ -326,6 +327,12 @@ function Hud({ view, live, onProfile }: { view: PublicView; live: NonNullable<Ga
         <span className="chip"><Star size={12} /> Rep {view.reputation}</span>
         <span className="chip" style={{ color: view.location.color }}><MapPin size={12} /> {view.location.city}</span>
         <span className="chip"><Home size={12} /> {view.housing}</span>
+        {view.immuneUntil > Date.now() && (
+          <span className="chip chip-green" title="You survived a fight. Nobody can attack or mug you for a while. Attacking someone ends it.">
+            <ShieldCheck size={12} /> Protected {fmt(view.immuneUntil - Date.now())}
+          </span>
+        )}
+        {view.onBail && <span className="chip chip-gold">On bail</span>}
       </div>
     </header>
   );

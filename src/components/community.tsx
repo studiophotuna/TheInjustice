@@ -68,6 +68,9 @@ type TrialCard = {
   canDefend: string | null;
   canJudge: string | null;
   overdue: boolean;
+  bail: { payerName: string; amount: number } | null;
+  bailAmount: number;
+  canBail: string | null;
 };
 type Patient = { caseId: string; crime: string; victimName: string; district: string; at: number; canExamine: string | null };
 type Deposit = { caseId: string; account: string; amount: number; at: number; minutesAfter: number; crime: string; district: string; canReview: string | null };
@@ -141,6 +144,18 @@ type Hub = {
   /** Why the viewer can't found a crew, or null. */
   foundBlock: string | null;
   readsCases: boolean;
+  breakout: {
+    jailed: { id: string; name: string; until: number; reason: string; canPlan: string | null }[];
+    plan: {
+      targetName: string;
+      plannerName: string;
+      team: string[];
+      odds: string;
+      isPlanner: boolean;
+      canJoin: string | null;
+      canCancel: boolean;
+    } | null;
+  } | null;
 };
 
 const POLICIES = [
@@ -390,6 +405,42 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
             </div>
           </div>
         </section>
+        {hub.breakout && (hub.breakout.plan || hub.breakout.jailed.length > 0) && (
+          <section className="card breakout">
+            <h3 className="card-title"><Lock size={16} /> Prison break</h3>
+            {hub.breakout.plan ? (
+              <>
+                <p>
+                  <b>{hub.breakout.plan.plannerName}</b> is planning to break <b>{hub.breakout.plan.targetName}</b> out.
+                </p>
+                <p className="muted">In on it: {hub.breakout.plan.team.join(", ")}. The crew says the odds are <b>{hub.breakout.plan.odds}</b>.</p>
+                <div className="row wrap">
+                  {!hub.breakout.plan.canJoin && (
+                    <button className="btn btn-primary btn-sm" disabled={game.busy} onClick={() => social({ op: "breakout_join" })}>Get in on it</button>
+                  )}
+                  {hub.breakout.plan.isPlanner && (
+                    <button className="btn btn-danger btn-sm" disabled={game.busy} onClick={() => social({ op: "breakout_go" })}>Give the signal</button>
+                  )}
+                  {hub.breakout.plan.canCancel && (
+                    <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: "breakout_cancel" })}>Call it off</button>
+                  )}
+                </div>
+                <p className="fine muted">More people, and sharper, bolder crews, make it likelier. If it fails, everyone in on it lands in a cell and they add time to the sentence.</p>
+              </>
+            ) : (
+              <ul className="officials">
+                {hub.breakout.jailed.map((m) => (
+                  <li key={m.id}>
+                    <span><b>{m.name}</b> <span className="muted">· free in {Math.max(1, Math.ceil((m.until - Date.now()) / 60000))} min</span></span>
+                    {!m.canPlan && (
+                      <button className="btn btn-danger btn-xs" disabled={game.busy} onClick={() => social({ op: "breakout_plan", playerId: m.id })}>Plan a breakout</button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
         <section className="card">
           <h3 className="card-title"><Vault size={16} /> Crew vault</h3>
           <p className="big-number">${(c.vault ?? 0).toLocaleString()}</p>
@@ -845,6 +896,11 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
               <ul className="tips">
                 {t.clues.map((x, i) => <li key={i}>{x}</li>)}
               </ul>
+              {t.bail ? (
+                <p className="fine">Out on ${t.bail.amount} bail, posted by {t.bail.payerName}.</p>
+              ) : !t.canBail ? (
+                <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => act({ op: "bail", caseId: t.caseId })}>Post bail (${t.bailAmount})</button>
+              ) : null}
               <div className="bench">
                 <span><span className="crime-label">Prosecution</span> {t.prosecutor ?? "—"}</span>
                 <span><span className="crime-label">Defense</span> {t.defender ?? "—"}</span>
@@ -1007,6 +1063,11 @@ export function JailCard({ game }: { game: GameApi }) {
             : "The verdict is coming."
           : `Free in ${Math.ceil(left / 60000)} min. No jobs, crimes or travel until then.`}
       </p>
+      {jail.custodyCase && jail.bail > 0 && (
+        <button className="btn btn-primary btn-sm" disabled={game.busy || game.view!.bank < jail.bail} onClick={() => game.social({ op: "bail", caseId: jail.custodyCase })}>
+          Post your own bail (${jail.bail} from the bank)
+        </button>
+      )}
       {jail.custodyCase && (
         <form
           className="row wrap bribe"

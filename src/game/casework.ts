@@ -121,6 +121,7 @@ export function huntBlock(v: Player, c: CaseFile, suspect: Player | null, eligib
   if (inJail(suspect, now)) return "They're behind bars already.";
   if (inHospital(suspect, now)) return "They're in the clinic.";
   if (now < protectedUntil(suspect)) return "They're new in town.";
+  if (now < (suspect.immuneUntil ?? 0)) return "They just survived a fight. Wait a few hours.";
   if (inJail(v, now) || inHospital(v, now)) return "You're in no shape to hunt.";
   if (v.energy < C.vigilante.energy) return "You're too tired.";
   if (v.hp < 20) return "You're too hurt.";
@@ -142,6 +143,8 @@ export function hunt(
   const block = huntBlock(v, c, suspect, eligible, now);
   if (block) throw new GameError(block);
   v.energy -= C.vigilante.energy;
+  v.immuneUntil = 0;
+  suspect.immuneUntil = now + BALANCE.pvp.immunityMs;
   v.heat += C.vigilante.heat * COUNTRY_BY_ID[c.country].heatMult;
 
   const res = resolveFight(playerFighter(v, 100), { ...playerFighter(suspect, 100), hp: suspect.hp }, rng);
