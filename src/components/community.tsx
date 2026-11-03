@@ -178,9 +178,15 @@ function ago(t: number) {
 
 export function CommunityTab({ game }: { game: GameApi }) {
   const view = game.view!;
-  const [section, setSection] = useState<"people" | "cases" | "chat" | "crew" | "inbox">(
-    () => (game.view!.sightings.length ? "cases" : "people"),
+  const jailed = !!game.view!.jail;
+  const [section, setSection] = useState<"people" | "yard" | "cases" | "chat" | "crew" | "inbox">(
+    () => (game.view!.jail ? "yard" : game.view!.sightings.length ? "cases" : "people"),
   );
+  // Locked up: the yard replaces the street. Released: back to the street.
+  useEffect(() => {
+    if (jailed && section === "people") setSection("yard");
+    if (!jailed && section === "yard") setSection("people");
+  }, [jailed, section]);
   const [hub, setHub] = useState<Hub | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -217,7 +223,7 @@ export function CommunityTab({ game }: { game: GameApi }) {
       <div className="segmented community-tabs">
         {(
           [
-            ["people", "People", Users],
+            jailed ? (["yard", "Yard", Lock] as const) : (["people", "People", Users] as const),
             ["cases", "Cases", Siren],
             ["chat", "Chat", MessageSquare],
             ["crew", "Crew", Shield],
@@ -235,6 +241,7 @@ export function CommunityTab({ game }: { game: GameApi }) {
       {section === "people" && <OnlineNow game={game} />}
       {section === "people" && <People game={game} hub={hub} social={social} />}
       {section === "cases" && <CasesPanel game={game} hub={hub} />}
+      {section === "yard" && <Yard game={game} hub={hub} social={social} />}
       {section === "chat" && hub && <Chat game={game} hub={hub} />}
       {section === "crew" && <CrewPanel game={game} hub={hub} social={social} />}
       {section === "inbox" && <InboxPanel game={game} social={social} />}
@@ -318,11 +325,11 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
 }
 
 const CHANNEL_NAME = (c: string, city: string, crewTag?: string) =>
-  c === "global" ? "Global" : c.startsWith("country:") ? city : `Crew ${crewTag ? `[${crewTag}]` : ""}`;
+  c === "global" ? "Global" : c.startsWith("country:") ? city : c.startsWith("yard:") ? "The yard" : `Crew ${crewTag ? `[${crewTag}]` : ""}`;
 
-function Chat({ game, hub }: { game: GameApi; hub: Hub }) {
+function Chat({ game, hub, initial }: { game: GameApi; hub: Hub; initial?: string }) {
   const view = game.view!;
-  const [channel, setChannel] = useState(hub.channels[1] ?? "global");
+  const [channel, setChannel] = useState(initial ?? hub.channels[1] ?? "global");
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
@@ -1063,6 +1070,9 @@ export function JailCard({ game }: { game: GameApi }) {
             : "The verdict is coming."
           : `Free in ${Math.ceil(left / 60000)} min. No jobs, crimes or travel until then.`}
       </p>
+      <button className="btn btn-ghost btn-sm" onClick={() => window.dispatchEvent(new CustomEvent("injustice:go", { detail: "tab:people" }))}>
+        Go to the yard
+      </button>
       {jail.custodyCase && jail.bail > 0 && (
         <button className="btn btn-primary btn-sm" disabled={game.busy || game.view!.bank < jail.bail} onClick={() => game.social({ op: "bail", caseId: jail.custodyCase })}>
           Post your own bail (${jail.bail} from the bank)
@@ -1082,5 +1092,82 @@ export function JailCard({ game }: { game: GameApi }) {
         </form>
       )}
     </section>
+  );
+}
+
+type Inmate = {
+  id: string;
+  name: string;
+  crewTag: string | null;
+  path: string | null;
+  status: string;
+  freeIn: number;
+  canFight: string | null;
+  canInvite: boolean;
+};
+
+/** The prison yard: inmates, fights for respect, shifts that shorten a sentence, yard chat. */
+function Yard({ game, hub, social }: { game: GameApi; hub: Hub | null; social: (b: Record<string, unknown>) => Promise<unknown> }) {
+  const view = game.view!;
+  const [inmates, setInmates] = useState<Inmate[] | null>(null);
+  const [channel, setChannel] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    const res = await fetch("/api/community?yard=1", { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      setInmates(data.inmates);
+      setChannel(data.channel ?? null);
+    }
+  }, []);
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const act = async (body: Record<string, unknown>) => {
+    if (await social(body)) load();
+  };
+
+  return (
+    <div className="stack">
+      <section className="card yard">
+        <div className="bars" aria-hidden />
+        <h3 className="card-title"><Lock size={16} /> The yard · {view.location.city}</h3>
+        <p className="muted">
+          Everyone doing time in {view.location.city} ends up here. Work a shift for a few dollars and time off your
+          sentence, or earn some respect the hard way.
+        </p>
+        <button className="btn btn-primary btn-sm" disabled={game.busy} onClick={() => act({ op: "yard_work" })}>
+          Work a prison shift
+        </button>
+      </section>
+
+      <section className="card">
+        <h3 className="card-title"><Users size={16} /> Inmates</h3>
+        {!inmates && <p className="muted">Looking around the yard…</p>}
+        {inmates && inmates.length === 0 && <p className="muted">You have the yard to yourself. For now.</p>}
+        <ul className="officials">
+          {inmates?.map((m) => (
+            <li key={m.id}>
+              <span>
+                <b style={{ color: m.path ? PATH_LOOKS[m.path]?.rim : undefined }}>{m.name}</b>
+                {m.crewTag && <span className="crew-tag"> [{m.crewTag}]</span>}
+                <span className="muted"> · {m.status}{m.freeIn ? `, out in ${Math.max(1, Math.ceil(m.freeIn / 60000))}m` : ""}</span>
+              </span>
+              <span className="row">
+                {m.canInvite && (
+                  <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => act({ op: "crew_invite", playerId: m.id })}>Recruit</button>
+                )}
+                <button className="btn btn-danger btn-xs" disabled={game.busy || !!m.canFight} title={m.canFight ?? ""} onClick={() => act({ op: "yard_fight", targetId: m.id })}>
+                  <Swords size={12} /> Fight
+                </button>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {hub && channel && hub.channels.includes(channel) && <Chat game={game} hub={hub} initial={channel} />}
+    </div>
   );
 }

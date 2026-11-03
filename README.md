@@ -141,6 +141,10 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
   and during crackdowns. The crew only hears the odds as words ("slim", "decent"…). Success
   frees the prisoner (everyone gains heat); failure puts the whole team in cells and adds time
   to the sentence.
+- **The prison yard**: everyone behind bars in a country shares a yard (People → Yard while
+  you're locked up). Inmates get a yard-only chat, can fight each other for respect (no cash,
+  no hospital: the guards break it up), work prison shifts ($3–6, hard labor, and 2 minutes
+  off a sentence for good behavior), and crew leaders doing time can recruit fellow inmates.
 - **Protection after a fight**: survive an attack or a mugging and nobody can attack or mug you
   for 4 hours (the HUD shows "Protected"). Attacking someone ends your own protection.
 - **Bail**: anyone (the suspect too) can post bail for someone held for trial: 3× what was

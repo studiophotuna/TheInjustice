@@ -61,6 +61,15 @@ export const BALANCE = {
     /** Survive an attack or mugging and the street leaves you alone this long. */
     immunityMs: 4 * 60 * 60_000,
   },
+  /** The prison yard: fights for respect, prison shifts that shorten a sentence. */
+  yard: {
+    fightEnergy: 10,
+    fightCooldownMs: 30 * 60_000,
+    respect: 2,
+    workEnergy: 10,
+    workPay: [3, 6],
+    goodBehaviorMs: 2 * 60_000,
+  },
   /** Bail = the stolen amount × this, at least `min`; refunded to whoever paid at the verdict. */
   bail: { multiplier: 3, min: 100 },
   /** Crew prison breaks for members serving a sentence. */

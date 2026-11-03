@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
-import { countryOf, tick } from "@/game/engine";
+import { countryOf, inJail, tick } from "@/game/engine";
 import { BALANCE } from "@/game/balance";
 import {
   acceptJoin,
@@ -53,6 +53,7 @@ import {
 } from "@/game/racket";
 import { rankTitle } from "@/game/content/paths";
 import { crackdownOn } from "@/game/city";
+import { inmateView, prisonWork, yardChannel, yardFight } from "@/game/prison";
 import { breakoutView, cancelBreakout, executeBreakout, joinBreakout, planBlock, planBreakout, serving } from "@/game/breakout";
 import {
   coldCaseView,
@@ -89,7 +90,13 @@ async function me(): Promise<Player> {
 }
 
 function channelsFor(p: Player): string[] {
-  return ["global", `country:${countryOf(p)}`, ...(p.crewId ? [`crew:${p.crewId}`] : [])];
+  // Inmates also get the yard, a chat only people behind bars in this country can see.
+  return [
+    "global",
+    `country:${countryOf(p)}`,
+    ...(p.crewId ? [`crew:${p.crewId}`] : []),
+    ...(inJail(p, Date.now()) ? [yardChannel(p)] : []),
+  ];
 }
 
 /** Public crew info: never includes anyone's private data. */
@@ -211,6 +218,25 @@ export async function GET(req: Request) {
           ? cases.filter((c) => !c.trial && caseCold(c, now)).slice(0, 10).map((c) => coldCaseView(c, p, now, c.hunt ? [] : suspectsFor(c, pool)))
           : [],
       });
+    }
+    if (url.searchParams.get("yard")) {
+      if (!inJail(p, now)) return NextResponse.json({ inmates: [], open: false });
+      const [people, crews, myCrew] = await Promise.all([
+        store.listPlayers(countryOf(p), 200),
+        store.listCrews(200),
+        p.crewId ? store.getCrew(p.crewId) : null,
+      ]);
+      const tags = new Map(crews.map((c) => [c.id, c.tag]));
+      const leading = myCrew && myCrew.leaderId === p.id ? myCrew : null;
+      const inmates = people
+        .filter((o) => o.id !== p.id && !o.dead && inJail(o, now))
+        .slice(0, 40)
+        .map((o) => {
+          tick(o, now);
+          const canInvite = !!leading && !o.crewId && !(leading.invites ?? []).some((i) => i.id === o.id) && leading.members.length < BALANCE.crew.maxMembers;
+          return inmateView(p, o, now, o.crewId ? tags.get(o.crewId) ?? null : null, canInvite);
+        });
+      return NextResponse.json({ inmates, open: true, channel: yardChannel(p) });
     }
     if (url.searchParams.get("online")) {
       // Players in this city with the game open right now, with quick actions.
@@ -664,6 +690,19 @@ export async function POST(req: Request) {
           for (const c of out.changed) await tx.putCase(c);
           if (city && out.cityChanged) await tx.putCity(city);
           return out.events;
+        });
+        break;
+      }
+      case "yard_fight": {
+        const target = str(b.targetId);
+        events = await store.transaction((tx) => withPair(tx, playerId, target, now, (a, t) => yardFight(a, t, now, Math.random).events));
+        break;
+      }
+      case "yard_work": {
+        events = await store.update(playerId, (p) => {
+          if (!p) throw new GameError("Create a character first.");
+          tick(p, now);
+          return { player: p, result: prisonWork(p, now, Math.random) };
         });
         break;
       }
