@@ -757,3 +757,17 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 .home-hero .street-title { margin: 2px 0 0; }
 .city-event { border-color: rgba(255, 194, 75, 0.45); background: linear-gradient(135deg, rgba(255, 194, 75, 0.1), transparent 60%), rgba(0, 0, 0, 0.25); }
 .season .chips-row { margin-bottom: 8px; }
+
+/* Newspaper */
+.paper { background: linear-gradient(180deg, rgba(244, 236, 220, 0.06), rgba(0, 0, 0, 0.25)); border-color: rgba(244, 236, 220, 0.25); }
+.paper-name { margin: 0; letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.8rem; color: var(--muted); border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+.paper-lead { margin: 10px 0 6px; font-size: 1.25rem; line-height: 1.25; }
+.paper-weather { margin: 0 0 8px; color: var(--gold, #ffc24b); font-size: 0.9rem; }
+.paper-stats { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.85rem; color: var(--muted); padding: 8px 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); }
+.paper-stats b { color: var(--text); }
+.paper-stories { margin: 10px 0 6px; padding-left: 18px; display: grid; gap: 6px; }
+.paper-stories li.scandal { color: var(--red); }
+/* Turf */
+.turf-row { align-items: flex-start !important; }
+.turf-row > div { min-width: 0; }
+.war-line { margin: 4px 0 0; color: var(--red); }

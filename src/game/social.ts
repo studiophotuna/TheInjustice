@@ -17,6 +17,24 @@ export function notify(p: Player, text: string, tone: GameEventTone, from?: Play
   ].slice(0, 30);
 }
 
+/** Total bounty on a player's head. */
+export function bountyOn(p: Player): number {
+  return (p.bounties ?? []).reduce((s, b) => s + b.amount, 0);
+}
+
+/** Anyone puts money on someone's head (from the bank). Whoever beats them in a fight collects. */
+export function postBounty(poster: Player, t: Player, amount: number, now: number): GameEvent[] {
+  if (poster.id === t.id) throw new GameError("You can't put a price on your own head.");
+  if (t.dead) throw new GameError("They're not around anymore.");
+  const a = Math.floor(amount);
+  if (!Number.isFinite(a) || a < BALANCE.bounty.min) throw new GameError(`Bounties start at $${BALANCE.bounty.min}.`);
+  if (!poster.hasBankAccount || poster.bank < a) throw new GameError("You don't have that much in the bank.");
+  poster.bank -= a;
+  t.bounties = [...(t.bounties ?? []), { byId: poster.id, byName: poster.name, amount: a, at: now }];
+  notify(t, `Someone put a $${a} price on your head. Watch your back.`, "bad", undefined, now);
+  return [{ tone: "good", text: `$${a} on ${t.name}'s head. Whoever beats them in a fight collects.` }];
+}
+
 export function protectedUntil(p: Player): number {
   return p.createdAt + BALANCE.pvp.protectionMs;
 }
@@ -75,6 +93,14 @@ export function attackPlayer(a: Player, t: Player, now: number, rng: Rng): { eve
     if (t.hp <= 0) knockOut(t, now, rng);
     a.hp = res.playerHp;
     events.push({ tone: "good", text: `You beat ${t.name}${taken ? ` and take $${taken}` : ""}.` });
+    // Collect every bounty on their head.
+    const bounty = bountyOn(t);
+    if (bounty > 0) {
+      a.cash += bounty;
+      t.bounties = [];
+      events.push({ tone: "good", text: `You collect the $${bounty} bounty on ${t.name}.` });
+      notify(t, `${a.name} collected the $${bounty} bounty on your head.`, "bad", a, now);
+    }
     notify(t, `${a.name} attacked you and won${taken ? `, taking $${taken} from your pockets` : ""}.${t.hp <= 0 ? " You woke up in the clinic." : ""}`, "bad", a, now);
   } else {
     t.reputation += 1;
@@ -119,6 +145,7 @@ export interface PublicProfile {
   danger: number;
   lastSeen: number;
   streetTitle: string | null;
+  bounty: number;
   online: boolean;
   canAttack: string | null;
   canVouch: string | null;
@@ -147,6 +174,7 @@ export function profileFor(viewer: Player, p: Player, now: number): PublicProfil
     danger: GUT_READS.indexOf(read as (typeof GUT_READS)[number]),
     lastSeen: p.seenAt ?? p.tickAt,
     streetTitle: streetTitle(p),
+    bounty: bountyOn(p),
     online: now - (p.seenAt ?? 0) < BALANCE.onlineMs,
     canAttack: attackBlock(viewer, p, now),
     canVouch,

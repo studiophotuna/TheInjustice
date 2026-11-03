@@ -70,6 +70,21 @@ export const BALANCE = {
     workPay: [3, 6],
     goodBehaviorMs: 2 * 60_000,
   },
+  /** Crew wars over districts. */
+  turf: {
+    claimCost: 1000,
+    maxPerCrew: 3,
+    /** Share of outsiders' job pay in a district that goes to the crew running it. */
+    cut: 0.05,
+    warMs: 30 * 60_000,
+    peaceMs: 12 * 60 * 60_000,
+    joinEnergy: 15,
+    homeAdvantage: 1.15,
+    heat: 6,
+    damage: 25,
+  },
+  /** Bounties on other players: posted from the bank, collected by beating the target. */
+  bounty: { min: 100 },
   /** Bail = the stolen amount × this, at least `min`; refunded to whoever paid at the verdict. */
   bail: { multiplier: 3, min: 100 },
   /** Crew prison breaks for members serving a sentence. */

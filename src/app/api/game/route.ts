@@ -7,7 +7,7 @@ import { assertJson } from "@/server/auth";
 import { resolveIdentity } from "@/server/identity";
 import { fileDeposit } from "@/game/casework";
 import { settleTrial } from "@/server/justice";
-import { payTax, taxRates } from "@/server/city";
+import { payTax, payTurf, taxRates, turfMap } from "@/server/city";
 import { getStore, StoreConfigError } from "@/server/store";
 
 export const dynamic = "force-dynamic";
@@ -88,6 +88,8 @@ export async function POST(req: Request) {
     let flag: { caseId: string; amount: number; at: number } | null = null;
     let owed: { country: import("@/game/types").CountryId; amount: number } | null = null;
     const rates = action.type === "job" || action.type === "collect_property" ? await taxRates(store) : {};
+    const turf = action.type === "job" ? await turfMap(store) : {};
+    let turfOwed: { crewId: string; amount: number } | null = null;
     const out = await store.update(playerId!, (p) => {
       if (action.type === "create") {
         if (p) throw new GameError("You already have a character.");
@@ -95,7 +97,11 @@ export async function POST(req: Request) {
         return { player: fresh, result: { view: toView(fresh, now), events: [] as GameEvent[] } };
       }
       if (!p) throw new GameError("Create a character first.");
-      const events = applyAction(p, action, now, Math.random, { taxRates: rates });
+      const events = applyAction(p, action, now, Math.random, { taxRates: rates, turf });
+      if (p.turfOwed) {
+        turfOwed = p.turfOwed;
+        p.turfOwed = null;
+      }
       p.seenAt = now;
       if (p.taxOwed) {
         owed = p.taxOwed;
@@ -107,6 +113,9 @@ export async function POST(req: Request) {
       }
       return { player: p, result: { view: toView(p, now), events } };
     });
+    // Protection money goes to the crew that runs the district.
+    const t = turfOwed as { crewId: string; amount: number } | null;
+    if (t) await payTurf(store, t).catch((e) => console.error(e));
     // Withheld city tax goes to the treasury.
     const o = owed as { country: import("@/game/types").CountryId; amount: number } | null;
     if (o) await payTax(store, o, now).catch((e) => console.error(e));

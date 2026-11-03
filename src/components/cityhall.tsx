@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Coins, Gavel, Landmark, Megaphone, Siren, Soup, Vote } from "lucide-react";
+import { Building2, Coins, Flag, Gavel, Landmark, Megaphone, Siren, Soup, Vote } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { GameApi } from "./useGame";
 
@@ -40,6 +40,22 @@ type CityData = {
   };
   prisoners: { id: string; name: string; reason: string }[];
   officers: { id: string; name: string; title: string }[];
+  turf: {
+    id: string;
+    name: string;
+    holder: { name: string; tag: string; mine: boolean } | null;
+    war: { attacker: string; endsAt: number; attackers: number; defenders: number; over: boolean; canJoin: string | null } | null;
+    canClaim: string | null;
+    canWar: string | null;
+  }[];
+  paper: {
+    name: string;
+    city: string;
+    lead: string;
+    stories: { headline: string; kind: string; at: number }[];
+    weather: string | null;
+    stats: { crimes: number; stolen: number; arrests: number; convictions: number; unsolved: number };
+  };
 };
 
 function until(t: number) {
@@ -76,6 +92,8 @@ export function CityHall({ game }: { game: GameApi }) {
   const ctl = c.controls;
 
   return (
+    <>
+    <Paper paper={data.paper} />
     <section className="card cityhall">
       <h3 className="card-title"><Landmark size={16} /> City hall · {c.city}</h3>
 
@@ -215,6 +233,66 @@ export function CityHall({ game }: { game: GameApi }) {
           </ul>
         </div>
       )}
+    </section>
+    <Turf turf={data.turf} game={game} act={act} />
+    </>
+  );
+}
+
+function Paper({ paper }: { paper: CityData["paper"] }) {
+  return (
+    <section className="card paper">
+      <p className="paper-name">{paper.name}</p>
+      <h2 className="paper-lead">{paper.lead}</h2>
+      {paper.weather && <p className="paper-weather">{paper.weather}</p>}
+      <div className="paper-stats">
+        <span><b>{paper.stats.crimes}</b> robberies</span>
+        <span><b>${paper.stats.stolen.toLocaleString()}</b> stolen</span>
+        <span><b>{paper.stats.arrests}</b> arrests</span>
+        <span><b>{paper.stats.convictions}</b> convictions</span>
+        <span><b>{paper.stats.unsolved}</b> unsolved</span>
+      </div>
+      {paper.stories.length > 0 && (
+        <ul className="paper-stories">
+          {paper.stories.map((x, i) => <li key={i} className={x.kind}>{x.headline}</li>)}
+        </ul>
+      )}
+      <p className="fine muted">This week in {paper.city}.</p>
+    </section>
+  );
+}
+
+function Turf({ turf, game, act }: { turf: CityData["turf"]; game: GameApi; act: (b: Record<string, unknown>) => Promise<void> }) {
+  return (
+    <section className="card turf">
+      <h3 className="card-title"><Flag size={16} /> Turf</h3>
+      <p className="muted fine">Crews run districts and take a cut of what outsiders earn there. Rival crews can go to war for them.</p>
+      <ul className="officials">
+        {turf.map((d) => (
+          <li key={d.id} className="turf-row">
+            <div>
+              <b>{d.name}</b>{" "}
+              {d.holder ? (
+                <span className={`chip ${d.holder.mine ? "chip-green" : ""}`}>[{d.holder.tag}] {d.holder.name}</span>
+              ) : (
+                <span className="muted">· nobody</span>
+              )}
+              {d.war && (
+                <p className="fine war-line">
+                  ⚔️ {d.war.attacker} attacking · {d.war.attackers} vs {d.war.defenders}
+                  {d.war.over ? " · fighting's over" : ` · ${Math.max(1, Math.ceil((d.war.endsAt - Date.now()) / 60000))}m left`}
+                </p>
+              )}
+            </div>
+            <span className="row wrap">
+              {!d.canClaim && <button className="btn btn-primary btn-xs" disabled={game.busy} onClick={() => act({ op: "claim_turf", district: d.id })}>Claim ($1,000)</button>}
+              {!d.canWar && <button className="btn btn-danger btn-xs" disabled={game.busy} onClick={() => act({ op: "declare_war", district: d.id })}>Declare war</button>}
+              {d.war && !d.war.over && !d.war.canJoin && <button className="btn btn-danger btn-xs" disabled={game.busy} onClick={() => act({ op: "join_war", district: d.id })}>Join the fight</button>}
+              {d.war?.over && <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => act({ op: "settle_war", district: d.id })}>Settle it</button>}
+            </span>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

@@ -20,6 +20,7 @@ import {
   STAT_KEYS,
   type Action,
   type CountryId,
+  type DistrictId,
   type Contract,
   type ContractKind,
   type TravelMode,
@@ -637,6 +638,8 @@ function maybeMugging(p: Player, job: JobDef, now: number, rng: Rng, events: Gam
 export interface ActionContext {
   /** City tax rate in each country. */
   taxRates?: Partial<Record<CountryId, number>>;
+  /** Crew that runs each district (takes a cut of outsiders' pay). */
+  turf?: Partial<Record<DistrictId, string>>;
 }
 
 /** Withholds city tax from income earned in `country`. Returns what's left. */
@@ -682,13 +685,18 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
   const event = cityEvent(countryOf(p), now);
   let pay = Math.round(randInt(rng, job.pay[0], job.pay[1]) * COUNTRY_BY_ID[countryOf(p)].payMult * crewBonus * (event?.payMult ?? 1));
   if (job.payStat) pay = Math.round(pay * (1 + (sv(p, job.payStat) - 10) / 40));
-  const { net, tax } = withholdTax(p, countryOf(p), pay, ctx);
+  const { net: afterTax, tax } = withholdTax(p, countryOf(p), pay, ctx);
+  // Protection money: the crew that runs this district takes a cut from outsiders.
+  const turfCrew = ctx.turf?.[job.district];
+  const cut = turfCrew && turfCrew !== p.crewId ? Math.floor(afterTax * BALANCE.turf.cut) : 0;
+  if (cut > 0) p.turfOwed = { crewId: turfCrew!, amount: (p.turfOwed?.crewId === turfCrew ? p.turfOwed?.amount ?? 0 : 0) + cut };
+  const net = afterTax - cut;
   bumpSeason(p, "earned", net, now);
   p.cash += net;
   p.heat += (job.heat ?? 0) * COUNTRY_BY_ID[countryOf(p)].heatMult;
   p.reputation += job.reputation ?? 0;
   shiftIntegrity(p, job.integrity);
-  events.push({ tone: "good", text: `${pick(rng, job.lines)} +$${net}${tax ? ` (city tax $${tax})` : ""}` });
+  events.push({ tone: "good", text: `${pick(rng, job.lines)} +$${net}${tax ? ` (city tax $${tax})` : ""}${cut ? ` (protection money $${cut})` : ""}` });
   bumpContract(p, "jobs");
   bumpContract(p, "earn", pay);
   if (job.path) p.jobsSinceRank += jobMerit(p, job, true);

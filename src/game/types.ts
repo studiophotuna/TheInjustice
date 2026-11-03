@@ -158,6 +158,10 @@ export interface Player {
   lastCrime?: { caseId: string; at: number } | null;
   /** A deposit the bank flagged; the server files it on the case, then clears this. */
   pendingDeposit?: { caseId: string; amount: number; at: number } | null;
+  /** Protection money owed to the crew that runs the district where you just worked. */
+  turfOwed?: { crewId: string; amount: number } | null;
+  /** Bounties on this player's head; whoever beats them in a fight collects. */
+  bounties?: { byId: string; byName: string; amount: number; at: number }[];
   /** City tax withheld from this player's pay, waiting to reach the city treasury. */
   taxOwed?: { country: CountryId; amount: number } | null;
   /** The player's own recent crimes (criminals know what they did). */
@@ -289,6 +293,23 @@ export interface Crew {
   createdAt: number;
   /** A planned prison break for a jailed member (one at a time). */
   breakout?: Breakout | null;
+}
+
+export interface TurfHold {
+  crewId: string;
+  name: string;
+  tag: string;
+  since: number;
+  lastWarAt: number;
+  war: {
+    crewId: string;
+    name: string;
+    tag: string;
+    startedAt: number;
+    endsAt: number;
+    attackers: { id: string; name: string }[];
+    defenders: { id: string; name: string }[];
+  } | null;
 }
 
 export interface Breakout {
@@ -443,6 +464,8 @@ export interface City {
   history: { term: number; name: string | null; votes: number; turnout: number; at: number }[];
   /** Public announcements from city hall. */
   log: { at: number; text: string }[];
+  /** Which crew runs each district (crew wars). */
+  turf?: Partial<Record<DistrictId, TurfHold>>;
   /** Server-only: residents who signed the recall petition against the current mayor. */
   recall?: string[];
   /** Police officer the mayor appointed to run the department. */

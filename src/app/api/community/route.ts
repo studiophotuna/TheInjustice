@@ -17,6 +17,7 @@ import {
   depositToVault,
   leaveCrew,
   notify,
+  postBounty,
   profileFor,
   validateCrew,
   vouchFor,
@@ -265,6 +266,7 @@ export async function GET(req: Request) {
             danger: prof.danger,
             canAttack: prof.canAttack,
             canCrime: Object.fromEntries(CRIME_KINDS.map((k) => [k, crimeBlock(p, o, k, now)])),
+            bounty: prof.bounty,
           };
         });
       return NextResponse.json({ online });
@@ -727,6 +729,12 @@ export async function POST(req: Request) {
           tick(p, now);
           return { player: p, result: prisonWork(p, now, Math.random) };
         });
+        break;
+      }
+      case "post_bounty": {
+        const target = str(b.targetId);
+        const amount = Number(b.amount);
+        events = await store.transaction((tx) => withPair(tx, playerId, target, now, (a, t) => postBounty(a, t, amount, now)));
         break;
       }
       case "vouch": {

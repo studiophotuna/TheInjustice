@@ -18,6 +18,7 @@ type OnlinePlayer = {
   danger: number;
   canAttack: string | null;
   canCrime: Record<CrimeKind, string | null>;
+  bounty: number;
 };
 
 const DANGER = ["Easy", "Favorable", "Even", "Risky", "Deadly"];
@@ -80,6 +81,7 @@ export function OnlineNow({ game, limit }: { game: GameApi; limit?: number }) {
                     {o.status === "hospital" ? " · in the clinic" : o.status === "traveling" ? " · on the road" : ""}
                   </span>
                 </span>
+                {o.bounty > 0 && <span className="chip chip-red">${o.bounty}</span>}
                 <span className={`danger-pill d${o.danger}`}>{DANGER[o.danger]}</span>
               </button>
               {expanded && (

@@ -25,6 +25,7 @@ type Profile = {
   canInvite: boolean;
   streetTitle: string | null;
   canCrime: Record<CrimeKind, string | null>;
+  bounty: number;
 };
 type CrimeKind = "pickpocket" | "snatch" | "mug";
 const CRIME_BUTTONS: { id: CrimeKind; label: string; Icon: typeof Hand; note: string }[] = [
@@ -279,6 +280,7 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
                 <b>{p.name}</b>
                 {p.crewTag && <span className="crew-tag">[{p.crewTag}]</span>}
                 {p.protected && <span className="chip chip-green"><Shield size={11} /> New</span>}
+                {p.bounty > 0 && <span className="chip chip-red">Wanted · ${p.bounty}</span>}
                 {STATUS[p.status] && <span className="chip">{STATUS[p.status]}</span>}
               </div>
               <p className="muted" style={{ color: p.path ? PATH_LOOKS[p.path]?.rim : undefined }}>
@@ -303,6 +305,16 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
                     <Shield size={14} /> Invite to crew
                   </button>
                 )}
+                <button
+                  className="btn btn-ghost btn-sm"
+                  disabled={game.busy}
+                  onClick={() => {
+                    const v = window.prompt(`Put a price on ${p.name}'s head. Whoever beats them in a fight collects. Amount from your bank ($100 or more):`, "100");
+                    if (v) social({ op: "post_bounty", targetId: p.id, amount: Number(v) });
+                  }}
+                >
+                  $ Bounty
+                </button>
                 <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: blocked ? "unblock" : "block", targetId: p.id })}>
                   <Ban size={14} /> {blocked ? "Unblock" : "Block"}
                 </button>

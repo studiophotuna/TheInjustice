@@ -31,6 +31,25 @@ export async function taxRates(store: PlayerStore): Promise<Partial<Record<Count
   return out;
 }
 
+/** Which crew runs each district, across every city. */
+export async function turfMap(store: PlayerStore): Promise<Partial<Record<import("@/game/types").DistrictId, string>>> {
+  const cities = await store.listCities();
+  const out: Partial<Record<import("@/game/types").DistrictId, string>> = {};
+  for (const c of cities) for (const [d, h] of Object.entries(c.turf ?? {})) if (h) out[d as import("@/game/types").DistrictId] = h.crewId;
+  return out;
+}
+
+/** Moves protection money into the vault of the crew that runs the district. */
+export async function payTurf(store: PlayerStore, owed: { crewId: string; amount: number }) {
+  if (owed.amount <= 0) return;
+  await store.transaction(async (tx) => {
+    const crew = await tx.getCrew(owed.crewId);
+    if (!crew) return;
+    crew.vault += owed.amount;
+    await tx.putCrew(crew);
+  });
+}
+
 /** Moves withheld tax into the city treasury. */
 export async function payTax(store: PlayerStore, owed: { country: CountryId; amount: number }, now: number) {
   if (owed.amount <= 0) return;
