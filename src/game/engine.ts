@@ -636,7 +636,7 @@ function maybeMugging(p: Player, job: JobDef, now: number, rng: Rng, events: Gam
   events.push({
     tone: "bad",
     text: `He takes half your cash: -$${lost}. (Money in the bank can't be stolen.)`,
-    action: { label: "Go to bank", target: "tab:profile" },
+    action: { label: "Go to bank", target: "place:bank" },
   });
 }
 
@@ -827,7 +827,7 @@ function answerOffer(p: Player, path: PathId, accept: boolean, now: number, even
     events.push({
       tone: "info",
       text: `${school.dean} is reviewing your application to ${school.name}. Tuition waived.`,
-      action: { label: "View application", target: "tab:profile" },
+      action: { label: "View application", target: "place:academy" },
     });
     return;
   }

@@ -122,12 +122,12 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
             <>
               <p>Application to <b>{view.application.schoolName}</b></p>
               <p className="muted">{view.application.status === "pending" ? `Decision in ${fmt(live.application)}.` : "A letter is waiting for you."}</p>
-              <button className="btn btn-ghost btn-sm" onClick={() => go("tab:profile")}>Open</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => go("place:academy")}>Open</button>
             </>
           ) : (
             <>
               <p className="muted">No career yet. Pay for school, get someone to vouch for you, or impress the right person on the street.</p>
-              <button className="btn btn-ghost btn-sm" onClick={() => go("tab:profile")}>See careers</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => go("place:academy")}>Visit the Academy</button>
             </>
           )}
         </section>

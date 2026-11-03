@@ -129,7 +129,7 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
   pays police a bounty per conviction from the treasury, orders a one-hour crackdown once a
   day (crime is harder, hotter and draws more bystanders), pardons one prisoner per term, and
   draws a daily salary. Mayors can also quietly skim the treasury; internal affairs can audit
-  the mayor, and a caught mayor is fined, held and removed from office. Lives in the Map tab.
+  the mayor, and a caught mayor is fined, held and removed from office. Lives in City Hall (City tab).
 - **Reputation** is your public standing, separate from career rank: it unlocks districts and
   schools, protects weaker players from you, decides who can run for mayor, and ranks the
   leaderboard. Promotions don't use it.
@@ -216,14 +216,14 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
 - **Medicine** career (8 ranks, Doc Mercy vouches) at St. Brigid's in Grayhaven or Halcyon
   University of Medicine; medics heal twice as fast. Kestrova also has its own Police college.
 - **Story**: the mystery of who framed you, told in comic chapters that unlock as you play
-  (one for everyone, two per career), replayable from the Map tab. Story progress survives
+  (one for everyone, two per career), replayable from the City tab. Story progress survives
   death.
 - **Death**: being knocked out by someone far stronger can kill you. Hidden stats are halved,
   cash, gear, housing and career are lost, bank savings survive. You continue as a new life,
   keeping your name or choosing a new one, and the game tells you that you feel weak.
 - **Doc Mercy** assessment after a hospital stay (rough comparison, never numbers).
 - **Layout**: a Home tab (greeting scene, your next move, career progress, daily reward, story,
-  inbox), Jobs grouped by district chips, Fight, Shop, People and Map. Illustrated comic
+  inbox), Jobs grouped by district chips, Fight, Shop, People and City. Illustrated comic
   scenes (streets, city, high rises, police station, hospital) and characters (bum, thug,
   detective, lawyer, doctor, banker, vigilante) are drawn as SVG in `src/components/art/`.
 - Leaderboard and event log.
@@ -250,3 +250,19 @@ for local development.
 - [Law path](docs/LAW_PATH.md)
 - [World: countries & cities](docs/WORLD.md)
 - [Timers, pop-ups & monetization](docs/TIMERS_AND_MONETIZATION.md)
+
+## The City: buildings
+
+The City tab is a grid of buildings you walk into; each one holds everything that happens there:
+
+- **Police Station**: witness sightings, case files, envelopes, narcotics and financial crimes, internal affairs.
+- **Courthouse**: trials, bail, the court record, your lawyer on retainer.
+- **Hospital**: Doc Mercy's check-ups, the clinic's patients, the back-alley door.
+- **Bank**: your account, laundering (and bankers' own services), loans, the compliance desk.
+- **Academy**: enroll at a school (tuition or a vouch), the dean's decision, student coursework, graduation with your degree.
+- **City Hall**: the mayor, elections, the paper, turf, the police chief, the soup kitchen.
+- **Prison**: the yard, when you're doing time.
+- **The Street**: the drug market, rackets, contracts, cold cases.
+- **Station**: travel between countries.
+
+Links anywhere in the game can open a building directly with `place:<id>` (for example `place:bank`).

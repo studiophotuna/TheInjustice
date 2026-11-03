@@ -206,20 +206,11 @@ function ago(t: number) {
   return h < 24 ? `${h}h ago` : `${Math.round(h / 24)}d ago`;
 }
 
-export function CommunityTab({ game }: { game: GameApi }) {
+/** The community hub (people, crews, roles), shared by the People tab and the city's buildings. */
+export function useHub(game: GameApi) {
   const view = game.view!;
-  const jailed = !!game.view!.jail;
-  const [section, setSection] = useState<"people" | "yard" | "cases" | "chat" | "crew" | "inbox">(
-    () => (game.view!.jail ? "yard" : game.view!.sightings.length ? "cases" : "people"),
-  );
-  // Locked up: the yard replaces the street. Released: back to the street.
-  useEffect(() => {
-    if (jailed && section === "people") setSection("yard");
-    if (!jailed && section === "yard") setSection("people");
-  }, [jailed, section]);
   const [hub, setHub] = useState<Hub | null>(null);
   const [error, setError] = useState<string | null>(null);
-
   const loadHub = useCallback(async () => {
     try {
       const res = await fetch("/api/community", { cache: "no-store" });
@@ -231,10 +222,21 @@ export function CommunityTab({ game }: { game: GameApi }) {
       setError(e instanceof Error ? e.message : "Couldn't reach the city.");
     }
   }, []);
-
   useEffect(() => {
     loadHub();
   }, [loadHub, view.location.country, view.crewId]);
+  const social = async (body: Record<string, unknown>) => {
+    const v = await game.social(body);
+    if (v) loadHub();
+    return v;
+  };
+  return { hub, error, loadHub, social };
+}
+
+export function CommunityTab({ game }: { game: GameApi }) {
+  const view = game.view!;
+  const [section, setSection] = useState<"people" | "chat" | "crew" | "inbox">("people");
+  const { hub, error, social } = useHub(game);
 
   // Opening the inbox marks everything read.
   useEffect(() => {
@@ -242,19 +244,12 @@ export function CommunityTab({ game }: { game: GameApi }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section]);
 
-  const social = async (body: Record<string, unknown>) => {
-    const v = await game.social(body);
-    if (v) loadHub();
-    return v;
-  };
-
   return (
     <div className="stack">
       <div className="segmented community-tabs">
         {(
           [
-            jailed ? (["yard", "Yard", Lock] as const) : (["people", "People", Users] as const),
-            ["cases", "Cases", Siren],
+            ["people", "People", Users],
             ["chat", "Chat", MessageSquare],
             ["crew", "Crew", Shield],
             ["inbox", "Inbox", Inbox],
@@ -263,15 +258,12 @@ export function CommunityTab({ game }: { game: GameApi }) {
           <button key={id} className={section === id ? "on" : ""} onClick={() => setSection(id)}>
             <Icon size={15} /> {label}
             {id === "inbox" && view.inbox.unread > 0 && <span className="badge-dot">{view.inbox.unread}</span>}
-            {id === "cases" && view.sightings.length > 0 && <span className="badge-dot">{view.sightings.length}</span>}
           </button>
         ))}
       </div>
       {error && <p className="form-error">{error}</p>}
       {section === "people" && <OnlineNow game={game} />}
       {section === "people" && <People game={game} hub={hub} social={social} />}
-      {section === "cases" && <CasesPanel game={game} hub={hub} />}
-      {section === "yard" && <Yard game={game} hub={hub} social={social} />}
       {section === "chat" && hub && <Chat game={game} hub={hub} />}
       {section === "crew" && <CrewPanel game={game} hub={hub} social={social} />}
       {section === "inbox" && <InboxPanel game={game} social={social} />}
@@ -787,7 +779,11 @@ const SOURCE_LABEL: Record<CaseCard["tips"][number]["source"], string> = {
   bank: "Bank",
 };
 
-function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
+export type PlaceId = "police" | "court" | "hospital" | "bank" | "street";
+
+/** Everything about crime and justice, filtered to one building of the city. */
+export function CasesPanel({ game, hub, place }: { game: GameApi; hub: Hub | null; place: PlaceId }) {
+  const at = (x: PlaceId) => x === place;
   const view = game.view!;
   const [data, setData] = useState<JusticeData | null>(null);
 
@@ -808,15 +804,15 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
 
   return (
     <div className="stack">
-      <Sightings game={game} />
-      {!view.sightings.length && (
+      {at("police") && <Sightings game={game} />}
+      {at("police") && !view.sightings.length && (
         <section className="card empty">
           <Eye size={26} />
           <p>You haven&apos;t seen anything lately. When someone gets robbed near you, you&apos;ll decide here whether to report it.</p>
         </section>
       )}
 
-      {data && data.envelopes.length > 0 && (
+      {at("police") && data && data.envelopes.length > 0 && (
         <section className="card envelope-card">
           <h3 className="card-title">✉️ An envelope on your desk</h3>
           {data.envelopes.map((x) => (
@@ -837,9 +833,9 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
         </section>
       )}
 
-      {data?.racket && <Racket game={game} racket={data.racket} act={act} />}
+      {at("street") && data?.racket && <Racket game={game} racket={data.racket} act={act} />}
 
-      {data && (data.labTips.length > 0 || data.launderFlags.length > 0) && (
+      {at("police") && data && (data.labTips.length > 0 || data.launderFlags.length > 0) && (
         <section className="card">
           <h3 className="card-title"><FileSearch size={16} /> Narcotics & financial crimes</h3>
           <ul className="officials">
@@ -859,7 +855,7 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
         </section>
       )}
 
-      {data && data.contracts.length > 0 && (
+      {at("street") && data && data.contracts.length > 0 && (
         <section className="card">
           <h3 className="card-title">💼 Contracts · get someone's money back</h3>
           <div className="case-list">
@@ -881,7 +877,7 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
         </section>
       )}
 
-      {data && data.robbed.some((r) => !r.closed) && (
+      {at("police") && data && data.robbed.some((r) => !r.closed) && (
         <section className="card">
           <h3 className="card-title">💸 You were robbed</h3>
           <ul className="officials">
@@ -902,7 +898,7 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
         </section>
       )}
 
-      {data && data.officials.length > 0 && (
+      {at("police") && data && data.officials.length > 0 && (
         <section className="card">
           <h3 className="card-title"><ShieldAlert size={16} /> Internal affairs · {view.location.city}</h3>
           <p className="muted">Audit an official. If they took an envelope, buried a deposit or lost a file, it comes out: a fine, a demotion and a cell. Once a day per person.</p>
@@ -921,7 +917,7 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
         </section>
       )}
 
-      {data?.roles.medic && (
+      {at("hospital") && data?.roles.medic && (
         <section className="card">
           <h3 className="card-title"><Stethoscope size={16} /> Clinic · patients</h3>
           {data.patients.length === 0 && <p className="muted">No crime victims waiting to be seen.</p>}
@@ -943,7 +939,7 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
         </section>
       )}
 
-      {data?.roles.banker && (
+      {at("bank") && data?.roles.banker && (
         <section className="card">
           <h3 className="card-title"><Landmark size={16} /> Compliance desk · flagged deposits</h3>
           {data.deposits.length === 0 && <p className="muted">No suspicious deposits. Clean money today. Probably.</p>}
@@ -970,7 +966,7 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
         </section>
       )}
 
-      {data?.roles.vigilante && (
+      {at("street") && data?.roles.vigilante && (
         <section className="card">
           <h3 className="card-title"><Moon size={16} /> Cold cases · the police gave up</h3>
           {data.coldCases.length === 0 && <p className="muted">No cold cases. The police are doing their job, for once.</p>}
@@ -1004,7 +1000,7 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
         </section>
       )}
 
-      {hub?.readsCases && (
+      {at("police") && hub?.readsCases && (
         <section className="card has-banner">
           <Scene kind="crimescene" className="banner-scene" />
           <div className="row between">
@@ -1072,7 +1068,7 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
         </section>
       )}
 
-      {hub && !hub.readsCases && (
+      {at("police") && hub && !hub.readsCases && (
         <section className="card">
           <h3 className="card-title"><FileSearch size={16} /> Case files</h3>
           <p className="muted">
@@ -1086,6 +1082,7 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
           </ul>
         </section>
       )}
+      {at("court") && (
       <section className="card courthouse has-banner">
         <Scene kind="court" className="banner-scene" />
         <h3 className="card-title"><Gavel size={16} /> Courthouse · {view.location.city}</h3>
@@ -1163,6 +1160,7 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
           </>
         )}
       </section>
+      )}
     </div>
   );
 }
@@ -1272,7 +1270,7 @@ export function JailCard({ game }: { game: GameApi }) {
             : "The verdict is coming."
           : `Free in ${Math.ceil(left / 60000)} min. No jobs, crimes or travel until then.`}
       </p>
-      <button className="btn btn-ghost btn-sm" onClick={() => window.dispatchEvent(new CustomEvent("injustice:go", { detail: "tab:people" }))}>
+      <button className="btn btn-ghost btn-sm" onClick={() => window.dispatchEvent(new CustomEvent("injustice:go", { detail: "place:prison" }))}>
         Go to the yard
       </button>
       {jail.custodyCase && jail.bail > 0 && (
@@ -1309,7 +1307,7 @@ type Inmate = {
 };
 
 /** The prison yard: inmates, fights for respect, shifts that shorten a sentence, yard chat. */
-function Yard({ game, hub, social }: { game: GameApi; hub: Hub | null; social: (b: Record<string, unknown>) => Promise<unknown> }) {
+export function Yard({ game, hub, social }: { game: GameApi; hub: Hub | null; social: (b: Record<string, unknown>) => Promise<unknown> }) {
   const view = game.view!;
   const [inmates, setInmates] = useState<Inmate[] | null>(null);
   const [channel, setChannel] = useState<string | null>(null);

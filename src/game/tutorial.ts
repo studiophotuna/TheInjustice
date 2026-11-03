@@ -18,13 +18,13 @@ export const TUTORIAL: TutorialStep[] = [
   { id: "job", title: "Do your first job", hint: "Jobs build your hidden strengths and pay a little.", go: "tab:jobs", done: (p) => did(p, (k) => !k.includes(":")) },
   { id: "eat", title: "Eat something", hint: "Food in the Shop refills energy.", go: "tab:shop", done: (p) => p.fullUntil > 0 },
   { id: "daily", title: "Collect your daily reward", hint: "Come back every day for a bigger one.", go: "tab:home", done: (p) => !!p.daily?.lastClaim },
-  { id: "bank", title: "Put money in the bank", hint: "Muggers can't steal what's in the bank.", go: "tab:shop", done: (p) => p.hasBankAccount && p.bank > 0 },
+  { id: "bank", title: "Put money in the bank", hint: "Muggers can't steal what's in the bank.", go: "place:bank", done: (p) => p.hasBankAccount && p.bank > 0 },
   { id: "gym", title: "Train at the gym", hint: "The gym builds strength, toughness or agility.", go: "tab:fight", done: (p) => did(p, (k) => k.startsWith("gym:")) },
   { id: "fight", title: "Win a street fight", hint: "Your gut tells you who you can beat.", go: "tab:fight", done: (p) => (p.jobCounts["fight:win"] ?? 0) > 0 },
-  { id: "story", title: "Read a chapter of your story", hint: "Who framed you? The Ledger remembers.", go: "tab:map", done: (p) => p.flags.some((f) => f.startsWith("read:")) },
+  { id: "story", title: "Read a chapter of your story", hint: "Who framed you? The Ledger remembers.", go: "tab:city", done: (p) => p.flags.some((f) => f.startsWith("read:")) },
   { id: "people", title: "See who's out on the streets", hint: "Other players: allies, rivals, marks.", go: "tab:people", done: (p) => p.flags.includes("visited:people") },
-  { id: "map", title: "Visit city hall", hint: "The mayor, the paper, the turf wars.", go: "tab:map", done: (p) => p.flags.includes("visited:map") },
-  { id: "career", title: "Find a career", hint: "Apply to a school, or impress the right people.", go: "tab:profile", done: (p) => !!p.path || !!p.application || p.offers.length > 0 },
+  { id: "map", title: "Visit the city", hint: "Police, courthouse, hospital, bank, academy, city hall.", go: "tab:city", done: (p) => p.flags.includes("visited:map") },
+  { id: "career", title: "Find a career", hint: "Enroll at the Academy, or impress the right people.", go: "place:academy", done: (p) => !!p.path || !!p.application || p.offers.length > 0 },
 ];
 
 export const TUTORIAL_REWARD = 15;

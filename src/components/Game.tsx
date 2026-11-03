@@ -31,12 +31,13 @@ import { NpcPortrait, PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 import { Skyline } from "./art/Skyline";
 import { Vehicle } from "./art/Vehicles";
 import { AuthForm, ChapterViewer, DeathScreen, Landing, Logo, Prologue } from "./screens";
-import { CityTab, DeanLetter, FightTab, JobsTab, ProfileTab, ShopTab } from "./tabs";
+import { DeanLetter, FightTab, JobsTab, ProfileTab, ShopTab } from "./tabs";
+import { CityPlaces, type Building } from "./places";
 import { CommunityTab } from "./community";
 import { HomeTab } from "./home";
 import { fmt, useGame, type GameApi } from "./useGame";
 
-type Tab = "home" | "jobs" | "fight" | "shop" | "people" | "map" | "profile";
+type Tab = "home" | "jobs" | "fight" | "shop" | "people" | "city" | "profile";
 
 const TABS: { id: Tab; label: string; Icon: typeof Briefcase }[] = [
   { id: "home", label: "Home", Icon: House },
@@ -44,7 +45,7 @@ const TABS: { id: Tab; label: string; Icon: typeof Briefcase }[] = [
   { id: "fight", label: "Fight", Icon: Swords },
   { id: "shop", label: "Shop", Icon: ShoppingBag },
   { id: "people", label: "People", Icon: Users },
-  { id: "map", label: "Map", Icon: MapIcon },
+  { id: "city", label: "City", Icon: MapIcon },
 ];
 /** The desktop sidebar also lists your profile; on phones it opens from the avatar. */
 const SIDE_TABS = [...TABS, { id: "profile" as Tab, label: "Me", Icon: UserRound }];
@@ -119,6 +120,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
   const [highlight, setHighlight] = useState<string | null>(null);
   const [saveOpen, setSaveOpen] = useState(false);
   const [reading, setReading] = useState<string | null>(null);
+  const [place, setPlace] = useState<Building | null>(null);
   const [letterSeen, setLetterSeen] = useState<string | null>(null);
   const letterKey =
     view.application && view.application.status !== "pending" ? `${view.application.schoolName}:${view.application.status}` : null;
@@ -145,6 +147,15 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
     if (kind === "story") setReading(id);
+    // "place:police" opens a building in the City tab; old "tab:map" links land on the City.
+    if (kind === "place") {
+      setTab("city");
+      setPlace(id as Building);
+    }
+    if (kind === "tab" && (id === "map" || id === "city")) {
+      setTab("city");
+      setPlace(null);
+    }
     if (kind === "job") {
       setTab("jobs");
       setHighlight(id);
@@ -224,9 +235,9 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
             {tab === "shop" && <ShopTab game={game} />}
             {tab === "people" && <CommunityTab game={game} />}
             {tab === "people" && <Visited game={game} flag="visited:people" />}
-            {tab === "map" && <Visited game={game} flag="visited:map" />}
+            {tab === "city" && <Visited game={game} flag="visited:map" />}
             {tab === "profile" && <ProfileTab game={game} />}
-            {tab === "map" && <CityTab game={game} onRead={setReading} />}
+            {tab === "city" && <CityPlaces game={game} place={place} setPlace={setPlace} onRead={setReading} />}
           </motion.main>
         </AnimatePresence>
       </div>

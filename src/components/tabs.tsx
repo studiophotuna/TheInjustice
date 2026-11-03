@@ -1,7 +1,6 @@
 "use client";
 
 import { CityHall } from "./cityhall";
-import { LaunderCard, StreetMarket } from "./underworld";
 import { motion } from "motion/react";
 import {
   Backpack,
@@ -269,8 +268,6 @@ export function ShopTab({ game }: { game: GameApi }) {
   const view = game.view!;
   return (
     <div className="stack">
-      <LaunderCard game={game} />
-      <StreetMarket game={game} />
       <section className="card">
         <h3 className="card-title"><Building size={16} /> Businesses</h3>
         <p className="muted">Buy a business with money from your bank. It earns every hour (up to a day's worth waits for you). You must be in its country to buy it.</p>
@@ -321,7 +318,6 @@ export function ShopTab({ game }: { game: GameApi }) {
 
 export function ProfileTab({ game }: { game: GameApi }) {
   const view = game.view!;
-  const [amount, setAmount] = useState("");
   const [perm, setPerm] = useState<string>(typeof Notification === "undefined" ? "unsupported" : Notification.permission);
 
   return (
@@ -364,36 +360,24 @@ export function ProfileTab({ game }: { game: GameApi }) {
         </section>
       )}
 
-      {view.retainer && (
+      {!view.path && (
         <section className="card">
-          <p className="fine">⚖️ {view.retainer.name} is your lawyer on retainer until {new Date(view.retainer.until).toLocaleDateString()}. If you're arrested, they defend you.</p>
+          <h3 className="card-title"><GraduationCap size={16} /> No career yet</h3>
+          <p className="muted">Law careers start at the Academy (City → Academy). Street careers find you, when the right person notices.</p>
+          {view.application && <p className="fine">Your application to {view.application.schoolName} is {view.application.status === "pending" ? "under review" : "decided: check the Academy"}.</p>}
         </section>
       )}
 
-      <LoansCard game={game} />
-
-      {view.application && <ApplicationCard game={game} />}
-
-      {!view.path && <CareersCard game={game} />}
-
+      <SeasonBoard />
       <section className="card">
-        <h3 className="card-title"><Landmark size={16} /> Old Market Credit Union</h3>
-        {view.hasBankAccount ? (
-          <>
-            <p className="big-number">${view.bank.toLocaleString()}</p>
-            <p className="muted">Safe from muggers, and it survives death.</p>
-            <div className="row">
-              <input inputMode="numeric" placeholder="Amount (empty = all cash)" value={amount} onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))} />
-              <button className="btn btn-primary btn-sm" disabled={game.busy} onClick={() => game.act({ type: "bank", op: "deposit", amount: Number(amount || view.cash) }).then(() => setAmount(""))}>Deposit</button>
-              <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.act({ type: "bank", op: "withdraw", amount: Number(amount || 0) }).then(() => setAmount(""))}>Withdraw</button>
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="muted">Muggers can&apos;t take what&apos;s in the bank, and savings survive death. Opening costs $20.</p>
-            <button className="btn btn-primary btn-sm" disabled={game.busy || view.cash < 20} onClick={() => game.act({ type: "bank", op: "open" })}>Open account</button>
-          </>
-        )}
+        <h3 className="card-title"><Newspaper size={16} /> What happened</h3>
+        <ul className="log">
+          {view.log.map((e, i) => (
+            <li key={i} className={e.tone}>
+              <Crosshair size={12} /> {e.text}
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="card">
@@ -406,12 +390,6 @@ export function ProfileTab({ game }: { game: GameApi }) {
           </div>
         ))}
         {game.live!.full > 0 && <p className="muted">Still full for {fmt(game.live!.full)}.</p>}
-      </section>
-
-      <section className="card">
-        <h3 className="card-title"><Stethoscope size={16} /> Doc Mercy</h3>
-        <p className="muted">{view.assessment.reason}</p>
-        <button className="btn btn-ghost btn-sm" disabled={game.busy || !view.assessment.available} onClick={() => game.act({ type: "assess" })}>Get checked</button>
       </section>
 
       <section className="card">
@@ -452,36 +430,106 @@ export function ProfileTab({ game }: { game: GameApi }) {
 
 // ─── City ──────────────────────────────────────────────────────────────────
 
-export function CityTab({ game, onRead }: { game: GameApi; onRead: (id: string) => void }) {
+/** The Ledger: chapters of your story, unlocked as you play. */
+export function StoryCard({ game, onRead }: { game: GameApi; onRead: (id: string) => void }) {
   const view = game.view!;
   return (
+    <section className="card">
+      <h3 className="card-title"><BookOpen size={16} /> The Ledger · Your story</h3>
+      <div className="chapters">
+        {view.chapters.filter((c) => c.unlocked).map((c) => (
+          <button key={c.id} className={`chapter ${c.unlocked ? "" : "locked"} ${c.unlocked && !c.read ? "unread" : ""}`} disabled={!c.unlocked} onClick={() => onRead(c.id)}>
+            <span className="chapter-title">{c.unlocked ? c.title : "Locked chapter"}</span>
+            <span className="chapter-teaser">{c.unlocked ? c.teaser : "Keep working, or follow a career, to uncover this."}</span>
+            {c.unlocked && !c.read && <span className="chip chip-green">New</span>}
+            {!c.unlocked && <Lock size={14} />}
+          </button>
+        ))}
+      </div>
+      {view.chapters.some((c) => !c.unlocked) && (
+        <p className="fine"><Lock size={12} /> {view.chapters.filter((c) => !c.unlocked).length} more chapters locked. Keep working, or follow a career, to uncover them.</p>
+      )}
+    </section>
+  );
+}
+
+/** The station: travel between countries. */
+export function TravelContent({ game }: { game: GameApi; onRead?: (id: string) => void }) {
+  return <WorldCard game={game} />;
+}
+
+/** Your bank account (the Bank building). */
+export function BankAccountCard({ game }: { game: GameApi }) {
+  const view = game.view!;
+  const [amount, setAmount] = useState("");
+  return (
+    <section className="card">
+        <h3 className="card-title"><Landmark size={16} /> Old Market Credit Union</h3>
+        {view.hasBankAccount ? (
+          <>
+            <p className="big-number">${view.bank.toLocaleString()}</p>
+            <p className="muted">Safe from muggers, and it survives death.</p>
+            <div className="row">
+              <input inputMode="numeric" placeholder="Amount (empty = all cash)" value={amount} onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))} />
+              <button className="btn btn-primary btn-sm" disabled={game.busy} onClick={() => game.act({ type: "bank", op: "deposit", amount: Number(amount || view.cash) }).then(() => setAmount(""))}>Deposit</button>
+              <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.act({ type: "bank", op: "withdraw", amount: Number(amount || 0) }).then(() => setAmount(""))}>Withdraw</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="muted">Muggers can&apos;t take what&apos;s in the bank, and savings survive death. Opening costs $20.</p>
+            <button className="btn btn-primary btn-sm" disabled={game.busy || view.cash < 20} onClick={() => game.act({ type: "bank", op: "open" })}>Open account</button>
+          </>
+        )}
+      </section>
+  );
+}
+
+/** Doc Mercy's check-up (the Hospital). */
+export function DocMercyCard({ game }: { game: GameApi }) {
+  const view = game.view!;
+  return (
+      <section className="card">
+        <h3 className="card-title"><Stethoscope size={16} /> Doc Mercy</h3>
+        <p className="muted">{view.assessment.reason}</p>
+        <button className="btn btn-ghost btn-sm" disabled={game.busy || !view.assessment.available} onClick={() => game.act({ type: "assess" })}>Get checked</button>
+      </section>
+  );
+}
+
+/** The Academy: schools, applications, the dean's letter, and your progress as a student. */
+export function AcademyContent({ game }: { game: GameApi }) {
+  const view = game.view!;
+  const student = view.path && view.ladder && view.ladder.graduationRank && view.ladder.current < view.ladder.graduationRank;
+  return (
     <div className="stack">
-      <CityHall game={game} />
-      <section className="card">
-        <h3 className="card-title"><BookOpen size={16} /> The Ledger · Your story</h3>
-        <div className="chapters">
-          {view.chapters.map((c) => (
-            <button key={c.id} className={`chapter ${c.unlocked ? "" : "locked"} ${c.unlocked && !c.read ? "unread" : ""}`} disabled={!c.unlocked} onClick={() => onRead(c.id)}>
-              <span className="chapter-title">{c.unlocked ? c.title : "Locked chapter"}</span>
-              <span className="chapter-teaser">{c.unlocked ? c.teaser : "Keep working, or follow a career, to uncover this."}</span>
-              {c.unlocked && !c.read && <span className="chip chip-green">New</span>}
-              {!c.unlocked && <Lock size={14} />}
-            </button>
-          ))}
-        </div>
-      </section>
-      <WorldCard game={game} />
-      <SeasonBoard />
-      <section className="card">
-        <h3 className="card-title"><Newspaper size={16} /> What happened</h3>
-        <ul className="log">
-          {view.log.map((e, i) => (
-            <li key={i} className={e.tone}>
-              <Crosshair size={12} /> {e.text}
-            </li>
-          ))}
-        </ul>
-      </section>
+      {student && (
+        <section className="card">
+          <h3 className="card-title"><GraduationCap size={16} /> Enrolled · {view.path!.name}</h3>
+          <p>You&apos;re a {view.path!.rank}. Graduate to earn your degree and your first real rank.</p>
+          <p className="muted">{view.path!.promotion ?? "Keep doing your coursework (your career jobs) to graduate."}</p>
+          <button className="btn btn-primary btn-sm" onClick={() => window.dispatchEvent(new CustomEvent("injustice:go", { detail: "tab:jobs" }))}>Go to coursework</button>
+        </section>
+      )}
+      {view.path && !student && (
+        <section className="card">
+          <h3 className="card-title"><GraduationCap size={16} /> Alumni</h3>
+          <p className="muted">You already have a career: {view.path.rank} · {view.path.name}. The Academy has nothing more to teach you.</p>
+        </section>
+      )}
+      {!view.path && !view.application && (
+        <section className="card">
+          <h3 className="card-title"><GraduationCap size={16} /> How the Academy works</h3>
+          <ol className="steps">
+            <li><b>Enroll</b> at a school: pay tuition from your bank, or get someone respected to vouch for you.</li>
+            <li><b>The dean decides.</b> Admissions take a little while. Your record matters.</li>
+            <li><b>Study.</b> As a student you do your coursework (career jobs in the Jobs tab).</li>
+            <li><b>Graduate</b> to earn your degree, and your first real rank in that career.</li>
+          </ol>
+        </section>
+      )}
+      {view.application && <ApplicationCard game={game} />}
+      <CareersCard game={game} />
     </div>
   );
 }
@@ -508,11 +556,8 @@ function CareersCard({ game }: { game: GameApi }) {
   const view = game.view!;
   return (
     <section className="card">
-      <h3 className="card-title"><GraduationCap size={16} /> Careers &amp; schools</h3>
-      <p className="muted">
-        Law careers start at school: pay tuition, or get someone respected to vouch for you. The dean has the final say.
-        Street careers have no school. Someone has to notice you.
-      </p>
+      <h3 className="card-title"><GraduationCap size={16} /> Schools</h3>
+      <p className="muted">Law careers need a degree. Each school trains one career, and you enroll in person in its city.</p>
       <div className="schools">
         {view.schools.map((sc) => (
           <article key={sc.id} className="school" style={{ ["--path" as string]: PATH_LOOKS[sc.path].rim }}>
@@ -533,13 +578,14 @@ function CareersCard({ game }: { game: GameApi }) {
               <p className="job-lock"><Lock size={12} /> {sc.locked}</p>
             ) : (
               <motion.button whileTap={{ scale: 0.95 }} className="btn btn-primary btn-sm" disabled={game.busy} onClick={() => game.act({ type: "apply", school: sc.id })}>
-                {sc.vouchedBy ? "Apply free (vouched)" : `Apply · $${sc.tuition} from bank`}
+                {sc.vouchedBy ? "Enroll free (vouched)" : `Enroll · $${sc.tuition} from bank`}
               </motion.button>
             )}
           </article>
         ))}
       </div>
-      <h4 className="subhead">By invitation only</h4>
+      <h4 className="subhead">No school: by invitation only</h4>
+      <p className="fine">Street careers have no degree. Someone has to notice you.</p>
       <div className="careers">
         {CAREER_HINTS.map((c) => (
           <div key={c.id} className="career" style={{ ["--path" as string]: PATH_LOOKS[c.id].rim }}>
@@ -781,7 +827,7 @@ function SeasonBoard() {
 }
 
 /** Loan offers, debts you owe, and money you lent out. */
-function LoansCard({ game }: { game: GameApi }) {
+export function LoansCard({ game }: { game: GameApi }) {
   const view = game.view!;
   const offers = view.loanOffers;
   const owed = view.loans.filter((l) => l.borrowerId === view.id);
