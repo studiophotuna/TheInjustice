@@ -85,6 +85,7 @@ export function reviewDeposit(b: Player, c: CaseFile, depositor: Player | null, 
   const dep = c.deposit!;
   dep.review = choice === "report" ? "reported" : "buried";
   dep.reviewerName = b.name;
+  dep.reviewerId = b.id;
   if (choice === "report") {
     const tip = addTip(c, "bank", 1, now, rng, b.id, "Bank records", ["nameStart", "nameEnd", "nameLength"]);
     b.reputation += 1;
@@ -109,6 +110,7 @@ export function huntBlock(v: Player, c: CaseFile, suspect: Player | null, eligib
   if (countryOf(v) !== c.country) return "That case is in another country.";
   if (c.trial) return "The courts have this one.";
   if (c.hunt) return "Someone already went after this one.";
+  if (c.payoff?.status === "taken") return "The file is gone.";
   if (!caseCold(c, now)) return "The police are still on it. Wait until it goes cold.";
   if (c.tips.length < 2) return "Not enough clues to go on.";
   if (!suspect || suspect.dead) return "They're not around anymore.";

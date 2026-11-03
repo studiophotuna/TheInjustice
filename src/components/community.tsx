@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { Ban, Crown, Eye, EyeOff, FileSearch, Footprints, Gavel, Hand, Landmark, Moon, Stethoscope, Inbox, Lock, MessageSquare, Search, Send, Shield, Siren, Swords, UserCheck, Users, Vault } from "lucide-react";
+import { Ban, Crown, Eye, EyeOff, ShieldAlert, FileSearch, Footprints, Gavel, Hand, Landmark, Moon, Stethoscope, Inbox, Lock, MessageSquare, Search, Send, Shield, Siren, Swords, UserCheck, Users, Vault } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 import type { GameApi } from "./useGame";
@@ -93,6 +93,25 @@ type JusticeData = {
   patients: Patient[];
   deposits: Deposit[];
   coldCases: ColdCase[];
+  racket: {
+    myCases: {
+      caseId: string;
+      crime: string;
+      district: string;
+      victimName: string;
+      at: number;
+      status: string;
+      clues: number | null;
+      statements: number | null;
+      canIntimidate: string | null;
+      canPayoff: string | null;
+      payoff: { copName: string; amount: number; status: string } | null;
+    }[];
+    cops: { id: string; name: string; title: string }[];
+  } | null;
+  envelopes: { caseId: string; amount: number; crime: string; district: string; victimName: string }[];
+  officials: { id: string; name: string; title: string; path: string | null; canAudit: string | null }[];
+  scandals: { caseId: string; name: string; role: string; at: number; by: string }[];
 };
 type CrewView = {
   id: string;
@@ -616,71 +635,45 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
         </section>
       )}
 
-      {hub && !hub.readsCases && (
-        <section className="card">
-          <h3 className="card-title"><FileSearch size={16} /> Case files</h3>
-          <p className="muted">
-            Only the police can read case files. Every report adds one clue: a body type, how they moved, part of a name,
-            a crew patch. Some clues are wrong. Detectives put them together and make arrests.
-          </p>
-          <ul className="how-cases">
-            <li><b>Doctors</b> examine victims and read the attacker from the bruises.</li>
-            <li><b>Bankers</b> catch cash deposited right after a robbery.</li>
-            <li><b>Vigilantes</b> hunt down suspects on cases the police let go cold.</li>
-          </ul>
+      {data && data.envelopes.length > 0 && (
+        <section className="card envelope-card">
+          <h3 className="card-title">✉️ An envelope on your desk</h3>
+          {data.envelopes.map((x) => (
+            <div key={x.caseId} className="case">
+              <p><b>${x.amount}</b> in cash, and a note: <i>&quot;Case #{x.caseId}. Lose it.&quot;</i></p>
+              <p className="muted">The {x.crime} on {x.victimName} in {x.district}.</p>
+              <div className="row wrap">
+                <button className="btn btn-ghost btn-sm envelope" disabled={game.busy} onClick={() => act({ op: "payoff_answer", caseId: x.caseId, take: true })}>
+                  Take it and lose the file
+                </button>
+                <button className="btn btn-primary btn-sm" disabled={game.busy} onClick={() => act({ op: "payoff_answer", caseId: x.caseId, take: false })}>
+                  Send it back and log it
+                </button>
+              </div>
+              <p className="fine muted">Taking it costs integrity, and internal affairs keeps records.</p>
+            </div>
+          ))}
         </section>
       )}
-      {hub?.readsCases && (
+
+      {data?.racket && <Racket game={game} racket={data.racket} act={act} />}
+
+      {data && data.officials.length > 0 && (
         <section className="card">
-          <div className="row between">
-            <h3 className="card-title"><FileSearch size={16} /> Case files · {view.location.city}</h3>
-            <button className="btn btn-ghost btn-sm" onClick={load}>Refresh</button>
-          </div>
-          {!data && <p className="muted">Pulling the files…</p>}
-          {data && data.cases.length === 0 && <p className="muted">No open cases. A quiet night in {view.location.city}.</p>}
-          <div className="case-list">
-            {data?.cases.map((c) => (
-              <article key={c.id} className={`case ${c.open || c.arrested ? "" : "cold"}`}>
-                <header>
-                  <b>#{c.id} · {c.crime}</b>
-                  <span className={`chip ${c.open ? "chip-red" : ""}`}>{c.arrested ? "In court" : c.open ? "Open" : "Cold"}</span>
-                </header>
-                <p className="muted">
-                  {c.victimName} · {c.district} · {ago(c.at)}{c.amount ? ` · $${c.amount} taken` : ""}
-                </p>
-                <ul className="tips">
-                  {c.tips.length === 0 && <li className="muted">No clues yet.</li>}
-                  {c.tips.map((t) => (
-                    <li key={t.id}>
-                      <span className={`tip-src ${t.source}`}>{SOURCE_LABEL[t.source]}</span> {t.text.replace(/^[^:]+: /, "")}
-                    </li>
-                  ))}
-                </ul>
-                {c.arrested && <p className="fine">Detective {c.arrested.officerName} arrested <b>{c.arrested.suspectName}</b>. The case is in court.</p>}
-                {c.suspects && c.suspects.length > 0 && (
-                  <div className="suspects">
-                    <span className="crime-label">People who fit</span>
-                    {c.suspects.map((x) => (
-                      <span key={x.id} className="suspect">
-                        <span className="chip">{x.name} · {x.matches}/{c.tips.length}</span>
-                        <button className="btn btn-danger btn-xs" disabled={game.busy || c.tips.length < 2} onClick={() => act({ op: "arrest", caseId: c.id, suspectId: x.id })}>
-                          <Handcuffs /> Arrest
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {!c.arrested && (data.detective ? (
-                  <button className="btn btn-primary btn-sm" disabled={game.busy || !!c.canInvestigate} title={c.canInvestigate ?? ""} onClick={() => act({ op: "investigate", caseId: c.id })}>
-                    <Search size={14} /> Work the scene
-                  </button>
-                ) : (
-                  <p className="fine muted">Detectives can work the scene, see who fits and make arrests.</p>
-                ))}
-                {data.detective && c.canInvestigate && !c.arrested && <p className="job-lock"><Lock size={11} /> {c.canInvestigate}</p>}
-              </article>
+          <h3 className="card-title"><ShieldAlert size={16} /> Internal affairs · {view.location.city}</h3>
+          <p className="muted">Audit an official. If they took an envelope, buried a deposit or lost a file, it comes out: a fine, a demotion and a cell. Once a day per person.</p>
+          <ul className="officials">
+            {data.officials.map((o) => (
+              <li key={o.id}>
+                <span>
+                  <b style={{ color: o.path ? PATH_LOOKS[o.path]?.rim : undefined }}>{o.name}</b> <span className="muted">· {o.title}</span>
+                </span>
+                <button className="btn btn-ghost btn-xs" disabled={game.busy || !!o.canAudit} title={o.canAudit ?? ""} onClick={() => act({ op: "audit", targetId: o.id })}>
+                  <Search size={12} /> Audit
+                </button>
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
       )}
 
@@ -767,6 +760,74 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
         </section>
       )}
 
+      {hub?.readsCases && (
+        <section className="card">
+          <div className="row between">
+            <h3 className="card-title"><FileSearch size={16} /> Case files · {view.location.city}</h3>
+            <button className="btn btn-ghost btn-sm" onClick={load}>Refresh</button>
+          </div>
+          {!data && <p className="muted">Pulling the files…</p>}
+          {data && data.cases.length === 0 && <p className="muted">No open cases. A quiet night in {view.location.city}.</p>}
+          <div className="case-list">
+            {data?.cases.map((c) => (
+              <article key={c.id} className={`case ${c.open || c.arrested ? "" : "cold"}`}>
+                <header>
+                  <b>#{c.id} · {c.crime}</b>
+                  <span className={`chip ${c.open ? "chip-red" : ""}`}>{c.arrested ? "In court" : c.open ? "Open" : "Cold"}</span>
+                </header>
+                <p className="muted">
+                  {c.victimName} · {c.district} · {ago(c.at)}{c.amount ? ` · $${c.amount} taken` : ""}
+                </p>
+                <ul className="tips">
+                  {c.tips.length === 0 && <li className="muted">No clues yet.</li>}
+                  {c.tips.map((t) => (
+                    <li key={t.id}>
+                      <span className={`tip-src ${t.source}`}>{SOURCE_LABEL[t.source]}</span> {t.text.replace(/^[^:]+: /, "")}
+                    </li>
+                  ))}
+                </ul>
+                {c.arrested && <p className="fine">Detective {c.arrested.officerName} arrested <b>{c.arrested.suspectName}</b>. The case is in court.</p>}
+                {c.suspects && c.suspects.length > 0 && (
+                  <div className="suspects">
+                    <span className="crime-label">People who fit</span>
+                    {c.suspects.map((x) => (
+                      <span key={x.id} className="suspect">
+                        <span className="chip">{x.name} · {x.matches}/{c.tips.length}</span>
+                        <button className="btn btn-danger btn-xs" disabled={game.busy || c.tips.length < 2} onClick={() => act({ op: "arrest", caseId: c.id, suspectId: x.id })}>
+                          <Handcuffs /> Arrest
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {!c.arrested && (data.detective ? (
+                  <button className="btn btn-primary btn-sm" disabled={game.busy || !!c.canInvestigate} title={c.canInvestigate ?? ""} onClick={() => act({ op: "investigate", caseId: c.id })}>
+                    <Search size={14} /> Work the scene
+                  </button>
+                ) : (
+                  <p className="fine muted">Detectives can work the scene, see who fits and make arrests.</p>
+                ))}
+                {data.detective && c.canInvestigate && !c.arrested && <p className="job-lock"><Lock size={11} /> {c.canInvestigate}</p>}
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {hub && !hub.readsCases && (
+        <section className="card">
+          <h3 className="card-title"><FileSearch size={16} /> Case files</h3>
+          <p className="muted">
+            Only the police can read case files. Every report adds one clue: a body type, how they moved, part of a name,
+            a crew patch. Some clues are wrong. Detectives put them together and make arrests.
+          </p>
+          <ul className="how-cases">
+            <li><b>Doctors</b> examine victims and read the attacker from the bruises.</li>
+            <li><b>Bankers</b> catch cash deposited right after a robbery.</li>
+            <li><b>Vigilantes</b> hunt down suspects on cases the police let go cold.</li>
+          </ul>
+        </section>
+      )}
       <section className="card courthouse">
         <h3 className="card-title"><Gavel size={16} /> Courthouse · {view.location.city}</h3>
         {!data && <p className="muted">Checking the docket…</p>}
@@ -815,6 +876,18 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
             </article>
           ))}
         </div>
+        {data && data.scandals.length > 0 && (
+          <>
+            <h4 className="crime-label record-title">Internal affairs</h4>
+            <ul className="log record">
+              {data.scandals.map((x) => (
+                <li key={`${x.caseId}-${x.name}`} className="bad">
+                  {x.name}, the {x.role} in case #{x.caseId}, was caught by {x.by} · {ago(x.at)}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
         {record.length > 0 && (
           <>
             <h4 className="crime-label record-title">Court record</h4>
@@ -830,6 +903,79 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
         )}
       </section>
     </div>
+  );
+}
+
+const STATUS_CHIP: Record<string, string> = {
+  open: "chip-red",
+  "in court": "chip-gold",
+  convicted: "",
+  acquitted: "chip-green",
+  "file lost": "chip-green",
+  cold: "chip-green",
+  hunted: "",
+  closed: "",
+};
+
+/** The Mafia's view of its own jobs: lean on witnesses, or pay a cop to lose the file. */
+function Racket({ game, racket, act }: { game: GameApi; racket: NonNullable<JusticeData["racket"]>; act: (b: Record<string, unknown>) => Promise<void> }) {
+  const [cop, setCop] = useState<Record<string, string>>({});
+  const [amount, setAmount] = useState<Record<string, string>>({});
+  return (
+    <section className="card racket">
+      <h3 className="card-title"><Crown size={16} /> Your jobs · the family business</h3>
+      {racket.myCases.length === 0 && <p className="muted">Nothing on your record. Keep it that way, or don&apos;t.</p>}
+      <div className="case-list">
+        {racket.myCases.map((x) => (
+          <article key={x.caseId} className="case">
+            <header>
+              <b>#{x.caseId} · {x.crime}</b>
+              <span className={`chip ${STATUS_CHIP[x.status] ?? ""}`}>{x.status}</span>
+            </header>
+            <p className="muted">{x.victimName} · {x.district} · {ago(x.at)}</p>
+            {x.statements !== null && (
+              <p className="fine">The police have {x.clues} clue{x.clues === 1 ? "" : "s"}; {x.statements} from witnesses who talked.</p>
+            )}
+            {x.payoff && (
+              <p className="fine">
+                Envelope for {x.payoff.copName}: ${x.payoff.amount} · {x.payoff.status}
+                {x.payoff.status === "pending" && (
+                  <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => act({ op: "payoff_withdraw", caseId: x.caseId })}>Take it back</button>
+                )}
+              </p>
+            )}
+            {x.status === "open" && (
+              <>
+                <div className="row wrap">
+                  <button className="btn btn-danger btn-sm" disabled={game.busy || !!x.canIntimidate} title={x.canIntimidate ?? ""} onClick={() => act({ op: "intimidate", caseId: x.caseId })}>
+                    🐀 Lean on the witnesses
+                  </button>
+                </div>
+                {x.canIntimidate && <p className="job-lock"><Lock size={11} /> {x.canIntimidate}</p>}
+                {!x.canPayoff ? (
+                  <form
+                    className="row wrap payoff"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      act({ op: "payoff", caseId: x.caseId, copId: cop[x.caseId] ?? racket.cops[0]?.id, amount: Number(amount[x.caseId] ?? 150) });
+                    }}
+                  >
+                    <select value={cop[x.caseId] ?? racket.cops[0]?.id ?? ""} onChange={(e) => setCop({ ...cop, [x.caseId]: e.target.value })} aria-label="Officer">
+                      {racket.cops.length === 0 && <option value="">No officers in town</option>}
+                      {racket.cops.map((c) => <option key={c.id} value={c.id}>{c.name} · {c.title}</option>)}
+                    </select>
+                    <input type="number" min={100} step={10} value={amount[x.caseId] ?? "150"} onChange={(e) => setAmount({ ...amount, [x.caseId]: e.target.value })} aria-label="Amount" />
+                    <button className="btn btn-ghost btn-sm" disabled={game.busy || racket.cops.length === 0}>✉️ Pay to lose the file</button>
+                  </form>
+                ) : (
+                  <p className="job-lock"><Lock size={11} /> {x.canPayoff}</p>
+                )}
+              </>
+            )}
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 

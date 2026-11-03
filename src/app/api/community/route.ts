@@ -24,6 +24,7 @@ import {
 import {
   canReadCases,
   caseCold,
+  fileLost,
   caseView,
   commitCrime,
   crimeBlock,
@@ -37,6 +38,20 @@ import {
 } from "@/game/crime";
 import { arrest, isDetective, isJudge, isLawyer, joinTrial, offerBribe, trialView } from "@/game/justice";
 import { settleTrial } from "@/server/justice";
+import {
+  answerPayoff,
+  audit,
+  auditBlock,
+  corruptionIn,
+  intimidate,
+  isInternalAffairs,
+  isMafia,
+  isOfficial,
+  myCaseView,
+  offerPayoff,
+  withdrawPayoff,
+} from "@/game/racket";
+import { rankTitle } from "@/game/content/paths";
 import {
   coldCaseView,
   depositView,
@@ -104,21 +119,28 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     if (url.searchParams.get("cases")) {
       const country = countryOf(p);
-      let cases = await store.listCases(country, 40);
+      let cases = await store.listCases(country, 100);
       // Trials nobody ruled on in time are closed by the court clerk.
       const overdue = cases.filter((c) => c.trial && !c.trial.verdict && now >= c.trial.deadline).slice(0, 3);
       if (overdue.length) {
         for (const c of overdue) await settleTrial(store, c.id, now).catch((e) => console.error(e));
-        cases = await store.listCases(country, 40);
+        cases = await store.listCases(country, 100);
       }
+      const all = cases;
+      // A file a bent cop "lost" is gone for everyone working cases.
+      cases = cases.filter((c) => !fileLost(c));
       const block = canReadCases(p);
       const detective = isDetective(p);
       const medic = isMedic(p);
       const banker = isBanker(p);
       const vigilante = isVigilante(p);
       let pool: { player: Player; crewTag: string | null }[] = [];
+      const mafia = isMafia(p);
+      const ia = isInternalAffairs(p);
+      let people: Player[] = [];
+      if (detective || vigilante || mafia || ia) people = await store.listPlayers(country, 200);
       if (detective || vigilante) {
-        const [people, crews] = await Promise.all([store.listPlayers(country, 200), store.listCrews(200)]);
+        const crews = await store.listCrews(200);
         const tags = new Map(crews.map((c) => [c.id, c.tag]));
         pool = people.filter((o) => o.id !== p.id).map((o) => ({ player: o, crewTag: o.crewId ? tags.get(o.crewId) ?? null : null }));
       }
@@ -139,6 +161,28 @@ export async function GET(req: Request) {
           ? cases.filter((c) => c.kind !== "pickpocket" && !c.examinedBy && !c.trial?.verdict && !c.hunt && !caseCold(c, now)).slice(0, 10).map((c) => patientView(c, p, now))
           : [],
         deposits: banker ? cases.filter((c) => c.deposit && !c.deposit.review && !caseCold(c, now) && !c.trial?.verdict).slice(0, 10).map((c) => depositView(c, p, now)) : [],
+        racket: mafia
+          ? {
+              myCases: (p.myCases ?? []).map((m) => myCaseView(all.find((c) => c.id === m.caseId) ?? null, m, p, now)),
+              cops: people
+                .filter((o) => o.id !== p.id && !o.dead && o.path === "police" && o.rank >= BALANCE.racket.payoff.copMinRank)
+                .slice(0, 20)
+                .map((o) => ({ id: o.id, name: o.name, title: rankTitle(o) ?? "" })),
+            }
+          : null,
+        envelopes: all
+          .filter((c) => c.payoff?.status === "pending" && c.payoff.copId === p.id)
+          .map((c) => ({ caseId: c.id, amount: c.payoff!.amount, crime: c.kind, district: c.district, victimName: c.victimName })),
+        officials: ia
+          ? people
+              .filter((o) => o.id !== p.id && !o.dead && isOfficial(o))
+              .slice(0, 30)
+              .map((o) => ({ id: o.id, name: o.name, title: rankTitle(o) ?? "", path: o.path, canAudit: auditBlock(p, o, now) }))
+          : [],
+        scandals: all
+          .flatMap((c) => (c.exposed ?? []).map((e) => ({ caseId: c.id, name: e.name, role: e.role, at: e.at, by: e.by })))
+          .sort((a, b) => b.at - a.at)
+          .slice(0, 10),
         coldCases: vigilante
           ? cases.filter((c) => !c.trial && caseCold(c, now)).slice(0, 10).map((c) => coldCaseView(c, p, now, c.hunt ? [] : suspectsFor(c, pool)))
           : [],
@@ -452,6 +496,100 @@ export async function POST(req: Request) {
           await tx.putPlayer(suspect);
           if (vic) await tx.putPlayer(vic);
           await tx.putCase(c);
+          return out.events;
+        });
+        break;
+      }
+      case "intimidate": {
+        const caseId = str(b.caseId);
+        events = await store.transaction(async (tx) => {
+          const c = await tx.getCase(caseId);
+          if (!c) throw new GameError("That case is closed.");
+          const witnessIds = [...new Set(c.tips.filter((t) => t.source === "witness" && t.byId).map((t) => t.byId!))].filter((id) => id !== playerId);
+          const [m, ...ws] = await tx.getPlayers([playerId, ...witnessIds]);
+          if (!m) throw new GameError("Create a character first.");
+          tick(m, now);
+          const witnesses = ws.filter((w): w is Player => !!w);
+          const out = intimidate(m, c, witnesses, now, Math.random);
+          await tx.putPlayer(m);
+          for (const w of witnesses) await tx.putPlayer(w);
+          await tx.putCase(c);
+          return out;
+        });
+        break;
+      }
+      case "payoff": {
+        const caseId = str(b.caseId);
+        const copId = str(b.copId);
+        const amount = Number(b.amount);
+        events = await store.transaction(async (tx) => {
+          const c = await tx.getCase(caseId);
+          if (!c) throw new GameError("That case is closed.");
+          const [m, cop] = await tx.getPlayers([playerId, copId]);
+          if (!m) throw new GameError("Create a character first.");
+          if (!cop) throw new GameError("Pick an officer.");
+          tick(m, now);
+          const out = offerPayoff(m, c, cop, amount, now);
+          await tx.putPlayer(m);
+          await tx.putPlayer(cop);
+          await tx.putCase(c);
+          return out;
+        });
+        break;
+      }
+      case "payoff_withdraw": {
+        const caseId = str(b.caseId);
+        events = await store.transaction(async (tx) => {
+          const c = await tx.getCase(caseId);
+          if (!c) throw new GameError("That case is closed.");
+          const [m] = await tx.getPlayers([playerId]);
+          if (!m) throw new GameError("Create a character first.");
+          const out = withdrawPayoff(m, c);
+          await tx.putPlayer(m);
+          await tx.putCase(c);
+          return out;
+        });
+        break;
+      }
+      case "payoff_answer": {
+        const caseId = str(b.caseId);
+        const take = b.take === true;
+        events = await store.transaction(async (tx) => {
+          const c = await tx.getCase(caseId);
+          if (!c?.payoff) throw new GameError("There's no envelope for you.");
+          const [cop, briber, victim] = await tx.getPlayers([playerId, c.payoff.fromId, c.victimId]);
+          if (!cop) throw new GameError("Create a character first.");
+          const br = briber && briber.id !== cop.id ? briber : null;
+          const vic = victim && victim.id !== cop.id && victim.id !== br?.id ? victim : null;
+          const out = answerPayoff(cop, c, br, vic, take, now, Math.random);
+          await tx.putPlayer(cop);
+          if (br) await tx.putPlayer(br);
+          if (vic) await tx.putPlayer(vic);
+          await tx.putCase(c);
+          return out;
+        });
+        break;
+      }
+      case "audit": {
+        const targetId = str(b.targetId);
+        const self = await store.get(playerId);
+        if (!self) throw new GameError("Create a character first.");
+        // Find the cases worth pulling first, then lock them.
+        const suspectCases = (await store.listCases(countryOf(self), 300)).filter((c) => corruptionIn(c, targetId)).map((c) => c.id);
+        events = await store.transaction(async (tx) => {
+          const [a, t] = await tx.getPlayers([playerId, targetId]);
+          if (!a) throw new GameError("Create a character first.");
+          tick(a, now);
+          if (t) tick(t, now);
+          const locked = [];
+          for (const id of suspectCases) {
+            const c = await tx.getCase(id);
+            if (c) locked.push(c);
+          }
+          const out = audit(a, t!, locked, now);
+          await tx.putPlayer(a);
+          if (t) await tx.putPlayer(t);
+          for (const c of out.changed) await tx.putCase(c);
           return out.events;
         });
         break;

@@ -98,6 +98,15 @@ export const BALANCE = {
     /** Night Patrollers and up hunt suspects on cold cases. */
     vigilante: { minRank: 2, energy: 15, heat: 6 },
   },
+  /** The Mafia fights back; internal affairs fights the corruption. */
+  racket: {
+    /** Soldiers and up lean on witnesses of their own crimes. */
+    intimidate: { minRank: 2, energy: 10, heat: 4 },
+    /** Capos and up offer police officers money to lose a file. */
+    payoff: { minRank: 4, minAmount: 100, copMinRank: 2 },
+    /** Sergeants and up audit officials. */
+    audit: { minRank: 5, energy: 20, cooldownMs: 24 * 60 * 60_000, jailMs: 20 * 60_000 },
+  },
   chat: { cooldownMs: 3_000, maxLength: 280 },
   banking: {
     /** Bankers' interest per hour on savings (shortened for testing). */

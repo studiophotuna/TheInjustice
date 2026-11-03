@@ -94,6 +94,15 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
     it (bank records give a name clue) or bury it for a 10% fee and lose integrity. Vigilantes
     (Night Patroller+) hunt suspects on cold cases: win and the victim is paid back, lose and
     you're hurt; either way you draw heat.
+  - **The Mafia fights back**: in "Your jobs", Mafia Soldiers+ see their own open cases and how
+    many witnesses talked, and can lean on them once: a scared witness takes back their
+    statement, a brave one gives the police another clue. Capos+ can leave an envelope on a
+    police officer's desk to lose the file: taking it buries the case for everyone; refusing
+    returns the money and puts a solid clue about the briber in the file.
+  - **Internal affairs**: Police Sergeants+ audit officials (police, bankers, judges) once a
+    day each. Hidden records of taken envelopes, buried deposits and lost files come out: a
+    fine of twice the money, a demotion and 20 minutes held. Clean officials gain reputation.
+    Every exposure goes on the public court record.
   - **Crews**: only street bosses (Mafia at Capo, rank 4, or higher) can found one,
     for $500. The leader picks who can join: **Open** (anyone joins), **On request** (the
     leader approves) or **Invite only** (the leader invites from the People list). Shared

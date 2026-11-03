@@ -177,13 +177,18 @@ export function eyeAccuracy(p: Player, bonus = 0): number {
   return clamp(0.5 + (sv(p, "perception") - 10) / 60 + bonus, 0.5, 0.92);
 }
 
+/** A bent cop took money to lose the file: nobody can work it anymore. */
+export function fileLost(c: CaseFile): boolean {
+  return c.payoff?.status === "taken";
+}
+
 export function caseCold(c: CaseFile, now: number): boolean {
-  return now - c.at >= BALANCE.crime.coldMs;
+  return fileLost(c) || now - c.at >= BALANCE.crime.coldMs;
 }
 
 /** Open for scene work and arrests: not cold, and nobody has been arrested for it yet. */
 export function caseOpen(c: CaseFile, now: number): boolean {
-  return !c.trial && now - c.at < BALANCE.crime.coldMs;
+  return !c.trial && !caseCold(c, now);
 }
 
 /** Why `a` can't commit `kind` against `t` right now, or null. */
@@ -314,6 +319,7 @@ export function commitCrime(
   });
 
   a.lastCrime = { caseId: ctx.caseId, at: now };
+  a.myCases = [{ caseId: ctx.caseId, at: now, kind, district: ctx.district, victimName: t.name }, ...(a.myCases ?? [])].slice(0, 8);
   const c: CaseFile = {
     id: ctx.caseId,
     country: countryOf(a),

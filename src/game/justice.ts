@@ -179,6 +179,7 @@ export function decideTrial(
 
   t.verdict = verdict;
   t.decidedBy = judge ? `Judge ${judge.name}` : "the court clerk";
+  if (judge) t.judgeId = judge.id;
   t.decidedAt = now;
   const s = parties.suspect;
   const crime = CRIMES[c.kind].name.toLowerCase();

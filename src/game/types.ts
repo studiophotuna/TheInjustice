@@ -141,6 +141,8 @@ export interface Player {
   lastCrime?: { caseId: string; at: number } | null;
   /** A deposit the bank flagged; the server files it on the case, then clears this. */
   pendingDeposit?: { caseId: string; amount: number; at: number } | null;
+  /** The player's own recent crimes (criminals know what they did). */
+  myCases?: { caseId: string; at: number; kind: CrimeKind; district: string; victimName: string }[];
 }
 
 // ── Street crime and case files ────────────────────────────────────────────
@@ -191,9 +193,15 @@ export interface CaseFile {
   /** A doctor examined the victim's injuries. */
   examinedBy?: { id: string; name: string; at: number };
   /** Cash the criminal deposited soon after the crime; bankers review it. */
-  deposit?: { amount: number; at: number; account: string; review?: "reported" | "buried"; reviewerName?: string };
+  deposit?: { amount: number; at: number; account: string; review?: "reported" | "buried"; reviewerName?: string; reviewerId?: string };
   /** A vigilante went after a suspect on a cold case. */
   hunt?: { hunterId: string; hunterName: string; suspectId: string; suspectName: string; won: boolean; at: number; restitution: number };
+  /** The criminal's crew leaned on the witnesses (once per case). */
+  intimidatedAt?: number;
+  /** Money offered to a police officer to lose the file. */
+  payoff?: { fromId: string; copId: string; copName: string; amount: number; at: number; status: "pending" | "taken" | "refused" | "withdrawn" };
+  /** Officials internal affairs caught over this case (public). */
+  exposed?: { id: string; name: string; role: string; at: number; by: string }[];
 }
 
 export interface CourtParty {
@@ -221,6 +229,8 @@ export interface Trial {
   bribe?: number;
   verdict?: Verdict;
   decidedBy?: string;
+  /** Server-only: the judge who ruled. */
+  judgeId?: string;
   decidedAt?: number;
   sentenceMs?: number;
   restitution?: number;

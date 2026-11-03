@@ -703,3 +703,9 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 .how-cases { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); font-size: 0.92rem; }
 .tip-src.doctor { color: #ff8fb1; }
 .tip-src.bank { color: #9b7bff; }
+.racket { border-color: rgba(255, 61, 90, 0.3); }
+.payoff select, .payoff input { padding: 7px 10px; border-radius: 10px; border: 1px solid var(--border); background: rgba(0, 0, 0, 0.35); color: var(--text); max-width: 100%; }
+.payoff input { width: 90px; }
+.envelope-card { border-color: rgba(255, 194, 75, 0.5); }
+.officials { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.officials li { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
