@@ -46,7 +46,7 @@ import {
   UserRound,
   Zap,
 } from "lucide-react";
-import { useEffect, useState, type ComponentType } from "react";
+import { useCallback, useEffect, useState, type ComponentType } from "react";
 import type { JobView, PublicView } from "@/game/view";
 import { Skyline } from "./art/Skyline";
 import { Scene, type CharacterKind, type SceneKind } from "./art/Scenes";
@@ -368,7 +368,7 @@ export function ProfileTab({ game }: { game: GameApi }) {
         </section>
       )}
 
-      <SeasonBoard />
+      <SeasonBoard game={game} />
       <section className="card">
         <h3 className="card-title"><Newspaper size={16} /> What happened</h3>
         <ul className="log">
@@ -787,15 +787,29 @@ function GymCard({ game }: { game: GameApi }) {
 type Board = { id: string; label: string; top: { place: number; who: string; value: number }[]; you: { place: number; value: number } | null };
 
 /** This month's leaderboards. Anonymous: a public list of names would put targets on backs. */
-function SeasonBoard() {
-  const [data, setData] = useState<{ season: string; boards: Board[] } | null>(null);
+type TrophyRow = { season: number; seasonName: string; label: string; place: number; prize?: number };
+type SeasonData = {
+  season: string;
+  boards: Board[];
+  last: { name: string; canClaim: boolean; finishes: TrophyRow[] };
+  trophies: TrophyRow[];
+  trophiesPublic: boolean;
+};
+
+function SeasonBoard({ game }: { game: GameApi }) {
+  const [data, setData] = useState<SeasonData | null>(null);
   const [tab, setTab] = useState(0);
-  useEffect(() => {
+  const load = useCallback(() => {
     fetch("/api/season", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then(setData)
       .catch(() => undefined);
   }, []);
+  useEffect(load, [load]);
+  const post = async (body: Record<string, unknown>) => {
+    await game.social(body, "/api/season");
+    load();
+  };
   if (!data) return null;
   const b = data.boards[tab];
   const fmtValue = (v: number) => (b.id === "earned" ? `$${v.toLocaleString()}` : v.toLocaleString());
@@ -822,6 +836,34 @@ function SeasonBoard() {
         </ol>
       )}
       <p className="fine">{b.you ? `Your place: #${b.you.place} (${fmtValue(b.you.value)}).` : "You're not on this board yet."}</p>
+
+      {data.last.canClaim && data.last.finishes.length > 0 && (
+        <div className="trophy-claim">
+          <p>
+            <b>{data.last.name} is over.</b> You finished{" "}
+            {data.last.finishes.map((t) => `#${t.place} in ${t.label.toLowerCase()}`).join(", ")}.
+          </p>
+          <button className="btn btn-primary btn-sm" disabled={game.busy} onClick={() => post({ op: "claim" })}>
+            <Trophy size={14} /> Claim ${data.last.finishes.reduce((s, t) => s + (t.prize ?? 0), 0)} and your trophies
+          </button>
+        </div>
+      )}
+      {data.trophies.length > 0 && (
+        <>
+          <h4 className="subhead">Your trophy shelf</h4>
+          <div className="trophies">
+            {data.trophies.map((t, i) => (
+              <span key={i} className={`trophy t${t.place}`}>
+                <Trophy size={14} /> #{t.place} {t.label} <small>{t.seasonName}</small>
+              </span>
+            ))}
+          </div>
+          <label className="toggle-row">
+            <input type="checkbox" checked={data.trophiesPublic} disabled={game.busy} onChange={(e) => post({ op: "show", on: e.target.checked })} />
+            <span>Show my trophies to other players. <span className="muted">Bragging rights, and a target on your back.</span></span>
+          </label>
+        </>
+      )}
     </section>
   );
 }

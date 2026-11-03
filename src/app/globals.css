@@ -841,3 +841,27 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 .place .banner-scene { display: none; }
 .steps { margin: 6px 0 0; padding-left: 20px; display: grid; gap: 6px; color: #c3cad6; }
 .steps b { color: var(--text); }
+
+/* ─── Trophies ─────────────────────────────────────────────────────────── */
+.trophy-claim { margin-top: 12px; padding: 12px; border-radius: var(--radius-sm); border: 1px solid rgba(255, 194, 75, 0.4); background: rgba(255, 194, 75, 0.08); display: grid; gap: 8px; }
+.trophies { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px; }
+.trophy { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 99px; font-size: 13px; font-weight: 700; border: 1px solid var(--border-strong); background: var(--surface-2); }
+.trophy small { color: var(--muted); font-weight: 500; }
+.trophy.t1 { color: #ffd76a; border-color: rgba(255, 215, 106, 0.5); }
+.trophy.t2 { color: #d7dde8; border-color: rgba(215, 221, 232, 0.4); }
+.trophy.t3 { color: #e3a26b; border-color: rgba(227, 162, 107, 0.45); }
+.toggle-row { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; cursor: pointer; }
+.toggle-row input { width: auto; margin-top: 3px; accent-color: var(--gold); }
+
+/* ─── The editor ───────────────────────────────────────────────────────── */
+.chip-cyan { color: var(--cyan); border-color: rgba(56, 225, 255, 0.4); background: rgba(56, 225, 255, 0.08); }
+.paper-stories li { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.paper-stories li .btn { flex: none; }
+.paper-stories.buried li span { text-decoration: line-through; color: var(--muted); }
+.paper-lead-actions { display: flex; justify-content: flex-end; margin-top: -2px; }
+.bury-btn { opacity: 0.7; }
+.bury-btn:hover { opacity: 1; }
+.paper-editorial { margin: 12px 0 6px; padding: 10px 12px; border-left: 3px solid var(--gold); background: rgba(255, 194, 75, 0.06); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-style: italic; display: grid; gap: 4px; }
+.paper-editorial .crime-label { font-style: normal; }
+.editor-desk { display: grid; gap: 8px; margin-top: 10px; }
+.paper-stories { padding-left: 0; list-style: none; } .paper-stories li { padding-left: 10px; border-left: 2px solid var(--border-strong); }

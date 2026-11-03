@@ -91,6 +91,10 @@ export async function POST(req: Request) {
     let owed: { country: import("@/game/types").CountryId; amount: number } | null = null;
     const rates = action.type === "job" || action.type === "collect_property" ? await taxRates(store) : {};
     const turf = action.type === "job" ? await turfMap(store) : {};
+    // Allied crews don't charge each other protection.
+    const self = action.type === "job" ? await store.get(playerId!) : null;
+    const myCrew = self?.crewId ? await store.getCrew(self.crewId) : null;
+    const allies = (myCrew?.allies ?? []).map((x) => x.id);
     let turfOwed: { crewId: string; amount: number } | null = null;
     let launderFlag: { amount: number; method: string } | null = null;
     const out = await store.update(playerId!, (p) => {
@@ -100,7 +104,7 @@ export async function POST(req: Request) {
         return { player: fresh, result: { view: toView(fresh, now), events: [] as GameEvent[] } };
       }
       if (!p) throw new GameError("Create a character first.");
-      const events = applyAction(p, action, now, Math.random, { taxRates: rates, turf });
+      const events = applyAction(p, action, now, Math.random, { taxRates: rates, turf, allies });
       if (p.launderFlag) {
         launderFlag = p.launderFlag;
         p.launderFlag = null;

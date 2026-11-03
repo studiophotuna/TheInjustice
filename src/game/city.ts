@@ -362,6 +362,11 @@ export function cityView(c: City, p: Player, now: number) {
     treasury: c.treasury,
     crackdown: crackdownOn(c, now) ? c.crackdownUntil : null,
     chief: c.chief ? { name: c.chief.name, you: isChief(c, p) } : null,
+    editor: c.editor ? { name: c.editor.name, you: c.editor.id === p.id, price: c.editor.price } : null,
+    editorControls:
+      c.editor?.id === p.id
+        ? { canSalary: now - (c.editorPaidAt ?? 0) >= 24 * 60 * 60_000 && c.treasury > 0, editorial: c.editorial?.text ?? "", price: c.editor.price }
+        : null,
     recall: c.mayor ? { signatures: c.recall?.length ?? 0, needed: recallNeeded(c), signed: !!c.recall?.includes(p.id), canSign: recallBlock(c, p, now) } : null,
     soupMeals: c.soupMeals ?? 0,
     mealsServed: c.mealsServed ?? 0,

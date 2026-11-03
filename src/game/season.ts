@@ -27,7 +27,11 @@ export function seasonName(id: number): string {
 /** Resets the player's counters when a new season starts. */
 export function ensureSeason(p: Player, now: number) {
   const id = seasonId(now);
-  if (p.season?.id !== id) p.season = { id, earned: 0, wins: 0, arrests: 0 };
+  if (p.season?.id !== id) {
+    // Keep the finished season's numbers for trophies.
+    if (p.season && p.season.id < id) p.lastSeason = { ...p.season };
+    p.season = { id, earned: 0, wins: 0, arrests: 0 };
+  }
   return p.season;
 }
 

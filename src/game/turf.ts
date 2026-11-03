@@ -39,6 +39,7 @@ export function warBlock(c: City, crew: Crew | null, p: Player, d: DistrictId, n
   if (!h) return "Nobody holds it. Just claim it.";
   if (!isLeader(crew, p)) return "Only a crew leader can declare war.";
   if (h.crewId === crew!.id) return "That's already your turf.";
+  if (crew!.allies?.some((a) => a.id === h.crewId)) return "They're your allies. Break the alliance first.";
   if (h.war) return "There's already a war on.";
   if (now - h.lastWarAt < T.peaceMs) return "The streets need time to cool down after the last war.";
   if (countryOf(p) !== c.country) return "You have to be in the city.";
@@ -54,11 +55,23 @@ export function declareWar(c: City, crew: Crew, p: Player, d: DistrictId, now: n
   return [{ tone: "good", text: `You declare war on ${h.name} [${h.tag}] for ${DISTRICT_BY_ID[d].name}. Get your crew in the fight.` }];
 }
 
-export function joinWarBlock(c: City, p: Player, d: DistrictId, now: number): string | null {
+/** Which side a player fights on: their own crew's, or an ally's. */
+function sideOf(h: TurfHold, p: Player, allies: string[]): "attack" | "defend" | "both" | null {
+  if (!p.crewId) return null;
+  if (p.crewId === h.war!.crewId) return "attack";
+  if (p.crewId === h.crewId) return "defend";
+  const atk = allies.includes(h.war!.crewId);
+  const def = allies.includes(h.crewId);
+  return atk && def ? "both" : atk ? "attack" : def ? "defend" : null;
+}
+
+export function joinWarBlock(c: City, p: Player, d: DistrictId, now: number, allies: string[] = []): string | null {
   const h = holdOf(c, d);
   if (!h?.war) return "There's no war there.";
   if (now >= h.war.endsAt) return "The fighting is over. Settle it.";
-  if (!p.crewId || (p.crewId !== h.crewId && p.crewId !== h.war.crewId)) return "This isn't your crew's fight.";
+  const side = sideOf(h, p, allies);
+  if (!side) return "This isn't your crew's fight, or an ally's.";
+  if (side === "both") return "You're allied with both sides. Stay out of it.";
   if ([...h.war.attackers, ...h.war.defenders].some((x) => x.id === p.id)) return "You're already in it.";
   if (countryOf(p) !== c.country) return "You have to be in the city.";
   if (inJail(p, now)) return "You're in a cell.";
@@ -66,12 +79,12 @@ export function joinWarBlock(c: City, p: Player, d: DistrictId, now: number): st
   return null;
 }
 
-export function joinWar(c: City, p: Player, d: DistrictId, now: number): GameEvent[] {
-  const block = joinWarBlock(c, p, d, now);
+export function joinWar(c: City, p: Player, d: DistrictId, now: number, allies: string[] = []): GameEvent[] {
+  const block = joinWarBlock(c, p, d, now, allies);
   if (block) throw new GameError(block);
   const h = holdOf(c, d)!;
   p.energy -= T.joinEnergy;
-  const attacking = p.crewId === h.war!.crewId;
+  const attacking = sideOf(h, p, allies) === "attack";
   (attacking ? h.war!.attackers : h.war!.defenders).push({ id: p.id, name: p.name });
   return [{ tone: "good", text: attacking ? `You're on the attack for ${DISTRICT_BY_ID[d].name}.` : `You're defending ${DISTRICT_BY_ID[d].name}.` }];
 }
@@ -117,12 +130,13 @@ export function settleWar(c: City, d: DistrictId, attackers: Player[], defenders
 
 /** Turf in this city, for the map. */
 export function turfView(c: City, viewer: Player, crew: Crew | null, now: number) {
+  const allies = (crew?.allies ?? []).map((a) => a.id);
   return DISTRICTS.filter((d) => d.country === c.country).map((d) => {
     const h = holdOf(c, d.id);
     return {
       id: d.id,
       name: d.name,
-      holder: h ? { name: h.name, tag: h.tag, mine: viewer.crewId === h.crewId } : null,
+      holder: h ? { name: h.name, tag: h.tag, mine: viewer.crewId === h.crewId, ally: allies.includes(h.crewId) } : null,
       war: h?.war
         ? {
             attacker: `${h.war.name} [${h.war.tag}]`,
@@ -130,11 +144,11 @@ export function turfView(c: City, viewer: Player, crew: Crew | null, now: number
             attackers: h.war.attackers.length,
             defenders: h.war.defenders.length,
             over: now >= h.war.endsAt,
-            canJoin: joinWarBlock(c, viewer, d.id, now),
+            canJoin: joinWarBlock(c, viewer, d.id, now, allies),
           }
         : null,
       canClaim: claimBlock(c, crew, viewer, d.id),
-      canWar: h ? warBlock(c, crew, viewer, d.id, now) : "Nobody holds it.",
+      canWar: h ? (allies.includes(h.crewId) ? "They're your allies." : warBlock(c, crew, viewer, d.id, now)) : "Nobody holds it.",
     };
   });
 }

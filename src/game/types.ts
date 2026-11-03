@@ -103,6 +103,13 @@ export interface Player {
   lastSoupAt?: number;
   /** This month's counters for the anonymous season leaderboard. */
   season?: { id: number; earned: number; wins: number; arrests: number };
+  /** The season before, frozen when a new one starts (for trophies). */
+  lastSeason?: { id: number; earned: number; wins: number; arrests: number };
+  /** Last season whose trophies this player has claimed. */
+  trophySeason?: number;
+  /** Top-3 finishes in past seasons. Private unless the player shows them off. */
+  trophies?: Trophy[];
+  trophiesPublic?: boolean;
   /** Last time the player had the game open (for "online now"). */
   seenAt?: number;
   /** Recent repetitions of each job or exercise (fades over time), for diminishing returns. */
@@ -307,6 +314,20 @@ export interface Notice {
   read: boolean;
 }
 
+export interface Trophy {
+  season: number;
+  seasonName: string;
+  stat: "earned" | "wins" | "arrests";
+  label: string;
+  place: number;
+}
+
+export interface CrewRef {
+  id: string;
+  name: string;
+  tag: string;
+}
+
 export interface Crew {
   id: string;
   name: string;
@@ -327,6 +348,10 @@ export interface Crew {
   lastHeistAt?: number;
   /** A planned prison break for a jailed member (one at a time). */
   breakout?: Breakout | null;
+  /** Allied crews: they fight in each other's wars and don't pay each other protection. */
+  allies?: CrewRef[];
+  /** Alliances other crews have proposed to this one. */
+  allyOffers?: (CrewRef & { at: number })[];
 }
 
 export interface Loan {
@@ -534,4 +559,13 @@ export interface City {
   mealsServed?: number;
   /** Server-only: money the mayor quietly took from the treasury. */
   skims: { mayorId: string; amount: number; at: number; exposed?: boolean }[];
+  /** Editor of the city paper, appointed by the mayor. */
+  editor?: { id: string; name: string; since: number; price: number } | null;
+  editorPaidAt?: number;
+  /** Stories pulled from the front page (by story id). */
+  buried?: string[];
+  /** Server-only: who paid the editor to bury what. */
+  buryPays?: { storyId: string; payerId: string; amount: number; at: number }[];
+  /** The editor's own column. */
+  editorial?: { text: string; at: number } | null;
 }

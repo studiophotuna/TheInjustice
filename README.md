@@ -266,3 +266,17 @@ The City tab is a grid of buildings you walk into; each one holds everything tha
 - **Station**: travel between countries.
 
 Links anywhere in the game can open a building directly with `place:<id>` (for example `place:bank`).
+
+## Trophies, alliances and the editor
+
+- **Season trophies:** when a month ends, the top three in money made, fights won and arrests
+  claim a trophy and a prize ($1,000 / $500 / $250, into the bank) from the season card in Me.
+  Boards stay anonymous; trophies are private unless the winner ticks "show my trophies", which
+  puts them next to their name in People.
+- **Crew alliances:** a crew leader proposes an alliance from the Crew tab, the other leader
+  accepts. Up to two allies. Allies can fight on each other's side in turf wars, can't declare war
+  on each other, and don't pay each other protection money. Either leader can break it.
+- **The newspaper editor:** the mayor appoints a resident (reputation 15+) to run the city paper.
+  The editor writes a column, pulls or restores stories, draws $60 a day from the treasury, and
+  sets a price for burying a story. Anyone can pay that price (dirty money first) to make a story
+  vanish from the front page; the envelope goes to the editor as dirty money.

@@ -1,3 +1,4 @@
+import { acceptAlliance, breakAlliance, declineAlliance, proposeAlliance } from "@/game/batch7";
 import { buildLab, flagLaundering, flagsView, frisk, friskBlock, isBankStaff, labCook, labTips, labView, launderWithBanker, probeLaundering, raidLab, setLaunderService } from "@/game/batch6";
 import { isDrug } from "@/game/drugs";
 import { cancelHeist, heistView, planHeist, runHeist, takeRole } from "@/game/heist";
@@ -117,8 +118,16 @@ function crewView(c: Crew, viewer: Player) {
     policy: policyOf(c),
     leader: c.members.find((m) => m.id === c.leaderId)?.name ?? "",
     members: c.members.map((m) => ({ id: m.id, name: m.name, role: m.role })),
+    // Alliances are public: the street knows who stands with whom.
+    allies: (c.allies ?? []).map((a) => ({ id: a.id, name: a.name, tag: a.tag })),
     ...(member
-      ? { vault: c.vault, log: c.log, requests: viewer.id === c.leaderId ? c.requests : [], isLeader: viewer.id === c.leaderId }
+      ? {
+          vault: c.vault,
+          log: c.log,
+          requests: viewer.id === c.leaderId ? c.requests : [],
+          isLeader: viewer.id === c.leaderId,
+          allyOffers: viewer.id === c.leaderId ? (c.allyOffers ?? []).map((o) => ({ id: o.id, name: o.name, tag: o.tag })) : [],
+        }
       : {
           requested: c.requests.some((r) => r.id === viewer.id),
           invited: (c.invites ?? []).some((i) => i.id === viewer.id),
@@ -1184,6 +1193,39 @@ export async function POST(req: Request) {
           await tx.putCrew(crew);
           if (city) await tx.putCity(city);
           return out;
+        });
+        break;
+      }
+      case "crew_ally": {
+        // Alliances between crews: propose, accept, decline, break.
+        const what = str(b.what);
+        const theirId = str(b.crewId);
+        const pre = await store.getCrew(theirId);
+        await store.transaction(async (tx) => {
+          const ids = [playerId, ...(pre && pre.leaderId !== playerId ? [pre.leaderId] : [])];
+          const rows = await tx.getPlayers(ids);
+          const me = rows.find((r) => r?.id === playerId) ?? null;
+          const theirLeader = rows.find((r) => r?.id === pre?.leaderId) ?? null;
+          if (!me?.crewId) throw new GameError("You're not in a crew.");
+          // Lock both crews in a fixed order.
+          const [firstId, secondId] = [me.crewId, theirId].sort();
+          const first = await tx.getCrew(firstId);
+          const second = firstId === secondId ? first : await tx.getCrew(secondId);
+          const mine = first?.id === me.crewId ? first : second;
+          const theirs = first?.id === theirId ? first : second;
+          if (!mine) throw new GameError("Your crew is gone.");
+          if (what === "decline") {
+            events = declineAlliance(mine, me, theirId);
+          } else if (what === "break") {
+            events = breakAlliance(mine, theirs, me, theirId, theirLeader, now);
+            if (theirs) await tx.putCrew(theirs);
+          } else {
+            if (!theirs) throw new GameError("That crew is gone.");
+            events = what === "accept" ? acceptAlliance(mine, theirs, me, theirLeader, now) : proposeAlliance(mine, theirs, me, theirLeader, now);
+            await tx.putCrew(theirs);
+          }
+          await tx.putCrew(mine);
+          if (theirLeader) await tx.putPlayer(theirLeader);
         });
         break;
       }

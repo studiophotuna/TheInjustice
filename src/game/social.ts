@@ -150,6 +150,8 @@ export interface PublicProfile {
   online: boolean;
   canAttack: string | null;
   canVouch: string | null;
+  /** Season trophies, only if the owner chose to show them. */
+  trophies: { label: string; place: number; seasonName: string }[];
 }
 
 export function profileFor(viewer: Player, p: Player, now: number): PublicProfile {
@@ -179,6 +181,7 @@ export function profileFor(viewer: Player, p: Player, now: number): PublicProfil
     online: now - (p.seenAt ?? 0) < BALANCE.onlineMs,
     canAttack: attackBlock(viewer, p, now),
     canVouch,
+    trophies: p.trophiesPublic ? (p.trophies ?? []).slice(0, 6).map((t) => ({ label: t.label, place: t.place, seasonName: t.seasonName })) : [],
   };
 }
 

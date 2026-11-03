@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Coins, Flag, Gavel, Landmark, Megaphone, Siren, Soup, Vote } from "lucide-react";
+import { Building2, Coins, Flag, Gavel, Landmark, Megaphone, Newspaper, Siren, Soup, Vote } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Scene } from "./art/Scenes";
 import type { GameApi } from "./useGame";
@@ -17,6 +17,8 @@ type CityData = {
     treasury: number;
     crackdown: number | null;
     chief: { name: string; you: boolean } | null;
+    editor: { name: string; you: boolean; price: number } | null;
+    editorControls: { canSalary: boolean; editorial: string; price: number } | null;
     recall: { signatures: number; needed: number; signed: boolean; canSign: string | null } | null;
     soupMeals: number;
     mealsServed: number;
@@ -42,11 +44,12 @@ type CityData = {
   };
   prisoners: { id: string; name: string; reason: string }[];
   officers: { id: string; name: string; title: string }[];
+  editorPicks: { id: string; name: string }[];
   residents: { id: string; name: string }[];
   turf: {
     id: string;
     name: string;
-    holder: { name: string; tag: string; mine: boolean } | null;
+    holder: { name: string; tag: string; mine: boolean; ally?: boolean } | null;
     war: { attacker: string; endsAt: number; attackers: number; defenders: number; over: boolean; canJoin: string | null } | null;
     canClaim: string | null;
     canWar: string | null;
@@ -55,7 +58,11 @@ type CityData = {
     name: string;
     city: string;
     lead: string;
-    stories: { headline: string; kind: string; at: number }[];
+    leadId: string | null;
+    stories: { id: string; headline: string; kind: string; at: number }[];
+    buried: { id: string; headline: string; kind: string; at: number }[];
+    editor: { name: string; price: number } | null;
+    editorial: { text: string; at: number } | null;
     weather: string | null;
     stats: { crimes: number; stolen: number; arrests: number; convictions: number; unsolved: number };
   };
@@ -79,6 +86,7 @@ export function CityHall({ game }: { game: GameApi }) {
   const [campaignAmt, setCampaignAmt] = useState("100");
   const [voter, setVoter] = useState("");
   const [chiefPick, setChiefPick] = useState("");
+  const [editorPick, setEditorPick] = useState("");
 
   const load = useCallback(async () => {
     const res = await fetch("/api/city", { cache: "no-store" });
@@ -98,7 +106,7 @@ export function CityHall({ game }: { game: GameApi }) {
 
   return (
     <>
-    <Paper paper={data.paper} />
+    <Paper paper={data.paper} city={c} game={game} act={act} />
     <section className="card cityhall has-banner">
       <Scene kind="city" className="banner-scene" />
       <h3 className="card-title"><Landmark size={16} /> City hall · {c.city}</h3>
@@ -109,6 +117,7 @@ export function CityHall({ game }: { game: GameApi }) {
         <div><span className="crime-label">Treasury</span><b>${c.treasury}</b></div>
         <div><span className="crime-label">Police bounty</span><b>{c.policeBounty ? `$${c.policeBounty}` : "None"}</b></div>
         <div><span className="crime-label">Police chief</span><b>{c.chief ? `${c.chief.name}${c.chief.you ? " (you)" : ""}` : "None"}</b></div>
+        <div><span className="crime-label">Editor</span><b>{c.editor ? `${c.editor.name}${c.editor.you ? " (you)" : ""}` : "None"}</b></div>
         <div><span className="crime-label">Soup kitchen</span><b>{c.soupMeals ? `${c.soupMeals} meals` : "Empty"}</b></div>
       </div>
       {!c.canSoup && (
@@ -233,6 +242,19 @@ export function CityHall({ game }: { game: GameApi }) {
               {c.chief && <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => act({ op: "dismiss_chief" })}>Fire {c.chief.name}</button>}
             </div>
           ) : null}
+          {data.editorPicks.length > 0 || c.editor ? (
+            <div className="row wrap">
+              {data.editorPicks.length > 0 && (
+                <>
+                  <select value={editorPick || data.editorPicks[0].id} onChange={(e) => setEditorPick(e.target.value)} aria-label="Resident">
+                    {data.editorPicks.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+                  </select>
+                  <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => act({ op: "appoint_editor", playerId: editorPick || data.editorPicks[0].id })}>Appoint paper editor</button>
+                </>
+              )}
+              {c.editor && <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => act({ op: "dismiss_editor" })}>Fire {c.editor.name}</button>}
+            </div>
+          ) : null}
           {ctl.canPardon && data.prisoners.length > 0 && (
             <div className="pardons">
               <span className="crime-label"><Gavel size={12} /> Pardon one prisoner this term</span>
@@ -266,11 +288,31 @@ export function CityHall({ game }: { game: GameApi }) {
   );
 }
 
-function Paper({ paper }: { paper: CityData["paper"] }) {
+type Story = { id: string; headline: string; kind: string; at: number };
+
+function Paper({ paper, city, game, act }: { paper: CityData["paper"]; city: CityData["city"]; game: GameApi; act: (b: Record<string, unknown>) => Promise<void> }) {
+  const editing = !!city.editorControls;
+  const [column, setColumn] = useState(city.editorControls?.editorial ?? "");
+  const [price, setPrice] = useState(String(city.editorControls?.price ?? 300));
+  const lead: Story | null = paper.leadId ? { id: paper.leadId, headline: paper.lead, kind: "lead", at: 0 } : null;
+  const storyButton = (s: Story) =>
+    editing ? (
+      <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => act({ op: "pull_story", storyId: s.id })}>Pull</button>
+    ) : paper.editor ? (
+      <button
+        className="btn btn-ghost btn-xs bury-btn"
+        disabled={game.busy}
+        title="Pay the editor to make this story disappear"
+        onClick={() => confirm(`Pay the editor $${paper.editor!.price} to bury this story?`) && act({ op: "bury_story", storyId: s.id })}
+      >
+        Bury · ${paper.editor.price}
+      </button>
+    ) : null;
   return (
     <section className="card paper">
       <p className="paper-name">{paper.name}</p>
       <h2 className="paper-lead">{paper.lead}</h2>
+      {lead && <div className="paper-lead-actions">{storyButton(lead)}</div>}
       {paper.weather && <p className="paper-weather">{paper.weather}</p>}
       <div className="paper-stats">
         <span><b>{paper.stats.crimes}</b> robberies</span>
@@ -279,12 +321,58 @@ function Paper({ paper }: { paper: CityData["paper"] }) {
         <span><b>{paper.stats.convictions}</b> convictions</span>
         <span><b>{paper.stats.unsolved}</b> unsolved</span>
       </div>
+      {paper.editorial && (
+        <blockquote className="paper-editorial">
+          <span className="crime-label">From the editor</span>
+          “{paper.editorial.text}” <span className="muted">· {paper.editor?.name}</span>
+        </blockquote>
+      )}
       {paper.stories.length > 0 && (
         <ul className="paper-stories">
-          {paper.stories.map((x, i) => <li key={i} className={x.kind}>{x.headline}</li>)}
+          {paper.stories.map((x) => (
+            <li key={x.id} className={x.kind}>
+              <span>{x.headline}</span>
+              {storyButton(x)}
+            </li>
+          ))}
         </ul>
       )}
-      <p className="fine muted">This week in {paper.city}.</p>
+      <p className="fine muted">
+        This week in {paper.city}. {paper.editor ? `Editor: ${paper.editor.name}.` : "The paper has no editor; the mayor appoints one."}
+      </p>
+
+      {city.editorControls && (
+        <div className="hall-block editor-desk">
+          <h4 className="crime-label"><Newspaper size={13} /> The editor&apos;s desk</h4>
+          <form className="row" onSubmit={(e) => { e.preventDefault(); act({ op: "editorial", text: column }); }}>
+            <input maxLength={140} placeholder="Your column (140 characters)" value={column} onChange={(e) => setColumn(e.target.value)} />
+            <button className="btn btn-ghost btn-sm" disabled={game.busy}>{column.trim() ? "Run it" : "Pull column"}</button>
+          </form>
+          <form className="row" onSubmit={(e) => { e.preventDefault(); act({ op: "bury_price", price: Number(price) }); }}>
+            <label className="inline">Price to bury a story $
+              <input type="number" min={50} max={5000} value={price} onChange={(e) => setPrice(e.target.value)} />
+            </label>
+            <button className="btn btn-ghost btn-sm" disabled={game.busy}>Set</button>
+          </form>
+          <p className="fine muted">Anyone can pay your price to make a story disappear. The envelope is dirty money.</p>
+          <button className="btn btn-primary btn-sm" disabled={game.busy || !city.editorControls.canSalary} onClick={() => act({ op: "editor_salary" })}>
+            <Coins size={14} /> Editor&apos;s salary ($60)
+          </button>
+          {paper.buried.length > 0 && (
+            <>
+              <h4 className="crime-label">Pulled stories</h4>
+              <ul className="paper-stories buried">
+                {paper.buried.map((x) => (
+                  <li key={x.id}>
+                    <span>{x.headline}</span>
+                    <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => act({ op: "pull_story", storyId: x.id })}>Run again</button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+      )}
     </section>
   );
 }
@@ -300,7 +388,7 @@ function Turf({ turf, game, act }: { turf: CityData["turf"]; game: GameApi; act:
             <div>
               <b>{d.name}</b>{" "}
               {d.holder ? (
-                <span className={`chip ${d.holder.mine ? "chip-green" : ""}`}>[{d.holder.tag}] {d.holder.name}</span>
+                <span className={`chip ${d.holder.mine ? "chip-green" : d.holder.ally ? "chip-cyan" : ""}`}>[{d.holder.tag}] {d.holder.name}{d.holder.ally ? " · ally" : ""}</span>
               ) : (
                 <span className="muted">· nobody</span>
               )}

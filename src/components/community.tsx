@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { Ban, Crown, Eye, EyeOff, ShieldAlert, ShieldCheck, FileSearch, Footprints, Gavel, Hand, Landmark, Moon, Stethoscope, Inbox, Lock, MessageSquare, Search, Send, Shield, Siren, Swords, UserCheck, Users, Vault } from "lucide-react";
+import { Ban, Crown, Eye, EyeOff, ShieldAlert, ShieldCheck, FileSearch, Footprints, Gavel, Hand, Handshake, Landmark, Moon, Stethoscope, Inbox, Lock, MessageSquare, Search, Send, Shield, Siren, Swords, UserCheck, Users, Vault } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 import { OnlineNow } from "./online";
@@ -27,6 +27,7 @@ type Profile = {
   streetTitle: string | null;
   canCrime: Record<CrimeKind, string | null>;
   bounty: number;
+  trophies?: { label: string; place: number; seasonName: string }[];
   lawyerFee: number | null;
   canFrisk: string | null;
 };
@@ -149,6 +150,8 @@ type CrewView = {
   isLeader?: boolean;
   requested?: boolean;
   invited?: boolean;
+  allies?: { id: string; name: string; tag: string }[];
+  allyOffers?: { id: string; name: string; tag: string }[];
 };
 type Invite = { crewId: string; name: string; tag: string; by: string; at: number };
 type Hub = {
@@ -297,6 +300,9 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
                 {p.crewTag && <span className="crew-tag">[{p.crewTag}]</span>}
                 {p.protected && <span className="chip chip-green"><Shield size={11} /> New</span>}
                 {p.bounty > 0 && <span className="chip chip-red">Wanted · ${p.bounty}</span>}
+                {p.trophies?.map((t, i) => (
+                  <span key={i} className="chip chip-gold" title={`${t.label}, ${t.seasonName}`}>🏆 #{t.place} {t.label}</span>
+                ))}
                 {STATUS[p.status] && <span className="chip">{STATUS[p.status]}</span>}
               </div>
               <p className="muted" style={{ color: p.path ? PATH_LOOKS[p.path]?.rim : undefined }}>
@@ -441,6 +447,57 @@ function Chat({ game, hub, initial }: { game: GameApi; hub: Hub; initial?: strin
         <button className="btn btn-primary btn-sm" disabled={game.busy || !text.trim()}><Send size={14} /></button>
       </form>
       <p className="fine">Be decent. Blocked players&apos; messages are hidden from you.</p>
+    </section>
+  );
+}
+
+/** Allied crews fight in each other's wars and don't charge each other protection. */
+function AlliancesCard({ game, crew, crews, social }: { game: GameApi; crew: CrewView; crews: CrewView[]; social: (b: Record<string, unknown>) => Promise<unknown> }) {
+  const allies = crew.allies ?? [];
+  const offers = crew.allyOffers ?? [];
+  const others = crews.filter((x) => x.id !== crew.id && !allies.some((a) => a.id === x.id) && !offers.some((o) => o.id === x.id));
+  if (!crew.isLeader && allies.length === 0) return null;
+  return (
+    <section className="card">
+      <h3 className="card-title"><Handshake size={16} /> Alliances</h3>
+      <p className="muted fine">Allies can fight in each other&apos;s turf wars and don&apos;t pay each other protection money. Up to 2.</p>
+      {allies.length === 0 && <p className="muted">No allies yet.</p>}
+      {allies.map((a) => (
+        <div key={a.id} className="crew-row">
+          <span className="crew-badge sm">{a.tag}</span>
+          <div className="crew-row-body"><b>{a.name}</b><span className="muted">Allied</span></div>
+          {crew.isLeader && (
+            <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => confirm(`Break the alliance with ${a.name}?`) && social({ op: "crew_ally", what: "break", crewId: a.id })}>
+              Break
+            </button>
+          )}
+        </div>
+      ))}
+      {offers.length > 0 && <h4 className="subhead">Offers</h4>}
+      {offers.map((o) => (
+        <div key={o.id} className="crew-row">
+          <span className="crew-badge sm">{o.tag}</span>
+          <div className="crew-row-body"><b>{o.name}</b><span className="muted">wants an alliance</span></div>
+          <span className="row">
+            <button className="btn btn-primary btn-sm" disabled={game.busy} onClick={() => social({ op: "crew_ally", what: "accept", crewId: o.id })}>Accept</button>
+            <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: "crew_ally", what: "decline", crewId: o.id })}>No</button>
+          </span>
+        </div>
+      ))}
+      {crew.isLeader && allies.length < 2 && others.length > 0 && (
+        <>
+          <h4 className="subhead">Propose an alliance</h4>
+          {others.slice(0, 8).map((x) => (
+            <div key={x.id} className="crew-row">
+              <span className="crew-badge sm">{x.tag}</span>
+              <div className="crew-row-body"><b>{x.name}</b><span className="muted">{x.size} members{x.allies?.length ? ` · allied with ${x.allies.map((a) => a.tag).join(", ")}` : ""}</span></div>
+              <button className="btn btn-ghost btn-sm" disabled={game.busy || offers.some((o) => o.id === x.id)} onClick={() => social({ op: "crew_ally", what: "propose", crewId: x.id })}>
+                Propose
+              </button>
+            </div>
+          ))}
+        </>
+      )}
     </section>
   );
 }
@@ -599,6 +656,7 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
             ))}
           </section>
         )}
+        <AlliancesCard game={game} crew={c} crews={hub.crews} social={social} />
         <section className="card">
           <h3 className="card-title"><Users size={16} /> Members</h3>
           {c.members.map((m) => (

@@ -646,6 +646,8 @@ export interface ActionContext {
   taxRates?: Partial<Record<CountryId, number>>;
   /** Crew that runs each district (takes a cut of outsiders' pay). */
   turf?: Partial<Record<DistrictId, string>>;
+  /** Crews allied with the player's crew (they don't charge protection). */
+  allies?: string[];
 }
 
 /** Withholds city tax from income earned in `country`. Returns what's left. */
@@ -695,7 +697,7 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
   const { net: afterTax, tax } = criminal ? { net: pay, tax: 0 } : withholdTax(p, countryOf(p), pay, ctx);
   // Protection money: the crew that runs this district takes a cut from outsiders.
   const turfCrew = ctx.turf?.[job.district];
-  const cut = turfCrew && turfCrew !== p.crewId ? Math.floor(afterTax * BALANCE.turf.cut) : 0;
+  const cut = turfCrew && turfCrew !== p.crewId && !ctx.allies?.includes(turfCrew) ? Math.floor(afterTax * BALANCE.turf.cut) : 0;
   if (cut > 0) p.turfOwed = { crewId: turfCrew!, amount: (p.turfOwed?.crewId === turfCrew ? p.turfOwed?.amount ?? 0 : 0) + cut };
   const net = afterTax - cut;
   bumpSeason(p, "earned", net, now);

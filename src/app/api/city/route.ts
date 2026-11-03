@@ -20,7 +20,8 @@ import {
   vote,
 } from "@/game/city";
 import { BALANCE } from "@/game/balance";
-import { frontPage } from "@/game/paper";
+import { frontPage, weekStories } from "@/game/paper";
+import { appointEditor, buryStory, dismissEditor, EDITOR, editorSalary, isEditor, setBuryPrice, toggleStory, writeEditorial } from "@/game/batch7";
 import { buyVote, campaign } from "@/game/batch4";
 import { claimTurf, declareWar, joinWar, settleWar, turfView } from "@/game/turf";
 import { rankTitle } from "@/game/content/paths";
@@ -59,8 +60,13 @@ export async function GET() {
     // The mayor sees who's serving time in the city (for pardons).
     let prisoners: { id: string; name: string; reason: string }[] = [];
     let officers: { id: string; name: string; title: string }[] = [];
+    let editorPicks: { id: string; name: string }[] = [];
     if (isMayor(c, p)) {
       const people = await store.listPlayers(c.country, 200);
+      editorPicks = people
+        .filter((o) => o.id !== p.id && !o.dead && o.reputation >= EDITOR.minReputation && o.id !== c.editor?.id)
+        .slice(0, 20)
+        .map((o) => ({ id: o.id, name: o.name }));
       prisoners = people
         .filter((o) => o.id !== p.id && !o.custodyCase && inJail(o, now))
         .slice(0, 20)
@@ -75,8 +81,8 @@ export async function GET() {
     const residents = c.candidates.some((x) => x.id === p.id)
       ? (await store.listPlayers(c.country, 100)).filter((o) => o.id !== p.id && !o.dead).slice(0, 40).map((o) => ({ id: o.id, name: o.name }))
       : [];
-    const paper = frontPage(c.country, c, await store.listCases(c.country, 100), now);
-    return NextResponse.json({ city: view, prisoners, officers, turf: turfView(c, p, crew, now), paper, residents });
+    const paper = frontPage(c.country, c, await store.listCases(c.country, 100), now, { editor: isEditor(c, p) });
+    return NextResponse.json({ city: view, prisoners, officers, editorPicks, turf: turfView(c, p, crew, now), paper, residents });
   } catch (e) {
     return failure(e);
   }
@@ -97,16 +103,22 @@ export async function POST(req: Request) {
     // Lock order everywhere: players first, the city last.
     const events: GameEvent[] = await store.transaction(async (tx) => {
       // A war being settled locks everyone who fought in it.
-      const pre = b.op === "settle_war" ? await store.getCity(country) : null;
+      const pre = b.op === "settle_war" || b.op === "bury_story" ? await store.getCity(country) : null;
+      const editorId = b.op === "bury_story" ? pre?.editor?.id : undefined;
       const war = pre?.turf?.[str(b.district) as DistrictId]?.war;
       const fighters = war ? [...war.attackers, ...war.defenders].map((x) => x.id) : [];
-      const ids = [playerId, ...(b.op === "pardon" || b.op === "appoint_chief" || b.op === "buy_vote" ? [str(b.playerId)] : []), ...fighters];
+      const ids = [
+        playerId,
+        ...(b.op === "pardon" || b.op === "appoint_chief" || b.op === "buy_vote" || b.op === "appoint_editor" ? [str(b.playerId)] : []),
+        ...(editorId ? [editorId] : []),
+        ...fighters,
+      ];
       const rows = await tx.getPlayers([...new Set(ids)]);
       const byId = new Map(rows.filter((r): r is Player => !!r).map((r) => [r.id, r]));
       const p = byId.get(playerId);
       const other = ids[1] ? byId.get(ids[1]) ?? null : null;
       if (!p) throw new GameError("Create a character first.");
-      const crew = ["claim_turf", "declare_war"].includes(b.op as string) && p.crewId ? await tx.getCrew(p.crewId) : null;
+      const crew = ["claim_turf", "declare_war", "join_war"].includes(b.op as string) && p.crewId ? await tx.getCrew(p.crewId) : null;
       const c = (await tx.getCity(country)) ?? newCity(country, now);
       advanceCity(c, now);
       tick(p, now);
@@ -165,7 +177,7 @@ export async function POST(req: Request) {
           out = declareWar(c, crew!, p, str(b.district) as DistrictId, now);
           break;
         case "join_war":
-          out = joinWar(c, p, str(b.district) as DistrictId, now);
+          out = joinWar(c, p, str(b.district) as DistrictId, now, (crew?.allies ?? []).map((a) => a.id));
           break;
         case "settle_war": {
           const h = c.turf?.[str(b.district) as DistrictId];
@@ -173,6 +185,35 @@ export async function POST(req: Request) {
           const side = (list: { id: string }[]) => list.map((x) => byId.get(x.id)).filter((x): x is Player => !!x);
           out = settleWar(c, str(b.district) as DistrictId, side(h.war.attackers), side(h.war.defenders), now, Math.random);
           for (const f of byId.values()) if (f.id !== playerId) await tx.putPlayer(f);
+          break;
+        }
+        case "appoint_editor": {
+          if (!other) throw new GameError("That player doesn't exist.");
+          out = appointEditor(c, p, other, now);
+          await tx.putPlayer(other);
+          break;
+        }
+        case "dismiss_editor":
+          out = dismissEditor(c, p, now);
+          break;
+        case "editor_salary":
+          out = editorSalary(c, p, now);
+          break;
+        case "bury_price":
+          out = setBuryPrice(c, p, Number(b.price));
+          break;
+        case "editorial":
+          out = writeEditorial(c, p, b.text, now);
+          break;
+        case "pull_story":
+          out = toggleStory(c, p, str(b.storyId));
+          break;
+        case "bury_story": {
+          const editor = editorId ? byId.get(editorId) : null;
+          if (!editor || c.editor?.id !== editor.id) throw new GameError("The paper has no editor to lean on.");
+          const ids = weekStories(c.country, c, await store.listCases(c.country, 100), now).stories.map((s) => s.id);
+          out = buryStory(c, p, editor, str(b.storyId), ids, now);
+          await tx.putPlayer(editor);
           break;
         }
         case "recall":

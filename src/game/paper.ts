@@ -15,16 +15,18 @@ const PAPER_NAMES: Record<CountryId, string> = {
   meridian: "The Halcyon Standard",
 };
 
-export function frontPage(country: CountryId, city: City | null, cases: CaseFile[], now: number) {
+/** Every story this week, with a stable id (so the editor can pull it). */
+export function weekStories(country: CountryId, city: City | null, cases: CaseFile[], now: number) {
   const recent = cases.filter((c) => now - c.at < WEEK);
   const verdicts = cases.filter((c) => c.trial?.verdict && now - (c.trial.decidedAt ?? 0) < WEEK);
   const scandals = cases.flatMap((c) => (c.exposed ?? []).filter((e) => now - e.at < WEEK).map((e) => ({ ...e, caseId: c.id })));
-  const stories: { at: number; headline: string; kind: string }[] = [];
+  const stories: { id: string; at: number; headline: string; kind: string }[] = [];
 
-  for (const s of scandals) stories.push({ at: s.at, kind: "scandal", headline: `SCANDAL: ${s.name}, the ${s.role}, caught by internal affairs` });
+  for (const s of scandals) stories.push({ id: `scandal:${s.caseId}:${s.at}`, at: s.at, kind: "scandal", headline: `SCANDAL: ${s.name}, the ${s.role}, caught by internal affairs` });
   for (const c of verdicts) {
     const t = c.trial!;
     stories.push({
+      id: `court:${c.id}`,
       at: t.decidedAt ?? c.at,
       kind: "court",
       headline:
@@ -33,8 +35,19 @@ export function frontPage(country: CountryId, city: City | null, cases: CaseFile
           : `${t.suspectName} walks free: not guilty in the ${c.district} ${CRIMES[c.kind].name.toLowerCase()}`,
     });
   }
-  for (const l of city?.log ?? []) if (now - l.at < WEEK) stories.push({ at: l.at, kind: "city", headline: l.text });
+  for (const l of city?.log ?? []) if (now - l.at < WEEK) stories.push({ id: `city:${l.at}`, at: l.at, kind: "city", headline: l.text });
   stories.sort((a, b) => b.at - a.at);
+  return { stories, recent, verdicts };
+}
+
+/**
+ * The front page. Buried stories are left out; the editor (only) still sees them, marked, so
+ * they can put them back.
+ */
+export function frontPage(country: CountryId, city: City | null, cases: CaseFile[], now: number, opts: { editor?: boolean } = {}) {
+  const { stories: all, recent, verdicts } = weekStories(country, city, cases, now);
+  const buried = new Set(city?.buried ?? []);
+  const stories = all.filter((s) => !buried.has(s.id));
 
   const event = cityEvent(country, now);
   const lead =
@@ -47,7 +60,11 @@ export function frontPage(country: CountryId, city: City | null, cases: CaseFile
     name: PAPER_NAMES[country],
     city: COUNTRY_BY_ID[country].capital,
     lead: lead?.headline ?? `Quiet week in ${COUNTRY_BY_ID[country].capital}. Too quiet.`,
-    stories: stories.filter((s) => s !== lead).slice(0, 8).map((s) => ({ headline: s.headline, kind: s.kind, at: s.at })),
+    leadId: lead?.id ?? null,
+    stories: stories.filter((s) => s !== lead).slice(0, 8).map((s) => ({ id: s.id, headline: s.headline, kind: s.kind, at: s.at })),
+    buried: opts.editor ? all.filter((s) => buried.has(s.id)).map((s) => ({ id: s.id, headline: s.headline, kind: s.kind, at: s.at })) : [],
+    editor: city?.editor ? { name: city.editor.name, price: city.editor.price } : null,
+    editorial: city?.editorial ?? null,
     weather: event ? `${event.name}: ${event.text}` : null,
     stats: {
       crimes: recent.length,
