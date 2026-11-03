@@ -21,6 +21,7 @@ import {
 } from "@/game/city";
 import { BALANCE } from "@/game/balance";
 import { frontPage } from "@/game/paper";
+import { buyVote, campaign } from "@/game/batch4";
 import { claimTurf, declareWar, joinWar, settleWar, turfView } from "@/game/turf";
 import { rankTitle } from "@/game/content/paths";
 import { countryOf, inJail, tick } from "@/game/engine";
@@ -70,8 +71,12 @@ export async function GET() {
         .map((o) => ({ id: o.id, name: o.name, title: rankTitle(o) ?? "" }));
     }
     const crew = p.crewId ? await store.getCrew(p.crewId) : null;
+    // Candidates see who lives here (to campaign door to door... or to buy votes).
+    const residents = c.candidates.some((x) => x.id === p.id)
+      ? (await store.listPlayers(c.country, 100)).filter((o) => o.id !== p.id && !o.dead).slice(0, 40).map((o) => ({ id: o.id, name: o.name }))
+      : [];
     const paper = frontPage(c.country, c, await store.listCases(c.country, 100), now);
-    return NextResponse.json({ city: view, prisoners, officers, turf: turfView(c, p, crew, now), paper });
+    return NextResponse.json({ city: view, prisoners, officers, turf: turfView(c, p, crew, now), paper, residents });
   } catch (e) {
     return failure(e);
   }
@@ -95,7 +100,7 @@ export async function POST(req: Request) {
       const pre = b.op === "settle_war" ? await store.getCity(country) : null;
       const war = pre?.turf?.[str(b.district) as DistrictId]?.war;
       const fighters = war ? [...war.attackers, ...war.defenders].map((x) => x.id) : [];
-      const ids = [playerId, ...(b.op === "pardon" || b.op === "appoint_chief" ? [str(b.playerId)] : []), ...fighters];
+      const ids = [playerId, ...(b.op === "pardon" || b.op === "appoint_chief" || b.op === "buy_vote" ? [str(b.playerId)] : []), ...fighters];
       const rows = await tx.getPlayers([...new Set(ids)]);
       const byId = new Map(rows.filter((r): r is Player => !!r).map((r) => [r.id, r]));
       const p = byId.get(playerId);
@@ -143,6 +148,15 @@ export async function POST(req: Request) {
         case "fund_soup":
           out = fundSoup(c, p, Number(b.amount), now);
           break;
+        case "campaign":
+          out = campaign(c, p, Number(b.amount), now);
+          break;
+        case "buy_vote": {
+          if (!other) throw new GameError("That player doesn't exist.");
+          out = buyVote(c, p, other, Number(b.amount), now);
+          await tx.putPlayer(other);
+          break;
+        }
         case "claim_turf":
           out = claimTurf(c, crew!, p, str(b.district) as DistrictId, now);
           if (crew) await tx.putCrew(crew);

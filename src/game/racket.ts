@@ -192,7 +192,12 @@ export function audit(
   now: number,
   city: City | null = null,
 ): { events: GameEvent[]; changed: CaseFile[]; cityChanged: boolean } {
-  const block = auditBlock(a, target, now, city?.mayor?.id === target.id || !!city?.skims.some((x) => x.mayorId === target.id));
+  const block = auditBlock(
+    a,
+    target,
+    now,
+    city?.mayor?.id === target.id || !!city?.skims.some((x) => x.mayorId === target.id) || !!city?.candidates.some((x) => x.id === target.id),
+  );
   if (block) throw new GameError(block);
   a.energy -= R.audit.energy;
   a.attackLog = { ...(a.attackLog ?? {}), [`audit:${target.id}`]: now };
@@ -200,16 +205,22 @@ export function audit(
 
   const found = cases.map((c) => ({ c, hit: corruptionIn(c, target.id) })).filter((x) => x.hit);
   const skims = city ? city.skims.filter((x) => x.mayorId === target.id && !x.exposed) : [];
+  const bought = city ? (city.voteBuys ?? []).filter((x) => x.candidateId === target.id && !x.exposed) : [];
   // Doctors' secret ledger of back-alley patients counts like a skim.
   const offBooks = (target.offBooks ?? []).filter((x) => !x.exposed);
   const skimmed = skims.reduce((s, x) => s + x.amount, 0);
   const backAlley = offBooks.reduce((s, x) => s + x.amount, 0);
-  if (!found.length && !skims.length && !offBooks.length) {
+  if (!found.length && !skims.length && !offBooks.length && !bought.length) {
     target.reputation += 1;
     notify(target, "Internal affairs went through your files. They found nothing. +1 reputation.", "good", undefined, now);
     return { events: [{ tone: "info", text: `${target.name} comes up clean. Or careful.` }], changed: [], cityChanged: false };
   }
-  const total = found.reduce((s, x) => s + x.hit!.amount, 0) + skimmed + backAlley;
+  const total = found.reduce((s, x) => s + x.hit!.amount, 0) + skimmed + backAlley + bought.reduce((s, x) => s + x.amount, 0);
+  if (bought.length && city) {
+    for (const x of bought) x.exposed = true;
+    city.candidates = city.candidates.filter((x) => x.id !== target.id);
+    city.log = [{ at: now, text: `Internal affairs caught ${target.name} buying votes. Struck off the ballot.` }, ...city.log].slice(0, 20);
+  }
   for (const x of offBooks) x.exposed = true;
   if (offBooks.length) target.backAlley = false;
   const fine = Math.min(target.cash + target.bank, total * 2);
@@ -231,13 +242,14 @@ export function audit(
     if (city.mayor?.id === target.id) city.mayor = null;
     city.log = [{ at: now, text: `Internal affairs caught Mayor ${target.name} skimming $${skimmed} from the treasury. City hall is empty until the next vote.` }, ...city.log].slice(0, 20);
   }
-  const hits = found.length + (skims.length ? 1 : 0) + (offBooks.length ? 1 : 0);
+  const hits = found.length + (skims.length ? 1 : 0) + (offBooks.length ? 1 : 0) + (bought.length ? 1 : 0);
   a.reputation += Math.min(10, 5 * hits);
   addMerit(a, "police", 3 * hits);
   const ids = [
     ...found.map((x) => `#${x.c.id}`),
     ...(skimmed ? ["the city treasury"] : []),
     ...(offBooks.length ? [`${offBooks.length} back-alley patient${offBooks.length > 1 ? "s" : ""}`] : []),
+    ...(bought.length ? ["buying votes"] : []),
   ].join(", ");
   notify(
     target,
@@ -249,7 +261,7 @@ export function audit(
   return {
     events: [{ tone: "good", text: `Got them. ${target.name} was dirty on ${ids}. Fined $${fine}${target.path ? " and demoted" : ""}${skimmed ? ", and removed from office" : ""}.` }],
     changed: found.map((x) => x.c),
-    cityChanged: skims.length > 0,
+    cityChanged: skims.length > 0 || bought.length > 0,
   };
 }
 

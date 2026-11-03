@@ -39,6 +39,7 @@ import {
   suspectsFor,
 } from "@/game/crime";
 import { arrest, isDetective, isJudge, isLawyer, joinTrial, lawyerPower, offerBribe, postBail, trialView } from "@/game/justice";
+import { acceptLoan, collectLoan, contractView, lenderKind, offerLoan, postContract, repayLoan, workContract } from "@/game/batch4";
 import { backAlleyFee, backAlleyTreat, hireLawyer, retainerFee, searchHome, setBackAlley } from "@/game/batch3";
 import { settleTrial } from "@/server/justice";
 import {
@@ -196,6 +197,20 @@ export async function GET(req: Request) {
           ? cases.filter((c) => c.kind !== "pickpocket" && !c.examinedBy && !c.trial?.verdict && !c.hunt && !caseCold(c, now)).slice(0, 10).map((c) => patientView(c, p, now))
           : [],
         deposits: banker ? cases.filter((c) => c.deposit && !c.deposit.review && !caseCold(c, now) && !c.trial?.verdict).slice(0, 10).map((c) => depositView(c, p, now)) : [],
+        contracts: mafia
+          ? all.filter((c) => c.contract && !c.contract.done && c.victimId !== p.id).slice(0, 10).map((c) => contractView(c, p, now))
+          : [],
+        robbed: (p.robbedIn ?? []).map((r) => {
+          const c = all.find((x) => x.id === r.caseId);
+          return {
+            caseId: r.caseId,
+            amount: r.amount,
+            district: r.district,
+            at: r.at,
+            contract: c?.contract ? { reward: c.contract.reward, done: c.contract.done } : null,
+            closed: !c || c.trial?.verdict === "guilty",
+          };
+        }),
         racket: mafia
           ? {
               myCases: (p.myCases ?? []).map((m) => myCaseView(all.find((c) => c.id === m.caseId) ?? null, m, p, now)),
@@ -210,10 +225,10 @@ export async function GET(req: Request) {
           .map((c) => ({ caseId: c.id, amount: c.payoff!.amount, crime: c.kind, district: c.district, victimName: c.victimName })),
         officials: ia
           ? people
-              .filter((o) => o.id !== p.id && !o.dead && (isOfficial(o) || city?.mayor?.id === o.id))
+              .filter((o) => o.id !== p.id && !o.dead && (isOfficial(o) || city?.mayor?.id === o.id || !!city?.candidates.some((x) => x.id === o.id)))
               .slice(0, 30)
               .map((o) => {
-                const mayor = city?.mayor?.id === o.id;
+                const mayor = city?.mayor?.id === o.id || !!city?.candidates.some((x) => x.id === o.id);
                 return { id: o.id, name: o.name, title: mayor ? "Mayor" : rankTitle(o) ?? "", path: o.path, canAudit: auditBlock(p, o, now, mayor) };
               })
           : [],
@@ -316,6 +331,7 @@ export async function GET(req: Request) {
       channels: channelsFor(p),
       blocked: p.blocked ?? [],
       readsCases: !canReadCases(p) || (!!hubCity && (isCityMayor(hubCity, p) || isChief(hubCity, p))),
+      lender: lenderKind(p),
     });
   } catch (e) {
     return failure(e);
@@ -508,6 +524,70 @@ export async function POST(req: Request) {
       case "back_alley": {
         const doctorId = str(b.doctorId);
         events = await store.transaction((tx) => withPair(tx, playerId, doctorId, now, (patient, doctor) => backAlleyTreat(patient, doctor, now)));
+        break;
+      }
+      case "loan_offer": {
+        const borrowerId = str(b.borrowerId);
+        events = await store.transaction((tx) =>
+          withPair(tx, playerId, borrowerId, now, (lender, borrower) => offerLoan(lender, borrower, Number(b.amount), Number(b.rate), now)),
+        );
+        break;
+      }
+      case "loan_accept": {
+        const lenderId = str(b.lenderId);
+        events = await store.transaction((tx) => withPair(tx, playerId, lenderId, now, (borrower, lender) => acceptLoan(borrower, lender, str(b.offerId), now)));
+        break;
+      }
+      case "loan_decline": {
+        const offerId = str(b.offerId);
+        await store.update(playerId, (p) => {
+          if (!p) throw new GameError("Create a character first.");
+          p.loanOffers = (p.loanOffers ?? []).filter((o) => o.id !== offerId);
+          return { player: p, result: null };
+        });
+        break;
+      }
+      case "loan_repay": {
+        const lenderId = str(b.lenderId);
+        events = await store.transaction((tx) => withPair(tx, playerId, lenderId, now, (borrower, lender) => repayLoan(borrower, lender, str(b.loanId), now)));
+        break;
+      }
+      case "loan_collect": {
+        const borrowerId = str(b.borrowerId);
+        events = await store.transaction((tx) => withPair(tx, playerId, borrowerId, now, (lender, borrower) => collectLoan(lender, borrower, str(b.loanId), now, Math.random).events));
+        break;
+      }
+      case "post_contract": {
+        const caseId = str(b.caseId);
+        events = await store.transaction(async (tx) => {
+          const c = await tx.getCase(caseId);
+          if (!c) throw new GameError("That case doesn't exist.");
+          const [v] = await tx.getPlayers([playerId]);
+          if (!v) throw new GameError("Create a character first.");
+          const out = postContract(v, c, Number(b.reward), now);
+          await tx.putPlayer(v);
+          await tx.putCase(c);
+          return out;
+        });
+        break;
+      }
+      case "work_contract": {
+        const caseId = str(b.caseId);
+        events = await store.transaction(async (tx) => {
+          const c = await tx.getCase(caseId);
+          if (!c) throw new GameError("That case doesn't exist.");
+          const rows = await tx.getPlayers([...new Set([playerId, c.culpritId, c.victimId])]);
+          const byId = new Map(rows.filter((r): r is Player => !!r).map((r) => [r.id, r]));
+          byId.forEach((r) => tick(r, now));
+          const m = byId.get(playerId);
+          if (!m) throw new GameError("Create a character first.");
+          const culprit = c.culpritId !== playerId ? byId.get(c.culpritId) ?? null : null;
+          const victim = c.victimId !== playerId ? byId.get(c.victimId) ?? null : null;
+          const out = workContract(m, c, culprit, victim, now, Math.random);
+          for (const r of byId.values()) await tx.putPlayer(r);
+          await tx.putCase(c);
+          return out.events;
+        });
         break;
       }
       case "arrest": {

@@ -357,6 +357,8 @@ export function ProfileTab({ game }: { game: GameApi }) {
         </section>
       )}
 
+      <LoansCard game={game} />
+
       {view.application && <ApplicationCard game={game} />}
 
       {!view.path && <CareersCard game={game} />}
@@ -761,6 +763,48 @@ function SeasonBoard() {
         </ol>
       )}
       <p className="fine">{b.you ? `Your place: #${b.you.place} (${fmtValue(b.you.value)}).` : "You're not on this board yet."}</p>
+    </section>
+  );
+}
+
+/** Loan offers, debts you owe, and money you lent out. */
+function LoansCard({ game }: { game: GameApi }) {
+  const view = game.view!;
+  const offers = view.loanOffers;
+  const owed = view.loans.filter((l) => l.borrowerId === view.id);
+  const lent = view.loans.filter((l) => l.lenderId === view.id);
+  if (!offers.length && !owed.length && !lent.length) return null;
+  const due = (t: number) => (t <= Date.now() ? "overdue" : `due in ${Math.ceil((t - Date.now()) / 3_600_000)}h`);
+  return (
+    <section className="card">
+      <h3 className="card-title">💵 Loans</h3>
+      <ul className="officials">
+        {offers.map((o) => (
+          <li key={o.id}>
+            <span>{o.lenderName} offers <b>${o.amount}</b> at {Math.round(o.rate * 100)}%{o.kind === "shark" ? " (loan shark)" : ""}</span>
+            <span className="row">
+              <button className="btn btn-primary btn-xs" disabled={game.busy} onClick={() => game.social({ op: "loan_accept", offerId: o.id, lenderId: o.lenderId })}>Take it</button>
+              <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => game.social({ op: "loan_decline", offerId: o.id })}>No</button>
+            </span>
+          </li>
+        ))}
+        {owed.map((l) => (
+          <li key={l.id}>
+            <span>You owe {l.lenderName} <b>${l.owed}</b>, {due(l.due)}{l.kind === "shark" ? ". They will come for it." : ""}</span>
+            <button className="btn btn-primary btn-xs" disabled={game.busy} onClick={() => game.social({ op: "loan_repay", loanId: l.id, lenderId: l.lenderId })}>Pay back</button>
+          </li>
+        ))}
+        {lent.map((l) => (
+          <li key={l.id}>
+            <span>{l.borrowerName} owes you <b>${l.owed}</b>, {due(l.due)}</span>
+            {l.due <= Date.now() && (
+              <button className="btn btn-danger btn-xs" disabled={game.busy} onClick={() => game.social({ op: "loan_collect", loanId: l.id, borrowerId: l.borrowerId })}>
+                {l.kind === "bank" ? "Seize their savings" : "Send the muscle"}
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

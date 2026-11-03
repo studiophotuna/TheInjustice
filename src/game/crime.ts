@@ -330,6 +330,7 @@ export function commitCrime(
   });
 
   a.lastCrime = { caseId: ctx.caseId, at: now };
+  t.robbedIn = [{ caseId: ctx.caseId, at: now, amount, district: ctx.district }, ...(t.robbedIn ?? [])].slice(0, 5);
   a.myCases = [{ caseId: ctx.caseId, at: now, kind, district: ctx.district, victimName: t.name }, ...(a.myCases ?? [])].slice(0, 8);
   const c: CaseFile = {
     id: ctx.caseId,

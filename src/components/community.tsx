@@ -93,7 +93,11 @@ type ColdCase = {
   canHunt: string | null;
   hunt: { hunterName: string; suspectName: string; won: boolean } | null;
 };
+type ContractCard = { caseId: string; crime: string; district: string; victimName: string; reward: number; clues: string[]; canTake: string | null };
+type Robbery = { caseId: string; amount: number; district: string; at: number; contract: { reward: number; done: boolean } | null; closed: boolean };
 type JusticeData = {
+  contracts: ContractCard[];
+  robbed: Robbery[];
   cases: CaseCard[];
   court: TrialCard[];
   block: string | null;
@@ -153,6 +157,7 @@ type Hub = {
   /** Why the viewer can't found a crew, or null. */
   foundBlock: string | null;
   readsCases: boolean;
+  lender: "bank" | "shark" | null;
   breakout: {
     jailed: { id: string; name: string; until: number; reason: string; canPlan: string | null }[];
     plan: {
@@ -301,6 +306,17 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
                 {!p.canVouch && (
                   <button className="btn btn-primary btn-sm" disabled={game.busy} onClick={() => social({ op: "vouch", targetId: p.id })}>
                     <UserCheck size={14} /> Vouch
+                  </button>
+                )}
+                {hub.lender && (
+                  <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => {
+                    const amount = window.prompt(`Lend ${p.name} how much? (from your bank)`, "100");
+                    if (!amount) return;
+                    const max = hub.lender === "bank" ? 20 : 100;
+                    const rate = window.prompt(`Interest in % (0–${max}). They have three days to pay.`, hub.lender === "bank" ? "10" : "50");
+                    if (rate) social({ op: "loan_offer", borrowerId: p.id, amount: Number(amount), rate: Number(rate) / 100 });
+                  }}>
+                    {hub.lender === "bank" ? "Offer a loan" : "Offer a loan (shark)"}
                   </button>
                 )}
                 {p.lawyerFee !== null && (
@@ -745,6 +761,49 @@ function CasesPanel({ game, hub }: { game: GameApi; hub: Hub | null }) {
       )}
 
       {data?.racket && <Racket game={game} racket={data.racket} act={act} />}
+
+      {data && data.contracts.length > 0 && (
+        <section className="card">
+          <h3 className="card-title">💼 Contracts · get someone's money back</h3>
+          <div className="case-list">
+            {data.contracts.map((k) => (
+              <article key={k.caseId} className="case">
+                <header>
+                  <b>${k.reward} reward</b>
+                  <span className="chip">#{k.caseId}</span>
+                </header>
+                <p className="muted">{k.victimName} was hit by a {k.crime.toLowerCase()} in {k.district}.</p>
+                <ul className="tips">{k.clues.map((t, i) => <li key={i}>{t}</li>)}</ul>
+                <button className="btn btn-danger btn-sm" disabled={game.busy || !!k.canTake} title={k.canTake ?? ""} onClick={() => act({ op: "work_contract", caseId: k.caseId })}>
+                  Take the job
+                </button>
+                {k.canTake && <p className="job-lock"><Lock size={11} /> {k.canTake}</p>}
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {data && data.robbed.some((r) => !r.closed) && (
+        <section className="card">
+          <h3 className="card-title">💸 You were robbed</h3>
+          <ul className="officials">
+            {data.robbed.filter((r) => !r.closed).map((r) => (
+              <li key={r.caseId}>
+                <span>#{r.caseId} · ${r.amount} in {r.district}</span>
+                {r.contract ? (
+                  <span className="muted fine">{r.contract.done ? "Contract done" : `$${r.contract.reward} contract out`}</span>
+                ) : (
+                  <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => {
+                    const v = window.prompt("Offer how much to whoever gets your money back? (from your bank)", "100");
+                    if (v) act({ op: "post_contract", caseId: r.caseId, reward: Number(v) });
+                  }}>Hire someone to get it back</button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {data && data.officials.length > 0 && (
         <section className="card">

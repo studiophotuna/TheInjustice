@@ -160,6 +160,11 @@ export interface Player {
   pendingDeposit?: { caseId: string; amount: number; at: number } | null;
   /** Protection money owed to the crew that runs the district where you just worked. */
   turfOwed?: { crewId: string; amount: number } | null;
+  /** Debts and loans (kept on both the borrower and the lender). */
+  loans?: Loan[];
+  loanOffers?: { id: string; lenderId: string; lenderName: string; kind: Loan["kind"]; amount: number; rate: number; at: number }[];
+  /** Cases where this player was robbed (so they can post a revenge contract). */
+  robbedIn?: { caseId: string; at: number; amount: number; district: string }[];
   /** A lawyer on retainer defends this player automatically if they're arrested. */
   retainer?: { lawyerId: string; name: string; power: number; until: number } | null;
   /** Doctors: taking back-alley patients. */
@@ -225,6 +230,8 @@ export interface CaseFile {
   deposit?: { amount: number; at: number; account: string; review?: "reported" | "buried"; reviewerName?: string; reviewerId?: string };
   /** A vigilante went after a suspect on a cold case. */
   hunt?: { hunterId: string; hunterName: string; suspectId: string; suspectName: string; won: boolean; at: number; restitution: number };
+  /** The victim's reward for whoever gets their money back (revenge contract). */
+  contract?: { posterId: string; posterName: string; reward: number; at: number; tried: string[]; done: boolean };
   /** Homes searched with a warrant for this case. */
   searches?: { searcherId: string; suspectId: string; suspectName: string; found: boolean; at: number }[];
   /** City hall put the witnesses under police protection: nobody can lean on them. */
@@ -301,6 +308,18 @@ export interface Crew {
   createdAt: number;
   /** A planned prison break for a jailed member (one at a time). */
   breakout?: Breakout | null;
+}
+
+export interface Loan {
+  id: string;
+  kind: "bank" | "shark";
+  lenderId: string;
+  lenderName: string;
+  borrowerId: string;
+  borrowerName: string;
+  owed: number;
+  due: number;
+  status: "active" | "repaid" | "collected";
 }
 
 export interface TurfHold {
@@ -466,7 +485,9 @@ export interface City {
   /** Term in which the mayor last used their pardon. */
   pardonTerm: number;
   lastSalaryAt: number;
-  candidates: { id: string; name: string; title: string; reputation: number; pitch: string; at: number }[];
+  candidates: { id: string; name: string; title: string; reputation: number; pitch: string; at: number; spent?: number }[];
+  /** Server-only: candidates paying residents for their votes. */
+  voteBuys?: { candidateId: string; voterId: string; amount: number; at: number; exposed?: boolean }[];
   /** Server-only: who voted for whom (secret ballot). */
   votes: Record<string, string>;
   history: { term: number; name: string | null; votes: number; turnout: number; at: number }[];

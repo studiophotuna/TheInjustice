@@ -21,7 +21,8 @@ type CityData = {
     mealsServed: number;
     canSoup: string | null;
     chiefControls: { canCrackdown: boolean; canSalary: boolean; salary: number } | null;
-    candidates: { id: string; name: string; title: string; reputation: number; pitch: string }[];
+    candidates: { id: string; name: string; title: string; reputation: number; pitch: string; buzz: string | null }[];
+    amCandidate: boolean;
     turnout: number;
     myVote: string | null;
     canRun: string | null;
@@ -40,6 +41,7 @@ type CityData = {
   };
   prisoners: { id: string; name: string; reason: string }[];
   officers: { id: string; name: string; title: string }[];
+  residents: { id: string; name: string }[];
   turf: {
     id: string;
     name: string;
@@ -73,6 +75,8 @@ export function CityHall({ game }: { game: GameApi }) {
   const [bounty, setBounty] = useState<string | null>(null);
   const [skimAmt, setSkimAmt] = useState("100");
   const [soupAmt, setSoupAmt] = useState("100");
+  const [campaignAmt, setCampaignAmt] = useState("100");
+  const [voter, setVoter] = useState("");
   const [chiefPick, setChiefPick] = useState("");
 
   const load = useCallback(async () => {
@@ -146,6 +150,7 @@ export function CityHall({ game }: { game: GameApi }) {
                   <div>
                     <b>{x.name}</b> <span className="muted">· {x.title} · ★ {x.reputation}</span>
                     {x.pitch && <p className="pitch">&ldquo;{x.pitch}&rdquo;</p>}
+                    {x.buzz && <p className="fine buzz">📣 {x.buzz}</p>}
                   </div>
                   {!c.canVote && (
                     <button className="btn btn-primary btn-xs" disabled={game.busy} onClick={() => act({ op: "vote", candidateId: x.id })}>Vote</button>
@@ -154,6 +159,26 @@ export function CityHall({ game }: { game: GameApi }) {
               ))}
             </ul>
             {c.myVote && <p className="fine">You voted for {c.myVote}.</p>}
+            {c.amCandidate && (
+              <div className="campaign">
+                <form className="row wrap" onSubmit={(e) => { e.preventDefault(); act({ op: "campaign", amount: Number(campaignAmt) }); }}>
+                  <input type="number" min={50} step={50} value={campaignAmt} onChange={(e) => setCampaignAmt(e.target.value)} aria-label="Campaign spend" />
+                  <button className="btn btn-primary btn-sm" disabled={game.busy}>📣 Spend on the campaign</button>
+                </form>
+                {data.residents.length > 0 && (
+                  <div className="row wrap">
+                    <select value={voter || data.residents[0].id} onChange={(e) => setVoter(e.target.value)} aria-label="Resident">
+                      {data.residents.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                    </select>
+                    <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => {
+                      const v = window.prompt("How much cash for their vote? Nobody sees it but internal affairs.", "50");
+                      if (v) act({ op: "buy_vote", playerId: voter || data.residents[0].id, amount: Number(v) });
+                    }}>Slip them some cash</button>
+                  </div>
+                )}
+                <p className="fine muted">Campaign money shows on the ballot and breaks ties. Buying votes is a crime; internal affairs strikes you off the ballot.</p>
+              </div>
+            )}
             {!c.canRun && (
               <form className="row wrap run" onSubmit={(e) => { e.preventDefault(); act({ op: "run", pitch }); }}>
                 <input maxLength={140} placeholder="Your campaign promise" value={pitch} onChange={(e) => setPitch(e.target.value)} />

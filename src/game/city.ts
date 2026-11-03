@@ -9,6 +9,7 @@ import { COUNTRY_BY_ID } from "./content/world";
 import { maxEnergy } from "./balance";
 import { countryOf, inJail, shiftIntegrity } from "./engine";
 import { notify, protectedUntil } from "./social";
+import { buzzWord } from "./batch4";
 import { caseCold } from "./crime";
 import { GameError, type CaseFile, type City, type CountryId, type GameEvent, type Player } from "./types";
 
@@ -62,7 +63,9 @@ export function advanceCity(c: City, now: number): boolean {
     const ended = termEnds(c.term);
     const counts = tally(c);
     const turnout = Object.keys(c.votes).length;
-    const ranked = [...c.candidates].sort((a, b) => (counts.get(b.id) ?? 0) - (counts.get(a.id) ?? 0) || b.reputation - a.reputation);
+    const ranked = [...c.candidates].sort(
+      (a, b) => (counts.get(b.id) ?? 0) - (counts.get(a.id) ?? 0) || (b.spent ?? 0) - (a.spent ?? 0) || b.reputation - a.reputation,
+    );
     const winner = ranked[0] && (counts.get(ranked[0].id) ?? 0) > 0 ? ranked[0] : null;
     if (winner) {
       const reelected = c.mayor?.id === winner.id;
@@ -77,6 +80,7 @@ export function advanceCity(c: City, now: number): boolean {
     c.candidates = [];
     c.votes = {};
     c.recall = [];
+    c.voteBuys = (c.voteBuys ?? []).filter((v) => !v.exposed).slice(-50);
     c.term += 1;
   }
   return changed;
@@ -365,7 +369,8 @@ export function cityView(c: City, p: Player, now: number) {
     chiefControls: isChief(c, p)
       ? { canCrackdown: now - c.lastCrackdownAt >= B.crackdownCooldownMs, canSalary: now - (c.chiefPaidAt ?? 0) >= B.salaryEveryMs && c.treasury > 0, salary: B.chiefSalary }
       : null,
-    candidates: c.candidates.map((x) => ({ id: x.id, name: x.name, title: x.title, reputation: x.reputation, pitch: x.pitch })),
+    candidates: c.candidates.map((x) => ({ id: x.id, name: x.name, title: x.title, reputation: x.reputation, pitch: x.pitch, buzz: buzzWord(x.spent ?? 0) })),
+    amCandidate: c.candidates.some((x) => x.id === p.id),
     turnout: Object.keys(c.votes).length,
     myVote: c.votes[p.id] ? c.candidates.find((x) => x.id === c.votes[p.id])?.name ?? null : null,
     canRun: runBlock(c, p, now),

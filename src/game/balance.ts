@@ -83,6 +83,12 @@ export const BALANCE = {
     heat: 6,
     damage: 25,
   },
+  /** Campaigns: money spent shows on the ballot (and breaks ties); a share pays for permits. */
+  campaign: { min: 50, permitShare: 0.2, minBribe: 20 },
+  /** Loans: bankers at legal rates, loan sharks at any rate; three days to pay. */
+  loans: { min: 50, bankMaxRate: 0.2, sharkMaxRate: 1, termMs: 3 * 24 * 60 * 60_000, collectEnergy: 15 },
+  /** Revenge contracts: a victim's reward for whoever gets their money back. */
+  contracts: { min: 50, energy: 15 },
   /** Search warrants: a detective searches a suspect's home once per case. */
   search: { energy: 15, missChance: 0.2 },
   /** Lawyers on retainer: a week of defense, paid up front. */

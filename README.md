@@ -155,6 +155,28 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
   and the money goes back to whoever paid it at the verdict.
 - **Recall**: residents can sign a petition against the mayor; enough signatures (half the
   last election's turnout, at least 3) remove them and open a special election.
+- **Crew wars**: crew leaders claim districts ($1,000 from the vault) and take 5% of what
+  outsiders earn there. A rival leader can declare war: for 30 minutes members of both crews
+  join their side, then team strength (with a home advantage) decides who holds it.
+- **Bounties**: put money on anyone's head; whoever beats them in a fight collects. "Wanted"
+  shows on people lists.
+- **Revenge contracts**: robbery victims post a reward; a Mafia player tracks the robber from
+  the clues and, if they find and beat them, returns the money and takes the reward.
+- **Loans**: Bankers lend at up to 20% and seize an overdue borrower's savings; Mafia loan
+  sharks lend at any rate and collect overdue debts by force.
+- **Search warrants**: a detective searches a suspect's home (warrant granted only if they fit
+  the clues); stolen goods found make the case airtight at the arrest.
+- **Lawyers on retainer**: a week of an attorney's time; if you're arrested, they defend you.
+- **Back-alley doctors**: doctors can take cash to get patients out of the clinic today, with
+  no paperwork except a secret ledger internal affairs can find.
+- **Campaigns and vote buying**: candidates spend on posters and rallies (shown on the ballot,
+  breaks ties) or quietly pay residents for votes, which internal affairs can catch.
+- **The newspaper**: each city's paper prints the week's verdicts, scandals, wars and city news,
+  plus crime numbers, never who did an unsolved crime.
+- **City events**: a heat wave, festival, blackout, storm or payday changes pay, crime odds and
+  witnesses for an hour.
+- **Street titles** earned by what you do, and **anonymous season leaderboards** each month:
+  entries never show names ("Someone in the Mafia"); you only learn your own place.
 - **Businesses**: buy one in any country (paid from the bank) and collect hourly income.
 - **Account recovery**: a one-time recovery code is shown at sign-up; use it with
   "Forgot password?" to set a new password. Players can generate a new code in the Me tab.

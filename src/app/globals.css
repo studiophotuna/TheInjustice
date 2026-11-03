@@ -771,3 +771,7 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 .turf-row { align-items: flex-start !important; }
 .turf-row > div { min-width: 0; }
 .war-line { margin: 4px 0 0; color: var(--red); }
+.buzz { margin: 2px 0 0; color: var(--gold, #ffc24b); }
+.campaign { display: grid; gap: 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
+.campaign input, .campaign select { padding: 7px 10px; border-radius: 10px; border: 1px solid var(--border); background: rgba(0, 0, 0, 0.35); color: var(--text); max-width: 100%; }
+.campaign input { width: 100px; }
