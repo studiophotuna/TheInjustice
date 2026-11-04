@@ -1,3 +1,4 @@
+import { assertActive } from "@/game/moderation";
 import { NextResponse } from "next/server";
 import { claimTrophies, lastSeasonFinish, setTrophiesPublic, TROPHY_PRIZES, trophyBlock } from "@/game/batch7";
 import { COUNTRIES } from "@/game/content/world";
@@ -62,6 +63,7 @@ export async function POST(req: Request) {
     await store.transaction(async (tx) => {
       const [me] = await tx.getPlayers([playerId]);
       if (!me) throw new GameError("Create a character first.");
+      assertActive(me, now);
       tick(me, now);
       if (b.op === "claim") events = claimTrophies(me, others, now);
       else if (b.op === "show") events = setTrophiesPublic(me, b.on === true);

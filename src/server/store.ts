@@ -4,7 +4,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import postgres from "postgres";
 import { rankTitle } from "@/game/content/paths";
-import type { CaseFile, City, Crew, Player } from "@/game/types";
+import type { CaseFile, City, Crew, Player, Report } from "@/game/types";
 import { LOCKOUT_MS, MAX_FAILED_LOGINS } from "./auth";
 
 export interface LeaderRow {
@@ -78,6 +78,13 @@ export interface PlayerStore {
   getCrew(id: string): Promise<Crew | null>;
   postMessage(m: Omit<ChatMessage, "id" | "at">): Promise<void>;
   listMessages(channel: string, limit: number): Promise<ChatMessage[]>;
+  getMessage(id: number): Promise<ChatMessage | null>;
+  deleteMessage(id: number): Promise<void>;
+
+  /** Moderation reports. */
+  addReport(r: Omit<Report, "id" | "at" | "status">): Promise<void>;
+  listReports(status: Report["status"], limit: number): Promise<Report[]>;
+  updateReport(id: number, patch: Partial<Pick<Report, "status" | "resolvedBy" | "action">>): Promise<Report | null>;
   /** Newest case files in a country. */
   listCases(country: string, limit: number): Promise<CaseFile[]>;
   getCity(country: string): Promise<City | null>;
@@ -101,6 +108,7 @@ interface FileData {
   messages: ChatMessage[];
   cases: Record<string, CaseFile>;
   cities: Record<string, City>;
+  reports: Report[];
 }
 
 export class FileStore implements PlayerStore {
@@ -123,11 +131,12 @@ export class FileStore implements PlayerStore {
             messages: raw.messages ?? [],
             cases: raw.cases ?? {},
             cities: raw.cities ?? {},
+            reports: raw.reports ?? [],
           }
-        : { players: raw, accounts: {}, sessions: {}, crews: {}, messages: [], cases: {}, cities: {} };
+        : { players: raw, accounts: {}, sessions: {}, crews: {}, messages: [], cases: {}, cities: {}, reports: [] };
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
-      this.data = { players: {}, accounts: {}, sessions: {}, crews: {}, messages: [], cases: {}, cities: {} };
+      this.data = { players: {}, accounts: {}, sessions: {}, crews: {}, messages: [], cases: {}, cities: {}, reports: [] };
     }
     return this.data!;
   }
@@ -315,6 +324,37 @@ export class FileStore implements PlayerStore {
 
   async listMessages(channel: string, limit: number) {
     return (await this.load()).messages.filter((m) => m.channel === channel).slice(-limit);
+  }
+
+  async getMessage(id: number) {
+    return (await this.load()).messages.find((m) => m.id === id) ?? null;
+  }
+
+  deleteMessage(id: number) {
+    return this.serial((d) => {
+      d.messages = d.messages.filter((m) => m.id !== id);
+    });
+  }
+
+  addReport(r: Omit<Report, "id" | "at" | "status">) {
+    return this.serial((d) => {
+      const id = (d.reports.at(-1)?.id ?? 0) + 1;
+      d.reports.push({ ...r, id, at: Date.now(), status: "open" });
+      d.reports = d.reports.slice(-1000);
+    });
+  }
+
+  async listReports(status: Report["status"], limit: number) {
+    return (await this.load()).reports.filter((r) => r.status === status).slice(-limit).reverse().map((r) => structuredClone(r));
+  }
+
+  updateReport(id: number, patch: Partial<Pick<Report, "status" | "resolvedBy" | "action">>) {
+    return this.serial((d) => {
+      const r = d.reports.find((x) => x.id === id);
+      if (!r) return null;
+      Object.assign(r, patch);
+      return structuredClone(r);
+    });
   }
 
   async getCity(country: string) {
@@ -540,6 +580,38 @@ class PostgresStore implements PlayerStore {
     return rows
       .reverse()
       .map((r) => ({ id: Number(r.id), channel: r.channel, authorId: r.author_id, authorName: r.author_name, body: r.body, at: r.created_at.getTime() }));
+  }
+
+  async getMessage(id: number) {
+    const rows = await this.sql<{ id: string; channel: string; author_id: string; author_name: string; body: string; created_at: Date }[]>`
+      select id, channel, author_id, author_name, body, created_at from injustice.messages where id = ${id}`;
+    const r = rows[0];
+    return r ? { id: Number(r.id), channel: r.channel, authorId: r.author_id, authorName: r.author_name, body: r.body, at: r.created_at.getTime() } : null;
+  }
+
+  async deleteMessage(id: number) {
+    await this.sql`delete from injustice.messages where id = ${id}`;
+  }
+
+  async addReport(r: Omit<Report, "id" | "at" | "status">) {
+    await this.sql`insert into injustice.reports (data) values (${this.sql.json(r as unknown as postgres.JSONValue)})`;
+  }
+
+  async listReports(status: Report["status"], limit: number) {
+    const rows = await this.sql<{ id: string; status: Report["status"]; data: Omit<Report, "id" | "at" | "status">; created_at: Date }[]>`
+      select id, status, data, created_at from injustice.reports where status = ${status} order by id desc limit ${limit}`;
+    return rows.map((r) => ({ ...r.data, id: Number(r.id), status: r.status, at: r.created_at.getTime() }) as Report);
+  }
+
+  async updateReport(id: number, patch: Partial<Pick<Report, "status" | "resolvedBy" | "action">>) {
+    const rows = await this.sql<{ id: string; status: Report["status"]; data: Omit<Report, "id" | "at" | "status">; created_at: Date }[]>`
+      update injustice.reports
+      set status = coalesce(${patch.status ?? null}, status),
+          data = data || ${this.sql.json({ ...(patch.resolvedBy ? { resolvedBy: patch.resolvedBy } : {}), ...(patch.action ? { action: patch.action } : {}) } as unknown as postgres.JSONValue)}
+      where id = ${id}
+      returning id, status, data, created_at`;
+    const r = rows[0];
+    return r ? ({ ...r.data, id: Number(r.id), status: r.status, at: r.created_at.getTime() } as Report) : null;
   }
 
   async getCity(country: string) {

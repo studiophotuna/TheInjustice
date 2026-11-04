@@ -84,6 +84,14 @@ export interface Player {
   reputation: number;
   housing: HousingTier;
   inventory: Record<string, number>;
+  /** Anti-cheat (server-only): devices and hashed IPs this character was recently played from. */
+  devices?: string[];
+  ips?: string[];
+  /** Moderation. */
+  mutedUntil?: number;
+  bannedUntil?: number;
+  banReason?: string;
+  lastReportAt?: number;
   /** A short introduction and a photo (data URL), shown to other players. */
   profile?: { bio?: string; photo?: string | null; updatedAt?: number };
   /** Gear in use: only equipped gear counts in a fight. */
@@ -368,6 +376,26 @@ export interface Trophy {
   place: number;
 }
 
+/** A player's report to the moderators. */
+export interface Report {
+  id: number;
+  at: number;
+  status: "open" | "resolved" | "dismissed";
+  reporterId: string;
+  reporterName: string;
+  targetId: string;
+  targetName: string;
+  kind: "player" | "message";
+  reason: string;
+  /** What was reported, as it was at the time: the message, or the intro and photo. */
+  excerpt?: string;
+  photo?: string | null;
+  messageId?: number;
+  channel?: string;
+  resolvedBy?: string;
+  action?: string;
+}
+
 export interface HitContract {
   id: string;
   targetId: string;
@@ -612,6 +640,8 @@ export interface City {
   candidates: { id: string; name: string; title: string; reputation: number; pitch: string; at: number; spent?: number }[];
   /** Server-only: candidates paying residents for their votes. */
   voteBuys?: { candidateId: string; voterId: string; amount: number; at: number; exposed?: boolean }[];
+  /** Server-only: devices that already voted this term (one vote per device). */
+  voteDevices?: Record<string, string>;
   /** Server-only: who voted for whom (secret ballot). */
   votes: Record<string, string>;
   history: { term: number; name: string | null; votes: number; turnout: number; at: number }[];

@@ -353,3 +353,10 @@ target notices they're being watched and can hire bodyguards, lie low or go to t
 detectives can stake out a reported threat. A player killed by a hit keeps their career but
 loses a rank, their cash and gear, and spends eight hours in the morgue; the killer faces a
 murder case and a three-day vendetta. Full rules in `WHACK.md`.
+
+## Moderation and anti-cheat (v1.5.0)
+
+- Moderators are the accounts listed in the `ADMIN_USERNAMES` environment variable
+  (comma-separated). They work from `/admin`.
+- `IP_HASH_SALT` salts the IP hashes used to spot alt accounts; raw IP addresses are never stored.
+- Reports live in `injustice.reports` (migration `supabase/migrations/20261104120000_reports.sql`).

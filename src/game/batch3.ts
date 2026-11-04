@@ -1,5 +1,6 @@
 // Search warrants, lawyers on retainer, and the doctors' black market.
 
+import { assertNotAlt } from "./anticheat";
 import { BALANCE } from "./balance";
 import { CRIMES, caseCold, suspectsFor, type SuspectMatch } from "./crime";
 import { countryOf, inHospital, inJail, shiftIntegrity } from "./engine";
@@ -77,6 +78,7 @@ export function hireBlock(client: Player, lawyer: Player | null, now: number): s
 
 /** A week on retainer: if you're arrested, this lawyer takes your defense automatically. */
 export function hireLawyer(client: Player, lawyer: Player, now: number, lawyerPower: number): GameEvent[] {
+  assertNotAlt(client, lawyer);
   const block = hireBlock(client, lawyer, now);
   if (block) throw new GameError(block);
   const fee = retainerFee(lawyer);
@@ -109,6 +111,7 @@ export function backAlleyBlock(patient: Player, doctor: Player | null, now: numb
 
 /** The patient pays cash and walks out today. Nothing on record but the doctor's secret ledger. */
 export function backAlleyTreat(patient: Player, doctor: Player, now: number): GameEvent[] {
+  assertNotAlt(patient, doctor);
   const block = backAlleyBlock(patient, doctor, now);
   if (block) throw new GameError(block);
   const fee = backAlleyFee(doctor);

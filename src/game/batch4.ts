@@ -1,5 +1,6 @@
 // Election campaigns and vote buying, loans and loan sharks, revenge contracts.
 
+import { assertNotAlt } from "./anticheat";
 import { BALANCE } from "./balance";
 import { playerFighter, resolveFight } from "./combat";
 import { CRIMES, caseCold } from "./crime";
@@ -39,6 +40,7 @@ export function campaign(c: City, p: Player, amount: number, now: number): GameE
 
 /** A candidate slips a resident cash for their vote. Nobody sees it but internal affairs. */
 export function buyVote(c: City, candidate: Player, voter: Player, amount: number, now: number): GameEvent[] {
+  assertNotAlt(candidate, voter);
   if (!c.candidates.some((x) => x.id === candidate.id)) throw new GameError("You're not on the ballot.");
   if (voter.id === candidate.id) throw new GameError("You already have your own vote.");
   if (countryOf(voter) !== c.country) throw new GameError("They don't live here.");
@@ -69,6 +71,7 @@ export function lenderKind(p: Player): Loan["kind"] | null {
 }
 
 export function offerLoan(lender: Player, borrower: Player, amount: number, rate: number, now: number): GameEvent[] {
+  assertNotAlt(lender, borrower);
   const kind = lenderKind(lender);
   if (!kind) throw new GameError("Only bankers and the Mafia lend money.");
   if (lender.id === borrower.id) throw new GameError("You can't lend to yourself.");
@@ -84,6 +87,7 @@ export function offerLoan(lender: Player, borrower: Player, amount: number, rate
 }
 
 export function acceptLoan(borrower: Player, lender: Player, offerId: string, now: number): GameEvent[] {
+  assertNotAlt(borrower, lender);
   const offer = (borrower.loanOffers ?? []).find((o) => o.id === offerId);
   if (!offer || offer.lenderId !== lender.id) throw new GameError("That offer is gone.");
   borrower.loanOffers = (borrower.loanOffers ?? []).filter((o) => o.id !== offerId);

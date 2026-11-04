@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.5.0: moderation and anti-cheat basics
+
+- **Reports:** players can report another player (photo, name or intro) from People, or a chat
+  or forum message with the small flag beside it. Reports keep a snapshot of what was reported.
+  One report a minute.
+- **Moderation page (/admin)** for accounts in `ADMIN_USERNAMES`: open reports with the evidence,
+  and one-click actions (dismiss, delete message, remove photo, clear intro, mute 24 hours,
+  suspend 7 days, suspend for good), a list of who is muted or suspended (with "Lift"), possible
+  alt accounts, and recent decisions. Moderators see a "Moderation" button under Me → Account.
+- **Mutes and suspensions:** muted players can't chat, post in forums, pin crew notes or change
+  their profile; suspended players can't take any action and disappear from People and the
+  online list.
+- **Alt accounts:** every browser gets a long-lived device id, and IP addresses are stored only as
+  salted hashes. Characters played from the same device can't attack, rob, vouch for, put
+  bounties on, lend to, hire, treat, launder for, buy votes from or sell guns to each other, and
+  only one of them can vote in an election. Characters that only share a network are shown to
+  moderators but not blocked (households and cafés share IPs).
+
 ## 1.4.0: Injustice is now Conspira
 
 - **New name:** Conspira, with the slogan "Every move has an agenda."

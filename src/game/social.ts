@@ -1,6 +1,7 @@
 // Rules for players interacting with each other. Pure functions over Player/Crew objects:
 // the server loads and saves both sides inside one transaction.
 
+import { ALT_BLOCK, assertNotAlt, sameOwner } from "./anticheat";
 import { publicProfile } from "./profile";
 import { wearGear } from "./gear";
 import { lyingLow, vendettaAgainst } from "./hit";
@@ -29,6 +30,7 @@ export function bountyOn(p: Player): number {
 
 /** Anyone puts money on someone's head (from the bank). Whoever beats them in a fight collects. */
 export function postBounty(poster: Player, t: Player, amount: number, now: number): GameEvent[] {
+  assertNotAlt(poster, t);
   if (poster.id === t.id) throw new GameError("You can't put a price on your own head.");
   if (t.dead) throw new GameError("They're not around anymore.");
   const a = Math.floor(amount);
@@ -47,6 +49,7 @@ export function protectedUntil(p: Player): number {
 /** Why `a` can't attack `t` right now, or null. */
 export function attackBlock(a: Player, t: Player, now: number): string | null {
   if (a.id === t.id) return "You can't attack yourself.";
+  if (sameOwner(a, t)) return ALT_BLOCK;
   if (a.dead || t.dead) return "They're not around anymore.";
   if (countryOf(a) !== countryOf(t)) return "They're in another country.";
   if (a.travel || t.travel) return "One of you is on the road.";
@@ -131,6 +134,7 @@ export function attackPlayer(a: Player, t: Player, now: number, rng: Rng): { eve
 
 /** A high-ranking player recommends `t` to the school of the voucher's own career. */
 export function vouchFor(v: Player, t: Player, now: number): GameEvent[] {
+  assertNotAlt(v, t);
   if (v.id === t.id) throw new GameError("You can't vouch for yourself.");
   const path = v.path ? PATHS[v.path] : null;
   if (!path?.school) throw new GameError("Only careers with a school accept vouches.");

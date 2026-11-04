@@ -80,6 +80,7 @@ export function advanceCity(c: City, now: number): boolean {
     c.history = [{ term: c.term, name: winner?.name ?? null, votes: winner ? counts.get(winner.id)! : 0, turnout, at: ended }, ...c.history].slice(0, 10);
     c.candidates = [];
     c.votes = {};
+    c.voteDevices = {};
     c.recall = [];
     c.voteBuys = (c.voteBuys ?? []).filter((v) => !v.exposed).slice(-50);
     c.term += 1;
@@ -117,6 +118,7 @@ export function voteBlock(c: City, p: Player, now: number): string | null {
   if (countryOf(p) !== c.country) return "Only people who live here can vote.";
   if (now < protectedUntil(p)) return "You're too new in town to vote.";
   if (c.votes[p.id]) return "You already voted.";
+  if ((p.devices ?? []).some((d) => c.voteDevices?.[d] && c.voteDevices[d] !== p.id)) return "Someone already voted from this device. One vote per person.";
   if (!c.candidates.length) return "Nobody is running yet.";
   return null;
 }
@@ -127,6 +129,8 @@ export function vote(c: City, p: Player, candidateId: string, now: number): Game
   const cand = c.candidates.find((x) => x.id === candidateId);
   if (!cand) throw new GameError("They're not on the ballot.");
   c.votes[p.id] = cand.id;
+  c.voteDevices = { ...(c.voteDevices ?? {}) };
+  for (const d of p.devices ?? []) c.voteDevices[d] = p.id;
   return [{ tone: "good", text: `You voted for ${cand.name}. The ballot is secret.` }];
 }
 
@@ -236,6 +240,7 @@ export function signRecall(c: City, p: Player, now: number): GameEvent[] {
     c.chief = null;
     c.candidates = [];
     c.votes = {};
+    c.voteDevices = {};
     c.recall = [];
     return [{ tone: "good", text: `Your signature was the last one needed. ${name} is out.` }];
   }

@@ -1,10 +1,12 @@
+import { trackDevice } from "@/game/anticheat";
+import { assertActive } from "@/game/moderation";
 import { NextResponse } from "next/server";
 import { applyAction, createPlayer, tick } from "@/game/engine";
 import { GameError, type GameEvent } from "@/game/types";
 import { toView } from "@/game/view";
 import { parseAction } from "@/server/actions";
 import { assertJson } from "@/server/auth";
-import { resolveIdentity } from "@/server/identity";
+import { deviceInfo, resolveIdentity } from "@/server/identity";
 import { fileDeposit } from "@/game/casework";
 import { settleTrial } from "@/server/justice";
 import { payTax, payTurf, taxRates, turfMap, withCity } from "@/server/city";
@@ -85,6 +87,7 @@ export async function POST(req: Request) {
     assertJson(req);
     const action = parseAction(await req.json().catch(() => null));
     const { playerId } = await resolveIdentity(true);
+    const { deviceId, ipHash } = await deviceInfo();
     const now = Date.now();
     const store = getStore();
     let flag: { caseId: string; amount: number; at: number } | null = null;
@@ -101,9 +104,12 @@ export async function POST(req: Request) {
       if (action.type === "create") {
         if (p) throw new GameError("You already have a character.");
         const fresh = createPlayer(playerId!, action.name, now, action.country);
+        trackDevice(fresh, deviceId, ipHash);
         return { player: fresh, result: { view: toView(fresh, now), events: [] as GameEvent[] } };
       }
       if (!p) throw new GameError("Create a character first.");
+      assertActive(p, now);
+      trackDevice(p, deviceId, ipHash);
       const events = applyAction(p, action, now, Math.random, { taxRates: rates, turf, allies });
       if (p.launderFlag) {
         launderFlag = p.launderFlag;

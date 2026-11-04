@@ -1,5 +1,6 @@
 // Bankers' laundering service, drug busts, crew drug labs, money-laundering investigations.
 
+import { assertNotAlt } from "./anticheat";
 import { BALANCE } from "./balance";
 import { DISTRICTS } from "./content/districts";
 import { COUNTRY_BY_ID } from "./content/world";
@@ -46,6 +47,7 @@ export function serviceBlock(client: Player, banker: Player | null, amount: numb
  * Returns a flag when the amount is big enough to catch the attention of investigators.
  */
 export function launderWithBanker(client: Player, banker: Player, amount: number, now: number): { events: GameEvent[]; flag: boolean } {
+  assertNotAlt(client, banker);
   const a = Math.floor(amount);
   const block = serviceBlock(client, banker, a);
   if (block) throw new GameError(block);

@@ -9,6 +9,7 @@
 // - The black market: a corrupt soldier can sell stolen army gear to the Mafia. The sales stay on
 //   a hidden ledger that internal affairs and court-martials can find.
 
+import { assertNotAlt } from "./anticheat";
 import { BALANCE } from "./balance";
 import { playerFighter, power } from "./combat";
 import { ITEM_BY_ID } from "./content/items";
@@ -213,6 +214,7 @@ export function gunSaleBlock(seller: Player, buyer: Player, itemId: string, pric
 }
 
 export function offerGun(seller: Player, buyer: Player, itemId: string, price: number, now: number): GameEvent[] {
+  assertNotAlt(seller, buyer);
   const block = gunSaleBlock(seller, buyer, itemId, price, now);
   if (block) throw new GameError(block);
   const item = ITEM_BY_ID[itemId];

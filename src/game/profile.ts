@@ -27,6 +27,7 @@ export function validPhoto(raw: unknown): string | null {
 
 /** Updates the intro and/or the photo. `photo: null` removes it; leaving it out keeps it. */
 export function updateProfile(p: Player, change: { bio?: unknown; photo?: unknown }, now: number): GameEvent[] {
+  if ((p.mutedUntil ?? 0) > now) throw new GameError("You're muted, so your profile is locked for now.");
   if (now - (p.profile?.updatedAt ?? 0) < PROFILE.cooldownMs) throw new GameError("Give it a moment before changing it again.");
   const next = { ...(p.profile ?? {}) };
   if (change.bio !== undefined) next.bio = cleanBio(change.bio);

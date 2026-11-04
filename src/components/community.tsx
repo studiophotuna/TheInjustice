@@ -1,5 +1,6 @@
 "use client";
 
+import { ReportButton } from "./ReportButton";
 import { AnimatePresence, motion } from "motion/react";
 import { Ban, Crown, Eye, EyeOff, ShieldAlert, ShieldCheck, FileSearch, Footprints, Gavel, Flame, Hand, Handshake, Landmark, MessagesSquare, Moon, Stethoscope, Inbox, Lock, MessageSquare, Search, Send, Shield, Siren, Swords, UserCheck, Users, Vault } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -429,6 +430,7 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
                 <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: blocked ? "unblock" : "block", targetId: p.id })}>
                   <Ban size={14} /> {blocked ? "Unblock" : "Block"}
                 </button>
+                <ReportButton game={game} targetId={p.id} targetName={p.name} />
               </div>
               {p.canAttack && <p className="job-lock"><Lock size={11} /> {p.canAttack}</p>}
               <div className="crime-row">
@@ -495,6 +497,7 @@ function Chat({ game, hub, initial }: { game: GameApi; hub: Hub; initial?: strin
               <span className="msg-author">{m.authorName}</span>
               <span className="msg-body">{m.body}</span>
               <span className="msg-time">{ago(m.at)}</span>
+              {m.authorId !== view.id && <ReportButton game={game} targetId={m.authorId} targetName={m.authorName} messageId={m.id} small />}
             </motion.div>
           ))}
         </AnimatePresence>
@@ -631,7 +634,10 @@ function ForumBoard({ game, forum, social }: { game: GameApi; forum: Hub["forums
             {messages.length === 0 && <p className="muted">Nothing posted yet.</p>}
             {[...messages].reverse().map((m) => (
               <article key={m.id} className={`forum-post ${m.authorId === view.id ? "mine" : ""}`}>
-                <header><b>{m.authorName}</b> <span className="muted">· {ago(m.at)}</span></header>
+                <header>
+                  <b>{m.authorName}</b> <span className="muted">· {ago(m.at)}</span>
+                  {m.authorId !== view.id && <ReportButton game={game} targetId={m.authorId} targetName={m.authorName} messageId={m.id} small />}
+                </header>
                 <p>{m.body}</p>
               </article>
             ))}

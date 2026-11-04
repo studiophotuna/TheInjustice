@@ -1,3 +1,4 @@
+import { assertActive, assertCanSpeak, checkReport, isBanned } from "@/game/moderation";
 import { acceptAlliance, breakAlliance, declineAlliance, proposeAlliance } from "@/game/batch7";
 import { ceremonyBlock, isMade, makeMember } from "@/game/family";
 import { bringCharges, buyGun, courtMartialBlock, declineGun, offerGun, sellableGear } from "@/game/military";
@@ -302,7 +303,7 @@ export async function GET(req: Request) {
       const [people, crews] = await Promise.all([store.listPlayers(countryOf(p), 80), store.listCrews(200)]);
       const tags = new Map(crews.map((c) => [c.id, c.tag]));
       const online = people
-        .filter((o) => o.id !== p.id && !o.dead && now - (o.seenAt ?? 0) < BALANCE.onlineMs)
+        .filter((o) => o.id !== p.id && !o.dead && !isBanned(o, now) && now - (o.seenAt ?? 0) < BALANCE.onlineMs)
         .slice(0, 30)
         .map((o) => {
           tick(o, now);
@@ -353,7 +354,7 @@ export async function GET(req: Request) {
     }
     return NextResponse.json({
       players: players
-        .filter((o) => o.id !== p.id && !o.dead)
+        .filter((o) => o.id !== p.id && !o.dead && !isBanned(o, now))
         .map((o) => {
           tick(o, now);
           const prof = profileFor(p, o, now);
@@ -461,6 +462,8 @@ export async function POST(req: Request) {
     if (!playerId) throw new GameError("Create a character first.");
     const store = getStore();
     const now = Date.now();
+    // Suspended characters can look around but not act.
+    assertActive(await store.get(playerId), now);
     let events: GameEvent[] = [];
 
     switch (b.op) {
@@ -471,6 +474,7 @@ export async function POST(req: Request) {
         const author = await store.update(playerId, (p) => {
           if (!p) throw new GameError("Create a character first.");
           if (channel.startsWith("forum:") ? !canUseForum(forumCrew, p) : !channelsFor(p).includes(channel)) throw new GameError("You can't post there.");
+          assertCanSpeak(p, now);
           if (now - (p.lastChatAt ?? 0) < BALANCE.chat.cooldownMs) throw new GameError("Slow down a little.");
           p.lastChatAt = now;
           return { player: p, result: p };
@@ -1153,6 +1157,33 @@ export async function POST(req: Request) {
         });
         break;
       }
+      case "report_player": {
+        // A report to the moderators: a player (their photo and intro as they are now) or a chat message.
+        const targetId = str(b.targetId);
+        const messageId = typeof b.messageId === "number" ? b.messageId : null;
+        const msg = messageId !== null ? await store.getMessage(messageId) : null;
+        if (messageId !== null && (!msg || msg.authorId !== targetId)) throw new GameError("That message is gone.");
+        const target = await store.get(targetId);
+        if (!target) throw new GameError("That player doesn't exist.");
+        const reporter = await store.update(playerId, (p) => {
+          if (!p) throw new GameError("Create a character first.");
+          const reason = checkReport(p, targetId, b.reason, now);
+          return { player: p, result: { p, reason } };
+        });
+        await store.addReport({
+          reporterId: playerId,
+          reporterName: reporter.p.name,
+          targetId,
+          targetName: target.name,
+          kind: msg ? "message" : "player",
+          reason: reporter.reason,
+          excerpt: msg ? msg.body : target.profile?.bio ?? "",
+          photo: msg ? null : target.profile?.photo ?? null,
+          ...(msg ? { messageId: msg.id, channel: msg.channel } : {}),
+        });
+        events = [{ tone: "good", text: "Thanks. A moderator will look at it." }];
+        break;
+      }
       case "court_martial": {
         const target = str(b.targetId);
         events = await store.transaction((tx) => withPair(tx, playerId, target, now, (o, s) => bringCharges(o, s, now)));
@@ -1498,6 +1529,7 @@ export async function POST(req: Request) {
           const [p] = await tx.getPlayers([playerId]);
           const crew = p?.crewId ? await tx.getCrew(p.crewId) : null;
           if (!p || !crew || crew.leaderId !== p.id) throw new GameError("Only the leader can post notes.");
+          assertCanSpeak(p, now);
           crewLog(crew, `📌 ${body}`, now);
           await tx.putCrew(crew);
         });

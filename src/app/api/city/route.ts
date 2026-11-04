@@ -1,3 +1,4 @@
+import { assertActive } from "@/game/moderation";
 import { NextResponse } from "next/server";
 import {
   advanceCity,
@@ -103,6 +104,7 @@ export async function POST(req: Request) {
     const now = Date.now();
     const self = await store.get(playerId);
     if (!self) throw new GameError("Create a character first.");
+    assertActive(self, now);
     const country = countryOf(self);
 
     // Lock order everywhere: players first, the city last.

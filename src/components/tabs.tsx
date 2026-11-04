@@ -489,6 +489,7 @@ export function ProfileTab({ game }: { game: GameApi }) {
             <KeyRound size={14} /> New recovery code
           </button>
           <p className="fine">A recovery code lets you reset your password. Getting a new one cancels the old one.</p>
+          <ModeratorLink />
           </>
         ) : (
           <>
@@ -981,4 +982,14 @@ export function LoansCard({ game }: { game: GameApi }) {
       </ul>
     </section>
   );
+}
+
+/** Shown only to moderator accounts. */
+function ModeratorLink() {
+  const [ok, setOk] = useState(false);
+  useEffect(() => {
+    fetch("/api/admin?probe=1", { cache: "no-store" }).then((r) => setOk(r.ok)).catch(() => undefined);
+  }, []);
+  if (!ok) return null;
+  return <a className="btn btn-primary btn-sm" href="/admin">Moderation</a>;
 }

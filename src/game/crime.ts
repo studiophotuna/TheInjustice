@@ -2,6 +2,7 @@
 // Crimes are anonymous: the victim only learns what witnesses, bystanders and detectives
 // piece together. Every tip reveals one trait, and some tips are wrong.
 
+import { ALT_BLOCK, sameOwner } from "./anticheat";
 import { BALANCE } from "./balance";
 import { playerFighter, resolveFight } from "./combat";
 import { DISTRICTS } from "./content/districts";
@@ -200,6 +201,7 @@ export function caseOpen(c: CaseFile, now: number): boolean {
 
 /** Why `a` can't commit `kind` against `t` right now, or null. */
 export function crimeBlock(a: Player, t: Player, kind: CrimeKind, now: number): string | null {
+  if (sameOwner(a, t)) return ALT_BLOCK;
   if (a.id === t.id) return "You can't rob yourself.";
   if (a.dead || t.dead) return "They're not around anymore.";
   if (countryOf(a) !== countryOf(t)) return "They're in another country.";
