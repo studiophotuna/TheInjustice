@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Injustice",
-    short_name: "Injustice",
-    description: "From the Gutter to power in Grayhaven.",
+    name: "Conspira",
+    short_name: "Conspira",
+    description: "Every move has an agenda.",
     start_url: "/",
     display: "standalone",
     background_color: "#07080c",

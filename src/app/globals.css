@@ -918,9 +918,13 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 /* ─── Logo ─────────────────────────────────────────────────────────────── */
 .logo-row { display: flex; align-items: center; gap: 10px; }
 .logo-mark { flex: none; border-radius: 22%; box-shadow: 0 0 18px rgba(255, 61, 90, 0.25); }
-.logo-crack { stroke-dasharray: 40; animation: crack-glow 3.5s ease-in-out infinite; }
-@keyframes crack-glow { 0%, 100% { opacity: 0.75; } 50% { opacity: 1; filter: drop-shadow(0 0 3px #ff3d5a); } }
-@media (prefers-reduced-motion: reduce) { .logo-crack { animation: none; } }
+/* The red string pulses as if someone just pinned another clue. */
+.logo-pin { animation: pin-glow 3.5s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.logo-string { animation: string-glow 3.5s ease-in-out infinite; }
+@keyframes pin-glow { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); filter: drop-shadow(0 0 3px #ff3d5a); } }
+@keyframes string-glow { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .logo-pin, .logo-string { animation: none; } }
+.logo-sub { letter-spacing: 0.22em; }
 
 /* ─── Player profiles ──────────────────────────────────────────────────── */
 .portrait-photo { overflow: hidden; border-radius: 50%; border: 2px solid var(--rim); background: #0b0d12; }

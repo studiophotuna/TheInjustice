@@ -14,43 +14,42 @@ import type { GameApi } from "./useGame";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-/** The mark: a gold scale of justice, tipped out of balance and cracked through. */
+/** The mark: an open gold C, pinned at both ends, with red string tying hidden points together. */
 export function LogoMark({ size = 32 }: { size?: number }) {
   return (
     <svg className="logo-mark" width={size} height={size} viewBox="0 0 64 64" aria-hidden>
       <defs>
-        <linearGradient id="lm-g" gradientUnits="userSpaceOnUse" x1="0" y1="8" x2="0" y2="56">
+        <linearGradient id="lm-g" gradientUnits="userSpaceOnUse" x1="0" y1="10" x2="0" y2="54">
           <stop offset="0" stopColor="#ffd76a" />
-          <stop offset="1" stopColor="#e0a530" />
+          <stop offset="1" stopColor="#d99a2b" />
         </linearGradient>
       </defs>
       <rect width="64" height="64" rx="14" fill="#0d0b12" />
       <rect x="1.5" y="1.5" width="61" height="61" rx="12.5" fill="none" stroke="#ffc24b" strokeOpacity="0.4" strokeWidth="1.5" />
-      <g transform="translate(0 4)">
-      <g fill="none" stroke="url(#lm-g)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M32 17 V48" />
-        <path d="M24 50 H40" />
-        <path className="logo-beam" d="M13 24 L51 15" />
-        <path d="M13 24 L8 37 M13 24 L18 37" />
-        <path d="M51 15 L46 28 M51 15 L56 28" />
+      <path d="M46.6 19.8 A19 19 0 1 0 46.6 44.2" fill="none" stroke="url(#lm-g)" strokeWidth="5.5" strokeLinecap="round" />
+      <g className="logo-string" stroke="#ff3d5a" strokeWidth="1.7" strokeLinecap="round" fill="none">
+        <path d="M46.6 19.8 L37 31.5 L46.6 44.2" />
+        <path d="M37 31.5 L24.5 25 L27.5 39 Z" />
       </g>
-      <path d="M7 37 Q13 43 19 37 Z" fill="url(#lm-g)" />
-      <path d="M45 28 Q51 34 57 28 Z" fill="url(#lm-g)" />
-      <circle cx="32" cy="19.2" r="2.8" fill="url(#lm-g)" />
-      <path className="logo-crack" d="M35 9 L30.5 18 L34.5 22 L29.5 31 L33 35" fill="none" stroke="#ff3d5a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-      </g>
+      <circle cx="24.5" cy="25" r="2.5" fill="url(#lm-g)" />
+      <circle cx="27.5" cy="39" r="2.5" fill="url(#lm-g)" />
+      <circle className="logo-pin" cx="37" cy="31.5" r="3.6" fill="#ff3d5a" />
+      <circle cx="36" cy="30.4" r="1.1" fill="#ffd0d7" />
     </svg>
   );
 }
+
+export const GAME_NAME = "Conspira";
+export const SLOGAN = "Every move has an agenda.";
 
 export function Logo({ small = false }: { small?: boolean }) {
   return (
     <div className={`logo ${small ? "logo-sm" : ""}`}>
       <div className="logo-row">
         <LogoMark size={small ? 30 : 46} />
-        <span className="logo-word">INJUSTICE</span>
+        <span className="logo-word">CONSPIRA</span>
       </div>
-      {!small && <span className="logo-sub">Grayhaven · From the gutter to the top</span>}
+      {!small && <span className="logo-sub">{SLOGAN}</span>}
     </div>
   );
 }
@@ -189,8 +188,8 @@ export function Landing({ game }: { game: GameApi }) {
       <motion.div className="landing-card glass" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease }}>
         <Logo />
         <p className="landing-pitch">
-          Framed. Jailed. Released with <b>nothing</b>. Work the streets, grow strengths you can&apos;t see, and choose
-          your side of the law.
+          Framed. Jailed. Released with <b>nothing</b>. Somebody arranged that. Work the streets, grow strengths you
+          can&apos;t see, find out who sold you out, and choose your side of the law.
         </p>
         {game.account ? (
           <>

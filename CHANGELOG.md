@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.0: Injustice is now Conspira
+
+- **New name:** Conspira, with the slogan "Every move has an agenda."
+- **New logo:** an open gold C pinned at both ends, with red string tying hidden points
+  together, like a detective's evidence wall. The centre pin pulses. Used as the app icon,
+  the browser tab and beside the CONSPIRA wordmark.
+- Page title, app name (home-screen install), description and README updated. Internal names
+  (the repository, the database schema, `INJUSTICE_DATA_FILE`, saved settings) are unchanged, so
+  existing characters and logins keep working.
+
 ## 1.3.1: new logo, player profiles
 
 - **New logo:** a gold scale of justice, tipped out of balance and cracked through in red, on a

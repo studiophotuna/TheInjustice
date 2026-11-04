@@ -1,4 +1,8 @@
-# Injustice
+# Conspira
+
+*Every move has an agenda.*
+
+(Formerly "Injustice". The repository, data files and environment variables keep their old names.)
 
 A modern take on the classic text-based crime RPG. You were framed, jailed, and released
 with nothing. Start as a bum with $0 in **The Gutter** of Grayhaven, work your way up, and
