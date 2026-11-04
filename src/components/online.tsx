@@ -7,6 +7,7 @@ import type { GameApi } from "./useGame";
 
 type CrimeKind = "pickpocket" | "snatch" | "mug";
 type OnlinePlayer = {
+  photo?: string | null;
   id: string;
   name: string;
   title: string;
@@ -72,7 +73,7 @@ export function OnlineNow({ game, limit }: { game: GameApi; limit?: number }) {
           return (
             <li key={o.id} className={expanded ? "open" : ""}>
               <button className="online-who" onClick={() => setOpen(expanded ? null : o.id)} aria-expanded={expanded}>
-                <PlayerAvatar name={o.name} path={o.path} className="avatar-sm" />
+                <PlayerAvatar name={o.name} path={o.path} photo={o.photo} className="avatar-sm" />
                 <span className="online-name">
                   <b>{o.name}</b>
                   {o.crewTag && <span className="crew-tag"> [{o.crewTag}]</span>}

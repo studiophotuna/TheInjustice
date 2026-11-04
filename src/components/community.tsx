@@ -31,6 +31,8 @@ type Profile = {
   contract?: { cost: number; block: string | null } | null;
   rat?: boolean;
   streetTitle: string | null;
+  bio?: string | null;
+  photo?: string | null;
   canCrime: Record<CrimeKind, string | null>;
   bounty: number;
   trophies?: { label: string; place: number; seasonName: string }[];
@@ -317,7 +319,7 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
         const blocked = hub.blocked.includes(p.id);
         return (
           <motion.article key={p.id} className="person" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-            <PlayerAvatar name={p.name} path={p.path} className="avatar-md" />
+            <PlayerAvatar name={p.name} path={p.path} photo={p.photo} className="avatar-md" />
             <div className="person-body">
               <div className="person-head">
                 <b>{p.name}</b>
@@ -334,6 +336,7 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
                 {p.title} · ★ {p.reputation} · seen {ago(p.lastSeen)}
                 {p.streetTitle && <em className="street-title"> · {p.streetTitle}</em>}
               </p>
+              {p.bio && <p className="person-bio">“{p.bio}”</p>}
               <div className="gut">
                 <span className={`danger-pill d${p.danger}`}>{DANGER[p.danger]}</span>
                 <span className="muted">“{p.read}”</span>

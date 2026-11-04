@@ -84,6 +84,8 @@ export interface Player {
   reputation: number;
   housing: HousingTier;
   inventory: Record<string, number>;
+  /** A short introduction and a photo (data URL), shown to other players. */
+  profile?: { bio?: string; photo?: string | null; updatedAt?: number };
   /** Gear in use: only equipped gear counts in a fight. */
   equipped?: { weapon?: string | null; armor?: string | null };
   /** Uses left on each piece of gear (missing = brand new). */
@@ -560,6 +562,7 @@ export type Action =
   | { type: "unequip"; slot: "weapon" | "armor" }
   | { type: "repair"; itemId: string }
   | { type: "hire_bodyguards" }
+  | { type: "profile"; bio?: string; photo?: string | null }
   | { type: "lie_low" }
   | { type: "bank"; op: "open" | "deposit" | "withdraw"; amount?: number }
   | { type: "fight"; npcId: string }

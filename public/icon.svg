@@ -1,1 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="96" fill="#ffd23f"/><g stroke="#111" stroke-width="20" stroke-linejoin="round"><g transform="rotate(-35 256 256)"><rect x="236" y="190" width="40" height="230" fill="#a0522d"/><rect x="150" y="120" width="212" height="90" rx="14" fill="#e63946"/></g><rect x="110" y="410" width="292" height="44" fill="#111"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="0" y1="8" x2="0" y2="56">
+      <stop offset="0" stop-color="#ffd76a"/>
+      <stop offset="1" stop-color="#e0a530"/>
+    </linearGradient>
+    <radialGradient id="bg" cx="0.5" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#1c1620"/>
+      <stop offset="1" stop-color="#07080c"/>
+    </radialGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <rect x="1.5" y="1.5" width="61" height="61" rx="12.5" fill="none" stroke="#ffc24b" stroke-opacity="0.35" stroke-width="1.5"/>
+  <!-- Tipped scales: justice out of balance -->
+  <g transform="translate(0 4)">
+  <g fill="none" stroke="url(#g)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M32 17 V48"/>
+    <path d="M24 50 H40"/>
+    <path d="M13 24 L51 15"/>
+    <path d="M13 24 L8 37 M13 24 L18 37"/>
+    <path d="M51 15 L46 28 M51 15 L56 28"/>
+  </g>
+  <path d="M7 37 Q13 43 19 37 Z" fill="url(#g)"/>
+  <path d="M45 28 Q51 34 57 28 Z" fill="url(#g)"/>
+  <circle cx="32" cy="19.2" r="2.8" fill="url(#g)"/>
+  <!-- The crack -->
+  <path d="M35 9 L30.5 18 L34.5 22 L29.5 31 L33 35" fill="none" stroke="#ff3d5a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

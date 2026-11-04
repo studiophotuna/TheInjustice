@@ -1,6 +1,7 @@
 // Rules for players interacting with each other. Pure functions over Player/Crew objects:
 // the server loads and saves both sides inside one transaction.
 
+import { publicProfile } from "./profile";
 import { wearGear } from "./gear";
 import { lyingLow, vendettaAgainst } from "./hit";
 import { breakOmerta, huntsRat, OMERTA, ratOf } from "./family";
@@ -164,6 +165,9 @@ export interface PublicProfile {
   online: boolean;
   canAttack: string | null;
   canVouch: string | null;
+  /** The player's own intro and photo. */
+  bio: string | null;
+  photo: string | null;
   /** Walked out on the family: fair game for their old crew. */
   rat: boolean;
   /** Season trophies, only if the owner chose to show them. */
@@ -198,6 +202,7 @@ export function profileFor(viewer: Player, p: Player, now: number): PublicProfil
     canAttack: attackBlock(viewer, p, now),
     canVouch,
     rat: !!ratOf(p, now),
+    ...publicProfile(p),
     trophies: p.trophiesPublic ? (p.trophies ?? []).slice(0, 6).map((t) => ({ label: t.label, place: t.place, seasonName: t.seasonName })) : [],
   };
 }

@@ -1,6 +1,7 @@
 // Server-side game rules. Pure functions over a Player: no I/O, so they can run in an
 // API route today and a database function (or worker) later without changes.
 
+import { updateProfile } from "./profile";
 import { hireBodyguards, lieLow } from "./hit";
 import { ensureEquipped, equip, equippedId, repair, unequip, usesLeft, wearGear } from "./gear";
 import { BALANCE, maxEnergy, regenMs } from "./balance";
@@ -1066,6 +1067,9 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng, ct
       break;
     case "hire_bodyguards":
       events.push(...hireBodyguards(p, now));
+      break;
+    case "profile":
+      events.push(...updateProfile(p, { bio: action.bio, photo: action.photo }, now));
       break;
     case "lie_low":
       events.push(...lieLow(p, now));

@@ -318,7 +318,7 @@ function Hud({ view, live, onProfile }: { view: PublicView; live: NonNullable<Ga
     <header className="hud glass">
       <div className="hud-id">
         <button className="avatar-btn" onClick={onProfile} aria-label="Open your profile">
-          <PlayerAvatar name={view.name} path={view.path?.id} className="avatar-sm" />
+          <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo} className="avatar-sm" />
         </button>
         <div>
           <div className="hud-name">{view.name}</div>

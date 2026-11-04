@@ -45,6 +45,12 @@ export function parseAction(body: unknown): Action {
       return { type: "equip", itemId: str(b.itemId) };
     case "repair":
       return { type: "repair", itemId: str(b.itemId) };
+    case "profile":
+      return {
+        type: "profile",
+        ...(typeof b.bio === "string" ? { bio: b.bio } : {}),
+        ...(b.photo === null || typeof b.photo === "string" ? { photo: b.photo as string | null } : {}),
+      };
     case "hire_bodyguards":
       return { type: "hire_bodyguards" };
     case "lie_low":

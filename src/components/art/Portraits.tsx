@@ -166,9 +166,17 @@ function hash(s: string) {
 }
 
 /** The player's avatar. Its color comes from the name; police get a cap, enforcers a scar-red rim. */
-export function PlayerAvatar({ name, path, className = "" }: { name: string; path?: string | null; className?: string }) {
+export function PlayerAvatar({ name, path, photo, className = "" }: { name: string; path?: string | null; photo?: string | null; className?: string }) {
   const look = path ? PATH_LOOKS[path] : undefined;
   const rim = look?.rim ?? PLAYER_RIMS[hash(name) % PLAYER_RIMS.length];
+  if (photo) {
+    return (
+      <div className={`portrait portrait-photo ${className}`} style={{ ["--rim" as string]: rim }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={photo} alt={name} />
+      </div>
+    );
+  }
   return (
     <div className={`portrait ${className}`} style={{ ["--rim" as string]: rim }}>
       <Bust rim={rim} bg="#0b0d12" prop={look?.prop ?? "none"} />

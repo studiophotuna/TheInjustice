@@ -312,6 +312,7 @@ export async function GET(req: Request) {
             name: o.name,
             title: prof.streetTitle ?? prof.title,
             path: o.path,
+            photo: prof.photo,
             crewTag: o.crewId ? tags.get(o.crewId) ?? null : null,
             status: prof.status,
             protected: prof.protected,

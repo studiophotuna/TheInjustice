@@ -1,5 +1,6 @@
 "use client";
 
+import { ProfileEditor } from "./ProfileEditor";
 import { CareerPortrait } from "./art/CareerPortrait";
 import { CityHall } from "./cityhall";
 import { motion } from "motion/react";
@@ -398,6 +399,8 @@ export function ProfileTab({ game }: { game: GameApi }) {
           <p className="quote">“{view.feel.conscience}”</p>
         </div>
       </section>
+
+      <ProfileEditor game={game} />
 
       <section className="card">
         <h3 className="card-title"><Brain size={16} /> How you feel</h3>

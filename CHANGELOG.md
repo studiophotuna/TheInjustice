@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3.1: new logo, player profiles
+
+- **New logo:** a gold scale of justice, tipped out of balance and cracked through in red, on a
+  dark tile. Used as the app icon and next to the INJUSTICE wordmark (the crack glows).
+- **Player profiles (Me → Your profile):** a short introduction (up to 160 characters) and a
+  photo. Photos are shrunk to 160×160 in the browser and stored with the character; they replace
+  the drawn avatar in People, the online list and the status bar. The moving rank portrait stays
+  on the home screen.
+- The street name can't be changed: detectives' clues are built from it, and case files, crews
+  and trials keep it. Season boards stay anonymous (no photos or intros there).
+
 ## 1.3.0: contract hits
 
 Whacking, built from the recommendations in WHACK.md.

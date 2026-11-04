@@ -914,3 +914,20 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 .hit-step.done { border-style: solid; border-color: rgba(255, 61, 90, 0.6); color: var(--text); }
 .threat-card { border-color: rgba(255, 159, 67, 0.45); }
 .contract-row select { width: auto; padding: 6px 8px; }
+
+/* ─── Logo ─────────────────────────────────────────────────────────────── */
+.logo-row { display: flex; align-items: center; gap: 10px; }
+.logo-mark { flex: none; border-radius: 22%; box-shadow: 0 0 18px rgba(255, 61, 90, 0.25); }
+.logo-crack { stroke-dasharray: 40; animation: crack-glow 3.5s ease-in-out infinite; }
+@keyframes crack-glow { 0%, 100% { opacity: 0.75; } 50% { opacity: 1; filter: drop-shadow(0 0 3px #ff3d5a); } }
+@media (prefers-reduced-motion: reduce) { .logo-crack { animation: none; } }
+
+/* ─── Player profiles ──────────────────────────────────────────────────── */
+.portrait-photo { overflow: hidden; border-radius: 50%; border: 2px solid var(--rim); background: #0b0d12; }
+.portrait-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.person-bio { margin: 2px 0 6px; font-style: italic; color: #c9cfda; font-size: 13.5px; overflow-wrap: anywhere; }
+.profile-preview { gap: 14px; align-items: center; flex-wrap: nowrap; margin: 6px 0; }
+.profile-preview p { margin: 0; overflow-wrap: anywhere; }
+.field { display: grid; gap: 4px; margin: 8px 0; }
+textarea { font: inherit; color: var(--text); width: 100%; min-width: 0; resize: vertical; background: rgba(0, 0, 0, 0.35); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 10px 12px; outline: none; }
+textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75, 0.18); }
