@@ -1,9 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Bangers, Bebas_Neue, Inter } from "next/font/google";
+import { Bangers, IBM_Plex_Mono, IBM_Plex_Sans, Special_Elite } from "next/font/google";
 import "./globals.css";
+import "./casefile.css";
 
-const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-body" });
-const bebas = Bebas_Neue({ weight: "400", subsets: ["latin"], display: "swap", variable: "--font-display" });
+// Case-file type: a typewriter for headings and stamps, IBM Plex for reading and for figures.
+const body = IBM_Plex_Sans({ weight: ["400", "500", "600", "700"], subsets: ["latin"], display: "swap", variable: "--font-body" });
+const mono = IBM_Plex_Mono({ weight: ["400", "500", "600"], subsets: ["latin"], display: "swap", variable: "--font-mono" });
+const typewriter = Special_Elite({ weight: "400", subsets: ["latin"], display: "swap", variable: "--font-display" });
 const bangers = Bangers({ weight: "400", subsets: ["latin"], display: "swap", variable: "--font-sfx" });
 
 export const metadata: Metadata = {
@@ -18,13 +21,13 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#07080c",
+  themeColor: "#120f0c",
   colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${bebas.variable} ${bangers.variable}`}>
+    <html lang="en" className={`${body.variable} ${mono.variable} ${typewriter.variable} ${bangers.variable}`}>
       <body>{children}</body>
     </html>
   );

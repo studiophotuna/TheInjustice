@@ -318,10 +318,17 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
   );
 }
 
+/** A stable case number for the file header. */
+const fileNo = (name: string) => String([...name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 9000, 7) + 1000);
+
 function Hud({ view, live, onProfile }: { view: PublicView; live: NonNullable<GameApi["live"]>; onProfile: () => void }) {
   const heatTone = { Clean: "ok", Noticed: "warn", Wanted: "hot", "Most wanted": "hot" }[view.heatLabel];
   return (
     <header className="hud glass">
+      <div className="hud-file">
+        <span>File Nº {fileNo(view.name)} · {view.location.city}</span>
+        <span className={`stamp stamp-${heatTone}`}>{view.heatLabel}</span>
+      </div>
       <div className="hud-id">
         <button className="avatar-btn" onClick={onProfile} aria-label="Open your profile">
           <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo} className="avatar-sm" />
@@ -343,9 +350,7 @@ function Hud({ view, live, onProfile }: { view: PublicView; live: NonNullable<Ga
           note={live.hospital > 0 ? `Clinic ${fmt(live.hospital)}` : view.hp >= view.maxHp ? "Healthy" : "Recovering"} />
       </div>
       <div className="hud-chips">
-        <span className={`chip heat-${heatTone}`}><Flame size={12} /> {view.heatLabel}</span>
         <span className="chip"><Star size={12} /> Rep {view.reputation}</span>
-        <span className="chip" style={{ color: view.location.color }}><MapPin size={12} /> {view.location.city}</span>
         <span className="chip"><Home size={12} /> {view.housing}</span>
         {view.immuneUntil > Date.now() && (
           <span className="chip chip-green" title="You survived a fight. Nobody can attack or mug you for a while. Attacking someone ends it.">

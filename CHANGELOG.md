@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.9.0: the case file
+
+A new look built around the game itself: the interface reads like the evidence in your frame-up.
+
+- **Paper, not glass:** every panel is a sheet of carbon paper on a dark desk, with a faint
+  grain. No blur, glows or glossy gradients; square corners instead of pills.
+- **Type:** a typewriter face (Special Elite) for names, headings and stamps; IBM Plex Sans for
+  reading; IBM Plex Mono for money, timers and labels.
+- **Ink colours:** cream text, manila for things you can press, red for danger and the red
+  thread, faded blue and green inks for energy and good news.
+- **Your file:** the top bar is your case file ("File Nº 9154 · Grayhaven") with your heat as a
+  rubber stamp (CLEAN / NOTICED / WANTED).
+- **Home:** your portrait is a mugshot print pinned to the photo; the street feed is a teletype
+  tape; Right now is a manila memo with a paper clip.
+- **Stamps:** how dangerous someone looks (Easy, Risky, Deadly...) is a crooked rubber stamp.
+- **Navigation:** folder-style tabs, a file-index sidebar with a manila marker on desktop, and a
+  flat bottom bar with a red marker on phones.
+- **Jobs** read as a work-order list; **City** buildings are photographs on the board.
+- **Landing:** the sign-up card is a confidential case file.
+
 ## 1.8.0: a living city
 
 - **Street regulars:** each city has ten characters run by the game (a night nurse, a beat cop,
