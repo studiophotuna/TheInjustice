@@ -2,6 +2,7 @@
 // the server loads and saves both sides inside one transaction.
 
 import { wearGear } from "./gear";
+import { lyingLow, vendettaAgainst } from "./hit";
 import { breakOmerta, huntsRat, OMERTA, ratOf } from "./family";
 import { BALANCE } from "./balance";
 import { gutRead, GUT_READS, playerFighter, resolveFight } from "./combat";
@@ -50,10 +51,12 @@ export function attackBlock(a: Player, t: Player, now: number): string | null {
   if (a.travel || t.travel) return "One of you is on the road.";
   if (inJail(a, now)) return "You're in a cell.";
   if (inJail(t, now)) return "They're behind bars.";
+  if (lyingLow(a, now)) return "You're lying low in a safe house.";
+  if (lyingLow(t, now)) return "Nobody knows where they are right now.";
   if (inHospital(a, now)) return "You're in the hospital.";
   if (inHospital(t, now)) return "They're already in the hospital. Even you have limits.";
   // A rat has no protection from the crew they walked out on.
-  const rat = huntsRat(a, t, now);
+  const rat = huntsRat(a, t, now) || vendettaAgainst(a, t, now);
   if (!rat && now < protectedUntil(t)) return "They're new in town. The street protects newcomers for a while.";
   if (!rat && now < (t.immuneUntil ?? 0)) return "They just survived a fight. The street leaves them alone for a while.";
   if (now < protectedUntil(a)) return "You're still new in town. Attacking now would end your protection... and your reputation.";

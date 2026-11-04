@@ -22,6 +22,7 @@ import {
 import { BALANCE } from "@/game/balance";
 import { frontPage, weekStories } from "@/game/paper";
 import { declareMartialLaw, joinPeacekeepers, peaceSettle, standGuard } from "@/game/military";
+import { reportThreat, stakeOut, stakeoutBlock } from "@/game/hit";
 import { appointEditor, buryStory, dismissEditor, EDITOR, editorSalary, isEditor, setBuryPrice, toggleStory, writeEditorial } from "@/game/batch7";
 import { buyVote, campaign } from "@/game/batch4";
 import { claimTurf, declareWar, joinWar, settleWar, turfView } from "@/game/turf";
@@ -83,7 +84,10 @@ export async function GET() {
       ? (await store.listPlayers(c.country, 100)).filter((o) => o.id !== p.id && !o.dead).slice(0, 40).map((o) => ({ id: o.id, name: o.name }))
       : [];
     const paper = frontPage(c.country, c, await store.listCases(c.country, 100), now, { editor: isEditor(c, p) });
-    return NextResponse.json({ city: view, prisoners, officers, editorPicks, turf: turfView(c, p, crew, now), paper, residents });
+    // Detectives see reported threats (never who's behind them); the person who reported sees it's on file.
+    const threats = !stakeoutBlock({ ...p, energy: 999 }, now) ? (c.threats ?? []).filter((t) => !t.solved).map((t) => ({ id: t.id, targetName: t.targetName, at: t.at })) : [];
+    const myThreatReported = (c.threats ?? []).some((t) => t.targetId === p.id && !t.solved);
+    return NextResponse.json({ city: view, prisoners, officers, editorPicks, turf: turfView(c, p, crew, now), paper, residents, threats, myThreatReported });
   } catch (e) {
     return failure(e);
   }
@@ -104,14 +108,19 @@ export async function POST(req: Request) {
     // Lock order everywhere: players first, the city last.
     const events: GameEvent[] = await store.transaction(async (tx) => {
       // A war being settled locks everyone who fought in it.
-      const pre = b.op === "settle_war" || b.op === "bury_story" ? await store.getCity(country) : null;
+      const pre = b.op === "settle_war" || b.op === "bury_story" || b.op === "stakeout" ? await store.getCity(country) : null;
       const editorId = b.op === "bury_story" ? pre?.editor?.id : undefined;
+      // A stakeout may catch the hitman, so lock them and the person they're after.
+      const threat = b.op === "stakeout" ? pre?.threats?.find((t) => t.id === str(b.threatId)) : undefined;
+      const hitCrewPre = threat ? await store.getCrew(threat.crewId) : null;
+      const stakeIds = hitCrewPre?.hit ? [hitCrewPre.hit.hitmanId, hitCrewPre.hit.targetId] : threat ? [threat.targetId] : [];
       const war = pre?.turf?.[str(b.district) as DistrictId]?.war;
       const fighters = war ? [...war.attackers, ...war.defenders, ...(war.peacekeepers ?? [])].map((x) => x.id) : [];
       const ids = [
         playerId,
         ...(b.op === "pardon" || b.op === "appoint_chief" || b.op === "buy_vote" || b.op === "appoint_editor" ? [str(b.playerId)] : []),
         ...(editorId ? [editorId] : []),
+        ...stakeIds,
         ...fighters,
       ];
       const rows = await tx.getPlayers([...new Set(ids)]);
@@ -120,6 +129,7 @@ export async function POST(req: Request) {
       const other = ids[1] ? byId.get(ids[1]) ?? null : null;
       if (!p) throw new GameError("Create a character first.");
       const crew = ["claim_turf", "declare_war", "join_war"].includes(b.op as string) && p.crewId ? await tx.getCrew(p.crewId) : null;
+      const hitCrew = threat ? await tx.getCrew(threat.crewId) : null;
       const c = (await tx.getCity(country)) ?? newCity(country, now);
       advanceCity(c, now);
       tick(p, now);
@@ -227,6 +237,19 @@ export async function POST(req: Request) {
         case "peacekeep":
           out = joinPeacekeepers(c, p, str(b.district) as DistrictId, now);
           break;
+        case "report_threat":
+          out = reportThreat(c, p, now);
+          break;
+        case "stakeout": {
+          const h = hitCrew?.hit;
+          const hitman = h ? byId.get(h.hitmanId) ?? null : null;
+          const target = threat ? byId.get(threat.targetId) ?? null : null;
+          for (const x of [hitman, target]) if (x && x.id !== p.id) tick(x, now);
+          out = stakeOut(c, p, str(b.threatId), hitCrew, hitman, target, now, Math.random);
+          for (const x of [hitman, target]) if (x && x.id !== p.id) await tx.putPlayer(x);
+          if (hitCrew) await tx.putCrew(hitCrew);
+          break;
+        }
         case "guard_bank":
           out = standGuard(c, p, now);
           break;

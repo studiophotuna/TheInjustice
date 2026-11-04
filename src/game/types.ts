@@ -119,7 +119,23 @@ export interface Player {
     turf?: boolean;
     /** Broke omertà: walked out on the crew after being made. Fair game for the old crew. */
     rat?: { crewId: string; crewName: string; at: number; until: number } | null;
+    /** After a hit, the family keeps you out of sight: no promotions until then. */
+    lowUntil?: number;
   };
+  // ── Contract hits ──
+  /** Last hit this player carried out (one every few days). */
+  lastHitAt?: number;
+  /** Last time someone put out a contract on this player (one a week). */
+  hitContractAt?: number;
+  /** Server-only crew id: someone has been casing this player. They only see the count. */
+  watched?: { crewId: string; count: number; at: number; since: number } | null;
+  bodyguardUntil?: number;
+  lieLowUntil?: number;
+  lastLieLowAt?: number;
+  /** Killed by a hit: in the morgue until this time. */
+  whacked?: { at: number; until: number } | null;
+  /** The victim of this player's hit (and their crew) can come after them through any protection. */
+  vendetta?: { victimId: string; crewId: string | null; until: number } | null;
   /** Soldiers: army gear offered to this player on the black market. */
   gunOffers?: { id: string; sellerId: string; sellerName: string; itemId: string; price: number; at: number }[];
   /** Server-only: army gear this soldier sold off the books (internal affairs and court-martials find it). */
@@ -228,7 +244,9 @@ export interface Player {
 
 // ── Street crime and case files ────────────────────────────────────────────
 
-export type CrimeKind = "pickpocket" | "snatch" | "mug";
+export type StreetCrime = "pickpocket" | "snatch" | "mug";
+/** Street crimes, plus the cases a contract hit leaves behind. */
+export type CrimeKind = StreetCrime | "murder" | "attempted_murder";
 /** Things a witness can notice about a criminal. */
 export type ClueTrait = "build" | "reflexes" | "nameStart" | "nameEnd" | "nameLength" | "crew";
 
@@ -348,6 +366,20 @@ export interface Trophy {
   place: number;
 }
 
+export interface HitContract {
+  id: string;
+  targetId: string;
+  targetName: string;
+  hitmanId: string;
+  hitmanName: string;
+  orderedBy: string;
+  placedAt: number;
+  scouts: number;
+  lastScoutAt: number;
+  escrow: number;
+  country: CountryId;
+}
+
 export interface CrewRef {
   id: string;
   name: string;
@@ -376,6 +408,8 @@ export interface Crew {
   breakout?: Breakout | null;
   /** Allied crews: they fight in each other's wars and don't pay each other protection. */
   allies?: CrewRef[];
+  /** A contract hit in progress. */
+  hit?: HitContract | null;
   /** The leader's secret forum: crew members plus invited guests of any career. */
   forum?: { name: string; createdAt: number; guests: { id: string; name: string; at: number }[] } | null;
   /** Alliances other crews have proposed to this one. */
@@ -525,6 +559,8 @@ export type Action =
   | { type: "equip"; itemId: string }
   | { type: "unequip"; slot: "weapon" | "armor" }
   | { type: "repair"; itemId: string }
+  | { type: "hire_bodyguards" }
+  | { type: "lie_low" }
   | { type: "bank"; op: "open" | "deposit" | "withdraw"; amount?: number }
   | { type: "fight"; npcId: string }
   | { type: "offer"; path: PathId; accept: boolean }
@@ -595,6 +631,8 @@ export interface City {
   /** Martial law: the mayor called in the army. Soldiers can break up turf wars. */
   martialUntil?: number;
   lastMartialAt?: number;
+  /** Threats reported by people who think they're being followed (the crew id is server-only). */
+  threats?: { id: string; crewId: string; targetId: string; targetName: string; at: number; solved: boolean }[];
   /** Soldiers standing guard at the city's banks (heists get harder). */
   guards?: { id: string; name: string; until: number }[];
   /** Editor of the city paper, appointed by the mayor. */

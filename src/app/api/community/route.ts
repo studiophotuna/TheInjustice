@@ -2,6 +2,7 @@ import { acceptAlliance, breakAlliance, declineAlliance, proposeAlliance } from 
 import { ceremonyBlock, isMade, makeMember } from "@/game/family";
 import { bringCharges, buyGun, courtMartialBlock, declineGun, offerGun, sellableGear } from "@/game/military";
 import { torchBusiness, torchTargets } from "@/game/arson";
+import { cancelHit, contractBlock, executeHit, hitCost, hitView, HIT, orderHit, scoutTarget } from "@/game/hit";
 import { canUseForum, closeForum, createForum, forumChannel, inviteToForum, removeFromForum } from "@/game/forum";
 import { buildLab, flagLaundering, flagsView, frisk, friskBlock, isBankStaff, labCook, labTips, labView, launderWithBanker, probeLaundering, raidLab, setLaunderService } from "@/game/batch6";
 import { isDrug } from "@/game/drugs";
@@ -362,7 +363,8 @@ export async function GET(req: Request) {
           const lawyerFee = o.path === "courts" && o.rank >= BALANCE.justice.lawyerRank ? retainerFee(o) : null;
           const canCrime = Object.fromEntries(CRIME_KINDS.map((k) => [k, crimeBlock(p, o, k, now)]));
           const canFrisk = p.path === "police" ? friskBlock(p, o, now) : "n/a";
-          return { ...prof, crewTag: prof.crewId ? crewTags.get(prof.crewId) ?? null : null, canInvite, canForum, canCourtMartial, canSellGun, canCrime, lawyerFee, canFrisk, torch: torchTargets(p, o, now) };
+          return { ...prof, crewTag: prof.crewId ? crewTags.get(prof.crewId) ?? null : null, canInvite, canForum, canCourtMartial, canSellGun, canCrime, lawyerFee, canFrisk, torch: torchTargets(p, o, now),
+            contract: leading && !leading.hit && o.crewId !== leading.id ? { cost: hitCost(o), block: contractBlock(leading, p, o, now) } : null };
         }),
       invites: p.crewInvites ?? [],
       foundBlock: crewFoundBlock(p),
@@ -373,6 +375,8 @@ export async function GET(req: Request) {
       myCrew: myCrew ? crewView(myCrew, p) : null,
       breakout: myCrew ? await crewJailView(store, myCrew, p, now) : null,
       heist: myCrew ? heistView(myCrew, p, now) : null,
+      hit: myCrew ? hitView(myCrew, p, now) : null,
+      hitmen: leading ? await hitmenFor(store, leading, p) : [],
       lab: myCrew ? labView(myCrew, p, now) : null,
       labBuild: myCrew && myCrew.leaderId === p.id && !myCrew.lab,
       police: p.path === "police" && p.rank >= BALANCE.drugBust.minRank,
@@ -407,6 +411,12 @@ async function forumsFor(store: ReturnType<typeof getStore>, p: Player, myCrew: 
     out.push({ crewId: f.crewId, name: crew!.forum!.name, tag: crew!.tag, channel: forumChannel(f.crewId), own: false, isLeader: false, guests: [] });
   }
   return out;
+}
+
+/** For the leader: made men in the crew who could take a contract (the leader included). */
+async function hitmenFor(store: ReturnType<typeof getStore>, crew: Crew, leader: Player) {
+  const mates = (await Promise.all(crew.members.map((m) => (m.id === leader.id ? leader : store.get(m.id))))).filter((m): m is Player => !!m);
+  return mates.filter((m) => m.path === "enforcer" && m.rank >= HIT.minRank && isMade(m)).map((m) => ({ id: m.id, name: m.name }));
 }
 
 /** For the leader: who in the crew could be made, and why not. */
@@ -1055,6 +1065,90 @@ export async function POST(req: Request) {
           await tx.putPlayer(owner);
           if (city) await tx.putCity(city);
           return out;
+        });
+        break;
+      }
+      case "hit_order": {
+        const targetId = str(b.targetId);
+        const hitmanId = str(b.hitmanId);
+        events = await store.transaction(async (tx) => {
+          const rows = await tx.getPlayers([...new Set([playerId, hitmanId, targetId])]);
+          const byId = new Map(rows.filter((r): r is Player => !!r).map((r) => [r.id, r]));
+          const leader = byId.get(playerId);
+          const target = byId.get(targetId);
+          const hitman = byId.get(hitmanId) ?? null;
+          if (!leader?.crewId) throw new GameError("You're not in a crew.");
+          if (!target) throw new GameError("That player doesn't exist.");
+          for (const x of byId.values()) tick(x, now);
+          const crew = await tx.getCrew(leader.crewId);
+          if (!crew) throw new GameError("Your crew is gone.");
+          const out = orderHit(crew, leader, hitman!, target, now);
+          for (const x of byId.values()) await tx.putPlayer(x);
+          await tx.putCrew(crew);
+          return out;
+        });
+        break;
+      }
+      case "hit_scout":
+      case "hit_cancel": {
+        const self0 = await store.get(playerId);
+        const pre = self0?.crewId ? await store.getCrew(self0.crewId) : null;
+        const targetId = pre?.hit?.targetId;
+        events = await store.transaction(async (tx) => {
+          const rows = await tx.getPlayers([...new Set([playerId, ...(targetId ? [targetId] : [])])]);
+          const me = rows.find((r) => r?.id === playerId);
+          const target = rows.find((r) => r?.id === targetId) ?? null;
+          if (!me?.crewId) throw new GameError("You're not in a crew.");
+          tick(me, now);
+          if (target) tick(target, now);
+          const crew = await tx.getCrew(me.crewId);
+          if (!crew) throw new GameError("Your crew is gone.");
+          let out: GameEvent[];
+          if (b.op === "hit_cancel") out = cancelHit(crew, me, now);
+          else {
+            if (!target) throw new GameError("The target is gone.");
+            out = scoutTarget(crew, me, target, now);
+            await tx.putPlayer(target);
+          }
+          await tx.putPlayer(me);
+          await tx.putCrew(crew);
+          return out;
+        });
+        break;
+      }
+      case "hit_execute": {
+        const self0 = await store.get(playerId);
+        if (!self0?.crewId) throw new GameError("You're not in a crew.");
+        const pre = await store.getCrew(self0.crewId);
+        const targetId = pre?.hit?.targetId;
+        if (!targetId) throw new GameError("You don't have a contract.");
+        const country = countryOf(self0);
+        const nearby = (await store.listPlayers(country, 40))
+          .filter((o) => o.id !== playerId && o.id !== targetId && !o.dead && !o.travel && now - o.tickAt < BALANCE.crime.witnessWindowMs)
+          .sort(() => Math.random() - 0.5)
+          .slice(0, BALANCE.crime.maxWitnesses)
+          .map((o) => o.id);
+        const caseId = randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase();
+        events = await store.transaction(async (tx) => {
+          const [hitman, target, ...rest] = await tx.getPlayers([playerId, targetId, ...nearby]);
+          if (!hitman || !target) throw new GameError("The target is gone.");
+          tick(hitman, now);
+          tick(target, now);
+          const witnesses = rest.filter((w): w is Player => !!w && countryOf(w) === country);
+          witnesses.forEach((w) => tick(w, now));
+          const crew = await tx.getCrew(self0.crewId!);
+          if (!crew) throw new GameError("Your crew is gone.");
+          const city = await tx.getCity(country);
+          const out = executeHit(crew, hitman, target, city, now, Math.random, { caseId, crewTag: crew.tag, witnesses });
+          await tx.putPlayer(hitman);
+          await tx.putPlayer(target);
+          await tx.putCrew(crew);
+          if (out.caseFile) {
+            for (const w of witnesses) await tx.putPlayer(w);
+            await tx.putCase(out.caseFile);
+          }
+          if (city) await tx.putCity(city);
+          return out.events;
         });
         break;
       }

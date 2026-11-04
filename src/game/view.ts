@@ -1,3 +1,4 @@
+import { threatView } from "./hit";
 import { gearView, usesLeft } from "./gear";
 import { marketView } from "./drugs";
 import { tutorialView } from "./tutorial";
@@ -131,6 +132,8 @@ export interface PublicView {
   };
   gym: { fee: number; energy: number };
   inbox: { items: import("./types").Notice[]; unread: number };
+  /** Someone casing you, your bodyguards, safe house and morgue time (never who). */
+  threat: ReturnType<typeof import("./hit").threatView>;
   /** Army gear offered to you on the black market. */
   gunOffers: { id: string; sellerId: string; sellerName: string; itemId: string; itemName: string; icon: string; price: number }[];
   /** Soldiers: army gear you could sell. */
@@ -272,6 +275,7 @@ export function toView(p: Player, now: number): PublicView {
     })(),
     gym: { fee: itemPrice(p, BALANCE.gym.fee), energy: BALANCE.gym.energy },
     inbox: { items: p.inbox ?? [], unread: (p.inbox ?? []).filter((n) => !n.read).length },
+    threat: threatView(p, null, now),
     gunOffers: (p.gunOffers ?? []).map((o) => ({ ...o, itemName: ITEM_BY_ID[o.itemId]?.name ?? o.itemId, icon: ITEM_BY_ID[o.itemId]?.icon ?? "" })),
     sellableGear: sellableGear(p).map((i) => ({ id: i.id, name: i.name, icon: i.icon })),
     jail:

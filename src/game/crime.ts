@@ -16,6 +16,7 @@ import {
   type CaseFile,
   type ClueTrait,
   type CrimeKind,
+  type StreetCrime,
   type FightSummary,
   type GameEvent,
   type Player,
@@ -66,10 +67,14 @@ export const CRIMES: Record<CrimeKind, CrimeDef> = {
     integrity: -3,
     blurb: "Corner them and take it. It can turn into a fight.",
   },
+  // Not street crimes: these case files come from contract hits (see hit.ts).
+  murder: { id: "murder", name: "Murder", verb: "kill", energy: 0, share: [0, 0], heat: 40, integrity: -15, blurb: "" },
+  attempted_murder: { id: "attempted_murder", name: "Attempted murder", verb: "try to kill", energy: 0, share: [0, 0], heat: 25, integrity: -10, blurb: "" },
 };
 
-export const CRIME_KINDS = Object.keys(CRIMES) as CrimeKind[];
-export const isCrimeKind = (v: unknown): v is CrimeKind => typeof v === "string" && v in CRIMES;
+/** The crimes a player can commit from the People list. */
+export const CRIME_KINDS: StreetCrime[] = ["pickpocket", "snatch", "mug"];
+export const isCrimeKind = (v: unknown): v is StreetCrime => typeof v === "string" && (CRIME_KINDS as string[]).includes(v);
 
 const TRAITS: ClueTrait[] = ["build", "reflexes", "nameStart", "nameEnd", "nameLength", "crew"];
 const BYSTANDERS = ["A shopkeeper", "A bus driver", "A street vendor", "A night-shift nurse", "A kid on a bike", "A taxi driver"];
@@ -253,7 +258,7 @@ function knockOut(p: Player, now: number, rng: Rng) {
 export function commitCrime(
   a: Player,
   t: Player,
-  kind: CrimeKind,
+  kind: StreetCrime,
   now: number,
   rng: Rng,
   ctx: CrimeContext,

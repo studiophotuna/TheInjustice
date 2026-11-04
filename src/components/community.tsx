@@ -28,6 +28,7 @@ type Profile = {
   canCourtMartial?: string | null;
   canSellGun?: boolean;
   torch?: { id: string; name: string; odds: number; block: string | null }[];
+  contract?: { cost: number; block: string | null } | null;
   rat?: boolean;
   streetTitle: string | null;
   canCrime: Record<CrimeKind, string | null>;
@@ -177,6 +178,20 @@ type Hub = {
   lab: { district: string; city: string; batches: number; suspicion: string; cook: { id: string; name: string; block: string | null }[] } | null;
   labBuild: boolean;
   police: boolean;
+  hit: {
+    targetName: string;
+    targetId: string;
+    hitmanName: string;
+    isHitman: boolean;
+    isLeader: boolean;
+    scouts: number;
+    scoutsNeeded: number;
+    readyAt: number;
+    nextScoutAt: number;
+    escrow: number;
+    ready: boolean;
+  } | null;
+  hitmen: { id: string; name: string }[];
   heist: {
     canPlan: string | null;
     plan: {
@@ -381,6 +396,7 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
                     🪖 Sell army gear
                   </button>
                 )}
+                {p.contract && hub.hitmen.length > 0 && <ContractButton game={game} target={p} hitmen={hub.hitmen} social={social} />}
                 {(p.torch ?? []).map((t) => (
                   <button
                     key={t.id}
@@ -496,6 +512,73 @@ function Chat({ game, hub, initial }: { game: GameApi; hub: Hub; initial?: strin
         <button className="btn btn-primary btn-sm" disabled={game.busy || !text.trim()}><Send size={14} /></button>
       </form>
       <p className="fine">Be decent. Blocked players&apos; messages are hidden from you.</p>
+    </section>
+  );
+}
+
+/** The leader puts out a contract: pick a made man for the job. */
+function ContractButton({ game, target, hitmen, social }: { game: GameApi; target: Profile; hitmen: { id: string; name: string }[]; social: (b: Record<string, unknown>) => Promise<unknown> }) {
+  const [open, setOpen] = useState(false);
+  const [hitman, setHitman] = useState(hitmen[0]?.id ?? "");
+  const c = target.contract!;
+  if (!open) {
+    return (
+      <button className="btn btn-danger btn-sm" disabled={game.busy || !!c.block} title={c.block ?? ""} onClick={() => setOpen(true)}>
+        ☠️ Put out a contract
+      </button>
+    );
+  }
+  return (
+    <span className="row contract-row">
+      <select value={hitman} onChange={(e) => setHitman(e.target.value)} aria-label="Hitman">
+        {hitmen.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
+      </select>
+      <button
+        className="btn btn-danger btn-sm"
+        disabled={game.busy}
+        onClick={() => confirm(`Put out a contract on ${target.name}? $${c.cost.toLocaleString("en")} from the vault goes into escrow.`) && social({ op: "hit_order", targetId: target.id, hitmanId: hitman })}
+      >
+        Sign off · ${c.cost.toLocaleString("en")}
+      </button>
+      <button className="btn btn-ghost btn-sm" onClick={() => setOpen(false)}>Not now</button>
+    </span>
+  );
+}
+
+/** The crew's contract: casing the target, then the hit. */
+function HitCard({ game, hit, social }: { game: GameApi; hit: NonNullable<Hub["hit"]>; social: (b: Record<string, unknown>) => Promise<unknown> }) {
+  const now = Date.now();
+  const hrs = (t: number) => Math.max(0, Math.ceil((t - now) / 3_600_000));
+  return (
+    <section className="card hit-card">
+      <h3 className="card-title">☠️ The contract</h3>
+      <p>
+        <b>{hit.targetName}</b> · {hit.hitmanName} has the job · ${hit.escrow.toLocaleString("en")} in escrow
+      </p>
+      <div className="hit-steps">
+        {Array.from({ length: hit.scoutsNeeded }, (_, i) => (
+          <span key={i} className={`hit-step ${i < hit.scouts ? "done" : ""}`}>Casing {i + 1}</span>
+        ))}
+        <span className={`hit-step ${hit.ready ? "done" : ""}`}>{hit.ready ? "Ready" : now < hit.readyAt ? `Ready in ${hrs(hit.readyAt)}h` : "Ready"}</span>
+      </div>
+      <p className="fine muted">The target will notice someone around them, but not who. They may hire bodyguards, go to ground, or call the police.</p>
+      <div className="row wrap">
+        {hit.isHitman && hit.scouts < hit.scoutsNeeded && (
+          <button className="btn btn-ghost btn-sm" disabled={game.busy || now < hit.nextScoutAt} title={now < hit.nextScoutAt ? "Don't be seen around them too often." : ""} onClick={() => social({ op: "hit_scout" })}>
+            Case them (20 energy)
+          </button>
+        )}
+        {hit.isHitman && (
+          <button className="btn btn-danger btn-sm" disabled={game.busy || !hit.ready} onClick={() => confirm(`Go through with the hit on ${hit.targetName}?`) && social({ op: "hit_execute" })}>
+            Do it (30 energy)
+          </button>
+        )}
+        {hit.isLeader && (
+          <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => confirm("Call it off? Half the escrow is lost.") && social({ op: "hit_cancel" })}>
+            Call it off
+          </button>
+        )}
+      </div>
     </section>
   );
 }
@@ -796,6 +879,7 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
             ))}
           </section>
         )}
+        {hub.hit && <HitCard game={game} hit={hub.hit} social={social} />}
         <AlliancesCard game={game} crew={c} crews={hub.crews} social={social} />
         {c.isLeader && hub.ceremony.length > 0 && (
           <section className="card">

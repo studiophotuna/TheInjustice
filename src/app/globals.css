@@ -906,3 +906,11 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 /* The portrait sits inside the hero's text block, anchored to its bottom-right corner. */
 .home-hero .hero-portrait { top: auto; bottom: 0; right: 0; }
 @media (min-width: 700px) { .home-hero .hero-portrait { top: auto; right: 0; } }
+
+/* ─── Contract hits ────────────────────────────────────────────────────── */
+.hit-card { border-color: rgba(255, 61, 90, 0.45); background: linear-gradient(180deg, rgba(255, 61, 90, 0.08), transparent 60%), var(--surface); }
+.hit-steps { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.hit-step { padding: 4px 10px; border-radius: 99px; font-size: 12px; border: 1px dashed var(--border-strong); color: var(--muted); }
+.hit-step.done { border-style: solid; border-color: rgba(255, 61, 90, 0.6); color: var(--text); }
+.threat-card { border-color: rgba(255, 159, 67, 0.45); }
+.contract-row select { width: auto; padding: 6px 8px; }

@@ -4,7 +4,7 @@ import { examine, fileDeposit, hunt, reviewDeposit } from "./casework";
 import { addTip, commitCrime } from "./crime";
 import { applyAction, createPlayer, tick } from "./engine";
 import { arrest } from "./justice";
-import type { CaseFile, CrimeKind, PathId, Player } from "./types";
+import type { CaseFile, CrimeKind, PathId, Player, StreetCrime } from "./types";
 
 const T0 = 1_700_000_000_000;
 const LATER = T0 + BALANCE.pvp.protectionMs + 1;
@@ -22,7 +22,7 @@ const career = (p: Player, path: PathId, rank: number) => {
   return p;
 };
 
-function crime(kind: CrimeKind = "snatch") {
+function crime(kind: StreetCrime = "snatch") {
   const thief = mk("a", "Novak Petresk");
   const victim = mk("t", "Victor");
   victim.cash = 200;

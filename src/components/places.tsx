@@ -85,7 +85,12 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
   const { hub, social } = useHub(game);
   switch (place) {
     case "police":
-      return <CasesPanel game={game} hub={hub} place="police" />;
+      return (
+        <div className="stack">
+          <ThreatReports game={game} />
+          <CasesPanel game={game} hub={hub} place="police" />
+        </div>
+      );
     case "court":
       return (
         <div className="stack">
@@ -146,6 +151,35 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
     case "station":
       return <TravelContent game={game} onRead={onRead} />;
   }
+}
+
+/** People who think they're being followed. A detective can sit outside and wait. */
+function ThreatReports({ game }: { game: GameApi }) {
+  const [threats, setThreats] = useState<{ id: string; targetName: string; at: number }[]>([]);
+  const load = useCallback(async () => {
+    const res = await fetch("/api/city", { cache: "no-store" });
+    if (res.ok) setThreats((await res.json()).threats ?? []);
+  }, []);
+  useEffect(() => {
+    load();
+  }, [load]);
+  if (!threats.length) return null;
+  return (
+    <section className="card">
+      <h3 className="card-title">👁️ Threat reports</h3>
+      <p className="muted fine">People who think someone is casing them. Sit outside their place: if the hitman shows and you spot them, you stop a murder.</p>
+      <ul className="officials">
+        {threats.map((t) => (
+          <li key={t.id}>
+            <span>{t.targetName} <span className="muted">· reported {Math.max(1, Math.round((Date.now() - t.at) / 3_600_000))}h ago</span></span>
+            <button className="btn btn-primary btn-xs" disabled={game.busy} onClick={async () => { if (await game.social({ op: "stakeout", threatId: t.id }, "/api/city")) load(); }}>
+              Stake out (20 energy)
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
 }
 
 /** Stolen army gear a soldier offered you. */

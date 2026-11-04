@@ -1,4 +1,33 @@
-# Whacking: design analysis (not built yet)
+# Whacking: design and how it was built
+
+**Built in v1.3.0** with every recommendation below (code: `src/game/hit.ts`). The "Decision
+needed" questions were answered "go with the recommendations": softer player-kill death, full
+counterplay from the start, Mafia-only hitmen.
+
+## As built
+
+| | Value |
+|---|---|
+| Who orders | The crew leader, from the People list ("Put out a contract") |
+| Who carries it out | A made man in the crew (Made Man and up), the leader included |
+| Cost | $25,000 + $5,000 × the target's rank, from the crew vault into escrow |
+| Targets | Not new players, not in the hospital, morgue, a cell, on the road or lying low; not more than 3 ranks below the hitman; not crewmates or allies; one contract per target per week |
+| Casing | 3 trips, an hour apart, 20 energy each; the hit can't happen until 12 hours after the order |
+| Hit chance | 25–60%: hitman nerve, agility, strength and weapon against target perception, toughness and armor; bodyguards multiply it by 0.55 |
+| Kill / wound | 1 in 3 hits kill, 2 in 3 wound (2–6 hours in hospital, cash on hand lost, heavy gear wear) |
+| Player-kill death | Career kept, one rank lost, merit reset, cash, dirty money and equipped gear lost, 8 hours in the morgue |
+| Pay | Escrow to the hitman as dirty money: all of it for a kill, half for a wounding (rest back to the vault); a botch returns a quarter |
+| Botch | The target learns who it was; the hitman gets heat and a 50% chance of a cell |
+| Vendetta | For 3 days the victim and their crew can attack the hitman through any protection |
+| Case file | Murder (6-hour sentence) or attempted murder (2-hour sentence), with witnesses, tips, detectives and a trial |
+| After a hit | The hitman can't be promoted for 3 days; one hit per hitman every 3 days |
+| Counterplay | Bodyguards ($2,000 a day), lie low in a safe house ($300, 6 hours, once a day: no work, no fights, can't be found), tell the police |
+| Police | Detectives (rank 4+) see threat reports in the Police Station and can stake one out (20 energy): if the hit is live and they spot the hitman, it's blown and the hitman is held 45 minutes for conspiracy to murder |
+| Calling it off | The leader gets half the escrow back |
+
+---
+
+# The original analysis
 
 A "whack" is a planned hit on another player that can leave them **dead or badly injured**. This
 is the most powerful thing one player could do to another, so this note looks at it before any

@@ -1,6 +1,7 @@
 // Server-side game rules. Pure functions over a Player: no I/O, so they can run in an
 // API route today and a database function (or worker) later without changes.
 
+import { hireBodyguards, lieLow } from "./hit";
 import { ensureEquipped, equip, equippedId, repair, unequip, usesLeft, wearGear } from "./gear";
 import { BALANCE, maxEnergy, regenMs } from "./balance";
 import { gutRead, npcFighter, playerFighter, power, resolveFight } from "./combat";
@@ -709,6 +710,7 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
   if (!job) throw new GameError("That job doesn't exist.");
   const lock = jobLock(p, job);
   if (lock) throw new GameError(lock);
+  if ((p.lieLowUntil ?? 0) > now) throw new GameError("You're lying low in a safe house. No work until it's safe.");
   if (p.energy < job.energy) throw new GameError("You're too tired. Rest or eat something.");
   p.energy -= job.energy;
   p.jobCounts[job.id] = (p.jobCounts[job.id] ?? 0) + 1;
@@ -1061,6 +1063,12 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng, ct
       break;
     case "repair":
       events.push(...repair(p, action.itemId, now, (base) => itemPrice(p, base)));
+      break;
+    case "hire_bodyguards":
+      events.push(...hireBodyguards(p, now));
+      break;
+    case "lie_low":
+      events.push(...lieLow(p, now));
       break;
     case "bank":
       bank(p, action.op, action.amount, now, events);

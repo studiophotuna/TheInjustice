@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.3.0: contract hits
+
+Whacking, built from the recommendations in WHACK.md.
+
+- **Ordering:** a crew leader puts out a contract from the People list and pays into escrow from
+  the vault ($25,000 + $5,000 × the target's rank); a made man in the crew takes the job.
+- **Casing:** three scouting trips over at least twelve hours. The target feels watched ("the
+  same car three times today") but never learns who.
+- **Counterplay:** the target can hire bodyguards, lie low in a safe house, or tell the police.
+  Detectives see threat reports in the Police Station and can stake one out; if they spot the
+  hitman, the hit is blown and the hitman is held for conspiracy to murder.
+- **The hit:** stat- and gear-based. A botch leaves the target knowing the hitman's face. A hit
+  wounds (hours in hospital) or, one time in three, kills.
+- **A softer death for player kills:** the career is kept, one rank is lost, along with cash on
+  hand, dirty money and equipped gear; eight hours in the morgue.
+- **Consequences:** a murder or attempted-murder case in the justice chain (6-hour / 2-hour
+  sentences), city headlines, heat, no promotions for the hitman for three days, and a
+  three-day vendetta: the victim and their crew can go after the hitman through any protection.
+
 ## 1.2.1: a portrait for every rank, no repeated footage
 
 - Every career has eight portraits, one per rank, from a cadet or student at rank 1 to the

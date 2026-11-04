@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { CareerPortrait } from "./art/CareerPortrait";
 import { motion } from "motion/react";
 import { ArrowRight, BookOpen, Briefcase, Cross, Inbox, MapPin, Plane, Sparkles, Zap } from "lucide-react";
@@ -59,7 +60,9 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
             ? view.jail.custodyCase ? "Behind bars, waiting for a verdict." : "Behind bars, doing your time."
             : view.travel
             ? `On the ${view.travel.mode} to ${view.travel.city}.`
-            : live.hospital > 0
+            : view.threat.morgueUntil
+              ? `In the morgue for ${fmt(view.threat.morgueUntil - Date.now())}. Someone put out a contract on you.`
+              : live.hospital > 0
               ? `Recovering in the clinic for ${fmt(live.hospital)}.`
               : view.path
                 ? `${view.path.rank} · ${view.path.name}`
@@ -74,6 +77,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
           <span className="muted"> · {view.event.text} Until {new Date(view.event.endsAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}.</span>
         </section>
       )}
+      <ThreatCard game={game} />
       <JailCard game={game} />
       <BackAlleyCard game={game} />
       <Sightings game={game} compact />
@@ -152,5 +156,41 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
         )}
       </section>
     </div>
+  );
+}
+
+/** Someone is casing you. You never learn who, but you can do something about it. */
+function ThreatCard({ game }: { game: GameApi }) {
+  const view = game.view!;
+  const t = view.threat;
+  const [reported, setReported] = useState(false);
+  if (!t.watched && !t.bodyguardUntil && !t.lyingLowUntil) return null;
+  const until = (x: number) => fmt(x - Date.now());
+  return (
+    <section className="card threat-card">
+      <h3 className="card-title">👁️ {t.watched ? "Someone is watching you" : "Keeping safe"}</h3>
+      {t.watched > 0 && (
+        <p className="muted">
+          {t.watched >= 3 ? "You're sure of it now. Someone knows your routine." : t.watched === 2 ? "It's happened twice. It isn't a coincidence." : "A strange feeling, like you're being followed."}
+        </p>
+      )}
+      {t.bodyguardUntil && <p className="fine">🕴️ Bodyguards with you for {until(t.bodyguardUntil)}.</p>}
+      {t.lyingLowUntil && <p className="fine">🏚️ Lying low in a safe house for {until(t.lyingLowUntil)}. No work, no fights, nobody can find you.</p>}
+      <div className="row wrap">
+        <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.act({ type: "hire_bodyguards" })}>Hire bodyguards ($2,000 / day)</button>
+        <button className="btn btn-ghost btn-sm" disabled={game.busy || !t.canLieLow} title={t.canLieLow ? "" : "You can't vanish again so soon."} onClick={() => game.act({ type: "lie_low" })}>Lie low ($300, 6h)</button>
+        {t.watched > 0 && (
+          <button
+            className="btn btn-primary btn-sm"
+            disabled={game.busy || reported}
+            onClick={async () => {
+              if (await game.social({ op: "report_threat" }, "/api/city")) setReported(true);
+            }}
+          >
+            {reported ? "Reported" : "Tell the police"}
+          </button>
+        )}
+      </div>
+    </section>
   );
 }

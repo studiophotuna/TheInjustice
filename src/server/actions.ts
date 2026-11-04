@@ -45,6 +45,10 @@ export function parseAction(body: unknown): Action {
       return { type: "equip", itemId: str(b.itemId) };
     case "repair":
       return { type: "repair", itemId: str(b.itemId) };
+    case "hire_bodyguards":
+      return { type: "hire_bodyguards" };
+    case "lie_low":
+      return { type: "lie_low" };
     case "unequip":
       if (b.slot !== "weapon" && b.slot !== "armor") throw new GameError("Bad request.");
       return { type: "unequip", slot: b.slot };

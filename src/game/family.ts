@@ -35,6 +35,7 @@ export function familyGate(p: Player, nextRank: number): string | null {
   if (p.path !== "enforcer") return null;
   const f = p.family ?? { crewJobs: 0, heists: 0 };
   if (f.rat && f.rat.until > Date.now()) return "Nobody promotes a rat. Wait for it to blow over.";
+  if ((f.lowUntil ?? 0) > Date.now()) return "After a hit, the family keeps you out of sight for a few days.";
   if (nextRank === 3 && !f.madeAt)
     return "Nobody gets made without proving themselves. Pass Kozak's test (make your bones), or get sworn in by your crew leader.";
   if (nextRank >= 5 && !p.crewId) return "No promotions for loners past Capo. Join a crew, or found one.";
