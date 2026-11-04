@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.7.0: old wounds, a stat soft cap and crew ambushes
+
+- **Old wounds:** every hospital stay from a fight you chose leaves an old wound that lowers your
+  maximum health by 4 (at most 7 wounds, so never below 72). That covers being knocked out by
+  an NPC you fought, as an attacker or mugger, on a risky job, in a lost turf war, or as the
+  target of a hit or an ambush. A random mugging on the way to work never counts. One wound
+  fades every three days. "How you feel" hints at them, never with numbers.
+- **Surgery:** doctors (Medicine, Resident and up) set a fee in their career card. Wounded
+  players see a "Surgery ($fee)" button on the doctor's row in People; it fixes two wounds.
+- **Stat soft cap:** above about 70, training and jobs raise a stat more slowly (half as fast
+  every 10 points). A player who stacks careers still grows, just not without limit.
+- **Crew ambushes (People → Plan an ambush, leaders only):** the crew gets two hours to take
+  roles on the Crew tab:
+  - Attackers (1–3): combined strength, each extra one counting a bit less (100%, +70%,
+    +50%). Five good players can take down someone much stronger than any of them.
+  - Driver (agility): nobody is left behind for the police, and if it goes wrong the attackers
+    take half the damage. Without a clean getaway, one attacker may spend 20 minutes in a cell.
+  - Lookout (perception): no witnesses, the target's crewmates aren't warned in time to help,
+    and everyone's heat is halved.
+  - The target's bodyguards and up to two crewmates who are online nearby fight back.
+  - If it works: the target goes to hospital for 1–3 hours with an old wound, and the crew
+    splits the cash they carried (dirty). An assault case opens and the target gets a three-day
+    vendetta on everyone who took part. If it fails, the attackers get hurt.
+  - Limits: newcomers are protected, a player can be ambushed once a day, a crew once every 12
+    hours, and alts can't take part.
+
 ## 1.6.0: changing careers and leadership seats
 
 - **Changing careers (Me → Career record → Leave this career):** walk away at any rank. Hidden

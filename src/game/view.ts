@@ -1,3 +1,4 @@
+import { playerMaxHp, woundHint } from "./wounds";
 import { careerRecordView } from "./career";
 import { publicProfile } from "./profile";
 import { threatView } from "./hit";
@@ -136,6 +137,9 @@ export interface PublicView {
   inbox: { items: import("./types").Notice[]; unread: number };
   /** Past careers, legacies, and whether you can leave the current one. */
   careerRecord: ReturnType<typeof import("./career").careerRecordView>;
+  woundHint: string | null;
+  /** Doctors: your surgery fee, if you're operating. */
+  surgeryFee: number | null;
   /** Your intro and photo. */
   profile: { bio: string | null; photo: string | null };
   /** Someone casing you, your bodyguards, safe house and morgue time (never who). */
@@ -260,7 +264,9 @@ export function toView(p: Player, now: number): PublicView {
     energyFullMs: Math.ceil(Math.max(0, missing) * rMs),
     energyRegenMs: rMs,
     hp: Math.floor(p.hp),
-    maxHp: BALANCE.hp.max,
+    maxHp: playerMaxHp(p),
+    woundHint: woundHint(p),
+    surgeryFee: p.surgeryFee ?? null,
     hospitalMs: hospital ? p.hospitalUntil - now : 0,
     fullMs: Math.max(0, p.fullUntil - now),
     heatLabel: heatLabel(p.heat),

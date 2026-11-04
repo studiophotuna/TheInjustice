@@ -8,6 +8,9 @@ import { canUseForum, closeForum, createForum, forumChannel, inviteToForum, remo
 import { buildLab, flagLaundering, flagsView, frisk, friskBlock, isBankStaff, labCook, labTips, labView, launderWithBanker, probeLaundering, raidLab, setLaunderService } from "@/game/batch6";
 import { isDrug } from "@/game/drugs";
 import { cancelHeist, heistView, planHeist, runHeist, takeRole } from "@/game/heist";
+import * as AM from "@/game/ambush";
+import { assertNotAlt } from "@/game/anticheat";
+import { setSurgeryFee, surgery, surgeryBlock, woundsOf } from "@/game/wounds";
 import { cityEvent } from "@/game/events";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
@@ -82,7 +85,7 @@ import {
   patientView,
   reviewDeposit,
 } from "@/game/casework";
-import { GameError, type HeistRole, type Crew, type CrewPolicy, type GameEvent, type Player } from "@/game/types";
+import { GameError, type AmbushRole, type HeistRole, type Crew, type CrewPolicy, type GameEvent, type Player } from "@/game/types";
 import { toView } from "@/game/view";
 import { assertJson } from "@/server/auth";
 import { resolveIdentity } from "@/server/identity";
@@ -366,7 +369,9 @@ export async function GET(req: Request) {
           const canCrime = Object.fromEntries(CRIME_KINDS.map((k) => [k, crimeBlock(p, o, k, now)]));
           const canFrisk = p.path === "police" ? friskBlock(p, o, now) : "n/a";
           return { ...prof, crewTag: prof.crewId ? crewTags.get(prof.crewId) ?? null : null, canInvite, canForum, canCourtMartial, canSellGun, canCrime, lawyerFee, canFrisk, torch: torchTargets(p, o, now),
-            contract: leading && !leading.hit && o.crewId !== leading.id ? { cost: hitCost(o), block: contractBlock(leading, p, o, now) } : null };
+            contract: leading && !leading.hit && o.crewId !== leading.id ? { cost: hitCost(o), block: contractBlock(leading, p, o, now) } : null,
+            ambush: leading && o.crewId !== leading.id ? AM.planBlock(leading, p, o, now) : "n/a",
+            surgery: o.surgeryFee && woundsOf(p) ? { fee: o.surgeryFee, block: surgeryBlock(p, o) } : null };
         }),
       invites: p.crewInvites ?? [],
       foundBlock: crewFoundBlock(p),
@@ -377,6 +382,7 @@ export async function GET(req: Request) {
       myCrew: myCrew ? crewView(myCrew, p) : null,
       breakout: myCrew ? await crewJailView(store, myCrew, p, now) : null,
       heist: myCrew ? heistView(myCrew, p, now) : null,
+      ambush: myCrew ? AM.ambushView(myCrew, p, now) : null,
       hit: myCrew ? hitView(myCrew, p, now) : null,
       hitmen: leading ? await hitmenFor(store, leading, p) : [],
       lab: myCrew ? labView(myCrew, p, now) : null,
@@ -1424,6 +1430,102 @@ export async function POST(req: Request) {
           for (const r of byId.values()) await tx.putPlayer(r);
           await tx.putCrew(crew);
           if (city) await tx.putCity(city);
+          return out;
+        });
+        break;
+      }
+      case "surgery_fee": {
+        const fee = b.fee === null ? null : Number(b.fee);
+        events = await store.update(playerId, (p) => {
+          if (!p) throw new GameError("Create a character first.");
+          tick(p, now);
+          return { player: p, result: setSurgeryFee(p, fee) };
+        });
+        break;
+      }
+      case "surgery": {
+        const doctorId = str(b.doctorId);
+        events = await store.transaction((tx) =>
+          withPair(tx, playerId, doctorId, now, (me, doc) => {
+            assertNotAlt(me, doc);
+            if (countryOf(me) !== countryOf(doc)) throw new GameError("They practice in another city.");
+            const out = surgery(me, doc, now);
+            notify(doc, `You operated on ${me.name}'s old wounds. +$${doc.surgeryFee}`, "good", me, now);
+            return out;
+          }),
+        );
+        break;
+      }
+      case "ambush_plan":
+      case "ambush_role":
+      case "ambush_leave":
+      case "ambush_cancel":
+      case "ambush_go": {
+        const self = await store.get(playerId);
+        if (!self?.crewId) throw new GameError("You're not in a crew.");
+        const crewNow = await store.getCrew(self.crewId);
+        if (!crewNow) throw new GameError("Your crew is gone.");
+        const plan = crewNow.ambush;
+        const targetId = b.op === "ambush_plan" ? str(b.targetId) : plan?.targetId ?? null;
+        const roleIds = plan ? [...plan.attackers.map((x) => x.id), plan.driver?.id, plan.lookout?.id].filter((x): x is string => !!x) : [];
+        let backupIds: string[] = [];
+        let witnessIds: string[] = [];
+        let crewTag: string | null = crewNow.tag;
+        if (b.op === "ambush_go" && plan) {
+          const country = plan.country;
+          const target = await store.get(plan.targetId);
+          const nearby = (await store.listPlayers(country, 60)).filter((o) => !o.dead && !o.travel && now - o.tickAt < BALANCE.crime.witnessWindowMs);
+          backupIds = target?.crewId
+            ? nearby.filter((o) => o.crewId === target.crewId && o.id !== target.id).slice(0, AM.AMBUSH.defenderWeights.length).map((o) => o.id)
+            : [];
+          witnessIds = nearby
+            .filter((o) => o.id !== plan.targetId && o.crewId !== crewNow.id && !backupIds.includes(o.id))
+            .sort(() => Math.random() - 0.5)
+            .slice(0, Math.min(BALANCE.crime.maxWitnesses, cityEvent(country, now)?.maxWitnesses ?? 99))
+            .map((o) => o.id);
+        }
+        const caseId = randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase();
+        events = await store.transaction(async (tx) => {
+          const ids = [...new Set([playerId, ...roleIds, ...(targetId ? [targetId] : []), ...backupIds, ...witnessIds])];
+          const rows = await tx.getPlayers(ids);
+          const byId = new Map(rows.filter((r): r is Player => !!r).map((r) => [r.id, r]));
+          byId.forEach((r) => tick(r, now));
+          const me = byId.get(playerId);
+          if (!me) throw new GameError("Create a character first.");
+          const crew = await tx.getCrew(crewNow.id);
+          if (!crew) throw new GameError("Your crew is gone.");
+          let out: GameEvent[];
+          if (b.op === "ambush_plan") {
+            const t = byId.get(targetId!);
+            if (!t) throw new GameError("That player doesn't exist.");
+            out = AM.planAmbush(crew, me, t, now);
+          } else if (b.op === "ambush_role") {
+            const role = b.role as AmbushRole;
+            if (!["attacker", "driver", "lookout"].includes(role)) throw new GameError("Bad request.");
+            out = AM.takeRole(crew, me, role, now);
+          } else if (b.op === "ambush_leave") out = AM.leaveRole(crew, me);
+          else if (b.op === "ambush_cancel") out = AM.cancelAmbush(crew, me, now);
+          else {
+            const a = crew.ambush;
+            if (!a) throw new GameError("There's no ambush planned.");
+            const target = byId.get(a.targetId);
+            if (!target) throw new GameError("They're not around anymore.");
+            const attackers = a.attackers.map((x) => byId.get(x.id)).filter((x): x is Player => !!x && x.crewId === crew.id);
+            const driver = a.driver ? byId.get(a.driver.id) ?? null : null;
+            const lookout = a.lookout ? byId.get(a.lookout.id) ?? null : null;
+            const city = await tx.getCity(a.country);
+            const res = AM.executeAmbush(crew, me, attackers, driver?.crewId === crew.id ? driver : null, lookout?.crewId === crew.id ? lookout : null, target, city, now, Math.random, {
+              caseId,
+              crewTag,
+              backup: backupIds.map((id) => byId.get(id)).filter((x): x is Player => !!x),
+              witnesses: witnessIds.map((id) => byId.get(id)).filter((x): x is Player => !!x),
+            });
+            if (res.caseFile) await tx.putCase(res.caseFile);
+            if (city) await tx.putCity(city);
+            out = res.events;
+          }
+          for (const r of byId.values()) await tx.putPlayer(r);
+          await tx.putCrew(crew);
           return out;
         });
         break;

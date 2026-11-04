@@ -2,6 +2,7 @@
 // Crimes are anonymous: the victim only learns what witnesses, bystanders and detectives
 // piece together. Every tip reveals one trait, and some tips are wrong.
 
+import { addWound, playerMaxHp } from "./wounds";
 import { ALT_BLOCK, sameOwner } from "./anticheat";
 import { BALANCE } from "./balance";
 import { playerFighter, resolveFight } from "./combat";
@@ -71,6 +72,7 @@ export const CRIMES: Record<CrimeKind, CrimeDef> = {
   // Not street crimes: these case files come from contract hits (see hit.ts).
   murder: { id: "murder", name: "Murder", verb: "kill", energy: 0, share: [0, 0], heat: 40, integrity: -15, blurb: "" },
   attempted_murder: { id: "attempted_murder", name: "Attempted murder", verb: "try to kill", energy: 0, share: [0, 0], heat: 25, integrity: -10, blurb: "" },
+  assault: { id: "assault", name: "Assault", verb: "jump", energy: 0, share: [0, 0], heat: 12, integrity: -5, blurb: "" },
 };
 
 /** The crimes a player can commit from the People list. */
@@ -286,7 +288,7 @@ export function commitCrime(
   let success: boolean;
 
   if (kind === "mug") {
-    const res = resolveFight(playerFighter(a, BALANCE.hp.max), { ...playerFighter(t, BALANCE.hp.max), hp: t.hp }, rng);
+    const res = resolveFight(playerFighter(a, playerMaxHp(a)), { ...playerFighter(t, playerMaxHp(t)), hp: t.hp }, rng);
     fight = { opponent: t.name, icon: "🧍", won: res.won, lines: res.lines, outcome: res.won ? "win" : "loss" };
     events.push({ tone: res.won ? "good" : "bad", text: `Mugging: ${t.name}`, fight });
     a.hp = res.playerHp;
@@ -296,6 +298,7 @@ export function commitCrime(
       if (t.hp <= 0) knockOut(t, now, rng);
     } else if (a.hp <= 0) {
       knockOut(a, now, rng);
+      addWound(a, now);
       fight.outcome = "ko";
     }
     a.stats.strength += 0.5;

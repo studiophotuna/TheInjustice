@@ -30,6 +30,8 @@ type Profile = {
   canSellGun?: boolean;
   torch?: { id: string; name: string; odds: number; block: string | null }[];
   contract?: { cost: number; block: string | null } | null;
+  ambush?: string | null;
+  surgery?: { fee: number; block: string | null } | null;
   rat?: boolean;
   streetTitle: string | null;
   bio?: string | null;
@@ -195,6 +197,18 @@ type Hub = {
     ready: boolean;
   } | null;
   hitmen: { id: string; name: string }[];
+  ambush: {
+    targetName: string;
+    expiresAt: number;
+    attackers: string[];
+    driver: string | null;
+    lookout: string | null;
+    mine: boolean;
+    isLeader: boolean;
+    canAttack: string | null;
+    canDrive: string | null;
+    canLook: string | null;
+  } | null;
   heist: {
     canPlan: string | null;
     plan: {
@@ -401,6 +415,26 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
                   </button>
                 )}
                 {p.contract && hub.hitmen.length > 0 && <ContractButton game={game} target={p} hitmen={hub.hitmen} social={social} />}
+                {p.ambush !== undefined && p.ambush !== "n/a" && !hub.ambush && (
+                  <button
+                    className="btn btn-danger btn-sm"
+                    disabled={game.busy || !!p.ambush}
+                    title={p.ambush ?? "Your crew picks attackers, a driver and a lookout, then you jump them together."}
+                    onClick={() => confirm(`Plan an ambush on ${p.name}? Your crew gets two hours to take their places.`) && social({ op: "ambush_plan", targetId: p.id })}
+                  >
+                    🚐 Plan an ambush
+                  </button>
+                )}
+                {p.surgery && (
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    disabled={game.busy || !!p.surgery.block}
+                    title={p.surgery.block ?? "Fixes up to two old wounds."}
+                    onClick={() => confirm(`Pay Dr. ${p.name} $${p.surgery!.fee} to operate on your old wounds?`) && social({ op: "surgery", doctorId: p.id })}
+                  >
+                    🩺 Surgery (${p.surgery.fee})
+                  </button>
+                )}
                 {(p.torch ?? []).map((t) => (
                   <button
                     key={t.id}
@@ -548,6 +582,49 @@ function ContractButton({ game, target, hitmen, social }: { game: GameApi; targe
       </button>
       <button className="btn btn-ghost btn-sm" onClick={() => setOpen(false)}>Not now</button>
     </span>
+  );
+}
+
+/** A planned ambush: crew members take roles, then the leader gives the signal. */
+function AmbushCard({ game, a, social }: { game: GameApi; a: NonNullable<Hub["ambush"]>; social: (b: Record<string, unknown>) => Promise<unknown> }) {
+  const mins = Math.max(0, Math.round((a.expiresAt - Date.now()) / 60_000));
+  const roles: { id: string; label: string; who: string; why: string; block: string | null }[] = [
+    { id: "attacker", label: "🥊 Attackers (up to 3)", who: a.attackers.join(", ") || "nobody yet", why: "Each extra attacker counts for a little less than the one before.", block: a.canAttack },
+    { id: "driver", label: "🚐 Driver", who: a.driver ?? "nobody yet", why: "Agility. Nobody gets left behind; if it goes wrong, you get out with half the damage.", block: a.canDrive },
+    { id: "lookout", label: "👀 Lookout", who: a.lookout ?? "nobody yet", why: "Perception. No witnesses, their crew isn't warned in time, half the heat.", block: a.canLook },
+  ];
+  return (
+    <section className="card ambush">
+      <h3 className="card-title">🚐 The ambush on {a.targetName}</h3>
+      <p className="muted">{mins} min left to take your places. Their bodyguards and any crewmates nearby will fight back.</p>
+      <ul className="role-list">
+        {roles.map((r) => (
+          <li key={r.id} className="row">
+            <span>
+              <b>{r.label}</b>: {r.who}
+              <br />
+              <span className="fine">{r.why}</span>
+            </span>
+            {!a.mine && (
+              <button className="btn btn-ghost btn-xs" disabled={game.busy || !!r.block} title={r.block ?? ""} onClick={() => social({ op: "ambush_role", role: r.id })}>
+                Take it
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+      <div className="row">
+        {a.mine && <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: "ambush_leave" })}>Drop out</button>}
+        {a.isLeader && (
+          <>
+            <button className="btn btn-danger btn-sm" disabled={game.busy || a.attackers.length === 0} title={a.attackers.length ? "" : "You need at least one attacker."} onClick={() => social({ op: "ambush_go" })}>
+              Give the signal
+            </button>
+            <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: "ambush_cancel" })}>Call it off</button>
+          </>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -889,6 +966,7 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
           </section>
         )}
         {hub.hit && <HitCard game={game} hit={hub.hit} social={social} />}
+        {hub.ambush && <AmbushCard game={game} a={hub.ambush} social={social} />}
         <AlliancesCard game={game} crew={c} crews={hub.crews} social={social} />
         {c.isLeader && hub.ceremony.length > 0 && (
           <section className="card">

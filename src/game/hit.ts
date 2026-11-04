@@ -13,6 +13,7 @@
 //    they and their crew can go after the hitman for three days, through any protection.
 // 6. Every hit that lands opens a murder (or attempted murder) case in the justice chain.
 
+import { addWound } from "./wounds";
 import { BALANCE } from "./balance";
 import { ITEM_BY_ID } from "./content/items";
 import { PATHS } from "./content/paths";
@@ -243,6 +244,7 @@ export function executeHit(crew: Crew, hitman: Player, target: Player, city: Cit
   crew.vault += h.escrow - pay;
   addMerit(hitman, "enforcer", killed ? 6 : 3);
 
+  addWound(target, now);
   if (killed) {
     whack(target, now);
     notify(target, `You were whacked in ${district}. You wake up on a steel table in the morgue. Eight hours before anyone lets you out. You lost a rank, your cash and the gear you carried. For three days, you and your crew can go after whoever did this, wherever they hide.`, "bad", undefined, now);

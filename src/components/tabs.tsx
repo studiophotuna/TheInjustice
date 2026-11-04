@@ -412,6 +412,7 @@ export function ProfileTab({ game }: { game: GameApi }) {
             </div>
           ))}
         </div>
+        {view.woundHint && <p className="fine wound-hint">🩹 {view.woundHint}</p>}
       </section>
 
       {view.path && view.ladder && (
@@ -427,6 +428,24 @@ export function ProfileTab({ game }: { game: GameApi }) {
             <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.social({ op: "back_alley_toggle", open: !view.backAlley })}>
               {view.backAlley ? "Stop taking back-alley patients" : "Take back-alley patients (cash, no paperwork)"}
             </button>
+          )}
+          {view.path.id === "medicine" && view.ladder.current >= 3 && (
+            <div className="row">
+              <span className="muted">{view.surgeryFee ? `Operating on old wounds for $${view.surgeryFee}.` : "Not taking surgery patients."}</span>
+              <button
+                className="btn btn-ghost btn-sm"
+                disabled={game.busy}
+                onClick={() => {
+                  const fee = prompt("Your fee to operate on a patient's old wounds ($50–$5000):", String(view.surgeryFee ?? 400));
+                  if (fee) game.social({ op: "surgery_fee", fee: Number(fee) });
+                }}
+              >
+                {view.surgeryFee ? "Change fee" : "Offer surgery"}
+              </button>
+              {!!view.surgeryFee && (
+                <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.social({ op: "surgery_fee", fee: null })}>Stop</button>
+              )}
+            </div>
           )}
           {view.careerRecord.veteran && <p className="fine">Veteran: you've held higher ranks here before, so promotions come twice as fast until you're back.</p>}
         </section>

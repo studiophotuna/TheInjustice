@@ -165,7 +165,7 @@ export const BALANCE = {
     /** Courts rank to argue a case (Junior Attorney) and to sit as judge (Judge). */
     lawyerRank: 2,
     judgeRank: 7,
-    sentenceMs: { pickpocket: 10 * 60_000, snatch: 15 * 60_000, mug: 25 * 60_000, murder: 6 * 60 * 60_000, attempted_murder: 2 * 60 * 60_000 },
+    sentenceMs: { pickpocket: 10 * 60_000, snatch: 15 * 60_000, mug: 25 * 60_000, murder: 6 * 60 * 60_000, attempted_murder: 2 * 60 * 60_000, assault: 45 * 60_000 },
     minBribe: 50,
   },
   /** Other careers that help solve crimes. */
@@ -242,6 +242,8 @@ export const BALANCE = {
    * stats), so cheap jobs can't be farmed; career work teaches a little more. Promotion merit is
    * also per energy spent, and each rank needs `meritGrowth` times more than the one before.
    */
+  /** Training slows down above this effective stat value: gains halve every `halfEvery` points. */
+  statSoftCap: { start: 70, halfEvery: 10 },
   progress: {
     xpPerEnergy: 0.2,
     careerXpPerEnergy: 0.26,

@@ -2,6 +2,7 @@
 // an empty seat or challenge the holder. A seat pays a daily stipend from the treasury and comes
 // with one daily power that matters to the whole city.
 
+import { playerMaxHp } from "./wounds";
 import { BALANCE } from "./balance";
 import { keyStatAvg, PATHS } from "./content/paths";
 import { COUNTRY_BY_ID } from "./content/world";
@@ -173,7 +174,7 @@ export function usePower(c: City, p: Player, target: Player | null, now: number)
     case "medicine":
       if (!inHospital(target!, now)) throw new GameError("They're not in the hospital.");
       target!.hospitalUntil = 0;
-      target!.hp = BALANCE.hp.max;
+      target!.hp = playerMaxHp(target!);
       if (target!.whacked) target!.whacked = null;
       notify(target!, `The Medical Director signed your discharge. You're healed.`, "good", p, now);
       events = [{ tone: "good", text: `${target!.name} is discharged, healed.` }];

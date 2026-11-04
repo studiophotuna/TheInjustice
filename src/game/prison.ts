@@ -2,6 +2,7 @@
 // (a yard-only chat), fight each other for respect, work prison shifts (good behavior takes
 // time off a sentence) and get recruited by crew leaders doing time with them.
 
+import { playerMaxHp } from "./wounds";
 import { BALANCE } from "./balance";
 import { playerFighter, resolveFight } from "./combat";
 import { countryOf, inJail, practiceFalloff } from "./engine";
@@ -32,7 +33,7 @@ export function yardFight(a: Player, t: Player, now: number, rng: Rng): { events
   if (block) throw new GameError(block);
   a.energy -= Y.fightEnergy;
   a.attackLog = { ...(a.attackLog ?? {}), [`yard:${t.id}`]: now };
-  const res = resolveFight(playerFighter(a, BALANCE.hp.max), { ...playerFighter(t, BALANCE.hp.max), hp: t.hp }, rng);
+  const res = resolveFight(playerFighter(a, playerMaxHp(a)), { ...playerFighter(t, playerMaxHp(t)), hp: t.hp }, rng);
   const fight: FightSummary = { opponent: t.name, icon: "🧍", won: res.won, lines: res.lines, outcome: res.won ? "win" : "loss" };
   // The guards break it up before anyone dies: nobody drops below a few points of health.
   a.hp = Math.max(5, res.playerHp);

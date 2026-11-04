@@ -360,3 +360,9 @@ murder case and a three-day vendetta. Full rules in `WHACK.md`.
   (comma-separated). They work from `/admin`.
 - `IP_HASH_SALT` salts the IP hashes used to spot alt accounts; raw IP addresses are never stored.
 - Reports live in `injustice.reports` (migration `supabase/migrations/20261104120000_reports.sql`).
+
+## Old wounds, the soft cap and crew ambushes (v1.7.0)
+
+- Old wounds (`src/game/wounds.ts`) lower max health after fights you chose; doctors operate.
+- XP gains slow above a stat value of 70 (`BALANCE.statSoftCap`).
+- Crew ambushes (`src/game/ambush.ts`): attackers, a driver and a lookout; see `CHANGELOG.md`.

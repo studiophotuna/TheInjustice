@@ -2,6 +2,7 @@
 // outsiders earn there goes to the crew vault. A rival crew can declare war on held turf: for
 // a while, members of both crews join their side, then team strength decides who holds it.
 
+import { addWound } from "./wounds";
 import { wearGear } from "./gear";
 import { peaceBlock } from "./military";
 import { BALANCE } from "./balance";
@@ -123,7 +124,10 @@ export function settleWar(c: City, d: DistrictId, attackers: Player[], defenders
     p.reputation += 3;
     notify(p, `Your crew won the war for ${district}.`, "good", undefined, now);
   }
-  for (const p of attackersWin ? defenders : attackers) notify(p, `Your crew lost the war for ${district}.`, "bad", undefined, now);
+  for (const p of attackersWin ? defenders : attackers) {
+    addWound(p, now);
+    notify(p, `Your crew lost the war for ${district}.`, "bad", undefined, now);
+  }
   if (attackersWin) {
     // The leader who declared the war now runs streets.
     const declarer = attackers.find((a) => a.id === war.attackers[0]?.id);

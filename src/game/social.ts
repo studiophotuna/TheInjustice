@@ -1,6 +1,7 @@
 // Rules for players interacting with each other. Pure functions over Player/Crew objects:
 // the server loads and saves both sides inside one transaction.
 
+import { addWound, playerMaxHp } from "./wounds";
 import { ALT_BLOCK, assertNotAlt, sameOwner } from "./anticheat";
 import { publicProfile } from "./profile";
 import { wearGear } from "./gear";
@@ -90,7 +91,7 @@ export function attackPlayer(a: Player, t: Player, now: number, rng: Rng): { eve
   t.immuneUntil = now + BALANCE.pvp.immunityMs;
   a.heat += BALANCE.pvp.heat * COUNTRY_BY_ID[countryOf(a)].heatMult;
 
-  const res = resolveFight(playerFighter(a, BALANCE.hp.max), { ...playerFighter(t, BALANCE.hp.max), hp: t.hp }, rng);
+  const res = resolveFight(playerFighter(a, playerMaxHp(a)), { ...playerFighter(t, playerMaxHp(t)), hp: t.hp }, rng);
   const broke = wearGear(a, ["weapon", "armor"]);
   for (const e of wearGear(t, ["weapon", "armor"])) notify(t, e.text, "bad", undefined, now);
   const fight: FightSummary = { opponent: t.name, icon: "🧍", won: res.won, lines: res.lines, outcome: res.won ? "win" : "loss" };
@@ -123,7 +124,10 @@ export function attackPlayer(a: Player, t: Player, now: number, rng: Rng): { eve
   } else {
     t.reputation += 1;
     a.hp = res.playerHp;
-    if (a.hp <= 0) knockOut(a, now, rng);
+    if (a.hp <= 0) {
+      knockOut(a, now, rng);
+      addWound(a, now);
+    }
     fight.outcome = a.hp <= 0 ? "ko" : "loss";
     events.push({ tone: "bad", text: `${t.name} fought you off.${a.hp <= 0 ? " You wake up in the clinic." : ""}` });
     notify(t, `${a.name} tried to jump you. You fought them off. +1 reputation.`, "good", a, now);
@@ -179,7 +183,7 @@ export interface PublicProfile {
 }
 
 export function profileFor(viewer: Player, p: Player, now: number): PublicProfile {
-  const read = gutRead(viewer, playerFighter(viewer, BALANCE.hp.max), playerFighter(p, BALANCE.hp.max), `${viewer.id}:${p.id}:${Math.floor(now / 3_600_000)}`);
+  const read = gutRead(viewer, playerFighter(viewer, playerMaxHp(viewer)), playerFighter(p, playerMaxHp(p)), `${viewer.id}:${p.id}:${Math.floor(now / 3_600_000)}`);
   let canVouch: string | null = null;
   const vp = viewer.path ? PATHS[viewer.path] : null;
   if (!vp?.school) canVouch = "Only school careers can vouch.";

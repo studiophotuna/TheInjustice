@@ -84,6 +84,12 @@ export interface Player {
   reputation: number;
   housing: HousingTier;
   inventory: Record<string, number>;
+  /** Old wounds from fights they chose: each lowers max health; they fade with rest. */
+  wounds?: { count: number; at: number };
+  /** Doctors: their surgery fee (null = not operating). */
+  surgeryFee?: number | null;
+  /** Last time a crew ambushed this player (once a day at most). */
+  ambushedAt?: number;
   /** Careers this player held before (most recent last). */
   careerHistory?: { path: PathId; rank: number; title: string; at: number; finished: boolean }[];
   /** Careers finished at the top rank: a permanent pay bonus. */
@@ -266,7 +272,7 @@ export interface Player {
 
 export type StreetCrime = "pickpocket" | "snatch" | "mug";
 /** Street crimes, plus the cases a contract hit leaves behind. */
-export type CrimeKind = StreetCrime | "murder" | "attempted_murder";
+export type CrimeKind = StreetCrime | "murder" | "attempted_murder" | "assault";
 /** Things a witness can notice about a criminal. */
 export type ClueTrait = "build" | "reflexes" | "nameStart" | "nameEnd" | "nameLength" | "crew";
 
@@ -417,6 +423,20 @@ export interface Seat {
   lastPaidAt: number;
 }
 
+export type AmbushRole = "attacker" | "driver" | "lookout";
+
+export interface Ambush {
+  targetId: string;
+  targetName: string;
+  plannerId: string;
+  country: CountryId;
+  createdAt: number;
+  expiresAt: number;
+  attackers: { id: string; name: string }[];
+  driver: { id: string; name: string } | null;
+  lookout: { id: string; name: string } | null;
+}
+
 export interface HitContract {
   id: string;
   targetId: string;
@@ -459,6 +479,9 @@ export interface Crew {
   breakout?: Breakout | null;
   /** Allied crews: they fight in each other's wars and don't pay each other protection. */
   allies?: CrewRef[];
+  /** A planned ambush: attackers, a driver and a lookout jump one target. */
+  ambush?: Ambush | null;
+  lastAmbushAt?: number;
   /** A contract hit in progress. */
   hit?: HitContract | null;
   /** The leader's secret forum: crew members plus invited guests of any career. */

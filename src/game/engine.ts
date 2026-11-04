@@ -1,6 +1,7 @@
 // Server-side game rules. Pure functions over a Player: no I/O, so they can run in an
 // API route today and a database function (or worker) later without changes.
 
+import { addWound, healWounds, playerMaxHp } from "./wounds";
 import { careerGapBlock, leaveCareer, legacyPayBonus, veteranFactor } from "./career";
 import { updateProfile } from "./profile";
 import { hireBodyguards, lieLow } from "./hit";
@@ -113,12 +114,13 @@ export function tick(p: Player, now: number): void {
   }
   if (p.hospitalUntil && p.hospitalUntil <= now) {
     p.hospitalUntil = 0;
-    p.hp = BALANCE.hp.max;
+    p.hp = playerMaxHp(p);
   }
+  healWounds(p, now);
   const maxE = maxEnergy(p.housing);
   if (p.energy < maxE) p.energy = Math.min(maxE, p.energy + elapsed / regenMs(p.housing));
-  if (!inHospital(p, now) && p.hp < BALANCE.hp.max) {
-    p.hp = Math.min(BALANCE.hp.max, p.hp + elapsed / BALANCE.hp.regenMs);
+  if (!inHospital(p, now) && p.hp < playerMaxHp(p)) {
+    p.hp = Math.min(playerMaxHp(p), p.hp + elapsed / BALANCE.hp.regenMs);
   }
   p.heat = Math.max(0, p.heat - elapsed / BALANCE.heatDecayMs);
   if (!p.homes) p.homes = { [countryOf(p)]: p.housing };
@@ -314,7 +316,7 @@ function rollIncident(p: Player, mode: TravelMode, rng: Rng, departAt: number): 
     return { kind: "pickpocket", text: `Somewhere between stations, a pickpocket lifts $${lost} from your coat.`, cashLost: lost };
   }
   // Bus: a planned ambush by a road gang.
-  const me = playerFighter(p, BALANCE.hp.max);
+  const me = playerFighter(p, playerMaxHp(p));
   const gang = roadGang(power(me));
   const res = resolveFight(me, npcFighter(gang), rng);
   const fight: FightSummary = { opponent: gang.name, icon: gang.icon, won: res.won, lines: res.lines, outcome: "win" };
@@ -416,9 +418,18 @@ export function jobLock(p: Player, job: JobDef): string | null {
   return job.requires?.(p) ?? null;
 }
 
+/**
+ * Soft cap: above an effective value of 70 (about what a top rank needs), every further 10
+ * points halves what training teaches. Veterans of several careers keep growing, but slowly.
+ */
+export function softCap(statValueNow: number): number {
+  const { start, halfEvery } = BALANCE.statSoftCap;
+  return statValueNow <= start ? 1 : Math.pow(0.5, (statValueNow - start) / halfEvery);
+}
+
 function grantXp(p: Player, xp: Partial<Record<StatKey, number>>, mult: number, events: GameEvent[]) {
   for (const k of STAT_KEYS) {
-    const gain = (xp[k] ?? 0) * mult;
+    const gain = (xp[k] ?? 0) * mult * softCap(statValue(p.stats[k]));
     if (!gain) continue;
     const before = tierOf(statValue(p.stats[k]));
     p.stats[k] += gain;
@@ -431,7 +442,8 @@ export function shiftIntegrity(p: Player, delta = 0) {
   p.stats.integrity = clamp(p.stats.integrity + delta, -100, 100);
 }
 
-function hospitalize(p: Player, now: number, rng: Rng, events: GameEvent[]) {
+function hospitalize(p: Player, now: number, rng: Rng, events: GameEvent[], wound = true) {
+  if (wound) addWound(p, now);
   p.hp = 0;
   // Medics know how to heal: their hospital stays are halved.
   const stay = randInt(rng, BALANCE.hp.hospitalMinMs, BALANCE.hp.hospitalMaxMs) * (p.path === "medicine" ? 0.5 : 1);
@@ -624,7 +636,7 @@ export function band(p: Player, stat: StatKey): string {
 }
 
 function fightNpc(p: Player, npc: NpcDef, now: number, rng: Rng, events: GameEvent[]) {
-  const me = playerFighter(p, BALANCE.hp.max);
+  const me = playerFighter(p, playerMaxHp(p));
   const them = npcFighter(npc);
   const res = resolveFight(me, them, rng);
   p.hp = res.playerHp;
@@ -654,7 +666,7 @@ function maybeMugging(p: Player, job: JobDef, now: number, rng: Rng, events: Gam
   if (rng() >= BALANCE.muggingChance) return;
   const m = mugger(p.reputation);
   events.push({ tone: "bad", text: "On the way back, someone steps out of an alley. \"Wallet. Now.\"" });
-  const me = playerFighter(p, BALANCE.hp.max);
+  const me = playerFighter(p, playerMaxHp(p));
   const them = npcFighter(m);
   const res = resolveFight(me, them, rng);
   p.hp = res.playerHp;
@@ -670,7 +682,7 @@ function maybeMugging(p: Player, job: JobDef, now: number, rng: Rng, events: Gam
     // A random mugging can put you in the clinic, but never kill you: death only comes
     // from fights you choose.
     summary.outcome = "ko";
-    hospitalize(p, now, rng, events);
+    hospitalize(p, now, rng, events, false);
     const lost = Math.floor(p.cash * 0.5);
     p.cash -= lost;
     if (lost) events.push({ tone: "bad", text: `You wake up in the clinic. Your wallet is $${lost} lighter.` });
@@ -822,8 +834,8 @@ function useItem(p: Player, itemId: string, now: number, events: GameEvent[]) {
       p.hospitalUntil = now + Math.round((p.hospitalUntil - now) / 2);
       events.push({ tone: "good", text: "The nurse patches you up faster. Hospital time halved." });
     } else {
-      if (p.hp >= BALANCE.hp.max) throw new GameError("You're not hurt.");
-      p.hp = Math.min(BALANCE.hp.max, p.hp + (item.heal ?? 0));
+      if (p.hp >= playerMaxHp(p)) throw new GameError("You're not hurt.");
+      p.hp = Math.min(playerMaxHp(p), p.hp + (item.heal ?? 0));
       events.push({ tone: "good", text: "You patch yourself up." });
     }
   } else {
@@ -1186,7 +1198,7 @@ export function scout(p: Player, npcId: string, now: number): string {
   const npc = NPC_BY_ID[npcId];
   if (!npc) throw new GameError("Nobody by that name around here.");
   const hourSeed = Math.floor(now / 3_600_000);
-  return gutRead(p, playerFighter(p, BALANCE.hp.max), npcFighter(npc), `${p.id}:${npcId}:${hourSeed}`);
+  return gutRead(p, playerFighter(p, playerMaxHp(p)), npcFighter(npc), `${p.id}:${npcId}:${hourSeed}`);
 }
 
 export { FIGHT_ENERGY };
