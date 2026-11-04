@@ -428,8 +428,11 @@ export function ProfileTab({ game }: { game: GameApi }) {
               {view.backAlley ? "Stop taking back-alley patients" : "Take back-alley patients (cash, no paperwork)"}
             </button>
           )}
+          {view.careerRecord.veteran && <p className="fine">Veteran: you've held higher ranks here before, so promotions come twice as fast until you're back.</p>}
         </section>
       )}
+
+      <CareerRecord game={game} />
 
       {!view.path && (
         <section className="card">
@@ -992,4 +995,51 @@ function ModeratorLink() {
   }, []);
   if (!ok) return null;
   return <a className="btn btn-primary btn-sm" href="/admin">Moderation</a>;
+}
+
+/** Past careers, legacies, and walking away from the current one. */
+function CareerRecord({ game }: { game: GameApi }) {
+  const view = game.view!;
+  const r = view.careerRecord;
+  if (!view.path && !r.history.length) return null;
+  return (
+    <section className="card">
+      <h3 className="card-title"><BookOpen size={16} /> Career record</h3>
+      {r.legacy.length > 0 && (
+        <p className="fine">
+          {r.legacy.map((l) => <span key={l} className="chip chip-gold">{l}</span>)} <span className="muted">+{r.legacyBonus}% pay on every job</span>
+        </p>
+      )}
+      {r.history.length > 0 ? (
+        <ul className="officials">
+          {r.history.map((h, i) => (
+            <li key={i}>
+              <span>{h.title} · {h.name}</span>
+              <span className="muted fine">{h.finished ? "retired at the top" : "left"} · {new Date(h.at).toLocaleDateString()}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="muted fine">Your first career. Finish it (reach the top rank) and leave, and you keep a legacy: a title and better pay on every job, for good.</p>
+      )}
+      {r.gap && <p className="fine muted">{r.gap}</p>}
+      {view.path && (
+        <>
+          <button
+            className="btn btn-ghost btn-sm"
+            disabled={game.busy || !!r.canLeave}
+            title={r.canLeave ?? ""}
+            onClick={() =>
+              confirm(
+                `Leave the ${view.path!.name}? You keep everything you've learned (your hidden strengths), but you lose your rank, your issued gear${view.path!.id === "enforcer" ? ", and your made status" : ""}. Coming back later is faster for veterans.`,
+              ) && game.act({ type: "leave_career" })
+            }
+          >
+            Leave this career
+          </button>
+          {r.canLeave && <p className="fine muted">{r.canLeave}</p>}
+        </>
+      )}
+    </section>
+  );
 }

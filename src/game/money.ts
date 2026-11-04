@@ -76,6 +76,7 @@ export function launder(p: Player, method: LaunderMethod, amount: number, now: n
   const option = launderOptions(p, now).find((o) => o.id === method);
   if (!option) throw new GameError("Unknown method.");
   if (option.block) throw new GameError(option.block);
+  if ((p.frozenUntil ?? 0) > now) throw new GameError("The Governor froze your dirty money. No bank, laundromat or business will touch it for now.");
   const a = Math.floor(amount);
   if (!Number.isFinite(a) || a <= 0) throw new GameError("How much?");
   if (a > dirtyOf(p)) throw new GameError("You don't have that much dirty money.");

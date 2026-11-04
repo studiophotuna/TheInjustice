@@ -84,6 +84,16 @@ export interface Player {
   reputation: number;
   housing: HousingTier;
   inventory: Record<string, number>;
+  /** Careers this player held before (most recent last). */
+  careerHistory?: { path: PathId; rank: number; title: string; at: number; finished: boolean }[];
+  /** Careers finished at the top rank: a permanent pay bonus. */
+  legacy?: PathId[];
+  /** When they last left a career (a day before taking another). */
+  careerChangeAt?: number;
+  /** Leadership: last time they challenged a seat holder (once a week). */
+  seatChallengeAt?: number;
+  /** A Governor froze this player's dirty money: no laundering until then. */
+  frozenUntil?: number;
   /** Anti-cheat (server-only): devices and hashed IPs this character was recently played from. */
   devices?: string[];
   ips?: string[];
@@ -396,6 +406,17 @@ export interface Report {
   action?: string;
 }
 
+/** A leadership seat at the head of a career in a city. */
+export interface Seat {
+  id: string;
+  name: string;
+  since: number;
+  /** A new holder can't be challenged before this. */
+  shieldUntil: number;
+  lastPowerAt: number;
+  lastPaidAt: number;
+}
+
 export interface HitContract {
   id: string;
   targetId: string;
@@ -591,6 +612,7 @@ export type Action =
   | { type: "repair"; itemId: string }
   | { type: "hire_bodyguards" }
   | { type: "profile"; bio?: string; photo?: string | null }
+  | { type: "leave_career" }
   | { type: "lie_low" }
   | { type: "bank"; op: "open" | "deposit" | "withdraw"; amount?: number }
   | { type: "fight"; npcId: string }
@@ -661,6 +683,12 @@ export interface City {
   mealsServed?: number;
   /** Server-only: money the mayor quietly took from the treasury. */
   skims: { mayorId: string; amount: number; at: number; exposed?: boolean }[];
+  /** Leadership seats: the head of each career in this city. */
+  seats?: Partial<Record<PathId, Seat>>;
+  /** The Commissioner's Most Wanted. */
+  mostWanted?: { id: string; name: string; until: number } | null;
+  /** The Don's truce: no turf wars declared until then. */
+  truceUntil?: number;
   /** Martial law: the mayor called in the army. Soldiers can break up turf wars. */
   martialUntil?: number;
   lastMartialAt?: number;

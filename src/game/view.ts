@@ -1,3 +1,4 @@
+import { careerRecordView } from "./career";
 import { publicProfile } from "./profile";
 import { threatView } from "./hit";
 import { gearView, usesLeft } from "./gear";
@@ -133,6 +134,8 @@ export interface PublicView {
   };
   gym: { fee: number; energy: number };
   inbox: { items: import("./types").Notice[]; unread: number };
+  /** Past careers, legacies, and whether you can leave the current one. */
+  careerRecord: ReturnType<typeof import("./career").careerRecordView>;
   /** Your intro and photo. */
   profile: { bio: string | null; photo: string | null };
   /** Someone casing you, your bodyguards, safe house and morgue time (never who). */
@@ -280,6 +283,7 @@ export function toView(p: Player, now: number): PublicView {
     inbox: { items: p.inbox ?? [], unread: (p.inbox ?? []).filter((n) => !n.read).length },
     threat: threatView(p, null, now),
     profile: publicProfile(p),
+    careerRecord: careerRecordView(p, now),
     gunOffers: (p.gunOffers ?? []).map((o) => ({ ...o, itemName: ITEM_BY_ID[o.itemId]?.name ?? o.itemId, icon: ITEM_BY_ID[o.itemId]?.icon ?? "" })),
     sellableGear: sellableGear(p).map((i) => ({ id: i.id, name: i.name, icon: i.icon })),
     jail:

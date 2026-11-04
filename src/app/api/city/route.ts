@@ -24,6 +24,7 @@ import { BALANCE } from "@/game/balance";
 import { frontPage, weekStories } from "@/game/paper";
 import { declareMartialLaw, joinPeacekeepers, peaceSettle, standGuard } from "@/game/military";
 import { reportThreat, stakeOut, stakeoutBlock } from "@/game/hit";
+import { claimSeat, collectStipend, stepDown, usePower } from "@/game/seats";
 import { appointEditor, buryStory, dismissEditor, EDITOR, editorSalary, isEditor, setBuryPrice, toggleStory, writeEditorial } from "@/game/batch7";
 import { buyVote, campaign } from "@/game/batch4";
 import { claimTurf, declareWar, joinWar, settleWar, turfView } from "@/game/turf";
@@ -81,7 +82,8 @@ export async function GET() {
     }
     const crew = p.crewId ? await store.getCrew(p.crewId) : null;
     // Candidates see who lives here (to campaign door to door... or to buy votes).
-    const residents = c.candidates.some((x) => x.id === p.id)
+    const holdsSeat = !!p.path && c.seats?.[p.path]?.id === p.id;
+    const residents = holdsSeat || c.candidates.some((x) => x.id === p.id)
       ? (await store.listPlayers(c.country, 100)).filter((o) => o.id !== p.id && !o.dead).slice(0, 40).map((o) => ({ id: o.id, name: o.name }))
       : [];
     const paper = frontPage(c.country, c, await store.listCases(c.country, 100), now, { editor: isEditor(c, p) });
@@ -111,11 +113,15 @@ export async function POST(req: Request) {
     const events: GameEvent[] = await store.transaction(async (tx) => {
       // A war being settled locks everyone who fought in it.
       const pre = b.op === "settle_war" || b.op === "bury_story" || b.op === "stakeout" ? await store.getCity(country) : null;
+      const pre2 = b.op === "seat_claim" ? await store.getCity(country) : null;
       const editorId = b.op === "bury_story" ? pre?.editor?.id : undefined;
       // A stakeout may catch the hitman, so lock them and the person they're after.
       const threat = b.op === "stakeout" ? pre?.threats?.find((t) => t.id === str(b.threatId)) : undefined;
       const hitCrewPre = threat ? await store.getCrew(threat.crewId) : null;
       const stakeIds = hitCrewPre?.hit ? [hitCrewPre.hit.hitmanId, hitCrewPre.hit.targetId] : threat ? [threat.targetId] : [];
+      // Seats: a challenge locks the holder; a power may lock its target.
+      const seatHolder = b.op === "seat_claim" && self.path ? pre2?.seats?.[self.path]?.id : undefined;
+      const powerTarget = b.op === "seat_power" && typeof b.targetId === "string" ? b.targetId : undefined;
       const war = pre?.turf?.[str(b.district) as DistrictId]?.war;
       const fighters = war ? [...war.attackers, ...war.defenders, ...(war.peacekeepers ?? [])].map((x) => x.id) : [];
       const ids = [
@@ -123,6 +129,8 @@ export async function POST(req: Request) {
         ...(b.op === "pardon" || b.op === "appoint_chief" || b.op === "buy_vote" || b.op === "appoint_editor" ? [str(b.playerId)] : []),
         ...(editorId ? [editorId] : []),
         ...stakeIds,
+        ...(seatHolder && seatHolder !== playerId ? [seatHolder] : []),
+        ...(powerTarget && powerTarget !== playerId ? [powerTarget] : []),
         ...fighters,
       ];
       const rows = await tx.getPlayers([...new Set(ids)]);
@@ -239,6 +247,26 @@ export async function POST(req: Request) {
         case "peacekeep":
           out = joinPeacekeepers(c, p, str(b.district) as DistrictId, now);
           break;
+        case "seat_claim": {
+          const holder = seatHolder ? byId.get(seatHolder) ?? null : null;
+          if (holder && holder.id !== p.id) tick(holder, now);
+          out = claimSeat(c, p, holder, now, Math.random);
+          if (holder && holder.id !== p.id) await tx.putPlayer(holder);
+          break;
+        }
+        case "seat_step_down":
+          out = stepDown(c, p, now);
+          break;
+        case "seat_stipend":
+          out = collectStipend(c, p, now);
+          break;
+        case "seat_power": {
+          const target = powerTarget ? byId.get(powerTarget) ?? null : null;
+          if (target && target.id !== p.id) tick(target, now);
+          out = usePower(c, p, target, now);
+          if (target && target.id !== p.id) await tx.putPlayer(target);
+          break;
+        }
         case "report_threat":
           out = reportThreat(c, p, now);
           break;

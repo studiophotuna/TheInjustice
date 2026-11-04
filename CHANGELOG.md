@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.6.0: changing careers and leadership seats
+
+- **Changing careers (Me → Career record → Leave this career):** walk away at any rank. Hidden
+  stats stay (everything you learned); rank, issued gear and (for the Mafia) made status go.
+  Not from a cell or while awaiting trial; the Mafia must leave their crew first (a made man
+  walking out still breaks omertà). A day's gap before accepting or applying for a new career.
+- **Veterans:** returning to a career you held before needs half the promotion merit until you
+  reach your old best rank.
+- **Legacy:** leaving a career at its top rank gives a permanent "Retired …" title and +5% pay
+  on every job (up to +15% for three finished careers). The career record lists every past
+  career.
+- **Leadership seats (City Hall → Leadership):** in each city, one seat at the head of each
+  career (Commissioner, Don of the City, Chief Justice, Medical Director, Governor of the
+  Exchange, General of the Garrison, The Symbol). Rank 6+ can take an empty seat or challenge
+  the holder once a week (career stats, rank and reputation, with a small edge to the holder;
+  new holders are safe for 48 hours). A holder who leaves the career or the city loses the seat.
+  Seats pay $300 a day from the treasury and have one daily power:
+  - Commissioner: name a player Most Wanted (+20 heat, a public badge).
+  - Don: call a 12-hour truce on turf wars.
+  - Chief Justice: commute one prison sentence.
+  - Medical Director: discharge one patient, healed.
+  - Governor: freeze one player's dirty money for a day.
+  - General: three squads guard the banks for two hours.
+  - The Symbol: publicly name a player with a dirty record (+15 heat).
+- A police chief who leaves the police is no longer chief.
+
 ## 1.5.0: moderation and anti-cheat basics
 
 - **Reports:** players can report another player (photo, name or intro) from People, or a chat

@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Coins, Flag, Gavel, Landmark, Megaphone, Newspaper, Siren, Soup, Vote } from "lucide-react";
+import { Building2, Coins, Crown, Flag, Gavel, Landmark, Megaphone, Newspaper, Siren, Soup, Vote } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Scene } from "./art/Scenes";
 import type { GameApi } from "./useGame";
@@ -18,6 +18,19 @@ type CityData = {
     crackdown: number | null;
     chief: { name: string; you: boolean } | null;
     editor: { name: string; you: boolean; price: number } | null;
+    seats: {
+      path: string;
+      title: string;
+      career: string;
+      holder: { name: string; since: number; you: boolean } | null;
+      power: { name: string; text: string; target: boolean };
+      canClaim: string | null;
+      challenge: boolean;
+      canPower: string | null;
+      canStipend: string | null;
+    }[];
+    mostWanted: string | null;
+    truceUntil: number | null;
     martial: number | null;
     canMartial: string | null;
     editorControls: { canSalary: boolean; editorial: string; price: number } | null;
@@ -292,6 +305,7 @@ export function CityHall({ game }: { game: GameApi }) {
         </div>
       )}
     </section>
+    <Leadership seats={c.seats} residents={data.residents} mostWanted={c.mostWanted} truceUntil={c.truceUntil} game={game} act={act} />
     <Turf turf={data.turf} game={game} act={act} />
     </>
   );
@@ -415,6 +429,78 @@ function Turf({ turf, game, act }: { turf: CityData["turf"]; game: GameApi; act:
               {d.war && !d.war.over && !d.war.canPeace && <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => act({ op: "peacekeep", district: d.id })}>🪖 Break it up</button>}
               {d.war?.over && <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => act({ op: "settle_war", district: d.id })}>Settle it</button>}
             </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** The head of each career in this city: claim an empty seat, challenge the holder, use the power. */
+function Leadership({
+  seats,
+  residents,
+  mostWanted,
+  truceUntil,
+  game,
+  act,
+}: {
+  seats: CityData["city"]["seats"];
+  residents: { id: string; name: string }[];
+  mostWanted: string | null;
+  truceUntil: number | null;
+  game: GameApi;
+  act: (b: Record<string, unknown>) => Promise<void>;
+}) {
+  const [target, setTarget] = useState("");
+  return (
+    <section className="card leadership">
+      <h3 className="card-title"><Crown size={16} /> Leadership</h3>
+      <p className="muted fine">The head of each career in this city. Rank 6 and up can take an empty seat or challenge the holder (once a week). Seats pay $300 a day and come with one daily power.</p>
+      {(mostWanted || truceUntil) && (
+        <p className="fine">
+          {mostWanted && <span className="chip chip-red">Most Wanted: {mostWanted}</span>}{" "}
+          {truceUntil && <span className="chip">Truce for {until(truceUntil)}</span>}
+        </p>
+      )}
+      <ul className="seats">
+        {seats.map((s) => (
+          <li key={s.path} className={`seat ${s.holder?.you ? "mine" : ""}`}>
+            <div className="seat-head">
+              <b>{s.title}</b>
+              <span className="muted fine">{s.holder ? `${s.holder.name}${s.holder.you ? " (you)" : ""}` : "Vacant"}</span>
+            </div>
+            <p className="fine muted">{s.power.name}: {s.power.text}</p>
+            {s.holder?.you ? (
+              <div className="row wrap">
+                {s.power.target && (
+                  <select value={target} onChange={(e) => setTarget(e.target.value)} aria-label="Who">
+                    <option value="">Choose someone</option>
+                    {residents.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                  </select>
+                )}
+                <button
+                  className="btn btn-primary btn-xs"
+                  disabled={game.busy || !!s.canPower || (s.power.target && !target)}
+                  title={s.canPower ?? ""}
+                  onClick={() => act({ op: "seat_power", ...(s.power.target ? { targetId: target } : {}) })}
+                >
+                  {s.power.name}
+                </button>
+                <button className="btn btn-ghost btn-xs" disabled={game.busy || !!s.canStipend} title={s.canStipend ?? ""} onClick={() => act({ op: "seat_stipend" })}>Stipend</button>
+                <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => confirm("Step down? The seat goes to whoever claims it next.") && act({ op: "seat_step_down" })}>Step down</button>
+              </div>
+            ) : (
+              !s.canClaim && (
+                <button
+                  className={`btn btn-xs ${s.challenge ? "btn-danger" : "btn-primary"}`}
+                  disabled={game.busy}
+                  onClick={() => (!s.challenge || confirm(`Challenge ${s.holder!.name} for the seat? If you lose, you lose reputation.`)) && act({ op: "seat_claim" })}
+                >
+                  {s.challenge ? "Challenge" : "Take the seat"}
+                </button>
+              )
+            )}
           </li>
         ))}
       </ul>

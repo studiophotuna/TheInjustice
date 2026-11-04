@@ -45,6 +45,7 @@ export function warBlock(c: City, crew: Crew | null, p: Player, d: DistrictId, n
   if (h.crewId === crew!.id) return "That's already your turf.";
   if (crew!.allies?.some((a) => a.id === h.crewId)) return "They're your allies. Break the alliance first.";
   if (h.war) return "There's already a war on.";
+  if ((c.truceUntil ?? 0) > now) return "The Don called a truce. Nobody moves until it's over.";
   if (now - h.lastWarAt < T.peaceMs) return "The streets need time to cool down after the last war.";
   if (countryOf(p) !== c.country) return "You have to be in the city.";
   return null;

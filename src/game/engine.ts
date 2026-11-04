@@ -1,6 +1,7 @@
 // Server-side game rules. Pure functions over a Player: no I/O, so they can run in an
 // API route today and a database function (or worker) later without changes.
 
+import { careerGapBlock, leaveCareer, legacyPayBonus, veteranFactor } from "./career";
 import { updateProfile } from "./profile";
 import { hireBodyguards, lieLow } from "./hit";
 import { ensureEquipped, equip, equippedId, repair, unequip, usesLeft, wearGear } from "./gear";
@@ -579,7 +580,7 @@ function checkCareer(p: Player, events: GameEvent[]) {
     return;
   }
   const def = PATHS[p.path];
-  if (p.rank >= def.ranks.length || p.jobsSinceRank < meritNeeded(p.path, p.rank)) return;
+  if (p.rank >= def.ranks.length || p.jobsSinceRank < meritNeeded(p.path, p.rank) * veteranFactor(p)) return;
   if (keyStatAvg(p, p.path) < def.promotionThresholds[p.rank - 1]) return;
   // The family has its own rules about who moves up.
   if (familyGate(p, p.rank + 1)) return;
@@ -736,7 +737,7 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
   }
 
   // Crew members get a small bonus: someone always has your back.
-  const crewBonus = p.crewId ? 1.05 : 1;
+  const crewBonus = (p.crewId ? 1.05 : 1) * legacyPayBonus(p);
   const event = cityEvent(countryOf(p), now);
   let pay = Math.round(randInt(rng, job.pay[0], job.pay[1]) * COUNTRY_BY_ID[countryOf(p)].payMult * crewBonus * (event?.payMult ?? 1));
   if (job.payStat) pay = Math.round(pay * (1 + (sv(p, job.payStat) - 10) / 40));
@@ -865,6 +866,7 @@ function bank(p: Player, op: "open" | "deposit" | "withdraw", amount: number | u
 
 function answerOffer(p: Player, path: PathId, accept: boolean, now: number, events: GameEvent[]) {
   if (!p.offers.includes(path)) throw new GameError("No such offer.");
+  if (accept && careerGapBlock(p, now)) throw new GameError(careerGapBlock(p, now)!);
   p.offers = p.offers.filter((o) => o !== path);
   if (!accept) {
     p.flags.push(`declined_${path}`);
@@ -961,6 +963,7 @@ function apply(p: Player, schoolId: string, now: number, events: GameEvent[]) {
   if (p.path) throw new GameError("You already have a career.");
   if (p.application?.status === "pending") throw new GameError("You already have an application under review.");
   if ((p.applyCooldownUntil ?? 0) > now) throw new GameError("The admissions office won't see you again so soon.");
+  if (careerGapBlock(p, now)) throw new GameError(careerGapBlock(p, now)!);
   if (school.country !== countryOf(p)) {
     throw new GameError(`${school.name} is in ${COUNTRY_BY_ID[school.country].capital}. Travel there to apply in person.`);
   }
@@ -1070,6 +1073,9 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng, ct
       break;
     case "profile":
       events.push(...updateProfile(p, { bio: action.bio, photo: action.photo }, now));
+      break;
+    case "leave_career":
+      events.push(...leaveCareer(p, now));
       break;
     case "lie_low":
       events.push(...lieLow(p, now));

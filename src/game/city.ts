@@ -3,6 +3,7 @@
 // fund a police bounty per conviction, call crackdowns on crime, pardon one prisoner a term,
 // draw a salary from the treasury... and can quietly skim it, which internal affairs can catch.
 
+import { seatsView } from "./seats";
 import { guardBlock, martialBlock, martialOn } from "./military";
 import { BALANCE } from "./balance";
 import { rankTitle } from "./content/paths";
@@ -89,7 +90,7 @@ export function advanceCity(c: City, now: number): boolean {
 }
 
 export const isMayor = (c: City, p: Player) => c.mayor?.id === p.id;
-export const isChief = (c: City, p: Player) => c.chief?.id === p.id;
+export const isChief = (c: City, p: Player) => c.chief?.id === p.id && p.path === "police";
 
 // ── Elections ──────────────────────────────────────────────────────────────
 
@@ -369,6 +370,9 @@ export function cityView(c: City, p: Player, now: number) {
     crackdown: crackdownOn(c, now) ? c.crackdownUntil : null,
     chief: c.chief ? { name: c.chief.name, you: isChief(c, p) } : null,
     guards: (c.guards ?? []).filter((g) => g.until > now).length,
+    seats: seatsView(c, p, now),
+    mostWanted: c.mostWanted && c.mostWanted.until > now ? c.mostWanted.name : null,
+    truceUntil: (c.truceUntil ?? 0) > now ? c.truceUntil! : null,
     martial: martialOn(c, now) ? c.martialUntil! : null,
     canMartial: isMayor(c, p) ? martialBlock(c, p, now) : "Only the mayor.",
     canGuard: guardBlock(c, p, now),

@@ -270,7 +270,9 @@ export function promotionHint(p: Player): string | null {
   const def = PATHS[p.path];
   if (p.rank >= def.ranks.length) return "You've reached the top rank available for now.";
   // Never a number: only how the people above you talk about you.
-  const progress = p.jobsSinceRank / meritNeeded(p.path, p.rank);
+  // Veterans returning to a career they held before need half the merit (see career.ts).
+  const best = Math.max(0, ...(p.careerHistory ?? []).filter((c) => c.path === p.path).map((c) => c.rank));
+  const progress = p.jobsSinceRank / (meritNeeded(p.path, p.rank) * (p.rank < best ? 0.5 : 1));
   if (progress < 0.35) return `${def.contact} hasn't noticed you yet. Harder work gets noticed; easy work doesn't.`;
   if (progress < 0.75) return `People mention your name around ${def.contact}. Keep taking on tougher work.`;
   if (progress < 1) return `${def.contact} has been asking about you.`;
