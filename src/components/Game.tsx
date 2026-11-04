@@ -35,7 +35,8 @@ import { DeanLetter, FightTab, JobsTab, ProfileTab, ShopTab } from "./tabs";
 import { CityPlaces, type Building } from "./places";
 import { CommunityTab } from "./community";
 import { HomeTab } from "./home";
-import { AwayRecap, GuestChip, setPeopleSection } from "./pulse";
+import { AwayRecap, GuestChip, LiveRail, setPeopleSection } from "./pulse";
+import { QuickBar } from "./quickbar";
 import { fmt, useGame, type GameApi } from "./useGame";
 
 type Tab = "home" | "jobs" | "fight" | "shop" | "people" | "city" | "profile";
@@ -246,6 +247,12 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
         </AnimatePresence>
       </div>
 
+      <aside className="rail" aria-label="What's happening">
+        <LiveRail game={game} go={go} onRead={setReading} />
+      </aside>
+
+      <QuickBar game={game} />
+
       <AwayRecap game={game} />
 
       <nav className="bottomnav glass" aria-label="Main">
@@ -318,48 +325,100 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
   );
 }
 
-/** A stable case number for the file header. */
-const fileNo = (name: string) => String([...name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 9000, 7) + 1000);
-
+/** The game HUD: who you are, and every resource in its own colour, always in the same place. */
 function Hud({ view, live, onProfile }: { view: PublicView; live: NonNullable<GameApi["live"]>; onProfile: () => void }) {
   const heatTone = { Clean: "ok", Noticed: "warn", Wanted: "hot", "Most wanted": "hot" }[view.heatLabel];
+  const ladder = view.ladder;
+  const progress = ladder ? Math.round((ladder.current / ladder.ranks.length) * 100) : 0;
+  const hurt = live.hospital > 0;
+  // Scrolling down, the HUD tucks away its details so the screen is for the game.
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    const on = () => setCompact(window.scrollY > 120);
+    on();
+    window.addEventListener("scroll", on, { passive: true });
+    return () => window.removeEventListener("scroll", on);
+  }, []);
   return (
-    <header className="hud glass">
-      <div className="hud-file">
-        <span>File Nº {fileNo(view.name)} · {view.location.city}</span>
-        <span className={`stamp stamp-${heatTone}`}>{view.heatLabel}</span>
-      </div>
-      <div className="hud-id">
-        <button className="avatar-btn" onClick={onProfile} aria-label="Open your profile">
+    <header className={`hud${compact ? " compact" : ""}`}>
+      <div className="hud-top">
+        <button className="hud-avatar" onClick={onProfile} aria-label="Open your profile" style={{ ["--p" as string]: `${progress}%`, ["--rim" as string]: view.path ? PATH_LOOKS[view.path.id]?.rim : "#8d96a8" }}>
           <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo} className="avatar-sm" />
+          {ladder && <span className="hud-rank">{ladder.current}</span>}
         </button>
-        <div>
-          <div className="hud-name">{view.name}</div>
-          <div className="hud-title">{view.path ? `${view.path.rank} · ${view.path.name}` : `Bum · ${view.location.city}`}</div>
+        <div className="hud-who">
+          <b className="hud-name">{view.name}</b>
+          <span className="hud-title">{view.path ? `${view.path.rank} · ${view.path.name}` : `Nobody · ${view.location.city}`}</span>
         </div>
-        <div className="hud-money">
+        <div className="hud-cash">
+          <Delta value={view.cash} prefix="$" />
           <Counter value={view.cash} className="cash" prefix="$" />
-          <span className="bank"><Home size={11} /> bank ${view.bank.toLocaleString()}</span>
-          {view.dirty > 0 && <span className="dirty" title="Dirty money: launder it before the bank or shops will take it">dirty ${view.dirty.toLocaleString()}</span>}
+          <span className="hud-sub">
+            <span title="In the bank">🏦 ${view.bank.toLocaleString()}</span>
+            {view.dirty > 0 && <span className="dirty" title="Dirty money: launder it before the bank or shops will take it">💵 ${view.dirty.toLocaleString()}</span>}
+          </span>
         </div>
       </div>
-      <div className="hud-bars">
-        <Bar icon={<Zap size={14} />} label="Energy" value={live.energy} max={view.maxEnergy} tone="cyan"
-          note={live.energy >= view.maxEnergy ? "Full" : `+1 in ${fmt(live.nextIn)} · full in ${fmt(live.fullIn)}`} />
-        <Bar icon={<Heart size={14} />} label="Health" value={live.hospital > 0 ? 0 : view.hp} max={view.maxHp} tone="red"
-          note={live.hospital > 0 ? `Clinic ${fmt(live.hospital)}` : view.hp >= view.maxHp ? "Healthy" : "Recovering"} />
+      <div className="hud-meters">
+        <Meter tone="energy" icon={<Zap size={14} />} value={live.energy} max={view.maxEnergy}
+          note={live.energy >= view.maxEnergy ? "Full" : `+1 in ${fmt(live.nextIn)} · full ${fmt(live.fullIn)}`} />
+        <Meter tone="health" icon={<Heart size={14} />} value={hurt ? 0 : view.hp} max={view.maxHp}
+          note={hurt ? `Clinic ${fmt(live.hospital)}` : view.hp >= view.maxHp ? "Healthy" : "Recovering"} />
       </div>
-      <div className="hud-chips">
-        <span className="chip"><Star size={12} /> Rep {view.reputation}</span>
-        <span className="chip"><Home size={12} /> {view.housing}</span>
+      <div className="hud-tags">
+        <span className={`tag tag-heat heat-${heatTone}`}><Flame size={12} /> {view.heatLabel}</span>
+        <span className="tag tag-rep"><Star size={12} /> {view.reputation} rep</span>
+        <span className="tag"><MapPin size={12} /> {view.location.city}</span>
+        <span className="tag"><Home size={12} /> {view.housing}</span>
         {view.immuneUntil > Date.now() && (
-          <span className="chip chip-green" title="You survived a fight. Nobody can attack or mug you for a while. Attacking someone ends it.">
-            <ShieldCheck size={12} /> Protected {fmt(view.immuneUntil - Date.now())}
+          <span className="tag tag-good" title="You survived a fight. Nobody can attack or mug you for a while. Attacking someone ends it.">
+            <ShieldCheck size={12} /> Safe {fmt(view.immuneUntil - Date.now())}
           </span>
         )}
-        {view.onBail && <span className="chip chip-gold">On bail</span>}
+        {view.onBail && <span className="tag tag-warn">On bail</span>}
       </div>
     </header>
+  );
+}
+
+/** A segmented meter with the number inside it, readable at a glance. */
+function Meter({ tone, icon, value, max, note }: { tone: string; icon: React.ReactNode; value: number; max: number; note: string }) {
+  const pct = Math.max(0, Math.min(100, (value / max) * 100));
+  return (
+    <div className={`meter meter-${tone}`}>
+      <div className="meter-bar">
+        <motion.div className="meter-fill" animate={{ width: `${pct}%` }} transition={{ type: "spring", stiffness: 120, damping: 20 }} />
+        <span className="meter-text">{icon}<b>{Math.floor(value)}</b>/{max}</span>
+      </div>
+      <span className="meter-note">{note}</span>
+    </div>
+  );
+}
+
+/** A number that floats up next to a value when it changes (+$24, -$60). */
+function Delta({ value, prefix = "" }: { value: number; prefix?: string }) {
+  const [prev, setPrev] = useState(value);
+  const [pops, setPops] = useState<{ id: number; d: number }[]>([]);
+  useEffect(() => {
+    if (value !== prev) {
+      const d = value - prev;
+      const id = Date.now();
+      setPops((x) => [...x.slice(-2), { id, d }]);
+      setPrev(value);
+      const t = setTimeout(() => setPops((x) => x.filter((p) => p.id !== id)), 1600);
+      return () => clearTimeout(t);
+    }
+  }, [value, prev]);
+  return (
+    <span className="deltas" aria-hidden>
+      <AnimatePresence>
+        {pops.map((p) => (
+          <motion.span key={p.id} className={`delta ${p.d > 0 ? "up" : "down"}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: -18 }} exit={{ opacity: 0, y: -30 }} transition={{ duration: 0.6 }}>
+            {p.d > 0 ? "+" : "-"}{prefix}{Math.abs(Math.round(p.d)).toLocaleString()}
+          </motion.span>
+        ))}
+      </AnimatePresence>
+    </span>
   );
 }
 

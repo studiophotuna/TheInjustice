@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.0.0: game feel
+
+A new look and layout built for long sessions: clear at a glance, fast to play.
+
+- **One colour per resource, everywhere:** cash green, energy yellow, health red, heat orange,
+  reputation violet, info cyan.
+- **Game HUD:** your avatar with a ring showing how far up your career ladder you are and your
+  rank number; big cash with bank and dirty money under it; chunky energy and health meters with
+  the numbers inside; heat, rep, city and home as tags. It shrinks while you scroll.
+- **Money pops:** every change in cash floats up beside it (+$24, -$60).
+- **Quick bar:** your four most common actions on every screen: repeat your last job, the gym
+  (your last exercise), eat the best food you can afford, use a medkit. Energy costs on each.
+  On desktop, press 1–4.
+- **Desktop layout:** sidebar, game in the middle, and a live panel on the right with Right now,
+  what's happening in the city and who's online.
+- **Type:** Barlow Condensed for the HUD, headings and buttons; Barlow for reading.
+- **Buttons** are chunky and obvious: yellow for actions that cost energy, red for violence,
+  dark for everything else. Fight odds are solid colour badges.
+- Replaces the 1.9 case-file look.
+
 ## 1.9.0: the case file
 
 A new look built around the game itself: the interface reads like the evidence in your frame-up.

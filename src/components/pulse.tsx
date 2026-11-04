@@ -3,6 +3,7 @@
 import { ArrowRight, Briefcase, Coins, Gift, Radio, Siren, Sparkles, X, Zap } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
+import { OnlineNow } from "./online";
 import { fmt, type GameApi } from "./useGame";
 
 export type FeedItem = { at: number; text: string; kind: "city" | "street" };
@@ -275,3 +276,29 @@ export const takePeopleSection = () => {
   pendingSection = null;
   return s;
 };
+
+// ── Desktop side panel ──────────────────────────────────────────────────────
+
+/** Desktop only: what to do, what's happening and who's out, beside every screen. */
+export function LiveRail({ game, go, onRead }: { game: GameApi; go: (t: string) => void; onRead: (id: string) => void }) {
+  const pulse = usePulse(game.view!.location.country);
+  return (
+    <div className="rail-inner">
+      <RightNow game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} />
+      {!!pulse?.feed.length && (
+        <section className="card rail-feed">
+          <h3 className="card-title"><Radio size={14} className="pulse" /> Live in {game.view!.location.city}</h3>
+          <ul>
+            {pulse.feed.slice(0, 8).map((f, i) => (
+              <li key={i} className={f.kind}>
+                <span>{f.text}</span>
+                <i>{ago(f.at)}</i>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      <OnlineNow game={game} limit={5} />
+    </div>
+  );
+}

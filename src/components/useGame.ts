@@ -27,6 +27,19 @@ function vibrate(ms: number | number[]) {
   }
 }
 
+export const LAST_JOB = "cns_last_job";
+export const LAST_GYM = "cns_last_gym";
+
+/** Remembers the last job and gym exercise so the quick bar can repeat them. */
+function rememberAction(body: Record<string, unknown>) {
+  try {
+    if (body.type === "job" && typeof body.jobId === "string") localStorage.setItem(LAST_JOB, body.jobId);
+    if (body.type === "train" && typeof body.stat === "string") localStorage.setItem(LAST_GYM, body.stat);
+  } catch {
+    // ignore
+  }
+}
+
 export function useGame() {
   const [view, setView] = useState<PublicView | null>(null);
   const [account, setAccount] = useState<{ username: string } | null>(null);
@@ -111,6 +124,7 @@ export function useGame() {
         }
         const v = data.view as PublicView;
         accept(v);
+        rememberAction(body);
         const events = (data.events ?? []) as GameEvent[];
         const fightEvent = events.find((e) => e.fight);
         if (fightEvent?.fight) {

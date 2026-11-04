@@ -1,12 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Bangers, IBM_Plex_Mono, IBM_Plex_Sans, Special_Elite } from "next/font/google";
+import { Bangers, Barlow, Barlow_Condensed, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import "./casefile.css";
+import "./game.css";
 
-// Case-file type: a typewriter for headings and stamps, IBM Plex for reading and for figures.
-const body = IBM_Plex_Sans({ weight: ["400", "500", "600", "700"], subsets: ["latin"], display: "swap", variable: "--font-body" });
-const mono = IBM_Plex_Mono({ weight: ["400", "500", "600"], subsets: ["latin"], display: "swap", variable: "--font-mono" });
-const typewriter = Special_Elite({ weight: "400", subsets: ["latin"], display: "swap", variable: "--font-display" });
+// Game type: Barlow for reading, Barlow Condensed for the HUD and headings, a mono for timers.
+const body = Barlow({ weight: ["400", "500", "600", "700"], subsets: ["latin"], display: "swap", variable: "--font-body" });
+const display = Barlow_Condensed({ weight: ["500", "600", "700", "800"], subsets: ["latin"], display: "swap", variable: "--font-display" });
+const mono = JetBrains_Mono({ weight: ["500", "700"], subsets: ["latin"], display: "swap", variable: "--font-mono" });
 const bangers = Bangers({ weight: "400", subsets: ["latin"], display: "swap", variable: "--font-sfx" });
 
 export const metadata: Metadata = {
@@ -21,13 +21,13 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#120f0c",
+  themeColor: "#0a0c11",
   colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${body.variable} ${mono.variable} ${typewriter.variable} ${bangers.variable}`}>
+    <html lang="en" className={`${body.variable} ${display.variable} ${mono.variable} ${bangers.variable}`}>
       <body>{children}</body>
     </html>
   );
