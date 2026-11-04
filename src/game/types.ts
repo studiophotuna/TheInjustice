@@ -178,6 +178,8 @@ export interface Player {
   trophiesPublic?: boolean;
   /** Last time the player had the game open (for "online now"). */
   seenAt?: number;
+  /** Set on street regulars (characters the game runs). See regulars.ts. */
+  regular?: { country: CountryId; key: string; slot: number };
   /** Recent repetitions of each job or exercise (fades over time), for diminishing returns. */
   practice?: Record<string, { n: number; at: number }>;
   /**
@@ -432,9 +434,9 @@ export interface Ambush {
   country: CountryId;
   createdAt: number;
   expiresAt: number;
-  attackers: { id: string; name: string }[];
-  driver: { id: string; name: string } | null;
-  lookout: { id: string; name: string } | null;
+  attackers: { id: string; name: string; hired?: boolean }[];
+  driver: { id: string; name: string; hired?: boolean } | null;
+  lookout: { id: string; name: string; hired?: boolean } | null;
 }
 
 export interface HitContract {
@@ -668,6 +670,8 @@ export class GameError extends Error {}
 
 /** One per country: an elected mayor, a treasury and city policies. */
 export interface City {
+  /** Last time a street regular spoke in city chat. */
+  regularChatAt?: number;
   country: CountryId;
   /** Index of the current two-week term. */
   term: number;

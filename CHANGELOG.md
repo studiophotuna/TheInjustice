@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.8.0: a living city
+
+- **Street regulars:** each city has ten characters run by the game (a night nurse, a beat cop,
+  a debt collector, a card sharp...), each with a career, rank, routine and a short bio. When few
+  real players are online, regulars fill the street (up to six people out in total); as the
+  city fills up, they fade out. They're always labelled "Regular".
+  - You can fight them, pickpocket, snatch or mug them. They carry pocket money only ($20–160,
+    refilled every 4 hours), so they can't be farmed.
+  - They see crimes and, half the time, tell the police.
+  - Now and then one says something in city chat.
+  - A crew leader can hire one for an ambush role (one per ambush, for an equal cut).
+  - They never appear on leaderboards or season boards, never hold seats or run for office, and
+    can't be put under contract, given loans, bountied, invited or reported.
+- **Live street feed:** a ticker on Home and People with the city's news (turf, seats, ambushes)
+  and what the regulars are up to.
+- **Right now (Home):** one card with the most useful thing to do next: your crew needs a driver,
+  your daily reward or business income is waiting, a new chapter, or the best job. Replaces
+  "Your next move".
+- **While you were away:** after 30 minutes or more, a short recap when you come back: messages,
+  money, reputation, how your body feels.
+- **First-day checklist:** from rank 2 it only appears when rewards are waiting, as one line with
+  "Claim all".
+- **Guest reminder:** a small chip instead of a banner. Dismiss it and it comes back once, at your
+  next promotion.
+- **People:** compact cards with one main button and a "⋯" menu grouped into Street, Crew,
+  Business, The law and Safety. Actions you can't take are hidden instead of greyed out. Cards
+  are about 70% shorter.
+- **Me** is in the phone's bottom bar.
+- **Shop** is split into Supplies, Weapons, Armor, Housing and Businesses.
+- **Desktop** uses two columns on Home and People.
+- **Landing:** first-time visitors get a 15-second comic cold open of the frame-up (tap to skip).
+
 ## 1.7.0: old wounds, a stat soft cap and crew ambushes
 
 - **Old wounds:** every hospital stay from a fight you chose leaves an old wound that lowers your

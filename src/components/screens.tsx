@@ -2,14 +2,14 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowRight, KeyRound, LogIn, Skull, UserPlus, Wallet } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CHAPTER_BY_ID, PROLOGUE } from "@/game/content/story";
 import { COUNTRIES } from "@/game/content/world";
 import type { CountryId } from "@/game/types";
 import type { PublicView } from "@/game/view";
 import { Skyline } from "./art/Skyline";
 import { Scene } from "./art/Scenes";
-import { ComicPanel, LightsOut } from "./Comic";
+import { Bars, ComicPanel, Gavel, LightsOut, Street } from "./Comic";
 import type { GameApi } from "./useGame";
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -172,10 +172,64 @@ function NameForm({ game, label = "Start" }: { game: GameApi; label?: string }) 
   );
 }
 
+const COLD_OPEN: { art: () => React.ReactElement; line: string }[] = [
+  { art: Gavel, line: "A judge you never met signed your name to a crime." },
+  { art: Bars, line: "Three years behind bars." },
+  { art: Street, line: "Today they let you out. With nothing." },
+  { art: LightsOut, line: "Somebody arranged that. Find out who." },
+];
+const INTRO_KEY = "cns_intro_seen";
+
+/** A 15-second cold open the first time someone lands here. Tap to skip. */
+function ColdOpen({ onDone }: { onDone: () => void }) {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => (i < COLD_OPEN.length - 1 ? setI(i + 1) : onDone()), i === COLD_OPEN.length - 1 ? 4200 : 3400);
+    return () => clearTimeout(t);
+  }, [i, onDone]);
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => e.key === "Escape" && onDone();
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, [onDone]);
+  const Art = COLD_OPEN[i].art;
+  return (
+    <motion.div className="cold-open" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} onClick={() => (i < COLD_OPEN.length - 1 ? setI(i + 1) : onDone())}>
+      <AnimatePresence mode="wait">
+        <motion.figure key={i} className="cold-panel" initial={{ opacity: 0, scale: 1.08 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.7, ease }}>
+          <Art />
+          <motion.figcaption initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, duration: 0.5 }}>
+            {COLD_OPEN[i].line}
+          </motion.figcaption>
+        </motion.figure>
+      </AnimatePresence>
+      <div className="cold-dots">{COLD_OPEN.map((_, j) => <span key={j} className={j <= i ? "on" : ""} />)}</div>
+      <button className="btn btn-ghost btn-sm cold-skip" onClick={(e) => { e.stopPropagation(); onDone(); }}>Skip</button>
+    </motion.div>
+  );
+}
+
 export function Landing({ game }: { game: GameApi }) {
   const [tab, setTab] = useState<"play" | "account">("play");
+  const [intro, setIntro] = useState(false);
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(INTRO_KEY)) setIntro(true);
+    } catch {
+      // No storage: skip the intro.
+    }
+  }, []);
+  const endIntro = useCallback(() => {
+    setIntro(false);
+    try {
+      localStorage.setItem(INTRO_KEY, "1");
+    } catch {
+      // ignore
+    }
+  }, []);
   return (
     <div className="landing">
+      <AnimatePresence>{intro && <ColdOpen key="cold" onDone={endIntro} />}</AnimatePresence>
       <Scene
         kind="street"
         className="landing-scene"

@@ -35,6 +35,7 @@ import { DeanLetter, FightTab, JobsTab, ProfileTab, ShopTab } from "./tabs";
 import { CityPlaces, type Building } from "./places";
 import { CommunityTab } from "./community";
 import { HomeTab } from "./home";
+import { AwayRecap, GuestChip, setPeopleSection } from "./pulse";
 import { fmt, useGame, type GameApi } from "./useGame";
 
 type Tab = "home" | "jobs" | "fight" | "shop" | "people" | "city" | "profile";
@@ -147,6 +148,13 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
     if (kind === "story") setReading(id);
+    // "people:crew" opens People on a section (people, chat, crew, inbox).
+    if (kind === "people") {
+      setTab("people");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      setPeopleSection(id);
+      setTimeout(() => window.dispatchEvent(new CustomEvent("conspira:section", { detail: id })), 60);
+    }
     // "place:police" opens a building in the City tab; old "tab:map" links land on the City.
     if (kind === "place") {
       setTab("city");
@@ -197,11 +205,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
       <div className="main">
         <Hud view={view} live={live} onProfile={() => go("tab:profile")} />
 
-        {!game.account && (
-          <button className="save-banner" onClick={() => setSaveOpen(true)}>
-            <Save size={16} /> <span>Playing as a guest. <b>Save your character</b> to keep it on any device.</span>
-          </button>
-        )}
+        <GuestChip game={game} onSave={() => setSaveOpen(true)} />
 
         {view.travel && (
           <div className="travel-banner">
@@ -242,8 +246,10 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
         </AnimatePresence>
       </div>
 
+      <AwayRecap game={game} />
+
       <nav className="bottomnav glass" aria-label="Main">
-        {TABS.map(({ id, label, Icon }) => (
+        {SIDE_TABS.map(({ id, label, Icon }) => (
           <button key={id} className={tab === id ? "on" : ""} onClick={() => go(`tab:${id}`)}>
             {tab === id && <motion.span layoutId="bottom-pill" className="bottom-pill" />}
             <Icon size={22} />

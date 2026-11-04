@@ -1,6 +1,7 @@
 // Server-side game rules. Pure functions over a Player: no I/O, so they can run in an
 // API route today and a database function (or worker) later without changes.
 
+import { regularUpkeep } from "./regulars";
 import { addWound, healWounds, playerMaxHp } from "./wounds";
 import { careerGapBlock, leaveCareer, legacyPayBonus, veteranFactor } from "./career";
 import { updateProfile } from "./profile";
@@ -131,6 +132,7 @@ export function tick(p: Player, now: number): void {
   ensureDaily(p, now);
   issueGear(p);
   ensureEquipped(p);
+  regularUpkeep(p, now);
 }
 
 /**

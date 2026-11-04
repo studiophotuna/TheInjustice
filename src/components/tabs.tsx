@@ -267,10 +267,30 @@ export function FightTab({ game }: { game: GameApi }) {
 
 const KIND_LABEL: Record<string, string> = { food: "Food", housing: "Housing", weapon: "Weapon", armor: "Armor", medical: "Medical" };
 
+const SHOP_CATS = [
+  { id: "supplies", label: "Supplies", kinds: ["food", "medical"] },
+  { id: "weapon", label: "Weapons", kinds: ["weapon"] },
+  { id: "armor", label: "Armor", kinds: ["armor"] },
+  { id: "housing", label: "Housing", kinds: ["housing"] },
+  { id: "business", label: "Businesses", kinds: [] },
+] as const;
+
 export function ShopTab({ game }: { game: GameApi }) {
   const view = game.view!;
+  const [cat, setCat] = useState<(typeof SHOP_CATS)[number]["id"]>("supplies");
+  const kinds = SHOP_CATS.find((c) => c.id === cat)!.kinds as readonly string[];
+  const waiting = view.properties.some((p) => p.owned && p.waiting >= 1);
   return (
     <div className="stack">
+      <div className="segmented shop-cats" role="tablist">
+        {SHOP_CATS.map((c) => (
+          <button key={c.id} role="tab" aria-selected={cat === c.id} className={cat === c.id ? "on" : ""} onClick={() => setCat(c.id)}>
+            {c.label}
+            {c.id === "business" && waiting && <span className="badge-dot" />}
+          </button>
+        ))}
+      </div>
+      {cat === "business" && (
       <section className="card">
         <h3 className="card-title"><Building size={16} /> Businesses</h3>
         <p className="muted">Buy a business with money from your bank. It earns every hour (up to a day's worth waits for you). You must be in its country to buy it.</p>
@@ -299,9 +319,10 @@ export function ShopTab({ game }: { game: GameApi }) {
           ))}
         </div>
       </section>
-      <h3 className="subhead">Supplies</h3>
-    <motion.div className="shop-grid" variants={list} initial="hidden" animate="show">
-      {view.shop.map((i) => (
+      )}
+      {cat !== "business" && (
+    <motion.div key={cat} className="shop-grid" variants={list} initial="hidden" animate="show">
+      {view.shop.filter((i) => kinds.includes(i.kind)).map((i) => (
         <motion.article key={i.id} variants={item} className={`shop-item ${i.owned ? "owned" : ""}`}>
           <div className="shop-emoji">{i.icon}</div>
           <div className="shop-body">
@@ -315,6 +336,7 @@ export function ShopTab({ game }: { game: GameApi }) {
         </motion.article>
       ))}
     </motion.div>
+      )}
       </div>
   );
 }

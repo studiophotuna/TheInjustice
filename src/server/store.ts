@@ -74,6 +74,8 @@ export interface PlayerStore {
   transaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T>;
   /** Most recently active players in a country. */
   listPlayers(country: string, limit: number): Promise<Player[]>;
+  /** The street regulars living in a country (never included in listPlayers). */
+  listRegulars(country: string): Promise<Player[]>;
   listCrews(limit: number): Promise<Crew[]>;
   getCrew(id: string): Promise<Crew | null>;
   postMessage(m: Omit<ChatMessage, "id" | "at">): Promise<void>;
@@ -176,6 +178,7 @@ export class FileStore implements PlayerStore {
 
   async leaderboard(limit: number) {
     return Object.values((await this.load()).players)
+      .filter((p) => !p.regular)
       .sort((a, b) => b.reputation - a.reputation)
       .slice(0, limit)
       .map((p) => ({ name: p.name, reputation: p.reputation, title: titleOf(p) }));
@@ -294,9 +297,15 @@ export class FileStore implements PlayerStore {
     });
   }
 
+  async listRegulars(country: string) {
+    return Object.values((await this.load()).players)
+      .filter((p) => !!p.regular && (p.country ?? "varrow") === country)
+      .map((p) => structuredClone(p));
+  }
+
   async listPlayers(country: string, limit: number) {
     return Object.values((await this.load()).players)
-      .filter((p) => (p.country ?? "varrow") === country)
+      .filter((p) => !p.regular && (p.country ?? "varrow") === country)
       .sort((a, b) => b.tickAt - a.tickAt)
       .slice(0, limit)
       .map((p) => structuredClone(p));
@@ -414,6 +423,7 @@ class PostgresStore implements PlayerStore {
   async leaderboard(limit: number) {
     return this.sql<LeaderRow[]>`
       select name, reputation, title from injustice.players
+      where data->'regular' is null
       order by reputation desc, created_at asc limit ${limit}`;
   }
 
@@ -551,8 +561,15 @@ class PostgresStore implements PlayerStore {
   async listPlayers(country: string, limit: number) {
     const rows = await this.sql<{ data: Player }[]>`
       select data from injustice.players
-      where coalesce(data->>'country', 'varrow') = ${country}
+      where coalesce(data->>'country', 'varrow') = ${country} and data->'regular' is null
       order by updated_at desc limit ${limit}`;
+    return rows.map((r) => r.data);
+  }
+
+  async listRegulars(country: string) {
+    const rows = await this.sql<{ data: Player }[]>`
+      select data from injustice.players
+      where id like 'reg-%' and coalesce(data->>'country', 'varrow') = ${country}`;
     return rows.map((r) => r.data);
   }
 

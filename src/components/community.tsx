@@ -6,6 +6,7 @@ import { Ban, Crown, Eye, EyeOff, ShieldAlert, ShieldCheck, FileSearch, Footprin
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 import { OnlineNow } from "./online";
+import { StreetFeed, takePeopleSection, usePulse } from "./pulse";
 import { Scene } from "./art/Scenes";
 import type { GameApi } from "./useGame";
 
@@ -32,6 +33,8 @@ type Profile = {
   contract?: { cost: number; block: string | null } | null;
   ambush?: string | null;
   surgery?: { fee: number; block: string | null } | null;
+  regular?: { out: boolean; line: string | null };
+  hire?: ("attacker" | "driver" | "lookout")[];
   rat?: boolean;
   streetTitle: string | null;
   bio?: string | null;
@@ -279,8 +282,18 @@ export function useHub(game: GameApi) {
 
 export function CommunityTab({ game }: { game: GameApi }) {
   const view = game.view!;
-  const [section, setSection] = useState<"people" | "chat" | "crew" | "inbox">("people");
+  type Section = "people" | "chat" | "crew" | "inbox";
+  const [section, setSection] = useState<Section>(() => (takePeopleSection() as Section | null) ?? "people");
   const { hub, error, social } = useHub(game);
+  const pulse = usePulse(view.location.country);
+  useEffect(() => {
+    const on = (e: Event) => {
+      const s = (e as CustomEvent<string>).detail as Section;
+      if (["people", "chat", "crew", "inbox"].includes(s)) setSection(s);
+    };
+    window.addEventListener("conspira:section", on);
+    return () => window.removeEventListener("conspira:section", on);
+  }, []);
 
   // Opening the inbox marks everything read.
   useEffect(() => {
@@ -306,6 +319,7 @@ export function CommunityTab({ game }: { game: GameApi }) {
         ))}
       </div>
       {error && <p className="form-error">{error}</p>}
+      {section === "people" && <StreetFeed feed={pulse?.feed} />}
       {section === "people" && <OnlineNow game={game} />}
       {section === "people" && <People game={game} hub={hub} social={social} />}
       {section === "chat" && hub && <Chat game={game} hub={hub} />}
@@ -315,8 +329,98 @@ export function CommunityTab({ game }: { game: GameApi }) {
   );
 }
 
+type Act = { key: string; label: React.ReactNode; run: () => unknown; danger?: boolean; title?: string };
+type Group = { id: string; label: string; acts: Act[] };
+
+/** Everyone's actions, grouped. Only what you can actually do right now is listed. */
+function personActions(game: GameApi, hub: Hub, p: Profile, social: (b: Record<string, unknown>) => Promise<unknown>): { primary: Act | null; groups: Group[] } {
+  const view = game.view!;
+  const blocked = hub.blocked.includes(p.id);
+  const street: Act[] = [];
+  const crew: Act[] = [];
+  const business: Act[] = [];
+  const law: Act[] = [];
+  const safety: Act[] = [];
+
+  const attack: Act | null = !p.canAttack ? { key: "attack", label: <><Swords size={14} /> Attack</>, danger: true, run: () => social({ op: "attack", targetId: p.id }) } : null;
+  for (const { id, label, Icon, note } of CRIME_BUTTONS) {
+    if (!p.canCrime?.[id]) street.push({ key: id, label: <><Icon size={13} /> {label}</>, title: `${note}. Anonymous, but witnesses may talk.`, run: () => social({ op: "crime", kind: id, targetId: p.id }) });
+  }
+  if (!p.regular) {
+    street.push({
+      key: "bounty",
+      label: <>$ Put a bounty</>,
+      run: () => {
+        const v = window.prompt(`Put a price on ${p.name}'s head. Whoever beats them in a fight collects. Amount from your bank ($100 or more):`, "100");
+        if (v) social({ op: "post_bounty", targetId: p.id, amount: Number(v) });
+      },
+    });
+  }
+
+  if (p.canInvite) crew.push({ key: "invite", label: <><Shield size={14} /> Invite to crew</>, run: () => social({ op: "crew_invite", playerId: p.id }) });
+  if (p.canForum) crew.push({ key: "forum", label: <><MessagesSquare size={14} /> Invite to forum</>, run: () => social({ op: "forum_invite", playerId: p.id }) });
+  if (p.ambush !== undefined && p.ambush !== "n/a" && !p.ambush && !hub.ambush) {
+    crew.push({ key: "ambush", label: <>🚐 Plan an ambush</>, danger: true, run: () => confirm(`Plan an ambush on ${p.name}? Your crew gets two hours to take their places.`) && social({ op: "ambush_plan", targetId: p.id }) });
+  }
+  for (const role of p.hire ?? []) {
+    crew.push({ key: `hire-${role}`, label: <>🤝 Hire as {role === "attacker" ? "an attacker" : `the ${role}`}</>, title: "They take an equal cut.", run: () => social({ op: "ambush_hire", regularId: p.id, role }) });
+  }
+  for (const t of p.torch ?? []) {
+    if (!t.block) crew.push({ key: `torch-${t.id}`, label: <>🔥 Torch {t.name}</>, danger: true, title: `About ${t.odds}% chance it catches.`, run: () => confirm(`Torch ${p.name}'s ${t.name}? If you're caught, you go to a cell.`) && social({ op: "torch", targetId: p.id, propertyId: t.id }) });
+  }
+
+  if (!p.canVouch) business.push({ key: "vouch", label: <><UserCheck size={14} /> Vouch for them</>, run: () => social({ op: "vouch", targetId: p.id }) });
+  if (hub.lender && !p.regular) {
+    business.push({
+      key: "loan",
+      label: <>{hub.lender === "bank" ? "Offer a loan" : "Offer a loan (shark)"}</>,
+      run: () => {
+        const amount = window.prompt(`Lend ${p.name} how much? (from your bank)`, "100");
+        if (!amount) return;
+        const max = hub.lender === "bank" ? 20 : 100;
+        const rate = window.prompt(`Interest in % (0–${max}). They have three days to pay.`, hub.lender === "bank" ? "10" : "50");
+        if (rate) social({ op: "loan_offer", borrowerId: p.id, amount: Number(amount), rate: Number(rate) / 100 });
+      },
+    });
+  }
+  if (p.lawyerFee !== null && p.lawyerFee !== undefined) business.push({ key: "lawyer", label: <>Hire as lawyer (${p.lawyerFee}/wk)</>, title: "A week on retainer: if you're arrested, they defend you automatically", run: () => social({ op: "hire_lawyer", lawyerId: p.id }) });
+  if (p.surgery && !p.surgery.block) business.push({ key: "surgery", label: <>🩺 Surgery (${p.surgery.fee})</>, title: "Fixes up to two old wounds.", run: () => confirm(`Pay Dr. ${p.name} $${p.surgery!.fee} to operate on your old wounds?`) && social({ op: "surgery", doctorId: p.id }) });
+  if (p.canSellGun && view.sellableGear.length > 0) {
+    business.push({
+      key: "gun",
+      label: <>🪖 Sell army gear</>,
+      run: () => {
+        const item = view.sellableGear[view.sellableGear.length - 1];
+        const price = prompt(`Sell ${p.name} a ${item.name.toLowerCase()} from the armory. Your price ($100–$5000):`, "800");
+        if (price) social({ op: "gun_offer", targetId: p.id, itemId: item.id, price: Number(price) });
+      },
+    });
+  }
+
+  if (p.canFrisk !== undefined && p.canFrisk !== "n/a" && !p.canFrisk) law.push({ key: "frisk", label: <><Search size={13} /> Frisk</>, title: "Stop and search them for drugs", run: () => social({ op: "frisk", targetId: p.id }) });
+  if (p.canCourtMartial !== undefined && p.canCourtMartial !== "n/a" && !p.canCourtMartial) {
+    law.push({ key: "cm", label: <><Gavel size={14} /> Court-martial</>, run: () => confirm(`Bring charges against ${p.name}? If their record is clean, it costs you reputation.`) && social({ op: "court_martial", targetId: p.id }) });
+  }
+
+  if (!p.regular) {
+    safety.push({ key: "block", label: <><Ban size={14} /> {blocked ? "Unblock" : "Block"}</>, run: () => social({ op: blocked ? "unblock" : "block", targetId: p.id }) });
+  }
+
+  // The one button on the card: a fight if you can, otherwise the first thing your career offers.
+  const primary = attack ?? (p.surgery && !p.surgery.block ? business.find((a) => a.key === "surgery")! : null) ?? street.find((a) => a.key !== "bounty") ?? null;
+  const groups: Group[] = [
+    { id: "street", label: "Street", acts: [...(attack && primary !== attack ? [attack] : []), ...street.filter((a) => a !== primary)] },
+    { id: "crew", label: "Crew", acts: crew },
+    { id: "business", label: "Business", acts: business.filter((a) => a !== primary) },
+    { id: "law", label: "The law", acts: law },
+    { id: "safety", label: "Safety", acts: safety },
+  ].filter((g) => g.acts.length);
+  return { primary, groups };
+}
+
 function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social: (b: Record<string, unknown>) => Promise<unknown> }) {
   const view = game.view!;
+  const [open, setOpen] = useState<string | null>(null);
   if (!hub) return <p className="muted">Looking around {view.location.city}…</p>;
   if (!hub.players.length) {
     return (
@@ -329,16 +433,19 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
   return (
     <div className="people">
       <h3 className="card-title list-title"><Users size={16} /> Everyone in {view.location.city}</h3>
-      <p className="muted">Most recently active first. Your gut tells you how a fight would go.</p>
+      <p className="muted">Most recently active first. Tap ⋯ for everything you can do.</p>
       {hub.players.map((p) => {
-        const blocked = hub.blocked.includes(p.id);
+        const { primary, groups } = personActions(game, hub, p, social);
+        const expanded = open === p.id;
+        const more = groups.reduce((n, g) => n + g.acts.length, 0);
         return (
-          <motion.article key={p.id} className="person" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+          <motion.article key={p.id} className={`person compact${expanded ? " open" : ""}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
             <PlayerAvatar name={p.name} path={p.path} photo={p.photo} className="avatar-md" />
             <div className="person-body">
               <div className="person-head">
                 <b>{p.name}</b>
                 {p.crewTag && <span className="crew-tag">[{p.crewTag}]</span>}
+                {p.regular && <span className="chip chip-regular" title="A street regular: one of the city's characters, run by the game.">Regular{p.regular.out ? " · out now" : ""}</span>}
                 {p.protected && <span className="chip chip-green"><Shield size={11} /> New</span>}
                 {p.bounty > 0 && <span className="chip chip-red">Wanted · ${p.bounty}</span>}
                 {p.rat && <span className="chip chip-red" title="Walked out on the family. Fair game for their old crew.">🐀 Rat</span>}
@@ -347,140 +454,48 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
                 ))}
                 {STATUS[p.status] && <span className="chip">{STATUS[p.status]}</span>}
               </div>
-              <p className="muted" style={{ color: p.path ? PATH_LOOKS[p.path]?.rim : undefined }}>
-                {p.title} · ★ {p.reputation} · seen {ago(p.lastSeen)}
+              <p className="muted person-line" style={{ color: p.path ? PATH_LOOKS[p.path]?.rim : undefined }}>
+                {p.title} · ★ {p.reputation} · {p.regular ? (p.regular.out ? "out now" : "off the street") : `seen ${ago(p.lastSeen)}`}
                 {p.streetTitle && <em className="street-title"> · {p.streetTitle}</em>}
               </p>
-              {p.bio && <p className="person-bio">“{p.bio}”</p>}
-              <div className="gut">
-                <span className={`danger-pill d${p.danger}`}>{DANGER[p.danger]}</span>
-                <span className="muted">“{p.read}”</span>
+              {p.bio && <p className={`person-bio${expanded ? "" : " clamp"}`}>“{p.bio}”</p>}
+              <div className="person-actions">
+                <span className={`danger-pill d${p.danger}`} title={p.read}>{DANGER[p.danger]}</span>
+                {primary ? (
+                  <button className={`btn btn-sm ${primary.danger ? "btn-danger" : "btn-primary"}`} disabled={game.busy} title={primary.title} onClick={primary.run}>
+                    {primary.label}
+                  </button>
+                ) : (
+                  <span className="fine muted person-lock"><Lock size={11} /> {p.canAttack ?? "Nothing to do here right now."}</span>
+                )}
+                {more > 0 && (
+                  <button className="btn btn-ghost btn-sm more-btn" aria-expanded={expanded} onClick={() => setOpen(expanded ? null : p.id)}>
+                    {expanded ? "Less" : `⋯ ${more}`}
+                  </button>
+                )}
+                {!p.regular && <ReportButton game={game} targetId={p.id} targetName={p.name} />}
               </div>
-              <div className="row">
-                <button className="btn btn-danger btn-sm" disabled={game.busy || !!p.canAttack} title={p.canAttack ?? ""} onClick={() => social({ op: "attack", targetId: p.id })}>
-                  <Swords size={14} /> Attack
-                </button>
-                {!p.canVouch && (
-                  <button className="btn btn-primary btn-sm" disabled={game.busy} onClick={() => social({ op: "vouch", targetId: p.id })}>
-                    <UserCheck size={14} /> Vouch
-                  </button>
+              <AnimatePresence initial={false}>
+                {expanded && (
+                  <motion.div className="action-sheet" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
+                    <p className="muted fine">“{p.read}”</p>
+                    {groups.map((g) => (
+                      <div key={g.id} className="action-group">
+                        <span className="crime-label">{g.label}</span>
+                        <div className="row wrap">
+                          {g.acts.map((a) => (
+                            <button key={a.key} className={`btn btn-sm ${a.danger ? "btn-danger" : "btn-ghost"}`} disabled={game.busy} title={a.title} onClick={a.run}>
+                              {a.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    {p.contract && hub.hitmen.length > 0 && <ContractButton game={game} target={p} hitmen={hub.hitmen} social={social} />}
+                    {p.canAttack && <p className="job-lock"><Lock size={11} /> {p.canAttack}</p>}
+                  </motion.div>
                 )}
-                {hub.lender && (
-                  <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => {
-                    const amount = window.prompt(`Lend ${p.name} how much? (from your bank)`, "100");
-                    if (!amount) return;
-                    const max = hub.lender === "bank" ? 20 : 100;
-                    const rate = window.prompt(`Interest in % (0–${max}). They have three days to pay.`, hub.lender === "bank" ? "10" : "50");
-                    if (rate) social({ op: "loan_offer", borrowerId: p.id, amount: Number(amount), rate: Number(rate) / 100 });
-                  }}>
-                    {hub.lender === "bank" ? "Offer a loan" : "Offer a loan (shark)"}
-                  </button>
-                )}
-                {p.canFrisk !== "n/a" && (
-                  <button className="btn btn-ghost btn-sm" disabled={game.busy || !!p.canFrisk} title={p.canFrisk ?? "Stop and search them for drugs"} onClick={() => social({ op: "frisk", targetId: p.id })}>
-                    <Search size={13} /> Frisk
-                  </button>
-                )}
-                {p.lawyerFee !== null && (
-                  <button className="btn btn-ghost btn-sm" disabled={game.busy} title="A week on retainer: if you're arrested, they defend you automatically" onClick={() => social({ op: "hire_lawyer", lawyerId: p.id })}>
-                    Hire as lawyer (${p.lawyerFee}/wk)
-                  </button>
-                )}
-                {p.canInvite && (
-                  <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: "crew_invite", playerId: p.id })}>
-                    <Shield size={14} /> Invite to crew
-                  </button>
-                )}
-                {p.canCourtMartial !== undefined && p.canCourtMartial !== "n/a" && (
-                  <button
-                    className="btn btn-ghost btn-sm"
-                    disabled={game.busy || !!p.canCourtMartial}
-                    title={p.canCourtMartial ?? "Bring charges: it sticks if their record is dirty or they sold army gear."}
-                    onClick={() => confirm(`Bring charges against ${p.name}? If their record is clean, it costs you reputation.`) && social({ op: "court_martial", targetId: p.id })}
-                  >
-                    <Gavel size={14} /> Court-martial
-                  </button>
-                )}
-                {p.canSellGun && view.sellableGear.length > 0 && (
-                  <button
-                    className="btn btn-ghost btn-sm"
-                    disabled={game.busy}
-                    onClick={() => {
-                      const item = view.sellableGear[view.sellableGear.length - 1];
-                      const price = prompt(`Sell ${p.name} a ${item.name.toLowerCase()} from the armory. Your price ($100–$5000):`, "800");
-                      if (price) social({ op: "gun_offer", targetId: p.id, itemId: item.id, price: Number(price) });
-                    }}
-                  >
-                    🪖 Sell army gear
-                  </button>
-                )}
-                {p.contract && hub.hitmen.length > 0 && <ContractButton game={game} target={p} hitmen={hub.hitmen} social={social} />}
-                {p.ambush !== undefined && p.ambush !== "n/a" && !hub.ambush && (
-                  <button
-                    className="btn btn-danger btn-sm"
-                    disabled={game.busy || !!p.ambush}
-                    title={p.ambush ?? "Your crew picks attackers, a driver and a lookout, then you jump them together."}
-                    onClick={() => confirm(`Plan an ambush on ${p.name}? Your crew gets two hours to take their places.`) && social({ op: "ambush_plan", targetId: p.id })}
-                  >
-                    🚐 Plan an ambush
-                  </button>
-                )}
-                {p.surgery && (
-                  <button
-                    className="btn btn-ghost btn-sm"
-                    disabled={game.busy || !!p.surgery.block}
-                    title={p.surgery.block ?? "Fixes up to two old wounds."}
-                    onClick={() => confirm(`Pay Dr. ${p.name} $${p.surgery!.fee} to operate on your old wounds?`) && social({ op: "surgery", doctorId: p.id })}
-                  >
-                    🩺 Surgery (${p.surgery.fee})
-                  </button>
-                )}
-                {(p.torch ?? []).map((t) => (
-                  <button
-                    key={t.id}
-                    className="btn btn-danger btn-sm"
-                    disabled={game.busy || !!t.block}
-                    title={t.block ?? `About ${t.odds}% chance it catches.`}
-                    onClick={() => confirm(`Torch ${p.name}'s ${t.name}? If you're caught, you go to a cell.`) && social({ op: "torch", targetId: p.id, propertyId: t.id })}
-                  >
-                    🔥 Torch {t.name}
-                  </button>
-                ))}
-                {p.canForum && (
-                  <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: "forum_invite", playerId: p.id })}>
-                    <MessagesSquare size={14} /> Invite to forum
-                  </button>
-                )}
-                <button
-                  className="btn btn-ghost btn-sm"
-                  disabled={game.busy}
-                  onClick={() => {
-                    const v = window.prompt(`Put a price on ${p.name}'s head. Whoever beats them in a fight collects. Amount from your bank ($100 or more):`, "100");
-                    if (v) social({ op: "post_bounty", targetId: p.id, amount: Number(v) });
-                  }}
-                >
-                  $ Bounty
-                </button>
-                <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: blocked ? "unblock" : "block", targetId: p.id })}>
-                  <Ban size={14} /> {blocked ? "Unblock" : "Block"}
-                </button>
-                <ReportButton game={game} targetId={p.id} targetName={p.name} />
-              </div>
-              {p.canAttack && <p className="job-lock"><Lock size={11} /> {p.canAttack}</p>}
-              <div className="crime-row">
-                <span className="crime-label">Street crime</span>
-                {CRIME_BUTTONS.map(({ id, label, Icon, note }) => (
-                  <button
-                    key={id}
-                    className="btn btn-ghost btn-sm"
-                    disabled={game.busy || !!p.canCrime?.[id]}
-                    title={p.canCrime?.[id] ?? `${note}. Anonymous, but witnesses may talk.`}
-                    onClick={() => social({ op: "crime", kind: id, targetId: p.id })}
-                  >
-                    <Icon size={13} /> {label}
-                  </button>
-                ))}
-              </div>
+              </AnimatePresence>
             </div>
           </motion.article>
         );

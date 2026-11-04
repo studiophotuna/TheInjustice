@@ -9,6 +9,10 @@ import { buildLab, flagLaundering, flagsView, frisk, friskBlock, isBankStaff, la
 import { isDrug } from "@/game/drugs";
 import { cancelHeist, heistView, planHeist, runHeist, takeRole } from "@/game/heist";
 import * as AM from "@/game/ambush";
+import { ambientLines, chatLine, defFor, isRegularId, REGULAR_OPS, REGULARS } from "@/game/regulars";
+import { DISTRICTS } from "@/game/content/districts";
+import { COUNTRY_BY_ID } from "@/game/content/world";
+import { realOnlineCount, regularsOnStreet } from "@/server/regulars";
 import { assertNotAlt } from "@/game/anticheat";
 import { setSurgeryFee, surgery, surgeryBlock, woundsOf } from "@/game/wounds";
 import { cityEvent } from "@/game/events";
@@ -85,7 +89,7 @@ import {
   patientView,
   reviewDeposit,
 } from "@/game/casework";
-import { GameError, type AmbushRole, type HeistRole, type Crew, type CrewPolicy, type GameEvent, type Player } from "@/game/types";
+import { GameError, type AmbushRole, type CaseFile, type CountryId, type HeistRole, type Crew, type CrewPolicy, type GameEvent, type Player } from "@/game/types";
 import { toView } from "@/game/view";
 import { assertJson } from "@/server/auth";
 import { resolveIdentity } from "@/server/identity";
@@ -301,13 +305,37 @@ export async function GET(req: Request) {
         .map((o) => ({ id: o.id, name: o.name, fee: backAlleyFee(o) }));
       return NextResponse.json({ doctors });
     }
+    if (url.searchParams.get("pulse")) {
+      // The street feed (what's happening in the city) and what your crew needs from you.
+      const country = countryOf(p);
+      const [city, real, myCrew] = await Promise.all([store.getCity(country), store.listPlayers(country, 40), p.crewId ? store.getCrew(p.crewId) : null]);
+      const { out } = await regularsOnStreet(store, country, realOnlineCount(real, now), now);
+      const districts = DISTRICTS.filter((d) => d.country === country).map((d) => d.name);
+      const feed = [...(city?.log ?? []).slice(0, 10).map((l) => ({ at: l.at, text: l.text, kind: "city" as const })), ...ambientLines(out, districts, now).map((l) => ({ ...l, kind: "street" as const }))]
+        .filter((l) => now - l.at < 24 * 60 * 60_000)
+        .sort((x, y) => y.at - x.at)
+        .slice(0, 12);
+      const needs: { kind: string; text: string; cta: string; go: string; until: number | null }[] = [];
+      const am = myCrew?.ambush;
+      if (myCrew && am && am.expiresAt > now) {
+        const inIt = [...am.attackers, am.driver, am.lookout].some((x) => x?.id === p.id);
+        const open = [am.attackers.length < AM.AMBUSH.maxAttackers ? "attackers" : null, am.driver ? null : "a driver", am.lookout ? null : "a lookout"].filter(Boolean);
+        if (myCrew.leaderId === p.id && am.attackers.length) needs.push({ kind: "ambush", text: `The ambush on ${am.targetName} is set.${open.length ? ` Still open: ${open.join(", ")}.` : ""}`, cta: "Give the signal", go: "people:crew", until: am.expiresAt });
+        else if (!inIt && open.length) needs.push({ kind: "ambush", text: `Your crew is jumping ${am.targetName}. They need ${open.join(", ")}.`, cta: "Take a role", go: "people:crew", until: am.expiresAt });
+      }
+      const h = myCrew?.heist;
+      if (myCrew && h && !Object.values(h.roles).some((x) => x?.id === p.id)) needs.push({ kind: "heist", text: `Your crew is planning a bank job in ${COUNTRY_BY_ID[h.country].capital}.`, cta: "Join the job", go: "people:crew", until: null });
+      const br = myCrew?.breakout;
+      if (myCrew && br && !br.team.some((x) => x.id === p.id)) needs.push({ kind: "breakout", text: `Your crew is breaking ${br.targetName} out of prison.`, cta: "Join in", go: "people:crew", until: null });
+      return NextResponse.json({ feed, needs });
+    }
     if (url.searchParams.get("online")) {
       // Players in this city with the game open right now, with quick actions.
       const [people, crews] = await Promise.all([store.listPlayers(countryOf(p), 80), store.listCrews(200)]);
       const tags = new Map(crews.map((c) => [c.id, c.tag]));
-      const online = people
-        .filter((o) => o.id !== p.id && !o.dead && !isBanned(o, now) && now - (o.seenAt ?? 0) < BALANCE.onlineMs)
-        .slice(0, 30)
+      const real = people.filter((o) => o.id !== p.id && !o.dead && !isBanned(o, now) && now - (o.seenAt ?? 0) < BALANCE.onlineMs);
+      const { out } = await regularsOnStreet(store, countryOf(p), real.length + 1, now);
+      const online = [...real.slice(0, 30), ...out]
         .map((o) => {
           tick(o, now);
           const prof = profileFor(p, o, now);
@@ -325,6 +353,7 @@ export async function GET(req: Request) {
             canAttack: prof.canAttack,
             canCrime: Object.fromEntries(CRIME_KINDS.map((k) => [k, crimeBlock(p, o, k, now)])),
             bounty: prof.bounty,
+            regular: !!o.regular,
           };
         });
       return NextResponse.json({ online });
@@ -335,10 +364,11 @@ export async function GET(req: Request) {
         if (!canUseForum(await store.getCrew(channel.slice(6)), p)) throw new GameError("You can't read that forum.");
       } else if (!channelsFor(p).includes(channel)) throw new GameError("You can't read that channel.");
       const blocked = new Set(p.blocked ?? []);
+      if (channel === `country:${countryOf(p)}`) await regularChat(store, countryOf(p), now);
       const messages = (await store.listMessages(channel, 60)).filter((m) => !blocked.has(m.authorId));
       return NextResponse.json({ messages });
     }
-    const [players, crews, myCrew, hubCity] = await Promise.all([
+    const [players0, crews, myCrew, hubCity] = await Promise.all([
       store.listPlayers(countryOf(p), 40),
       store.listCrews(20),
       p.crewId ? store.getCrew(p.crewId) : null,
@@ -347,6 +377,29 @@ export async function GET(req: Request) {
     const crewTags = new Map(crews.map((c) => [c.id, c.tag]));
     if (myCrew) crewTags.set(myCrew.id, myCrew.tag);
     const leading = myCrew && myCrew.leaderId === p.id ? myCrew : null;
+    // Street regulars: the ones out now are always listed; while the city is small, all of them.
+    const regs = await regularsOnStreet(store, countryOf(p), realOnlineCount(players0, now), now);
+    const outIds = new Set(regs.out.map((r) => r.id));
+    const shownRegs = players0.length < 20 ? regs.all : regs.out;
+    // Regulars out now count as just seen; the ones off the street go last.
+    const seen = (o: Player) => (outIds.has(o.id) ? now : o.regular ? 0 : o.tickAt);
+    const players = [...players0, ...shownRegs].sort((a, b) => seen(b) - seen(a));
+    const regularRow = (o: Player) => {
+      const prof = profileFor(p, o, now);
+      const plan = myCrew?.ambush;
+      const hire = leading && plan && plan.expiresAt > now && outIds.has(o.id)
+        ? (["attacker", "driver", "lookout"] as const).filter((r) => !AM.hireBlock(leading, p, o, r, now))
+        : [];
+      return {
+        ...prof,
+        lastSeen: outIds.has(o.id) ? now : prof.lastSeen,
+        regular: { out: outIds.has(o.id), line: defFor(o)?.lines[0] ?? null },
+        crewTag: null, canInvite: false, canForum: false, canCourtMartial: "n/a", canSellGun: false, lawyerFee: null, canFrisk: "n/a",
+        canVouch: "n/a", torch: [], contract: null, ambush: "n/a", surgery: null, bounty: 0,
+        canCrime: Object.fromEntries(CRIME_KINDS.map((k) => [k, crimeBlock(p, o, k, now)])),
+        hire,
+      };
+    };
     // Keep the player's own "leads a crew" record in step (older crews predate it).
     if (!!leading !== !!p.family?.leads) {
       await store.update(p.id, (x) => {
@@ -359,6 +412,7 @@ export async function GET(req: Request) {
       players: players
         .filter((o) => o.id !== p.id && !o.dead && !isBanned(o, now))
         .map((o) => {
+          if (o.regular) return regularRow(o);
           tick(o, now);
           const prof = profileFor(p, o, now);
           const canInvite = !!leading && !o.crewId && o.path === BALANCE.crew.path && !(leading.invites ?? []).some((i) => i.id === o.id);
@@ -436,6 +490,40 @@ async function ceremonyList(store: ReturnType<typeof getStore>, crew: Crew, lead
 }
 
 /** Loads the acting player and another player, ticks both, and saves both. */
+/** Ids of street regulars out right now who might see a crime (one or two of them). */
+async function regularWitnesses(store: ReturnType<typeof getStore>, country: CountryId, now: number): Promise<string[]> {
+  const real = await store.listPlayers(country, 40);
+  const { out } = await regularsOnStreet(store, country, realOnlineCount(real, now), now);
+  return out.sort(() => Math.random() - 0.5).slice(0, 2).map((r) => r.id);
+}
+
+/** Regulars who saw a crime sometimes talk to the police. */
+function regularsTalk(witnesses: Player[], c: CaseFile, culprit: Player | null, now: number) {
+  for (const w of witnesses) {
+    if (!w.regular || !(w.sightings ?? []).some((s) => s.caseId === c.id)) continue;
+    if (Math.random() < REGULARS.reportChance) reportSighting(w, c, culprit && culprit.id !== w.id ? culprit : null, now, Math.random);
+    else w.sightings = (w.sightings ?? []).filter((s) => s.caseId !== c.id);
+  }
+}
+
+/** Now and then, one of the regulars out on the street says something in city chat. */
+async function regularChat(store: ReturnType<typeof getStore>, country: CountryId, now: number) {
+  const city = await store.getCity(country);
+  if (!city || now - (city.regularChatAt ?? 0) < REGULARS.chatGapMs) return;
+  const real = await store.listPlayers(country, 40);
+  const { out } = await regularsOnStreet(store, country, realOnlineCount(real, now), now);
+  const line = chatLine(out, city.regularChatAt ?? 0, now);
+  if (!line) return;
+  const posted = await store.transaction(async (tx) => {
+    const c = await tx.getCity(country);
+    if (!c || now - (c.regularChatAt ?? 0) < REGULARS.chatGapMs) return false;
+    c.regularChatAt = now;
+    await tx.putCity(c);
+    return true;
+  });
+  if (posted) await store.postMessage({ channel: `country:${country}`, authorId: line.who.id, authorName: `${line.who.name} · regular`, body: line.text });
+}
+
 async function withPair<T>(tx: Tx, myId: string, otherId: string, now: number, fn: (a: Player, b: Player) => T): Promise<T> {
   const [a, b] = await tx.getPlayers([myId, otherId]);
   if (!a) throw new GameError("Create a character first.");
@@ -471,6 +559,9 @@ export async function POST(req: Request) {
     // Suspended characters can look around but not act.
     assertActive(await store.get(playerId), now);
     let events: GameEvent[] = [];
+    if (!REGULAR_OPS.has(String(b.op)) && Object.values(b).some(isRegularId)) {
+      throw new GameError("They're a street regular. They keep to themselves.");
+    }
 
     switch (b.op) {
       case "say": {
@@ -521,6 +612,7 @@ export async function POST(req: Request) {
           .sort(() => Math.random() - 0.5)
           .slice(0, Math.min(BALANCE.crime.maxWitnesses, cityEvent(country, now)?.maxWitnesses ?? 99))
           .map((o) => o.id);
+        nearby.push(...(await regularWitnesses(store, country, now)).filter((id) => id !== target));
         const crewTag = self.crewId ? (await store.getCrew(self.crewId))?.tag ?? null : null;
         const city = await store.getCity(country);
         const crack = crackdownOn(city, now);
@@ -534,6 +626,7 @@ export async function POST(req: Request) {
           const witnesses = rest.filter((w): w is Player => !!w && countryOf(w) === country);
           witnesses.forEach((w) => tick(w, now));
           const out = commitCrime(a, t, kind, now, Math.random, { caseId, district: crimeDistrict(a, Math.random), crewTag, witnesses, crackdown: crack });
+          if (out.caseFile) regularsTalk(witnesses, out.caseFile, a, now);
           await tx.putPlayer(a);
           await tx.putPlayer(t);
           if (out.caseFile) {
@@ -1457,6 +1550,7 @@ export async function POST(req: Request) {
         break;
       }
       case "ambush_plan":
+      case "ambush_hire":
       case "ambush_role":
       case "ambush_leave":
       case "ambush_cancel":
@@ -1467,6 +1561,8 @@ export async function POST(req: Request) {
         if (!crewNow) throw new GameError("Your crew is gone.");
         const plan = crewNow.ambush;
         const targetId = b.op === "ambush_plan" ? str(b.targetId) : plan?.targetId ?? null;
+        const hireId = b.op === "ambush_hire" ? str(b.regularId) : null;
+        if (hireId && !isRegularId(hireId)) throw new GameError("Only street regulars are for hire.");
         const roleIds = plan ? [...plan.attackers.map((x) => x.id), plan.driver?.id, plan.lookout?.id].filter((x): x is string => !!x) : [];
         let backupIds: string[] = [];
         let witnessIds: string[] = [];
@@ -1483,10 +1579,11 @@ export async function POST(req: Request) {
             .sort(() => Math.random() - 0.5)
             .slice(0, Math.min(BALANCE.crime.maxWitnesses, cityEvent(country, now)?.maxWitnesses ?? 99))
             .map((o) => o.id);
+          witnessIds.push(...(await regularWitnesses(store, country, now)).filter((id) => !roleIds.includes(id)));
         }
         const caseId = randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase();
         events = await store.transaction(async (tx) => {
-          const ids = [...new Set([playerId, ...roleIds, ...(targetId ? [targetId] : []), ...backupIds, ...witnessIds])];
+          const ids = [...new Set([playerId, ...roleIds, ...(targetId ? [targetId] : []), ...(hireId ? [hireId] : []), ...backupIds, ...witnessIds])];
           const rows = await tx.getPlayers(ids);
           const byId = new Map(rows.filter((r): r is Player => !!r).map((r) => [r.id, r]));
           byId.forEach((r) => tick(r, now));
@@ -1503,6 +1600,14 @@ export async function POST(req: Request) {
             const role = b.role as AmbushRole;
             if (!["attacker", "driver", "lookout"].includes(role)) throw new GameError("Bad request.");
             out = AM.takeRole(crew, me, role, now);
+          } else if (b.op === "ambush_hire") {
+            const role = b.role as AmbushRole;
+            if (!["attacker", "driver", "lookout"].includes(role)) throw new GameError("Bad request.");
+            const reg = byId.get(hireId!);
+            if (!reg) throw new GameError("They're not around.");
+            const { out: outNow } = await regularsOnStreet(store, crew.ambush?.country ?? countryOf(me), 0, now);
+            if (!outNow.some((r) => r.id === reg.id)) throw new GameError(`${reg.name} isn't out on the street right now.`);
+            out = AM.hireRegular(crew, me, reg, role, now);
           } else if (b.op === "ambush_leave") out = AM.leaveRole(crew, me);
           else if (b.op === "ambush_cancel") out = AM.cancelAmbush(crew, me, now);
           else {
@@ -1510,17 +1615,23 @@ export async function POST(req: Request) {
             if (!a) throw new GameError("There's no ambush planned.");
             const target = byId.get(a.targetId);
             if (!target) throw new GameError("They're not around anymore.");
-            const attackers = a.attackers.map((x) => byId.get(x.id)).filter((x): x is Player => !!x && x.crewId === crew.id);
-            const driver = a.driver ? byId.get(a.driver.id) ?? null : null;
-            const lookout = a.lookout ? byId.get(a.lookout.id) ?? null : null;
+            const ok = (x: Player | undefined): x is Player => !!x && (x.crewId === crew.id || !!x.regular);
+            const attackers = a.attackers.map((x) => byId.get(x.id)).filter(ok);
+            const driver0 = a.driver ? byId.get(a.driver.id) : undefined;
+            const lookout0 = a.lookout ? byId.get(a.lookout.id) : undefined;
+            const driver = ok(driver0) ? driver0 : null;
+            const lookout = ok(lookout0) ? lookout0 : null;
             const city = await tx.getCity(a.country);
-            const res = AM.executeAmbush(crew, me, attackers, driver?.crewId === crew.id ? driver : null, lookout?.crewId === crew.id ? lookout : null, target, city, now, Math.random, {
+            const res = AM.executeAmbush(crew, me, attackers, driver, lookout, target, city, now, Math.random, {
               caseId,
               crewTag,
               backup: backupIds.map((id) => byId.get(id)).filter((x): x is Player => !!x),
               witnesses: witnessIds.map((id) => byId.get(id)).filter((x): x is Player => !!x),
             });
-            if (res.caseFile) await tx.putCase(res.caseFile);
+            if (res.caseFile) {
+              regularsTalk(witnessIds.map((id) => byId.get(id)).filter((x): x is Player => !!x), res.caseFile, attackers[0] ?? null, now);
+              await tx.putCase(res.caseFile);
+            }
             if (city) await tx.putCity(city);
             out = res.events;
           }

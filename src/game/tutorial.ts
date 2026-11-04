@@ -32,6 +32,11 @@ export const TUTORIAL_BONUS = 100;
 
 /** Claims the reward for a finished step; finishing them all pays a bonus. */
 export function claimTutorial(p: Player, stepId: string): GameEvent[] {
+  if (stepId === "all") {
+    const ready = TUTORIAL.filter((s) => !p.flags.includes(`tut:${s.id}`) && s.done(p));
+    if (!ready.length) throw new GameError("Nothing to claim.");
+    return ready.flatMap((s) => claimTutorial(p, s.id));
+  }
   const step = TUTORIAL.find((s) => s.id === stepId);
   if (!step) throw new GameError("Unknown step.");
   if (p.flags.includes(`tut:${step.id}`)) throw new GameError("Already claimed.");
@@ -51,5 +56,7 @@ export function tutorialView(p: Player) {
   if (p.flags.includes("tut:hidden")) return null;
   const steps = TUTORIAL.map((s) => ({ id: s.id, title: s.title, hint: s.hint, go: s.go, done: s.done(p), claimed: p.flags.includes(`tut:${s.id}`) }));
   if (steps.every((s) => s.claimed)) return null;
+  // Past the basics (rank 2+), the checklist only shows up if there's something to claim.
+  if (p.rank >= 2 && !steps.some((s) => s.done && !s.claimed)) return null;
   return steps;
 }

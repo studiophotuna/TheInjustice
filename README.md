@@ -366,3 +366,9 @@ murder case and a three-day vendetta. Full rules in `WHACK.md`.
 - Old wounds (`src/game/wounds.ts`) lower max health after fights you chose; doctors operate.
 - XP gains slow above a stat value of 70 (`BALANCE.statSoftCap`).
 - Crew ambushes (`src/game/ambush.ts`): attackers, a driver and a lookout; see `CHANGELOG.md`.
+
+## A living city (v1.8.0)
+
+- Street regulars (`src/game/regulars.ts`, `src/server/regulars.ts`): game-run characters stored
+  as players with ids starting `reg-`. `listPlayers` never returns them; `listRegulars` does.
+- `/api/community?pulse=1` returns the street feed and what your crew needs from you.

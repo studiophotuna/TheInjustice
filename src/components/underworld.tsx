@@ -151,11 +151,26 @@ export function TutorialCard({ game, go }: { game: GameApi; go: (t: string) => v
   const steps = game.view!.tutorial;
   if (!steps) return null;
   const done = steps.filter((s) => s.claimed).length;
+  const ready = steps.filter((s) => s.done && !s.claimed).length;
+  const veteran = (game.view!.ladder?.current ?? 0) >= 2;
+  if (veteran) {
+    return (
+      <section className="card tutorial compact">
+        <div className="row between">
+          <span>🎁 {ready} first-day reward{ready === 1 ? "" : "s"} waiting</span>
+          <button className="btn btn-primary btn-xs" disabled={game.busy} onClick={() => game.act({ type: "tutorial", step: "all" })}>Claim all ${ready * 15}</button>
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="card tutorial">
       <div className="row between">
         <h3 className="card-title"><ShieldAlert size={16} /> Your first day · {done}/{steps.length}</h3>
-        <button className="btn btn-ghost btn-xs" onClick={() => game.act({ type: "flag", flag: "tut:hidden" })}>Hide</button>
+        <span className="row">
+          {ready > 1 && <button className="btn btn-primary btn-xs" disabled={game.busy} onClick={() => game.act({ type: "tutorial", step: "all" })}>Claim all ${ready * 15}</button>}
+          <button className="btn btn-ghost btn-xs" onClick={() => game.act({ type: "flag", flag: "tut:hidden" })}>Hide</button>
+        </span>
       </div>
       <div className="tut-bar"><span style={{ width: `${(done / steps.length) * 100}%` }} /></div>
       <ul className="tut-steps">

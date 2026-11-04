@@ -124,6 +124,34 @@ export function takeRole(crew: Crew, p: Player, role: AmbushRole, now: number): 
   return [{ tone: "good", text: what }];
 }
 
+/** The leader hires a street regular for one role. They take an equal cut. One per ambush. */
+export function hireBlock(crew: Crew, leader: Player, reg: Player, role: AmbushRole, now: number): string | null {
+  const a = crew.ambush;
+  if (!reg.regular) return "Only street regulars are for hire.";
+  if (!a || a.expiresAt <= now) return "There's no ambush planned.";
+  if (crew.leaderId !== leader.id) return "Only the leader hires help.";
+  if ([...a.attackers, a.driver, a.lookout].some((x) => x?.hired)) return "You already hired someone for this one.";
+  if (inPlan(a, reg.id)) return "They're already in.";
+  if (countryOf(reg) !== a.country) return "They're not in the city.";
+  if (inJail(reg, now) || inHospital(reg, now)) return "They're in no shape for it.";
+  if (role === "attacker" && a.attackers.length >= AMBUSH.maxAttackers) return "Three attackers is plenty.";
+  if (role === "driver" && a.driver) return "There's already a driver.";
+  if (role === "lookout" && a.lookout) return "There's already a lookout.";
+  return null;
+}
+
+export function hireRegular(crew: Crew, leader: Player, reg: Player, role: AmbushRole, now: number): GameEvent[] {
+  const block = hireBlock(crew, leader, reg, role, now);
+  if (block) throw new GameError(block);
+  const a = crew.ambush!;
+  const who = { id: reg.id, name: reg.name, hired: true };
+  if (role === "attacker") a.attackers.push(who);
+  else if (role === "driver") a.driver = who;
+  else a.lookout = who;
+  crew.log = [{ at: now, text: `${leader.name} hired ${reg.name} as ${role === "attacker" ? "an attacker" : `the ${role}`}.` }, ...crew.log].slice(0, 30);
+  return [{ tone: "good", text: `${reg.name} is in, for an equal cut.` }];
+}
+
 export function leaveRole(crew: Crew, p: Player): GameEvent[] {
   const a = crew.ambush;
   if (!a || !inPlan(a, p.id)) throw new GameError("You don't have a role.");
@@ -259,15 +287,17 @@ export function executeAmbush(
   return { events, caseFile: c };
 }
 
+const label = (x: { name: string; hired?: boolean }) => (x.hired ? `${x.name} (hired)` : x.name);
+
 export function ambushView(crew: Crew, viewer: Player, now: number) {
   const a = crew.ambush;
   if (!a || a.expiresAt <= now) return null;
   return {
     targetName: a.targetName,
     expiresAt: a.expiresAt,
-    attackers: a.attackers.map((x) => x.name),
-    driver: a.driver?.name ?? null,
-    lookout: a.lookout?.name ?? null,
+    attackers: a.attackers.map(label),
+    driver: a.driver ? label(a.driver) : null,
+    lookout: a.lookout ? label(a.lookout) : null,
     mine: inPlan(a, viewer.id),
     isLeader: crew.leaderId === viewer.id,
     canAttack: roleBlock(crew, viewer, "attacker", now),

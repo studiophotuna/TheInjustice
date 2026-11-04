@@ -9,6 +9,7 @@ import { PATH_LOOKS } from "./art/Portraits";
 import { Scene, type CharacterKind, type SceneKind } from "./art/Scenes";
 import { BackAlleyCard, JailCard, Sightings } from "./community";
 import { OnlineNow } from "./online";
+import { RightNow, StreetFeed, usePulse } from "./pulse";
 import { TutorialCard } from "./underworld";
 import { DailyCard } from "./tabs";
 import { fmt, type GameApi } from "./useGame";
@@ -47,6 +48,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
   const unreadChapter = view.chapters.find((c) => c.unlocked && !c.read);
   const recent = view.inbox.items.slice(0, 3);
   const nextRank = view.ladder && view.ladder.current < view.ladder.ranks.length ? view.ladder.ranks[view.ladder.current] : null;
+  const pulse = usePulse(view.location.country);
 
   return (
     <div className="stack home">
@@ -70,6 +72,8 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
         </p>
       </Scene>
 
+      <StreetFeed feed={pulse?.feed} />
+      <RightNow game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} />
       <TutorialCard game={game} go={go} />
       {view.event && (
         <section className="card city-event">
@@ -83,26 +87,6 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
       <Sightings game={game} compact />
 
       <div className="home-grid">
-        <section className="card next-move">
-          <h3 className="card-title"><Sparkles size={16} /> Your next move</h3>
-          {view.jail ? (
-            <p className="muted">You&apos;re behind bars. Nothing to do but wait{view.jail.custodyCase ? " for the verdict" : ""}.</p>
-          ) : view.travel ? (
-            <p><Plane size={14} /> Arriving in {fmt(live.travel)}. Sit tight.</p>
-          ) : live.hospital > 0 ? (
-            <p><Cross size={14} /> Rest up. Medkits cut the stay in half.</p>
-          ) : best ? (
-            <>
-              <p className="next-job"><b>{best.name}</b> <span className="muted">· ${best.pay[0]}–{best.pay[1]} · ⚡{best.energy}</span></p>
-              <motion.button whileTap={{ scale: 0.95 }} className="btn btn-primary" onClick={() => go(`job:${best.id}`)}>
-                <Briefcase size={15} /> Go to work <ArrowRight size={15} />
-              </motion.button>
-            </>
-          ) : (
-            <p className="muted"><Zap size={14} /> Out of energy. Full in {fmt(live.fullIn)}. Eat something, or train later.</p>
-          )}
-        </section>
-
         <section className="card">
           <h3 className="card-title"><Briefcase size={16} /> Career</h3>
           {view.path && view.ladder ? (
@@ -131,14 +115,6 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
       <OnlineNow game={game} limit={4} />
 
       <DailyCard game={game} />
-
-      {unreadChapter && (
-        <button className="card story-nudge" onClick={() => onRead(unreadChapter.id)}>
-          <BookOpen size={18} />
-          <span><b>New chapter:</b> {unreadChapter.title}</span>
-          <ArrowRight size={16} />
-        </button>
-      )}
 
       <section className="card">
         <div className="row between">

@@ -20,6 +20,7 @@ type OnlinePlayer = {
   canAttack: string | null;
   canCrime: Record<CrimeKind, string | null>;
   bounty: number;
+  regular?: boolean;
 };
 
 const DANGER = ["Easy", "Favorable", "Even", "Risky", "Deadly"];
@@ -77,6 +78,7 @@ export function OnlineNow({ game, limit }: { game: GameApi; limit?: number }) {
                 <span className="online-name">
                   <b>{o.name}</b>
                   {o.crewTag && <span className="crew-tag"> [{o.crewTag}]</span>}
+                  {o.regular && <span className="chip chip-regular" title="A street regular: one of the city's characters, run by the game."> Regular</span>}
                   <span className="muted" style={{ color: o.path ? PATH_LOOKS[o.path]?.rim : undefined }}>
                     {o.title}
                     {o.status === "hospital" ? " · in the clinic" : o.status === "traveling" ? " · on the road" : ""}
