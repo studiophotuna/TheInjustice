@@ -54,23 +54,24 @@ import { Scene, type CharacterKind, type SceneKind } from "./art/Scenes";
 
 /** Districts drawn as full illustrated scenes (the rest use their animated skyline). */
 const DISTRICT_SCENES: Partial<Record<string, { scene: SceneKind; chars: { kind: CharacterKind; x: number; scale?: number }[] }>> = {
-  gutter: { scene: "street", chars: [] },
-  old_market: { scene: "street", chars: [] },
-  southside: { scene: "street", chars: [] },
-  iron_row: { scene: "crimescene", chars: [] },
-  precinct_square: { scene: "police", chars: [] },
-  st_brigids: { scene: "hospital", chars: [] },
-  courthouse_hill: { scene: "court", chars: [] },
-  boardwalk: { scene: "city", chars: [] },
+  // Every district has its own footage, never shared with a building or another district.
+  gutter: { scene: "gutter", chars: [] },
+  old_market: { scene: "oldmarket", chars: [] },
+  southside: { scene: "southside", chars: [] },
+  iron_row: { scene: "ironrow", chars: [] },
+  precinct_square: { scene: "precinct", chars: [] },
+  st_brigids: { scene: "stbrigids", chars: [] },
+  courthouse_hill: { scene: "courthousehill", chars: [] },
+  boardwalk: { scene: "boardwalk", chars: [] },
   casino_strip: { scene: "casino", chars: [] },
-  marina: { scene: "city", chars: [] },
-  exchange: { scene: "bank", chars: [] },
-  rail_yards: { scene: "street", chars: [] },
-  checkpoint_row: { scene: "prison", chars: [] },
-  foundry: { scene: "lab", chars: [] },
-  undercity: { scene: "street", chars: [] },
+  marina: { scene: "marina", chars: [] },
+  exchange: { scene: "exchange", chars: [] },
+  rail_yards: { scene: "railyards", chars: [] },
+  checkpoint_row: { scene: "checkpoint", chars: [] },
+  foundry: { scene: "foundry", chars: [] },
+  undercity: { scene: "undercity", chars: [] },
   glass_quarter: { scene: "highrise", chars: [] },
-  tech_park: { scene: "highrise", chars: [] },
+  tech_park: { scene: "techpark", chars: [] },
 };
 import { Vehicle } from "./art/Vehicles";
 import { NpcPortrait, PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
@@ -390,7 +391,7 @@ export function ProfileTab({ game }: { game: GameApi }) {
   return (
     <div className="profile">
       <section className="card profile-hero">
-        <CareerPortrait path={view.path?.id} name={view.name} className="profile-portrait" />
+        <CareerPortrait path={view.path?.id} rank={view.ladder?.current} name={view.name} className="profile-portrait" />
         <div>
           <h2>{view.name}</h2>
           <p className="muted">{view.path ? `${view.path.rank} · ${view.path.name}` : `Bum · ${view.location.city}`}{view.deaths ? ` · Life #${view.deaths + 1}` : ""}</p>

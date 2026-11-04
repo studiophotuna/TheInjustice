@@ -110,7 +110,7 @@ export function CityHall({ game }: { game: GameApi }) {
     <>
     <Paper paper={data.paper} city={c} game={game} act={act} />
     <section className="card cityhall has-banner">
-      <Scene kind="city" className="banner-scene" />
+      <Scene kind="cityhall" className="banner-scene" />
       <h3 className="card-title"><Landmark size={16} /> City hall · {c.city}</h3>
 
       <div className="hall-stats">

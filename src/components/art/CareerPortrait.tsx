@@ -9,8 +9,10 @@ import { PATH_LOOKS, PlayerAvatar } from "./Portraits";
 
 const CLIPS = new Set(["police", "enforcer", "courts", "medicine", "banking", "military", "vigilante"]);
 
-export function CareerPortrait({ path, name, className = "" }: { path: string | null | undefined; name: string; className?: string }) {
-  const clip = path && CLIPS.has(path) ? path : "street";
+/** Every career has a different portrait for each of its eight ranks: `<career>-<rank>`. */
+export function CareerPortrait({ path, rank, name, className = "" }: { path: string | null | undefined; rank?: number | null; name: string; className?: string }) {
+  const r = Math.max(1, Math.min(8, rank ?? 1));
+  const clip = path && CLIPS.has(path) ? `${path}-${r}` : "street";
   const rim = (path && PATH_LOOKS[path]?.rim) || "#ffc24b";
   const ref = useRef<HTMLVideoElement>(null);
   const [failed, setFailed] = useState(false);

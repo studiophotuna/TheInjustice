@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.1: a portrait for every rank, no repeated footage
+
+- Every career has eight portraits, one per rank, from a cadet or student at rank 1 to the
+  commissioner, Don, chief justice, medical director, governor, general or "symbol" at rank 8.
+  The portrait changes when you're promoted.
+- Every building, district and city now has its own footage. City Hall, the Courthouse Hill,
+  Precinct Square, St. Brigid's, the Gutter, Old Market, Southside, Iron Row, the Boardwalk,
+  the Marina, the Exchange, the Rail Yards, Checkpoint Row, the Foundry, the Undercity and the
+  Tech Park got new clips, and Port Solace, Ironmoor and Halcyon have their own home skylines.
+  The home screen no longer reuses a building's clip for your career.
+
 ## 1.2.0: gear, prices, arson, portraits
 
 - **Equipment.** One weapon slot and one armor slot; only equipped gear counts in a fight. Gear

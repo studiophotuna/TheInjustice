@@ -25,10 +25,10 @@ const CHARACTER_FOR: Record<PathId, CharacterKind> = {
 
 /** Each city gets its own backdrop. */
 const SCENE_FOR: Record<CountryId, SceneKind> = {
-  varrow: "street",
-  solmarra: "casino",
-  kestrova: "prison",
-  meridian: "highrise",
+  varrow: "city",
+  solmarra: "solace",
+  kestrova: "ironmoor",
+  meridian: "halcyon",
 };
 
 function greeting() {
@@ -42,19 +42,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
   const best = view.jobs.find((j) => j.id === view.recommendedJobId);
   const character: CharacterKind = view.path ? CHARACTER_FOR[view.path.id] : "bum";
   // Locked up or in the clinic, the hero shows it; otherwise your career's world, or your city.
-  const scene: SceneKind = view.jail
-    ? "interrogation"
-    : live.hospital > 0
-      ? "hospital"
-      : view.path?.id === "police"
-        ? "police"
-        : view.path?.id === "medicine"
-          ? "hospital"
-          : view.path?.id === "courts"
-            ? "court"
-            : view.path?.id === "banking"
-              ? "bank"
-              : SCENE_FOR[view.location.country];
+  const scene: SceneKind = view.jail ? "prison" : live.hospital > 0 ? "hospital" : SCENE_FOR[view.location.country];
   const unreadChapter = view.chapters.find((c) => c.unlocked && !c.read);
   const recent = view.inbox.items.slice(0, 3);
   const nextRank = view.ladder && view.ladder.current < view.ladder.ranks.length ? view.ladder.ranks[view.ladder.current] : null;
@@ -62,7 +50,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
   return (
     <div className="stack home">
       <Scene kind={scene} className="home-hero" characters={[{ kind: character, x: 78, scale: 0.95 }]}>
-        <CareerPortrait path={view.path?.id} name={view.name} className="hero-portrait" />
+        <CareerPortrait path={view.path?.id} rank={view.ladder?.current} name={view.name} className="hero-portrait" />
         <p className="eyebrow"><MapPin size={13} /> {view.location.city}, {view.location.countryName}</p>
         <h1 className="home-title">{greeting()}, {view.name}.</h1>
         {view.streetTitle && <p className="street-title">&ldquo;{view.streetTitle}&rdquo;</p>}

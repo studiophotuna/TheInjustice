@@ -21,10 +21,29 @@ export type SceneKind =
   | "crimescene"
   | "interrogation"
   | "academy"
-  | "station";
+  | "station"
+  | "cityhall"
+  | "gutter"
+  | "oldmarket"
+  | "southside"
+  | "ironrow"
+  | "precinct"
+  | "stbrigids"
+  | "courthousehill"
+  | "boardwalk"
+  | "marina"
+  | "exchange"
+  | "railyards"
+  | "checkpoint"
+  | "foundry"
+  | "undercity"
+  | "techpark"
+  | "solace"
+  | "ironmoor"
+  | "halcyon";
 
 /** Every scene has a looping clip in public/scenes/<kind>.mp4 and a poster <kind>.jpg. */
-const VIDEO_SCENES = new Set<SceneKind>(["street", "city", "highrise", "police", "hospital", "court", "bank", "prison", "lab", "casino", "crimescene", "interrogation", "academy", "station"]);
+const VIDEO_SCENES = new Set<SceneKind>(["street", "city", "highrise", "police", "hospital", "court", "bank", "prison", "lab", "casino", "crimescene", "interrogation", "academy", "station", "cityhall", "gutter", "oldmarket", "southside", "ironrow", "precinct", "stbrigids", "courthousehill", "boardwalk", "marina", "exchange", "railyards", "checkpoint", "foundry", "undercity", "techpark", "solace", "ironmoor", "halcyon"]);
 export type CharacterKind = "bum" | "thug" | "detective" | "lawyer" | "doctor" | "banker" | "vigilante";
 
 const rnd = (seed: number) => () => {
@@ -267,6 +286,25 @@ const SCENES: Record<SceneKind, () => ReactNode> = {
   interrogation: Police,
   academy: City,
   station: Highrise,
+  cityhall: City,
+  gutter: Street,
+  oldmarket: Street,
+  southside: Street,
+  ironrow: Street,
+  precinct: Police,
+  stbrigids: Hospital,
+  courthousehill: City,
+  boardwalk: City,
+  marina: City,
+  exchange: Highrise,
+  railyards: Street,
+  checkpoint: Police,
+  foundry: Street,
+  undercity: Street,
+  techpark: Highrise,
+  solace: City,
+  ironmoor: Street,
+  halcyon: Highrise,
 };
 
 /** Plays the scene's clip on a loop; still poster for reduced motion; hidden if it fails. */
