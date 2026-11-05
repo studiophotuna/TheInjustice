@@ -4,7 +4,7 @@ import { specialtiesView } from "./specialties";
 import { promoChoiceView } from "./career";
 import { encounterView } from "./encounters";
 import { playerMaxHp, woundHint } from "./wounds";
-import { careerRecordView } from "./career";
+import { careerGapBlock, careerRecordView } from "./career";
 import { publicProfile } from "./profile";
 import { threatView } from "./hit";
 import { gearView, usesLeft } from "./gear";
@@ -82,7 +82,7 @@ export interface PublicView {
     promotion: string | null;
     family: { made: boolean; madeBy: string | null; rat: { crewName: string; until: number } | null } | null;
   } | null;
-  offers: { id: PathId; name: string; side: string; blurb: string; contact: string; contactId: string; lines: string[] }[];
+  offers: { id: PathId; name: string; side: string; blurb: string; contact: string; contactId: string; lines: string[]; wait: string | null }[];
   districts: { id: DistrictId; name: string; tagline: string; locked: string | null }[];
   jobs: JobView[];
   recommendedJobId: string | null;
@@ -391,6 +391,7 @@ export function toView(p: Player, now: number): PublicView {
       contact: PATHS[o].contact,
       contactId: PATHS[o].contactId,
       lines: PATHS[o].offer,
+      wait: careerGapBlock(p, now),
     })),
     districts: DISTRICTS.filter((d) => d.country === here && (!d.visible || d.visible(p))).map((d) => ({
       id: d.id,

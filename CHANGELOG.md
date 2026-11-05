@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.4.1: career offer fixes
+
+- **Fixed:** answering a Military career offer (accept or turn down) failed with "Bad request".
+  The server's list of careers didn't include Military; it now comes straight from the career list,
+  so a new career can't be left out again.
+- **Fixed:** career offers kept arriving during the 24-hour break after leaving a career. They now
+  wait until the break is over.
+- An offer that already came in during a break says how long is left, keeps until then, and can
+  be put aside with "Call me back later" instead of blocking the screen.
+
 ## 3.4.0: getting your car back, and crew home jobs
 
 - **Stolen cars come home.** When a car thief is found guilty, the court returns the car itself

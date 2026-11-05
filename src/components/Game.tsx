@@ -229,7 +229,9 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
     return () => window.removeEventListener("injustice:go", onGo);
   }, [go]);
 
-  const offer = view.offers[0];
+  // An offer that came in during a career break can wait: "call me back later" hides it for now.
+  const [offerLater, setOfferLater] = useState<string[]>([]);
+  const offer = view.offers.find((o) => !(o.wait && offerLater.includes(o.id)));
   const [arrivalFightDone, setArrivalFightDone] = useState<number | null>(null);
   const arrival = view.arrival;
   const arrivalFight = arrival?.incident?.fight && arrivalFightDone !== arrival.at ? arrival.incident.fight : null;
@@ -335,9 +337,16 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
               {offer.lines.map((l, i) => (
                 <motion.p key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.35 }}>{l}</motion.p>
               ))}
-              <p className="fine">Choosing a path closes the others for now.</p>
-              <div className="row">
-                <button className="btn btn-primary btn-lg" disabled={game.busy} onClick={() => game.act({ type: "offer", path: offer.id, accept: true }).then(() => go("tab:jobs"))}>Accept</button>
+              {offer.wait ? (
+                <p className="fine offer-wait">{offer.wait} The offer will keep until then.</p>
+              ) : (
+                <p className="fine">Choosing a path closes the others for now.</p>
+              )}
+              <div className="row wrap">
+                <button className="btn btn-primary btn-lg" disabled={game.busy || !!offer.wait} onClick={() => game.act({ type: "offer", path: offer.id, accept: true }).then(() => go("tab:jobs"))}>Accept</button>
+                {offer.wait && (
+                  <button className="btn btn-ghost btn-lg" onClick={() => setOfferLater((xs) => [...xs, offer.id])}>Call me back later</button>
+                )}
                 <button className="btn btn-ghost btn-lg" disabled={game.busy} onClick={() => game.act({ type: "offer", path: offer.id, accept: false })}>Turn it down</button>
               </div>
             </div>

@@ -621,6 +621,8 @@ export function addMerit(p: Player, path: PathId, amount: number): GameEvent[] {
 function checkCareer(p: Player, events: GameEvent[]) {
   if (!p.path) {
     if (p.application?.status === "pending") return;
+    // Just left a career: new offers wait until the break is over.
+    if (careerGapBlock(p, p.tickAt)) return;
     for (const id of Object.keys(PATHS) as PathId[]) {
       if (p.offers.includes(id) || p.flags.includes(`declined_${id}`)) continue;
       if (PATHS[id].qualifies(p)) {

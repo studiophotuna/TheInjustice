@@ -1,7 +1,9 @@
 import type { Action, CountryId, PathId, TravelMode } from "@/game/types";
 import { GameError } from "@/game/types";
+import { PATHS } from "@/game/content/paths";
 
-const PATH_IDS: PathId[] = ["police", "enforcer", "courts", "vigilante", "medicine", "banking"];
+// Every career, straight from the career list, so a new one is never left out.
+const PATH_IDS = Object.keys(PATHS) as PathId[];
 const COUNTRY_IDS: CountryId[] = ["varrow", "solmarra", "kestrova", "meridian"];
 const MODES: TravelMode[] = ["bus", "train", "plane"];
 const str = (v: unknown, max = 40): string => {

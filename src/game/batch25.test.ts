@@ -5,6 +5,9 @@ import { HOME_JOB, homeJobBlock, runHomeJob, stealCar } from "./breakin";
 import { planHeist } from "./heist";
 import { decideTrial } from "./justice";
 import type { Crew, Player } from "./types";
+import { parseAction } from "../server/actions";
+import { CAREER } from "./career";
+import { PATHS } from "./content/paths";
 
 const T0 = 1_800_000_000_000;
 const NOW = T0 + BALANCE.pvp.protectionMs + 1;
@@ -104,5 +107,37 @@ describe("crew home jobs", () => {
     expect(out.caseFile).toBeNull();
     expect(wheel.jailUntil).toBeGreaterThan(NOW);
     expect(mark.stash?.varrow?.dirty).toBe(200_000);
+  });
+});
+
+describe("career offers", () => {
+  it("every career, military included, can be accepted or turned down", () => {
+    for (const path of Object.keys(PATHS)) {
+      expect(parseAction({ type: "offer", path, accept: true })).toMatchObject({ type: "offer", path, accept: true });
+    }
+  });
+
+  it("no new offers arrive during the break after leaving a career", () => {
+    const ready = (p: Player) => {
+      // Qualifies for the police: a decent home, a clean record, night-shift experience.
+      p.housing = 2;
+      p.jobCounts.security = 10;
+      return p;
+    };
+    const work = (p: Player, at: number) => {
+      for (let i = 0; i < 3; i++) applyAction(p, { type: "job", jobId: "cans" }, at + i, always(0.5));
+    };
+    // Strong enough to qualify for careers: offers arrive...
+    const free = ready(mk("free"));
+    work(free, NOW);
+    expect(free.offers.length).toBeGreaterThan(0);
+    // ...but not during the break after leaving one.
+    const p = ready(mk("pia"));
+    p.careerChangeAt = NOW;
+    work(p, NOW);
+    expect(p.offers).toEqual([]);
+    // Once the break is over, they come.
+    work(p, NOW + CAREER.gapMs + 1);
+    expect(p.offers.length).toBeGreaterThan(0);
   });
 });
