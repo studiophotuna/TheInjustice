@@ -10,6 +10,7 @@ import { isDrug } from "@/game/drugs";
 import { cancelHeist, heistView, planHeist, runHeist, takeRole } from "@/game/heist";
 import * as AM from "@/game/ambush";
 import { robberLead, specTier } from "@/game/specialties";
+import { dispose } from "@/game/daily_life";
 import { ambientLines, chatLine, defFor, isHeavy, isRegularId, REGULAR_OPS, REGULARS } from "@/game/regulars";
 
 const HEAVY_WIN_REP = 8;
@@ -464,6 +465,7 @@ export async function GET(req: Request) {
       breakout: myCrew ? await crewJailView(store, myCrew, p, now) : null,
       heist: myCrew ? heistView(myCrew, p, now) : null,
       ambush: myCrew ? AM.ambushView(myCrew, p, now) : null,
+      contacts: await contactsView(store, p, now),
       hit: myCrew ? hitView(myCrew, p, now) : null,
       hitmen: leading ? await hitmenFor(store, leading, p) : [],
       lab: myCrew ? labView(myCrew, p, now) : null,
@@ -517,6 +519,24 @@ async function ceremonyList(store: ReturnType<typeof getStore>, crew: Crew, lead
 }
 
 /** Loads the acting player and another player, ticks both, and saves both. */
+/** Your people: where they are and whether they're around. */
+async function contactsView(store: ReturnType<typeof getStore>, p: Player, now: number) {
+  const ids = (p.contacts ?? []).slice(0, 30);
+  const rows = (await Promise.all(ids.map((id) => store.get(id)))).filter((o): o is Player => !!o && !o.dead && !isBanned(o, now));
+  return rows.map((o) => ({
+    id: o.id,
+    name: o.name,
+    photo: o.profile?.photo ?? null,
+    path: o.path,
+    title: rankTitle(o) ?? "Nobody",
+    city: COUNTRY_BY_ID[countryOf(o)].capital,
+    sameCity: countryOf(o) === countryOf(p),
+    online: now - (o.seenAt ?? 0) < BALANCE.onlineMs,
+    lastSeen: o.seenAt ?? o.tickAt,
+    status: inJail(o, now) ? "jail" : inHospital(o, now) ? "clinic" : o.travel ? "travel" : "ok",
+  }));
+}
+
 /** Ids of street regulars out right now who might see a crime (one or two of them). */
 async function regularWitnesses(store: ReturnType<typeof getStore>, country: CountryId, now: number): Promise<string[]> {
   const real = await store.listPlayers(country, 40);
@@ -1576,6 +1596,38 @@ export async function POST(req: Request) {
           for (const r of byId.values()) await tx.putPlayer(r);
           await tx.putCrew(crew);
           if (city) await tx.putCity(city);
+          return out;
+        });
+        break;
+      }
+      case "contact_add":
+      case "contact_remove": {
+        const who = str(b.playerId);
+        if (b.op === "contact_add" && isRegularId(who)) throw new GameError("Regulars don't keep in touch.");
+        events = await store.update(playerId, (p) => {
+          if (!p) throw new GameError("Create a character first.");
+          if (who === p.id) throw new GameError("That's you.");
+          const list = (p.contacts ?? []).filter((x) => x !== who);
+          if (b.op === "contact_add") {
+            if (list.length >= 30) throw new GameError("Your little black book is full (30). Remove someone first.");
+            list.unshift(who);
+          }
+          p.contacts = list;
+          return { player: p, result: [{ tone: "info", text: b.op === "contact_add" ? "Added to your people." : "Removed from your people." }] as GameEvent[] };
+        });
+        break;
+      }
+      case "dispose": {
+        const choice = b.choice;
+        if (choice !== "leave" && choice !== "sea" && choice !== "parlour") throw new GameError("Bad request.");
+        events = await store.transaction(async (tx) => {
+          const [me] = await tx.getPlayers([playerId]);
+          if (!me) throw new GameError("Create a character first.");
+          tick(me, now);
+          const c = me.disposal ? await tx.getCase(me.disposal.caseId) : null;
+          const out = dispose(me, c, choice, now, Math.random);
+          await tx.putPlayer(me);
+          if (c) await tx.putCase(c);
           return out;
         });
         break;

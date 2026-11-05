@@ -375,7 +375,8 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
 function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonNullable<GameApi["live"]>; onProfile: () => void; onSearch: () => void }) {
   const heatTone = { Clean: "ok", Noticed: "warn", Wanted: "hot", "Most wanted": "hot" }[view.heatLabel];
   const ladder = view.ladder;
-  const progress = ladder ? Math.round((ladder.current / ladder.ranks.length) * 100) : 0;
+  // The ring around your face fills as you work toward your next rank.
+  const progress = view.promo ? view.promo.work : 0;
   const hurt = live.hospital > 0;
   // Scrolling down, the HUD tucks away its details so the screen is for the game.
   const [compact, setCompact] = useState(false);

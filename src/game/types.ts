@@ -183,6 +183,13 @@ export interface Player {
   jsnap?: { path: PathId | null; rank: number; crew: string | null; jailed: boolean; clinic: boolean; clinics: number; story: number; money: number; country: string; deaths: number };
   /** What each street regular thinks of you: -5..5 and the last thing they remember. */
   ties?: Record<string, { t: number; memo: string; at: number }>;
+  /** People you keep an eye on (player ids). */
+  contacts?: string[];
+  /** Bank statement: recent money movements, newest first, and the snapshot they're measured from. */
+  ledger?: { at: number; label: string; cash: number; bank: number; dirty: number }[];
+  msnap?: { cash: number; bank: number; dirty: number };
+  /** After a successful hit: the body still has to be dealt with. */
+  disposal?: { caseId: string; targetName: string; until: number } | null;
   /** Specialty tiers already announced, and their cooldowns (see specialties.ts). */
   specs?: Record<string, number>;
   dressingAt?: number;
@@ -657,6 +664,7 @@ export type Action =
   | { type: "leave_career" }
   | { type: "start_exit" }
   | { type: "field_dressing" }
+  | { type: "community_service"; task: string }
   | { type: "argue_sentence" }
   | { type: "promo_choice"; pick: "a" | "b" }
   | { type: "abandon_exit" }

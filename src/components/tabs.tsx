@@ -148,11 +148,13 @@ export function JobsTab({ game, highlight }: { game: GameApi; highlight: string 
               <p className="muted">{view.path.name} · your career goes with you, wherever you live</p>
             </div>
           </div>
+          <PromoBar game={game} />
           <motion.div className="job-grid" variants={list} initial="hidden" animate="show">
             {careerJobs.sort((a, b) => Number(!!a.locked) - Number(!!b.locked)).map(card)}
           </motion.div>
         </section>
       )}
+      <ServiceCard game={game} />
       <div className="district-chips" role="tablist">
         {view.districts.map((d) => (
           <button key={d.id} role="tab" aria-selected={d.id === shown?.id} className={`chip-btn ${d.id === shown?.id ? "on" : ""}`} onClick={() => setDistrict(d.id)}>
@@ -1183,6 +1185,93 @@ function Specialties({ game }: { game: GameApi }) {
           );
         })}
       </ul>
+    </section>
+  );
+}
+
+/** Work done toward your next rank. Stats stay words: you're told when they're the hold-up. */
+export function PromoBar({ game }: { game: GameApi }) {
+  const p = game.view!.promo;
+  if (!p) return null;
+  if (!p.next) return <p className="fine muted promo-bar-top">Top of the ladder.</p>;
+  return (
+    <div className="promo-bar">
+      <div className="row between">
+        <span className="fine">Next: <b>{p.next}</b></span>
+        <span className="fine promo-pct">{p.work}% of the work</span>
+      </div>
+      <div className="promo-track"><span style={{ width: `${p.work}%` }} /></div>
+      {p.statsHint && p.work >= 60 && <p className="fine promo-hint">{p.statsHint}</p>}
+    </div>
+  );
+}
+
+// ── 4. Community service ──
+
+const SERVICE_LIST = [
+  { id: "graffiti", name: "Scrub graffiti off the underpass" },
+  { id: "park", name: "Weed the flowerbeds in the park" },
+  { id: "crossing", name: "Crossing guard at the school" },
+  { id: "kitchen", name: "Serve at the soup kitchen" },
+  { id: "dogs", name: "Walk the shelter dogs" },
+];
+
+/** Unpaid good deeds: they cool your record and lighten your conscience. */
+function ServiceCard({ game }: { game: GameApi }) {
+  const view = game.view!;
+  const [open, setOpen] = useState(false);
+  const blocked = game.busy || game.live!.hospital > 0 || !!view.travel || !!view.jail || game.live!.energy < 8;
+  const exiting = !!view.careerRecord.exit?.started;
+  return (
+    <section className={`card service${open || exiting ? " open" : ""}`}>
+      <button className="service-head" onClick={() => setOpen(!open)} aria-expanded={open || exiting}>
+        <span>
+          <b>Community service</b>
+          <small>No pay. Cools your record and lightens your conscience.{exiting ? " Counts toward getting out." : ""}</small>
+        </span>
+        <span className="service-cost"><Zap size={12} /> 8</span>
+      </button>
+      {(open || exiting) && (
+        <div className="service-list">
+          {SERVICE_LIST.map((s) => (
+            <button key={s.id} className="btn btn-ghost btn-sm" disabled={blocked} onClick={() => game.act({ type: "community_service", task: s.id })}>
+              {s.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ── 5. Bank statement ──
+
+/** Where your money went: newest first. */
+export function Statement({ game }: { game: GameApi }) {
+  const ledger = game.view!.ledger;
+  if (!ledger.length) return null;
+  const fmtD = (n: number) => (n > 0 ? `+$${n.toLocaleString("en")}` : `-$${Math.abs(n).toLocaleString("en")}`);
+  return (
+    <section className="card statement">
+      <h3 className="card-title"><Landmark size={16} /> Statement</h3>
+      <div className="statement-table">
+        <table>
+          <thead>
+            <tr><th>When</th><th>What</th><th>Cash</th><th>Bank</th><th>Dirty</th></tr>
+          </thead>
+          <tbody>
+            {ledger.map((l, i) => (
+              <tr key={i}>
+                <td className="muted">{new Date(l.at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</td>
+                <td>{l.label}</td>
+                <td className={l.cash > 0 ? "up" : l.cash < 0 ? "down" : "muted"}>{l.cash ? fmtD(l.cash) : "·"}</td>
+                <td className={l.bank > 0 ? "up" : l.bank < 0 ? "down" : "muted"}>{l.bank ? fmtD(l.bank) : "·"}</td>
+                <td className={l.dirty > 0 ? "dirty-up" : l.dirty < 0 ? "down" : "muted"}>{l.dirty ? fmtD(l.dirty) : "·"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }

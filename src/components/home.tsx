@@ -8,7 +8,7 @@ import type { CountryId, PathId } from "@/game/types";
 import { PATH_LOOKS } from "./art/Portraits";
 import { Scene, type CharacterKind, type SceneKind } from "./art/Scenes";
 import { BackAlleyCard, JailCard, Sightings } from "./community";
-import { BigFish, RightNow, StreetFeed, usePulse } from "./pulse";
+import { BigFish, DisposalCard, ReadyStrip, RightNow, StreetFeed, usePulse } from "./pulse";
 import { CityMap } from "./citymap";
 import { TutorialCard } from "./underworld";
 import { DailyCard } from "./tabs";
@@ -73,7 +73,9 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
       </Scene>
 
       <StreetFeed feed={pulse?.feed} />
+      <DisposalCard game={game} />
       <RightNow game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} />
+      <ReadyStrip game={game} go={go} />
       <TutorialCard game={game} go={go} />
       {view.event && (
         <section className="card city-event">

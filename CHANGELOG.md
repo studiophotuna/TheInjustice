@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.9.0: clearer days, harder choices
+
+- **Next-rank progress:** the ring around your face in the HUD and a bar on your career card
+  show how much of the work toward your next rank is done ("Next: Underboss · 42% of the work").
+  When the work is nearly done but your stats aren't ready, it tells you which ones need to grow.
+- **What's ready:** a strip on Home shows what you can do now (daily reward, eat, field dressing,
+  lie low) and what's on a timer (energy full, bodyguards, clinic, arrival). Tap a ready one to
+  do it.
+- **Your people:** add anyone to your contacts from their file ("Add to your people"). They show
+  at the top of People: online or not, which city, in a cell or the clinic. Up to 30.
+- **Community service (Jobs):** unpaid good deeds (scrub graffiti, the soup kitchen, the crossing
+  guard...). They cool your heat, mend your conscience and count toward getting out.
+- **Bank statement (Bank):** where your money went, newest first: work, shopping, laundering,
+  rewards, and anything that happened between your moves (fights, robberies, fines, interest),
+  across cash, bank and dirty money.
+- **The body:** after a successful hit, decide within 20 minutes: leave it and run (free, but
+  forensics gets a clue and the heat rises), a boat and the sea ($1,500, the physical clues are
+  gone), or the funeral parlour ($4,000, only what witnesses saw remains).
+- Fixed: the bank's buttons ran off the side of the screen on phones.
+
 ## 2.8.0: specialties, promotion choices, break reminders
 
 - **Specialties (Me):** lasting skills earned by what you've done in *any* career, so living more

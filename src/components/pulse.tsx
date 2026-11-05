@@ -89,6 +89,9 @@ export function RightNow({ game, go, needs, onRead }: { game: GameApi; go: (t: s
       run: () => go(n.go),
     });
   }
+  if (view.disposal) {
+    moves.push({ key: "body", icon: Siren, tone: "urgent", title: `${view.disposal.targetName}'s body needs dealing with.`, text: `${fmt(view.disposal.until - Date.now())} to decide`, cta: "Decide", run: () => go("tab:home") });
+  }
   if (view.encounter) {
     const e = view.encounter;
     moves.push({ key: "encounter", icon: MessageCircle, tone: "urgent", title: `${e.name} wants a word.`, text: `${fmt(e.expiresAt - Date.now())} before they move on`, cta: "Hear them out", run: () => window.dispatchEvent(new Event("conspira:encounter")) });
@@ -383,6 +386,67 @@ export function BigFish({ game, heavies, go }: { game: GameApi; heavies: Heavy[]
           </li>
         ))}
       </ul>
+    </section>
+  );
+}
+
+// ── Ready board ─────────────────────────────────────────────────────────────
+
+type ReadyItem = { key: string; label: string; ready: boolean; until?: number; go?: string; run?: () => unknown };
+
+/** What you can do now, and what's on a timer, at a glance. */
+export function ReadyStrip({ game, go }: { game: GameApi; go: (t: string) => void }) {
+  const view = game.view!;
+  const live = game.live!;
+  const items: ReadyItem[] = [];
+  const spec = (id: string) => view.specialties.find((s) => s.id === id && s.tier > 0);
+  items.push({ key: "energy", label: live.fullIn > 0 ? "Energy full" : "Energy full", ready: live.fullIn === 0, until: Date.now() + live.fullIn, go: "tab:jobs" });
+  items.push({ key: "daily", label: "Daily reward", ready: view.daily.canClaim, run: () => game.act({ type: "claim_daily" }) });
+  items.push({ key: "food", label: "Eat", ready: live.full === 0, until: Date.now() + live.full, go: "tab:shop" });
+  const medic = spec("combat_medic");
+  if (medic) items.push({ key: "dressing", label: "Field dressing", ready: !!medic.ready, run: () => game.act({ type: "field_dressing" }) });
+  if (view.threat.bodyguardUntil) items.push({ key: "guards", label: "Bodyguards", ready: false, until: view.threat.bodyguardUntil });
+  if (view.threat.canLieLow && view.heatLabel !== "Clean") items.push({ key: "lowlie", label: "Lie low", ready: true, go: "tab:home" });
+  if (live.hospital > 0) items.push({ key: "clinic", label: "Out of the clinic", ready: false, until: Date.now() + live.hospital });
+  if (view.travel) items.push({ key: "travel", label: `Arrive in ${view.travel.city}`, ready: false, until: Date.now() + live.travel });
+  const readyNow = items.filter((i) => i.ready);
+  const later = items.filter((i) => !i.ready && i.until && i.until > Date.now());
+  if (!readyNow.length && !later.length) return null;
+  return (
+    <div className="ready-strip" aria-label="What's ready">
+      {readyNow.map((i) => (
+        <button key={i.key} className="ready-chip on" onClick={() => (i.run ? i.run() : i.go && go(i.go))} disabled={game.busy}>
+          <span className="dot" /> {i.label}
+        </button>
+      ))}
+      {later.map((i) => (
+        <span key={i.key} className="ready-chip">
+          {i.label} <b>{fmt(i.until! - Date.now())}</b>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+// ── After a hit: the body ───────────────────────────────────────────────────
+
+/** The job is done. Now there's a body, and how you deal with it decides what the police find. */
+export function DisposalCard({ game }: { game: GameApi }) {
+  const d = game.view!.disposal;
+  if (!d) return null;
+  return (
+    <section className="card disposal">
+      <p className="eyebrow">The job is done</p>
+      <h3 className="disposal-title">{d.targetName} is dead. What about the body?</h3>
+      <p className="fine muted">Decide in {fmt(d.until - Date.now())}. What you choose decides what the police have to work with.</p>
+      <div className="disposal-options">
+        {d.options.map((o) => (
+          <button key={o.id} className="enc-option" disabled={game.busy || !!o.block} onClick={() => game.social({ op: "dispose", choice: o.id })}>
+            <b>{o.label}</b>
+            <small>{o.block ?? o.hint}</small>
+          </button>
+        ))}
+      </div>
     </section>
   );
 }

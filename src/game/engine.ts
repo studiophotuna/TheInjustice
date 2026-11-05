@@ -7,6 +7,7 @@ import { chooseEncounter, maybeEncounter } from "./encounters";
 import { addWound, healWounds, playerMaxHp } from "./wounds";
 import { abandonExit, careerGapBlock, choosePromo, exitJobDone, leaveCareer, legacyPayBonus, startExit, veteranFactor } from "./career";
 import { argueSentence, clinicFactor, fieldDressing, specialtyUps, travelFactor } from "./specialties";
+import { communityService, recordMoney } from "./daily_life";
 import { updateProfile } from "./profile";
 import { hireBodyguards, lieLow } from "./hit";
 import { ensureEquipped, equip, equippedId, repair, unequip, usesLeft, wearGear } from "./gear";
@@ -137,6 +138,7 @@ export function tick(p: Player, now: number): void {
   ensureEquipped(p);
   regularUpkeep(p, now);
   journalTick(p, now);
+  recordMoney(p, now, "On the street (fights, robberies, fines, interest)");
 }
 
 /**
@@ -1050,6 +1052,25 @@ function assess(p: Player, now: number, events: GameEvent[]) {
 
 export function applyAction(p: Player, action: Action, now: number, rng: Rng, ctx: ActionContext = {}): GameEvent[] {
   tick(p, now);
+  const events = applyActionInner(p, action, now, rng, ctx);
+  recordMoney(p, now, ledgerLabel(action, events));
+  return events;
+}
+
+/** A short line for the bank statement. */
+function ledgerLabel(action: Action, events: GameEvent[]): string {
+  const first = events.find((e) => e.tone !== "info")?.text ?? events[0]?.text ?? "";
+  const named: Partial<Record<Action["type"], string>> = {
+    job: "Work", fight: "Street fight", buy: "Shop", bank: "Bank", launder: "Laundering", claim_daily: "Daily reward",
+    collect_property: "Business income", buy_property: "Bought a business", train: "Gym", travel: "Travel", use: "Used an item",
+    repair: "Repairs", drug_buy: "Bought product", drug_sell: "Sold product", encounter: "On the street", tutorial: "First-day reward",
+    claim_contract: "Contract reward", hire_bodyguards: "Bodyguards", lie_low: "Safe house",
+  };
+  const base = named[action.type] ?? action.type.replace(/_/g, " ");
+  return action.type === "job" || action.type === "encounter" ? `${base}: ${first.replace(/[+-]?\$[\d,]+.*$/, "").slice(0, 60).trim()}` : base;
+}
+
+function applyActionInner(p: Player, action: Action, now: number, rng: Rng, ctx: ActionContext): GameEvent[] {
   const events: GameEvent[] = [];
   if (isDead(p) && action.type !== "rebirth" && action.type !== "flag") {
     throw new GameError("You're dead. Start a new life to keep playing.");
@@ -1101,6 +1122,9 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng, ct
       break;
     case "leave_career":
       events.push(...leaveCareer(p, now));
+      break;
+    case "community_service":
+      events.push(...communityService(p, action.task, now));
       break;
     case "field_dressing":
       events.push(...fieldDressing(p, playerMaxHp(p), inHospital(p, now), now));

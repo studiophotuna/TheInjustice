@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { Scene, type SceneKind } from "./art/Scenes";
 import { CityHall } from "./cityhall";
 import { BackAlleyCard, CasesPanel, JailCard, Sightings, useHub, Yard } from "./community";
-import { AcademyContent, BankAccountCard, DocMercyCard, LoansCard, TravelContent } from "./tabs";
+import { AcademyContent, BankAccountCard, DocMercyCard, LoansCard, Statement, TravelContent } from "./tabs";
 import { ConspiracyBoard } from "./board";
 import { ItemArt } from "./art/ItemArt";
 import { LaunderCard, StreetMarket } from "./underworld";
@@ -117,6 +117,7 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
       return (
         <div className="stack">
           <BankAccountCard game={game} />
+          <Statement game={game} />
           <GuardCard game={game} />
           <LaunderCard game={game} />
           <LoansCard game={game} />

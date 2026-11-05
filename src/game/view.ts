@@ -1,3 +1,5 @@
+import { disposalView, promoProgress } from "./daily_life";
+import { veteranFactor } from "./career";
 import { specialtiesView } from "./specialties";
 import { promoChoiceView } from "./career";
 import { encounterView } from "./encounters";
@@ -137,6 +139,14 @@ export interface PublicView {
   /** Past careers, legacies, and whether you can leave the current one. */
   careerRecord: ReturnType<typeof import("./career").careerRecordView>;
   woundHint: string | null;
+  /** Work done toward your next rank (stats stay words). */
+  promo: ReturnType<typeof promoProgress>;
+  /** Your contacts' ids (details come with People). */
+  contacts: string[];
+  /** Bank statement, newest first. */
+  ledger: NonNullable<Player["ledger"]>;
+  /** After a hit: what to do with the body. */
+  disposal: ReturnType<typeof disposalView>;
   /** Lasting skills earned across careers. */
   specialties: ReturnType<typeof specialtiesView>;
   /** A promotion waiting for you to choose how it changed you. */
@@ -277,6 +287,10 @@ export function toView(p: Player, now: number): PublicView {
     encounter: encounterView(p, now),
     journal: p.journal ?? [],
     specialties: specialtiesView(p, now),
+    promo: promoProgress(p, veteranFactor(p)),
+    contacts: p.contacts ?? [],
+    ledger: p.ledger ?? [],
+    disposal: disposalView(p, now),
     promoChoice: promoChoiceView(p),
     startedAt: p.createdAt,
     surgeryFee: p.surgeryFee ?? null,

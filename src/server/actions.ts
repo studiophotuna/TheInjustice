@@ -51,6 +51,8 @@ export function parseAction(body: unknown): Action {
       return { type: "start_exit" };
     case "field_dressing":
       return { type: "field_dressing" };
+    case "community_service":
+      return { type: "community_service", task: str(b.task) };
     case "argue_sentence":
       return { type: "argue_sentence" };
     case "promo_choice":

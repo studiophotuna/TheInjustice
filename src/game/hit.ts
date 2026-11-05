@@ -13,6 +13,7 @@
 //    they and their crew can go after the hitman for three days, through any protection.
 // 6. Every hit that lands opens a murder (or attempted murder) case in the justice chain.
 
+import { DISPOSAL } from "./daily_life";
 import { addWound } from "./wounds";
 import { BALANCE } from "./balance";
 import { ITEM_BY_ID } from "./content/items";
@@ -277,6 +278,7 @@ export function executeHit(crew: Crew, hitman: Player, target: Player, city: Cit
     investigatedBy: [],
   };
   if (!killed) addTip(c, "victim", eyeAccuracy(target), now, rng, target.id, "Victim");
+  if (killed) hitman.disposal = { caseId: c.id, targetName: target.name, until: now + DISPOSAL.ttlMs };
   addTip(c, "bystander", 0.55, now, rng, undefined, "A neighbor");
   const text = killed ? `You heard shots in ${district}, and saw someone walk away fast.` : `You saw someone open fire on ${target.name} in ${district}.`;
   for (const w of ctx.witnesses) {

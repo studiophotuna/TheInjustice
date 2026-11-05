@@ -199,6 +199,7 @@ type Hub = {
     ready: boolean;
   } | null;
   hitmen: { id: string; name: string }[];
+  contacts: { id: string; name: string; photo: string | null; path: string | null; title: string; city: string; sameCity: boolean; online: boolean; lastSeen: number; status: string }[];
   ambush: {
     targetName: string;
     expiresAt: number;
@@ -434,6 +435,7 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
   const outNow = (p: Profile) => (p.regular ? p.regular.out : Date.now() - p.lastSeen < 10 * 60_000);
   return (
     <div className="lineup-wrap">
+      <YourPeople hub={hub} onOpen={(id) => setOpenId(id)} />
       <div className="lineup-head">
         <h3 className="card-title list-title"><Users size={16} /> The lineup · {view.location.city}</h3>
         <span className="fine muted">{people.filter(outNow).length} out on the street</span>
@@ -528,7 +530,14 @@ function PersonFile({ game, hub, p, social, onClose }: { game: GameApi; hub: Hub
           </div>
         ))}
         {p.contract && hub.hitmen.length > 0 && <ContractButton game={game} target={p} hitmen={hub.hitmen} social={social} />}
-        {!p.regular && <div className="file-foot"><ReportButton game={game} targetId={p.id} targetName={p.name} /></div>}
+        {!p.regular && (
+          <div className="file-foot">
+            <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: hub.contacts.some((x) => x.id === p.id) ? "contact_remove" : "contact_add", playerId: p.id })}>
+              {hub.contacts.some((x) => x.id === p.id) ? "★ In your people" : "☆ Add to your people"}
+            </button>
+            <ReportButton game={game} targetId={p.id} targetName={p.name} />
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );
@@ -1853,6 +1862,29 @@ export function BackAlleyCard({ game }: { game: GameApi }) {
           </li>
         ))}
       </ul>
+    </section>
+  );
+}
+
+/** The people you keep an eye on: who's around, and where. */
+function YourPeople({ hub, onOpen }: { hub: Hub; onOpen: (id: string) => void }) {
+  if (!hub.contacts?.length) return null;
+  const here = new Set(hub.players.map((p) => p.id));
+  return (
+    <section className="your-people" aria-label="Your people">
+      <span className="crime-label">Your people</span>
+      <div className="yp-row">
+        {hub.contacts.map((c) => (
+          <button key={c.id} className={`yp${c.online ? " on" : ""}`} onClick={() => here.has(c.id) && onOpen(c.id)} title={here.has(c.id) ? "Open their file" : `In ${c.city}`}>
+            <span className="yp-face">
+              <PlayerAvatar name={c.name} path={c.path} photo={c.photo} className="yp-avatar" />
+              <i className={`yp-dot ${c.online ? "on" : ""}`} />
+            </span>
+            <b>{c.name}</b>
+            <small>{c.status === "jail" ? "In a cell" : c.status === "clinic" ? "In the clinic" : c.status === "travel" ? "On the road" : c.sameCity ? (c.online ? "Out now" : `Seen ${ago(c.lastSeen)}`) : c.city}</small>
+          </button>
+        ))}
+      </div>
     </section>
   );
 }

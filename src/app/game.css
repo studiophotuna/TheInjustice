@@ -624,3 +624,59 @@ html, body { overflow-x: clip; }
 .promo-option b { font-family: var(--display); font-weight: 800; font-size: 19px; text-transform: uppercase; }
 .promo-option span { font-size: 14px; color: #c3c9d6; }
 .pi-lead { color: var(--info); font-weight: 600; }
+
+/* ─── v2.9 ──────────────────────────────────────────────────────────────── */
+.promo-bar { display: grid; gap: 4px; margin-top: 4px; }
+.promo-track { height: 8px; border-radius: 5px; background: var(--panel-3); overflow: hidden; }
+.promo-track span { display: block; height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--path, var(--energy)), var(--energy)); transition: width 0.5s; }
+.promo-pct { font-family: var(--display); font-weight: 700; letter-spacing: 0.03em; }
+.promo-hint { color: var(--heat); margin: 0; }
+
+.ready-strip { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 2px 0; }
+.ready-strip::-webkit-scrollbar { display: none; }
+.ready-chip { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--panel); color: var(--muted); font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.ready-chip b { color: var(--text); font-family: var(--display); }
+button.ready-chip { cursor: pointer; }
+.ready-chip.on { color: var(--cash); border-color: rgba(61, 220, 132, 0.4); background: rgba(61, 220, 132, 0.08); }
+.ready-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--cash); }
+
+.service .service-head { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; background: none; border: 0; color: var(--text); cursor: pointer; text-align: left; padding: 0; }
+.service .service-head span:first-child { display: grid; gap: 2px; }
+.service .service-head b { font-family: var(--display); font-weight: 800; font-size: 17px; text-transform: uppercase; }
+.service .service-head small { color: var(--muted); font-size: 13px; }
+.service-cost { flex: none; display: inline-flex; align-items: center; gap: 2px; padding: 2px 7px; border-radius: 6px; background: var(--energy); color: #111; font-family: var(--display); font-weight: 800; }
+.service-list { display: grid; gap: 6px; margin-top: 10px; }
+.service-list .btn { justify-content: flex-start; text-transform: none; font-family: var(--font-body); font-weight: 600; letter-spacing: 0; }
+
+.statement-table { overflow-x: auto; }
+.statement table { width: 100%; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.statement th { text-align: left; font-family: var(--display); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); font-size: 12px; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.statement td { padding: 7px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.statement td:nth-child(2) { white-space: normal; min-width: 140px; }
+.statement .up { color: var(--cash); font-weight: 600; }
+.statement .down { color: var(--health); font-weight: 600; }
+.statement .dirty-up { color: #9ad6a6; font-weight: 600; }
+
+.disposal { border-color: rgba(255, 77, 94, 0.5); box-shadow: inset 4px 0 0 var(--health), var(--shadow); display: grid; gap: 8px; }
+.disposal .eyebrow { color: var(--health); }
+.disposal-title { font-family: var(--display); font-weight: 800; font-size: 22px; text-transform: uppercase; line-height: 1.1; margin: 0; }
+.disposal-options { display: grid; gap: 8px; }
+
+.your-people { display: grid; gap: 6px; }
+.yp-row { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.yp-row::-webkit-scrollbar { display: none; }
+.yp { flex: none; width: 84px; display: grid; justify-items: center; gap: 2px; padding: 8px 4px; border-radius: 12px; border: 1px solid var(--border); background: var(--panel); color: var(--text); cursor: pointer; }
+.yp.on { border-color: rgba(61, 220, 132, 0.35); }
+.yp-face { position: relative; }
+.yp-avatar { width: 48px !important; height: 48px !important; border-radius: 12px !important; }
+.yp-avatar img { border-radius: 12px; }
+.yp-dot { position: absolute; right: -2px; bottom: -2px; width: 12px; height: 12px; border-radius: 50%; background: var(--dim); border: 2px solid var(--bg); }
+.yp-dot.on { background: var(--cash); }
+.yp b { font-size: 12.5px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.yp small { font-size: 11px; color: var(--muted); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file-foot { gap: 8px; justify-content: space-between; }
+
+/* Nothing pushes the page wider than the phone. */
+.main > *, .stack > *, main > * { min-width: 0; }
+.card .row { flex-wrap: wrap; }
+.card .row input { min-width: 0; flex: 1 1 140px; }
