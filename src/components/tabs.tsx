@@ -418,6 +418,8 @@ export function ProfileTab({ game }: { game: GameApi }) {
         </div>
       </section>
 
+      <PromoChoice game={game} />
+      <Specialties game={game} />
       <StoryLine game={game} />
 
       <ProfileEditor game={game} />
@@ -1127,5 +1129,60 @@ function GettingOut({ game }: { game: GameApi }) {
         <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => game.act({ type: "abandon_exit" })}>Change your mind</button>
       )}
     </div>
+  );
+}
+
+/** A promotion asks how the job changed you. */
+export function PromoChoice({ game }: { game: GameApi }) {
+  const c = game.view!.promoChoice;
+  if (!c) return null;
+  return (
+    <section className="card promo-choice">
+      <h3 className="card-title"><Sparkles size={16} /> {c.title}: how did it change you?</h3>
+      <div className="promo-options">
+        {c.options.map((o) => (
+          <button key={o.id} className="promo-option" disabled={game.busy} onClick={() => game.act({ type: "promo_choice", pick: o.id })}>
+            <b>{o.label}</b>
+            <span>{o.text}</span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+const ROMAN = ["", "I", "II", "III"];
+
+/** Lasting skills from everything you've done, in every career. */
+function Specialties({ game }: { game: GameApi }) {
+  const view = game.view!;
+  const list = [...view.specialties].sort((a, b) => b.tier - a.tier || b.progress / (b.next ?? 1) - a.progress / (a.next ?? 1));
+  return (
+    <section className="card specialties">
+      <h3 className="card-title"><Sparkles size={16} /> Specialties</h3>
+      <p className="fine muted">Skills you keep for good, earned by what you've done in any career. Living more than one life makes you better at all of them.</p>
+      <ul className="spec-list">
+        {list.map((s) => {
+          const pct = s.next ? Math.min(100, ((s.progress - s.from) / (s.next - s.from)) * 100) : 100;
+          return (
+            <li key={s.id} className={s.tier ? "has" : ""}>
+              <div className="row between">
+                <b className="spec-name">{s.name} <span className="spec-tier">{s.tier ? ROMAN[s.tier] : ""}</span></b>
+                <span className="fine muted">{s.next ? `${s.progress} / ${s.next}` : "Mastered"}</span>
+              </div>
+              <div className="spec-bar"><span style={{ width: `${pct}%` }} /></div>
+              {s.perk && <p className="fine spec-perk">{s.perk}</p>}
+              {s.nextPerk && <p className="fine muted">{s.tier ? "Next: " : ""}{s.nextPerk}</p>}
+              <p className="fine muted spec-how">{s.how}</p>
+              {s.id === "combat_medic" && s.tier > 0 && (
+                <button className="btn btn-primary btn-xs" disabled={game.busy || !s.ready || view.hp >= view.maxHp} onClick={() => game.act({ type: "field_dressing" })}>
+                  {s.ready ? "Field dressing" : "Restocking your kit"}
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }

@@ -1,6 +1,7 @@
 // Rules for players interacting with each other. Pure functions over Player/Crew objects:
 // the server loads and saves both sides inside one transaction.
 
+import { clinicFactor } from "./specialties";
 import { addWound, playerMaxHp } from "./wounds";
 import { ALT_BLOCK, assertNotAlt, sameOwner } from "./anticheat";
 import { publicProfile } from "./profile";
@@ -76,7 +77,7 @@ export function attackBlock(a: Player, t: Player, now: number): string | null {
 function knockOut(p: Player, now: number, rng: Rng) {
   p.hp = 0;
   const stay = BALANCE.hp.hospitalMinMs + rng() * (BALANCE.hp.hospitalMaxMs - BALANCE.hp.hospitalMinMs);
-  p.hospitalUntil = now + Math.round(stay * (p.path === "medicine" ? 0.5 : 1));
+  p.hospitalUntil = now + Math.round(stay * (p.path === "medicine" ? 0.5 : 1) * clinicFactor(p));
   p.assessmentReady = true;
 }
 

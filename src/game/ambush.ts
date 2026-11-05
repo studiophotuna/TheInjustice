@@ -13,6 +13,7 @@
 // they were carrying; it opens an assault case, and the target gets a three-day vendetta on the
 // attackers.
 
+import { roleBonus } from "./specialties";
 import { assertNotAlt } from "./anticheat";
 import { BALANCE } from "./balance";
 import { playerFighter, power } from "./combat";
@@ -208,8 +209,9 @@ export function executeAmbush(
   crew.lastAmbushAt = now;
   target.ambushedAt = now;
 
-  const driverOk = !!driver && crewHere.includes(driver) && rng() < roleOdds(driver, "agility");
-  const lookoutOk = !!lookout && crewHere.includes(lookout) && rng() < roleOdds(lookout, "perception");
+  // A Wheelman drives cleaner; a Private eye misses less.
+  const driverOk = !!driver && crewHere.includes(driver) && rng() < Math.min(0.97, roleOdds(driver, "agility") + roleBonus(driver, "wheelman"));
+  const lookoutOk = !!lookout && crewHere.includes(lookout) && rng() < Math.min(0.97, roleOdds(lookout, "perception") + roleBonus(lookout, "private_eye"));
   const backup = lookoutOk ? [] : ctx.backup.filter((b) => b.id !== target.id && countryOf(b) === a.country && !inJail(b, now) && !inHospital(b, now));
   const attack = sideStrength(atk, AMBUSH.weights) * (0.85 + rng() * 0.3);
   const defense =

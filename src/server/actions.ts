@@ -49,6 +49,13 @@ export function parseAction(body: unknown): Action {
       return { type: "leave_career" };
     case "start_exit":
       return { type: "start_exit" };
+    case "field_dressing":
+      return { type: "field_dressing" };
+    case "argue_sentence":
+      return { type: "argue_sentence" };
+    case "promo_choice":
+      if (b.pick !== "a" && b.pick !== "b") throw new GameError("Bad request.");
+      return { type: "promo_choice", pick: b.pick };
     case "abandon_exit":
       return { type: "abandon_exit" };
     case "profile":

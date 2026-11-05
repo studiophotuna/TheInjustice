@@ -2,6 +2,7 @@
 // Crimes are anonymous: the victim only learns what witnesses, bystanders and detectives
 // piece together. Every tip reveals one trait, and some tips are wrong.
 
+import { clinicFactor } from "./specialties";
 import { addWound, playerMaxHp } from "./wounds";
 import { ALT_BLOCK, sameOwner } from "./anticheat";
 import { BALANCE } from "./balance";
@@ -251,7 +252,7 @@ export function crimeDistrict(p: Player, rng: Rng): string {
 function knockOut(p: Player, now: number, rng: Rng) {
   p.hp = 0;
   const stay = BALANCE.hp.hospitalMinMs + rng() * (BALANCE.hp.hospitalMaxMs - BALANCE.hp.hospitalMinMs);
-  p.hospitalUntil = now + Math.round(stay * (p.path === "medicine" ? 0.5 : 1));
+  p.hospitalUntil = now + Math.round(stay * (p.path === "medicine" ? 0.5 : 1) * clinicFactor(p));
   p.assessmentReady = true;
 }
 

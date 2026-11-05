@@ -10,7 +10,8 @@ import { PATHS } from "./content/paths";
 import { inJail, issueGear } from "./engine";
 import { BALANCE } from "./balance";
 import { dirtyOf } from "./money";
-import { GameError, type GameEvent, type PathId, type Player } from "./types";
+import { GameError, type GameEvent, type PathId, type Player, type StatKey } from "./types";
+import { statValue } from "./stats";
 
 export const CAREER = {
   /** Time between leaving a career and accepting (or applying for) another one. */
@@ -179,4 +180,67 @@ export function careerRecordView(p: Player, now: number) {
     veteran: p.path ? bestRank(p, p.path) > p.rank : false,
     gap: careerGapBlock(p, now),
   };
+}
+
+// ── How the job changed you ────────────────────────────────────────────────
+//
+// Each promotion asks one question: what did this rank make you better at? Two answers per
+// career, each strengthening two stats. You never see numbers; you feel it.
+
+export const PROMO_PICKS: Record<PathId, [Pick, Pick]> = {
+  police: [
+    { label: "The beat", text: "Long nights on the street made you harder to put down.", stats: ["toughness", "strength"] },
+    { label: "The case", text: "The paperwork taught you to notice what others miss.", stats: ["perception", "wits"] },
+  ],
+  enforcer: [
+    { label: "Muscle", text: "Collecting taught your fists to do the talking.", stats: ["strength", "toughness"] },
+    { label: "Respect", text: "People step aside now. You learned to let them.", stats: ["nerve", "charisma"] },
+  ],
+  courts: [
+    { label: "The courtroom", text: "You learned to own a room and hold a jury.", stats: ["charisma", "nerve"] },
+    { label: "The casework", text: "You read every file twice. Details stick.", stats: ["wits", "perception"] },
+  ],
+  vigilante: [
+    { label: "The rooftops", text: "Running and jumping until nothing hurts anymore.", stats: ["agility", "toughness"] },
+    { label: "The watch", text: "Hours of watching taught you patience and nerve.", stats: ["perception", "nerve"] },
+  ],
+  medicine: [
+    { label: "The ward", text: "Double shifts and worse sights hardened you.", stats: ["toughness", "nerve"] },
+    { label: "The diagnosis", text: "You see what's wrong before anyone says it.", stats: ["wits", "perception"] },
+  ],
+  banking: [
+    { label: "The deal", text: "You learned to close, and to never blink first.", stats: ["charisma", "nerve"] },
+    { label: "The numbers", text: "Columns of figures taught you where money hides.", stats: ["wits", "perception"] },
+  ],
+  military: [
+    { label: "Assault", text: "Drills made you faster and hit harder.", stats: ["strength", "agility"] },
+    { label: "Endurance", text: "Marches and cold nights taught you to outlast.", stats: ["toughness", "nerve"] },
+  ],
+};
+interface Pick {
+  label: string;
+  text: string;
+  stats: [StatKey, StatKey];
+}
+
+/** The boost a promotion choice gives (in stat value): grows a little with rank. */
+export const promoBoost = (rank: number) => 2 + 0.5 * (rank - 1);
+
+export function promoChoiceView(p: Player) {
+  const c = p.promoChoice;
+  if (!c || c.path !== p.path) return null;
+  return { rank: c.rank, title: PATHS[c.path].ranks[c.rank - 1], options: PROMO_PICKS[c.path].map((o, i) => ({ id: i === 0 ? "a" : "b", label: o.label, text: o.text })) };
+}
+
+export function choosePromo(p: Player, pick: "a" | "b"): GameEvent[] {
+  const c = p.promoChoice;
+  if (!c || c.path !== p.path) throw new GameError("There's nothing to choose right now.");
+  const o = PROMO_PICKS[c.path][pick === "a" ? 0 : 1];
+  const delta = promoBoost(c.rank);
+  for (const k of o.stats) {
+    const target = statValue(p.stats[k]) + delta;
+    p.stats[k] = Math.max(p.stats[k], ((target - 10) / 4) ** 2);
+  }
+  p.promoChoice = null;
+  return [{ tone: "good", text: `${o.label}. ${o.text}` }];
 }

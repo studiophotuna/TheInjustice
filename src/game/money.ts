@@ -2,6 +2,7 @@
 // spent in shops until it's laundered, but it pays for anything illegal (bribes, payoffs,
 // bought votes, bounties, back-alley doctors, drugs). Illegal payments use dirty money first.
 
+import { launderFactor } from "./specialties";
 import { BALANCE } from "./balance";
 import { countryOf, dayKey } from "./engine";
 import { PROPERTY_BY_ID } from "./content/properties";
@@ -52,19 +53,20 @@ export function launderOptions(p: Player, now: number) {
   const businesses = Object.keys(p.properties ?? {}).filter((id) => PROPERTY_BY_ID[id]?.country === here).length;
   const today = p.laundered?.day === dayKey(now) ? p.laundered.amount : 0;
   const cap = businesses * W.businessCapPerDay;
+  const f = launderFactor(p);
   return [
-    { id: "laundromat" as const, name: "The laundromat in the back", fee: W.laundromatFee, block: null as string | null, left: null as number | null },
+    { id: "laundromat" as const, name: "The laundromat in the back", fee: W.laundromatFee * f, block: null as string | null, left: null as number | null },
     {
       id: "business" as const,
       name: "Run it through your business",
-      fee: W.businessFee,
+      fee: W.businessFee * f,
       block: businesses ? (today >= cap ? "Your books can't take any more today." : null) : "You need a business in this country.",
       left: businesses ? Math.max(0, cap - today) : null,
     },
     {
       id: "bank" as const,
       name: "Your own bank's back office",
-      fee: W.bankerFee,
+      fee: W.bankerFee * f,
       block: p.path === "banking" && p.rank >= BALANCE.casework.bank.minRank ? null : "Only bank officers can do this.",
       left: null,
     },

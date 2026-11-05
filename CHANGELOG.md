@@ -1,5 +1,27 @@
 # Changelog
 
+## 2.8.0: specialties, promotion choices, break reminders
+
+- **Specialties (Me):** lasting skills earned by what you've done in *any* career, so living more
+  than one life pays off. Three tiers each, with progress bars:
+  - **Private eye** (Police work; arrests and manhunts count triple): when you're robbed you work
+    out the first letter, then three letters, then the whole name of who did it. Also makes you
+    a better ambush lookout.
+  - **Devil's advocate** (Courts work): once per sentence, argue your own case and cut 30 / 45 /
+    60% of the time left.
+  - **Combat medic** (Medicine *and* Military work): a field dressing for 15 / 30 / 45 health
+    every half hour, no medkit needed. Shows on the quick bar when you're out of medkits.
+  - **Wheelman** (Military and Vigilante work, successful snatches): cleaner ambush getaways.
+  - **Money on my mind** (Banking work): laundering fees 15 / 30 / 45% cheaper.
+  - **Hard as nails** (waking up in the clinic): shorter clinic stays.
+  - **Globetrotter** (trips between cities): shorter trips.
+  Past work counts: your history already earns tiers, announced the next time you act.
+- **Promotion choices:** every promotion asks how the job changed you, with two answers per
+  career (a cop's "The beat" or "The case", a mobster's "Muscle" or "Respect"...). Each
+  strengthens two hidden stats a little more at higher ranks.
+- **Break reminders:** after every hour of actual play, a short in-world nudge to stretch, drink
+  water or rest (energy refills while you're away anyway).
+
 ## 2.7.0: getting out
 
 - **Nobody just walks out of the family.** To leave the Mafia you start **getting out** (Me ->

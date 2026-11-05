@@ -177,6 +177,40 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
     }
   }, []);
 
+  // Gentle reminders: after every hour of actual play (game visible), a short nudge to take a break.
+  useEffect(() => {
+    const KEY = "cns_session";
+    const LINES = [
+      "An hour on the streets. Stretch your legs. The city will still be here.",
+      "Two hours in. Drink some water. Nobody in Grayhaven is going anywhere.",
+      "Three hours. Your energy refills while you rest, so a break costs you nothing.",
+    ];
+    const read = () => {
+      try {
+        return JSON.parse(sessionStorage.getItem(KEY) ?? "null") as { active: number; hours: number } | null;
+      } catch {
+        return null;
+      }
+    };
+    const t = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      const s = read() ?? { active: 0, hours: 0 };
+      s.active += 60_000;
+      const hours = Math.floor(s.active / 3_600_000);
+      if (hours > s.hours) {
+        s.hours = hours;
+        game.pushToasts([{ tone: "info", text: LINES[hours - 1] ?? `You've been out for ${hours} hours. Even the night shift takes breaks.` }]);
+      }
+      try {
+        sessionStorage.setItem(KEY, JSON.stringify(s));
+      } catch {
+        // ignore
+      }
+    }, 60_000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Sounds load on the first tap (browsers only allow audio after one).
   useEffect(() => {
     window.addEventListener("pointerdown", preloadSounds, { once: true });

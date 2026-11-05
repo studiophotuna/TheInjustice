@@ -183,6 +183,13 @@ export interface Player {
   jsnap?: { path: PathId | null; rank: number; crew: string | null; jailed: boolean; clinic: boolean; clinics: number; story: number; money: number; country: string; deaths: number };
   /** What each street regular thinks of you: -5..5 and the last thing they remember. */
   ties?: Record<string, { t: number; memo: string; at: number }>;
+  /** Specialty tiers already announced, and their cooldowns (see specialties.ts). */
+  specs?: Record<string, number>;
+  dressingAt?: number;
+  /** The jail term a Devil's advocate appeal was already used on. */
+  appealedFor?: number;
+  /** A promotion waiting for you to choose how the job changed you. */
+  promoChoice?: { path: PathId; rank: number } | null;
   /** Getting out of a dirty career: when it started, and honest jobs done since. */
   exiting?: { at: number; jobs: number } | null;
   /** A regular who stopped you in the street with a choice (see encounters.ts). */
@@ -649,6 +656,9 @@ export type Action =
   | { type: "profile"; bio?: string; photo?: string | null }
   | { type: "leave_career" }
   | { type: "start_exit" }
+  | { type: "field_dressing" }
+  | { type: "argue_sentence" }
+  | { type: "promo_choice"; pick: "a" | "b" }
   | { type: "abandon_exit" }
   | { type: "lie_low" }
   | { type: "bank"; op: "open" | "deposit" | "withdraw"; amount?: number }

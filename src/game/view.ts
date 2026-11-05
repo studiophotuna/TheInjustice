@@ -1,3 +1,5 @@
+import { specialtiesView } from "./specialties";
+import { promoChoiceView } from "./career";
 import { encounterView } from "./encounters";
 import { playerMaxHp, woundHint } from "./wounds";
 import { careerRecordView } from "./career";
@@ -135,6 +137,10 @@ export interface PublicView {
   /** Past careers, legacies, and whether you can leave the current one. */
   careerRecord: ReturnType<typeof import("./career").careerRecordView>;
   woundHint: string | null;
+  /** Lasting skills earned across careers. */
+  specialties: ReturnType<typeof specialtiesView>;
+  /** A promotion waiting for you to choose how it changed you. */
+  promoChoice: ReturnType<typeof promoChoiceView>;
   /** Your life so far, oldest first, and when it started. */
   journal: { at: number; kind: string; text: string }[];
   startedAt: number;
@@ -270,6 +276,8 @@ export function toView(p: Player, now: number): PublicView {
     woundHint: woundHint(p),
     encounter: encounterView(p, now),
     journal: p.journal ?? [],
+    specialties: specialtiesView(p, now),
+    promoChoice: promoChoiceView(p),
     startedAt: p.createdAt,
     surgeryFee: p.surgeryFee ?? null,
     hospitalMs: hospital ? p.hospitalUntil - now : 0,

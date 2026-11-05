@@ -5,7 +5,8 @@ import { regularUpkeep } from "./regulars";
 import { journalTick } from "./journal";
 import { chooseEncounter, maybeEncounter } from "./encounters";
 import { addWound, healWounds, playerMaxHp } from "./wounds";
-import { abandonExit, careerGapBlock, exitJobDone, leaveCareer, legacyPayBonus, startExit, veteranFactor } from "./career";
+import { abandonExit, careerGapBlock, choosePromo, exitJobDone, leaveCareer, legacyPayBonus, startExit, veteranFactor } from "./career";
+import { argueSentence, clinicFactor, fieldDressing, specialtyUps, travelFactor } from "./specialties";
 import { updateProfile } from "./profile";
 import { hireBodyguards, lieLow } from "./hit";
 import { ensureEquipped, equip, equippedId, repair, unequip, usesLeft, wearGear } from "./gear";
@@ -358,7 +359,7 @@ function startTrip(p: Player, to: CountryId, mode: TravelMode, now: number, rng:
   const incident = rollIncident(p, mode, rng, now);
   const seized = smugglingCheck(p, mode, rng);
   if (seized) events.push({ tone: "bad", text: seized });
-  p.travel = { from, to, mode, departAt: now, arriveAt: now + tripMs(from, to, mode) + (incident?.delayMs ?? 0), incident };
+  p.travel = { from, to, mode, departAt: now, arriveAt: now + Math.round(tripMs(from, to, mode) * travelFactor(p)) + (incident?.delayMs ?? 0), incident };
   p.arrival = null;
   events.push({
     tone: "info",
@@ -373,6 +374,7 @@ function arrive(p: Player) {
   const at = trip.arriveAt;
   const inc = trip.incident;
   p.travel = null;
+  p.jobCounts.trip = (p.jobCounts.trip ?? 0) + 1;
   // Each country has its own home: leave this one, move into whatever you have there.
   p.homes = { ...(p.homes ?? {}), [trip.from]: p.housing };
   p.country = trip.to;
@@ -451,7 +453,7 @@ function hospitalize(p: Player, now: number, rng: Rng, events: GameEvent[], woun
   if (wound) addWound(p, now);
   p.hp = 0;
   // Medics know how to heal: their hospital stays are halved.
-  const stay = randInt(rng, BALANCE.hp.hospitalMinMs, BALANCE.hp.hospitalMaxMs) * (p.path === "medicine" ? 0.5 : 1);
+  const stay = randInt(rng, BALANCE.hp.hospitalMinMs, BALANCE.hp.hospitalMaxMs) * (p.path === "medicine" ? 0.5 : 1) * clinicFactor(p);
   p.hospitalUntil = now + Math.round(stay);
   p.assessmentReady = true;
   const lost = Math.floor(p.cash * 0.25);
@@ -605,6 +607,7 @@ function checkCareer(p: Player, events: GameEvent[]) {
   p.jobsSinceRank = 0;
   p.reputation += 3;
   careerBonus(p);
+  p.promoChoice = { path: p.path, rank: p.rank };
   const title = def.ranks[p.rank - 1];
   if (isGraduation(p.path, p.rank)) {
     const school = p.school ? SCHOOL_BY_ID[p.school] : null;
@@ -615,6 +618,7 @@ function checkCareer(p: Player, events: GameEvent[]) {
   } else {
     events.push({ tone: "story", text: def.promotion(title) });
   }
+  events.push({ tone: "story", text: "How did this rank change you? Choose on your profile.", action: { label: "Choose", target: "tab:profile" } });
   if (def.examStats) {
     events.push({ tone: "info", text: `${def.examName}: ${def.examStats.map((k) => band(p, k)).join(" ")}` });
   }
@@ -1098,6 +1102,15 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng, ct
     case "leave_career":
       events.push(...leaveCareer(p, now));
       break;
+    case "field_dressing":
+      events.push(...fieldDressing(p, playerMaxHp(p), inHospital(p, now), now));
+      break;
+    case "argue_sentence":
+      events.push(...argueSentence(p, now));
+      break;
+    case "promo_choice":
+      events.push(...choosePromo(p, action.pick));
+      break;
     case "start_exit":
       events.push(...startExit(p, now));
       break;
@@ -1207,6 +1220,7 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng, ct
   }
 
   p.heat = Math.max(0, p.heat);
+  events.push(...specialtyUps(p));
   for (const e of events) p.log.unshift({ at: now, text: e.text, tone: e.tone });
   p.log = p.log.slice(0, BALANCE.logSize);
   return events;

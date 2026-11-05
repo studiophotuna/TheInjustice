@@ -110,7 +110,7 @@ type ColdCase = {
   hunt: { hunterName: string; suspectName: string; won: boolean } | null;
 };
 type ContractCard = { caseId: string; crime: string; district: string; victimName: string; reward: number; clues: string[]; canTake: string | null };
-type Robbery = { caseId: string; amount: number; district: string; at: number; contract: { reward: number; done: boolean } | null; closed: boolean };
+type Robbery = { caseId: string; amount: number; district: string; at: number; contract: { reward: number; done: boolean } | null; closed: boolean; lead?: string | null };
 type JusticeData = {
   labTips: { crewId: string; district: string; heat: number }[];
   launderFlags: { id: string; amount: number; method: string; at: number; canProbe: string | null }[];
@@ -1327,7 +1327,10 @@ export function CasesPanel({ game, hub, place }: { game: GameApi; hub: Hub | nul
           <ul className="officials">
             {data.robbed.filter((r) => !r.closed).map((r) => (
               <li key={r.caseId}>
-                <span>#{r.caseId} · ${r.amount} in {r.district}</span>
+                <span>
+                  #{r.caseId} · ${r.amount} in {r.district}
+                  {r.lead && <span className="pi-lead" title="Private eye: what you've worked out about who did it"> · 🔎 {r.lead}</span>}
+                </span>
                 {r.contract ? (
                   <span className="muted fine">{r.contract.done ? "Contract done" : `$${r.contract.reward} contract out`}</span>
                 ) : (
@@ -1717,6 +1720,14 @@ export function JailCard({ game }: { game: GameApi }) {
       <button className="btn btn-ghost btn-sm" onClick={() => window.dispatchEvent(new CustomEvent("injustice:go", { detail: "place:prison" }))}>
         Go to the yard
       </button>
+      {(() => {
+        const da = game.view!.specialties.find((s) => s.id === "devils_advocate");
+        return da && da.tier > 0 && !jail.custodyCase ? (
+          <button className="btn btn-primary btn-sm" disabled={game.busy || !da.ready} title={da.ready ? "" : "You've already argued this sentence."} onClick={() => game.act({ type: "argue_sentence" })}>
+            ⚖️ Argue your own sentence
+          </button>
+        ) : null;
+      })()}
       {jail.custodyCase && jail.bail > 0 && (
         <button className="btn btn-primary btn-sm" disabled={game.busy || game.view!.bank < jail.bail} onClick={() => game.social({ op: "bail", caseId: jail.custodyCase })}>
           Post your own bail (${jail.bail} from the bank)

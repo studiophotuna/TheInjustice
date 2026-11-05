@@ -9,6 +9,7 @@ import { buildLab, flagLaundering, flagsView, frisk, friskBlock, isBankStaff, la
 import { isDrug } from "@/game/drugs";
 import { cancelHeist, heistView, planHeist, runHeist, takeRole } from "@/game/heist";
 import * as AM from "@/game/ambush";
+import { robberLead, specTier } from "@/game/specialties";
 import { ambientLines, chatLine, defFor, isHeavy, isRegularId, REGULAR_OPS, REGULARS } from "@/game/regulars";
 
 const HEAVY_WIN_REP = 8;
@@ -209,6 +210,16 @@ export async function GET(req: Request) {
         const tags = new Map(crews.map((c) => [c.id, c.tag]));
         pool = people.filter((o) => o.id !== p.id).map((o) => ({ player: o, crewTag: o.crewId ? tags.get(o.crewId) ?? null : null }));
       }
+      // Private eyes work out (part of) who robbed them.
+      const leads = new Map<string, string>();
+      if (specTier(p, "private_eye")) {
+        for (const r of (p.robbedIn ?? []).slice(0, 8)) {
+          const c = all.find((x) => x.id === r.caseId);
+          const who = c?.culpritId ? await store.get(c.culpritId) : null;
+          const lead = who ? robberLead(p, who.name) : null;
+          if (lead) leads.set(r.caseId, lead);
+        }
+      }
       return NextResponse.json({
         block,
         detective,
@@ -241,6 +252,7 @@ export async function GET(req: Request) {
             at: r.at,
             contract: c?.contract ? { reward: c.contract.reward, done: c.contract.done } : null,
             closed: !c || c.trial?.verdict === "guilty",
+            lead: leads.get(r.caseId) ?? null,
           };
         }),
         racket: mafia

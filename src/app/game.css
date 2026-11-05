@@ -600,3 +600,27 @@ html, body { overflow-x: clip; }
 .go-list li.done b { color: var(--muted); text-decoration: line-through; }
 .go-check { flex: none; width: 20px; height: 20px; border-radius: 6px; display: grid; place-items: center; border: 1.5px solid var(--border-strong); font-size: 13px; font-weight: 800; color: #0a0c11; }
 .go-list li.done .go-check { background: var(--cash); border-color: var(--cash); }
+
+/* ─── Specialties and promotion choice ──────────────────────────────────── */
+.spec-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.spec-list li { display: grid; gap: 5px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.spec-list li:last-child { border-bottom: 0; padding-bottom: 0; }
+.spec-list li:not(.has) .spec-name { color: var(--muted); }
+.spec-name { font-family: var(--display); font-weight: 800; font-size: 17px; text-transform: uppercase; letter-spacing: 0.02em; }
+.spec-tier { color: var(--energy); margin-left: 4px; }
+.spec-bar { height: 6px; border-radius: 4px; background: var(--panel-3); overflow: hidden; }
+.spec-bar span { display: block; height: 100%; border-radius: 4px; background: var(--rep); }
+.spec-list li.has .spec-bar span { background: var(--energy); }
+.spec-perk { color: var(--cash); margin: 0; }
+.spec-how { margin: 0; font-style: italic; }
+.spec-list .btn { justify-self: start; }
+@media (min-width: 960px) { .profile > .specialties { grid-column: span 2; } .spec-list { grid-template-columns: 1fr 1fr; column-gap: 20px; } .spec-list li:nth-last-child(2) { border-bottom: 0; } }
+.promo-choice { border-color: rgba(255, 204, 51, 0.45); background: linear-gradient(180deg, rgba(255, 204, 51, 0.08), transparent 60%), var(--panel); }
+@media (min-width: 960px) { .profile > .promo-choice { grid-column: span 2; } }
+.promo-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 480px) { .promo-options { grid-template-columns: 1fr; } }
+.promo-option { display: grid; gap: 4px; text-align: left; padding: 14px; border-radius: 12px; border: 1px solid var(--border-strong); background: var(--panel-2); color: var(--text); cursor: pointer; transition: border-color 0.15s, transform 0.1s; }
+.promo-option:hover:not(:disabled) { border-color: var(--energy); transform: translateY(-2px); }
+.promo-option b { font-family: var(--display); font-weight: 800; font-size: 19px; text-transform: uppercase; }
+.promo-option span { font-size: 14px; color: #c3c9d6; }
+.pi-lead { color: var(--info); font-weight: 600; }

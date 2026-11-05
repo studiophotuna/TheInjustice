@@ -113,6 +113,9 @@ export function RightNow({ game, go, needs, onRead }: { game: GameApi; go: (t: s
       },
     });
   }
+  if (view.promoChoice) {
+    moves.push({ key: "promo", icon: Sparkles, tone: "money", title: `${view.promoChoice.title}: how did the job change you?`, cta: "Choose", run: () => go("tab:profile") });
+  }
   const exit = view.careerRecord.exit;
   if (exit?.started) {
     const done = exit.items.filter((i) => i.done).length;

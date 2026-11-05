@@ -42,6 +42,7 @@ export function QuickBar({ game }: { game: GameApi }) {
     .filter((i) => i.kind === "food" && i.price <= view.cash)
     .sort((a, b) => b.price - a.price)[0];
   const medkit = view.inventory.find((i) => i.id === "medkit");
+  const medic = view.specialties.find((s) => s.id === "combat_medic" && s.tier > 0);
 
   const slots: Slot[] = [
     {
@@ -75,12 +76,19 @@ export function QuickBar({ game }: { game: GameApi }) {
     },
     {
       key: "4",
-      label: "Medkit",
-      sub: medkit ? `${medkit.count} left` : "None",
+      label: !medkit && medic ? "Field dressing" : "Medkit",
+      sub: !medkit && medic ? (medic.ready ? "Combat medic" : "Restocking") : medkit ? `${medkit.count} left` : "None",
       tone: "health",
       Icon: HeartPulse,
-      block: !medkit ? "Buy medkits in the Shop." : view.hp >= view.maxHp && live.hospital === 0 ? "You're not hurt." : null,
-      run: () => act({ type: "use", itemId: "medkit" }),
+      block:
+        view.hp >= view.maxHp && live.hospital === 0
+          ? "You're not hurt."
+          : medkit
+            ? null
+            : medic
+              ? medic.ready && live.hospital === 0 ? null : "Your kit needs restocking."
+              : "Buy medkits in the Shop.",
+      run: () => act(medkit ? { type: "use", itemId: "medkit" } : { type: "field_dressing" }),
     },
   ];
 
