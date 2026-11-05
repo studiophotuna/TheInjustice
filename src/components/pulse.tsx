@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowRight, Briefcase, Coins, Gift, MessageCircle, Radio, Siren, Sparkles, X, Zap } from "lucide-react";
+import { ArrowRight, Briefcase, Coins, Crown, Gift, MessageCircle, Radio, Siren, Sparkles, X, Zap } from "lucide-react";
+import { PlayerAvatar } from "./art/Portraits";
 import { motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { OnlineNow } from "./online";
@@ -8,7 +9,12 @@ import { fmt, type GameApi } from "./useGame";
 
 export type FeedItem = { at: number; text: string; kind: "city" | "street" };
 export type CrewNeed = { kind: string; text: string; cta: string; go: string; until: number | null };
-type Pulse = { feed: FeedItem[]; needs: CrewNeed[] };
+export type Heavy = {
+  id: string; name: string; photo: string | null; title: string; path: string | null; out: boolean; status: string;
+  danger: number; read: string; canAttack: string | null; hours: [number, number] | null; reputation: number;
+  tie: { label: string; tone: string; memo: string } | null;
+};
+type Pulse = { feed: FeedItem[]; needs: CrewNeed[]; heavies?: Heavy[] };
 
 /** The street feed and your crew's needs, refreshed every minute while the page is visible. */
 export function usePulse(country: string) {
@@ -304,5 +310,69 @@ export function LiveRail({ game, go, onRead }: { game: GameApi; go: (t: string) 
       )}
       <OnlineNow game={game} limit={5} />
     </div>
+  );
+}
+
+// ── Big fish ────────────────────────────────────────────────────────────────
+
+const ODDS = ["Easy", "Favorable", "Even", "Risky", "Deadly"];
+
+/** When a heavy is next out, in the player's own clock. */
+function nextOut(hours: [number, number] | null): string {
+  if (!hours) return "";
+  const d = new Date();
+  d.setUTCHours(hours[0], 0, 0, 0);
+  if (d.getTime() < Date.now()) d.setUTCDate(d.getUTCDate() + 1);
+  return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+/**
+ * The city's heavies: the people who actually run these streets. Where they are, how a fight
+ * would go, and a way to take them on (alone if you're strong enough, with your crew if not).
+ */
+export function BigFish({ game, heavies, go }: { game: GameApi; heavies: Heavy[] | undefined; go: (t: string) => void }) {
+  if (!heavies?.length) return null;
+  return (
+    <section className="card bigfish">
+      <h3 className="card-title"><Crown size={16} /> Big fish in {game.view!.location.city}</h3>
+      <p className="fine muted">The people who really run these streets. Beat one and the whole city hears about it.</p>
+      <ul className="bigfish-list">
+        {heavies.map((h) => (
+          <li key={h.id} className={h.out ? "out" : ""}>
+            <PlayerAvatar name={h.name} path={h.path} photo={h.photo} className="avatar-md" />
+            <div className="bf-body">
+              <b>{h.name}</b>
+              <span className="fine muted">{h.title} · ★ {h.reputation}</span>
+              <span className="row bf-tags">
+                <span className={`danger-pill d${h.danger}`} title={h.read}>{ODDS[h.danger]}</span>
+                {h.status === "hospital" ? (
+                  <span className="chip chip-red">In the clinic</span>
+                ) : h.out ? (
+                  <span className="chip chip-green">Out now</span>
+                ) : (
+                  <span className="chip">Out at {nextOut(h.hours)}</span>
+                )}
+                {h.tie && <span className={`tie-badge tie-${h.tie.tone}`}>{h.tie.label}</span>}
+              </span>
+            </div>
+            <div className="bf-actions">
+              {h.out && !h.canAttack ? (
+                <button
+                  className={`btn btn-sm ${h.danger >= 4 ? "btn-ghost" : "btn-danger"}`}
+                  disabled={game.busy}
+                  onClick={() => (h.danger < 4 || confirm(`${h.name} would most likely put you in the clinic. A crew ambush is the smarter play. Go anyway?`)) && game.social({ op: "attack", targetId: h.id })}
+                >
+                  {h.danger >= 4 ? "Take them on (deadly)" : "Take them on"}
+                </button>
+              ) : (
+                <button className="btn btn-ghost btn-sm" onClick={() => go("people:crew")} title={h.canAttack ?? "Plan an ambush with your crew from their card in People."}>
+                  {h.danger >= 3 ? "Bring a crew" : "Find them"}
+                </button>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

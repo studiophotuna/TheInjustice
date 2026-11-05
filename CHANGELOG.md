@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.4.0: big fish
+
+- **Fixed: strong players couldn't attack anyone.** Two things combined:
+  - The "too small to pick on" rule blocked anyone with under about a third of your reputation.
+    Above ~120 reputation that was every regular in the city. Regulars are now always fair
+    game; beating up nobodies just costs you a little reputation. Small *real* players are
+    still protected.
+  - Regulars were far stronger than real players of the same rank (the stat formula didn't
+    match how players actually grow). They're recalibrated: a rank-N regular is about as strong
+    as a player who reached rank N. Existing regulars update automatically.
+- **The heavies:** two per city (an underboss and a captain, a Don and a commodore, a colonel and
+  a racket boss, a banker and his fixer), with real reputation and $200–1,000 in their pockets.
+  They keep their own hours, however busy the city is, wear a gold ring on the map and a 👑 Heavy
+  badge.
+  - Beating one: +8 reputation and a line in your story.
+  - Crews can plan an ambush on a heavy from their card in People.
+- **Big fish (Home):** the city's heavies, when they're out (in your local time), your odds, and
+  "Take them on" or "Bring a crew".
+
 ## 2.3.0: the city remembers you
 
 - **The regulars remember you:** every encounter choice, mugging and fight changes how that

@@ -9,7 +9,7 @@ import { PATH_LOOKS } from "./art/Portraits";
 import { Scene, type CharacterKind, type SceneKind } from "./art/Scenes";
 import { BackAlleyCard, JailCard, Sightings } from "./community";
 import { OnlineNow } from "./online";
-import { RightNow, StreetFeed, usePulse } from "./pulse";
+import { BigFish, RightNow, StreetFeed, usePulse } from "./pulse";
 import { CityMap } from "./citymap";
 import { TutorialCard } from "./underworld";
 import { DailyCard } from "./tabs";
@@ -114,6 +114,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
       </div>
 
       <CityMap game={game} go={go} feed={pulse?.feed} />
+      <BigFish game={game} heavies={pulse?.heavies} go={go} />
 
       <DailyCard game={game} />
 

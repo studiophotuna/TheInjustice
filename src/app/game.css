@@ -468,3 +468,18 @@ input:focus { border-color: var(--info) !important; box-shadow: 0 0 0 3px rgba(7
 .tl-story .tl-icon { color: var(--rep); border-color: rgba(167, 139, 250, 0.4); }
 .tl-street .tl-icon { color: var(--info); border-color: rgba(76, 201, 240, 0.4); }
 @media (min-width: 960px) { .profile > .storyline { grid-column: span 2; } }
+
+/* ─── Heavies ───────────────────────────────────────────────────────────── */
+.chip-heavy { color: #ffd65c; background: rgba(255, 204, 51, 0.12); border-color: rgba(255, 204, 51, 0.45); font-weight: 700; }
+.map-pin.heavy { box-shadow: 0 0 0 2px #ffcc33, 0 0 0 5px rgba(255, 204, 51, 0.25), 0 4px 10px rgba(0, 0, 0, 0.6); }
+.bigfish { background: linear-gradient(180deg, rgba(255, 204, 51, 0.06), transparent 40%), var(--panel); border-color: rgba(255, 204, 51, 0.25); }
+.bigfish .card-title > svg { color: var(--energy); }
+.bigfish-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.bigfish-list li { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 10px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--border); }
+.bigfish-list li.out { border-color: rgba(61, 220, 132, 0.35); }
+.bf-body { display: grid; gap: 3px; min-width: 0; }
+.bf-body b { font-family: var(--display); font-weight: 800; font-size: 17px; text-transform: uppercase; line-height: 1.05; }
+.bf-tags { gap: 6px; }
+@media (max-width: 420px) { .bigfish-list li { grid-template-columns: auto 1fr; } .bf-actions { grid-column: 1 / -1; } .bf-actions .btn { width: 100%; } }
+@media (min-width: 1100px) { .home > .bigfish { grid-column: 1 / -1; } .bigfish-list { grid-template-columns: 1fr 1fr; } }
+.online-name .chip-heavy, .person-head .chip-heavy { width: fit-content; justify-self: start; }

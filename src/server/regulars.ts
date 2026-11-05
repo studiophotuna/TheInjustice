@@ -14,7 +14,7 @@ export function makeRegular(country: CountryId, key: string, now: number): Playe
   p.path = def.path;
   p.rank = def.path ? def.rank : 0;
   p.stats = { ...p.stats, ...regularStats(def) };
-  p.reputation = 5 + def.rank * 8;
+  p.reputation = def.heavy?.rep ?? 5 + def.rank * 8;
   p.profile = { bio: def.bio, photo: null, updatedAt: now };
   p.regular = { country, key, slot: -1 };
   regularUpkeep(p, now);
@@ -28,7 +28,12 @@ export async function cityRegulars(store: Store, country: CountryId, now: number
   const missing = ROSTER[country].filter((d) => !have.has(d.key));
   if (missing.length) {
     for (const d of missing) {
-      await store.update(regularId(country, d.key), (p) => ({ player: p ?? makeRegular(country, d.key, now), result: null }));
+      // One bad entry must never take the city's pages down with it.
+      try {
+        await store.update(regularId(country, d.key), (p) => ({ player: p ?? makeRegular(country, d.key, now), result: null }));
+      } catch (e) {
+        console.error(`Could not create regular ${country}/${d.key}`, e);
+      }
     }
     list = await store.listRegulars(country);
   }

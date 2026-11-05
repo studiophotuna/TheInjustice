@@ -37,7 +37,11 @@ export interface RegularDef {
   leans: StatKey[];
   bio: string;
   lines: string[];
+  /** The city's heavies: high reputation, real money, worth a top player's time. */
+  heavy?: { rep: number; cash: [number, number] };
 }
+
+const HEAVY = (def: RegularDef, rep: number, cash: [number, number]): RegularDef => ({ ...def, heavy: { rep, cash } });
 
 const R = (key: string, name: string, path: PathId | null, rank: number, hours: [number, number], leans: StatKey[], bio: string, lines: string[]): RegularDef => ({
   key, name, path, rank, hours, leans, bio, lines,
@@ -55,6 +59,8 @@ export const ROSTER: Record<CountryId, RegularDef[]> = {
     R("bea", "Bea Calloway", "banking", 2, [8, 9], ["wits"], "Teller at Grayhaven Savings. Counts in her sleep.", ["Bank's open till six. Deposit, don't get mugged.", "Interest rates went up. Nobody's happy.", "Funny how some accounts never run dry."]),
     R("sully", "Sully Raines", "vigilante", 2, [22, 8], ["agility", "perception"], "Walks the Gutter at night in a red scarf. Says he's just walking.", ["Somebody's got to watch the watchers.", "Saw a guy in a nice coat paying off a cop. Again.", "Lock your doors tonight."]),
     R("nico", "Nico Hale", "military", 2, [4, 9], ["strength", "toughness"], "On leave from the garrison. Bored, which is dangerous.", ["Garrison's quiet. Too quiet.", "Anyone know a gym that opens early?", "Civilians. Always in a hurry."]),
+    HEAVY(R("crowe", "Silas Crowe", "enforcer", 7, [19, 9], ["strength", "nerve", "toughness"], "Runs Iron Row's collections for Kozak. Has never once raised his voice.", ["Everyone pays. The only question is when.", "Kozak sends his regards.", "I don't threaten people. I explain things."]), 170, [300, 700]),
+    HEAVY(R("webb", "Captain Harlan Webb", "police", 6, [13, 10], ["perception", "toughness", "wits"], "Precinct Square's night captain. Half the city fears him; the other half pays him.", ["Nothing happens in this city I don't hear about.", "Clean records are just records nobody's read yet.", "Move along. Unless you want to talk."]), 150, [200, 500]),
   ],
   solmarra: [
     R("lucia", "Lucia Ferro", "banking", 3, [7, 10], ["wits", "charisma"], "Port Solace exchange broker. Every handshake is a contract.", ["The harbor money moves before sunrise.", "Never trust a man who pays in coins.", "Rates are good today. For me."]),
@@ -67,6 +73,8 @@ export const ROSTER: Record<CountryId, RegularDef[]> = {
     R("rico", "Rico Mancuso", "enforcer", 2, [17, 10], ["agility", "strength"], "Smuggler's runner. Knows every alley to the sea.", ["Need something moved? Quietly?", "The coast guard changed shifts.", "I was never here."]),
     R("elena", "Elena Duarte", "vigilante", 3, [0, 8], ["perception", "agility"], "Writes anonymous letters to the paper. Signs them 'The Tide'.", ["The tide always comes back.", "Somebody should look at the port authority's books.", "Not everyone in a uniform is clean."]),
     R("matteo", "Matteo Russo", "military", 1, [5, 9], ["toughness"], "Navy recruit. Homesick, broke, and handy with a wrench.", ["Shore leave's too short.", "Anyone hiring? Odd jobs?", "The sea's calmer than this city."]),
+    HEAVY(R("bruni", "Don Salvatore Bruni", "enforcer", 7, [20, 9], ["charisma", "nerve", "strength"], "Owns the harbor, the casino strip and three judges. Smiles at everyone.", ["Port Solace is a family. I am its father.", "Sit, eat. Then we talk business.", "The sea keeps secrets. So do I."]), 210, [400, 900]),
+    HEAVY(R("vargas", "Commodore Vargas", "military", 6, [6, 10], ["toughness", "strength", "perception"], "Runs the naval yard like a fortress and the smuggling routes like a business.", ["Nothing leaves this harbor without my say.", "Discipline is cheaper than bribes.", "Stand straight when you talk to me."]), 160, [250, 600]),
   ],
   kestrova: [
     R("anya", "Anya Volkova", "military", 4, [5, 10], ["strength", "toughness"], "Garrison sergeant. Ironmoor's walls know her boots.", ["Curfew is not a suggestion.", "Stand up straight when you rob someone.", "The colonel is watching the rail yard."]),
@@ -79,6 +87,8 @@ export const ROSTER: Record<CountryId, RegularDef[]> = {
     R("stefan", "Stefan Hale", "banking", 3, [9, 9], ["wits"], "Clerk at the state bank. Moves money like weather.", ["Money leaves Ironmoor on Tuesdays.", "A deposit that large needs a story.", "The vault is cold. So is the manager."]),
     R("dusan", "Dušan Petrov", "vigilante", 1, [23, 8], ["agility"], "Teenager with a camera and a death wish.", ["I've got pictures. Lots of pictures.", "Somebody tell the paper about the rail yard.", "They can't arrest all of us."]),
     R("yuri", "Yuri Sokol", "enforcer", 3, [16, 10], ["toughness", "strength"], "Runs the rail yard card game. Never loses, never smiles.", ["Sit. Play. Lose quietly.", "The rail yard has its own law.", "You looking for work or trouble?"]),
+    HEAVY(R("hraba", "Colonel Radek Hraba", "military", 7, [5, 10], ["strength", "toughness", "nerve"], "Commands the Ironmoor garrison and sells its rifles out the back door.", ["Order is a product. I sell it.", "The rail yard answers to me.", "You have papers? Good. Now you owe me."]), 200, [350, 800]),
+    HEAVY(R("sorokina", "Mila Sorokina", "enforcer", 6, [20, 9], ["agility", "wits", "nerve"], "Runs the foundry rackets. Nobody has seen her lose a fight.", ["Everyone in Ironmoor works for me. Some just don't know it.", "Pay on Friday. Always Friday.", "I remember every face."]), 155, [250, 650]),
   ],
   meridian: [
     R("sloane", "Sloane Avery", "banking", 4, [13, 10], ["wits", "charisma"], "Halcyon hedge fund partner. Owns three penthouses and no conscience.", ["Markets are just crime with better lighting.", "Lunch is at the club. Members only.", "I don't launder money. I diversify it."]),
@@ -91,6 +101,8 @@ export const ROSTER: Record<CountryId, RegularDef[]> = {
     R("milo2", "Milo Grant", null, 0, [18, 10], ["agility"], "Rideshare driver. Drove a getaway car once, by accident.", ["Where to? No questions. Mostly.", "Five stars or I remember your face.", "Traffic's bad by the stock exchange."]),
     R("reed", "Reed Holloway", "military", 3, [6, 9], ["toughness", "strength"], "Private contractor. Ex-army, ex-everything.", ["Security detail. Don't stand so close.", "I've been to worse places. Not many.", "Contracts pay better than medals."]),
     R("tess", "Tess Laurent", "enforcer", 1, [19, 10], ["charisma"], "Card sharp who works the casino floor.", ["Pick a card. Any card. That one's mine.", "The casino lets me win. Small.", "Never play with a man who counts out loud."]),
+    HEAVY(R("vale", "Augustin Vale", "banking", 7, [12, 10], ["wits", "charisma", "perception"], "Chairman of the Meridian Exchange. Launders more money than the central bank prints.", ["Money has no smell. I made sure.", "Every crisis is an opportunity, for me.", "My lawyers have lawyers."]), 220, [500, 1000]),
+    HEAVY(R("thorne", "Marcus Thorne", "enforcer", 6, [21, 9], ["strength", "agility", "nerve"], "Vale's fixer. Problems in Halcyon tend to vanish around him.", ["Mr. Vale doesn't like loose ends.", "I'm just here to talk. For now.", "Halcyon is a clean city. I keep it that way."]), 160, [300, 700]),
   ],
 };
 
@@ -123,17 +135,20 @@ export function scheduledOut(def: RegularDef, now: number): boolean {
  */
 export function regularsOut(all: Player[], realOnline: number, now: number, inHospitalOrJail: (p: Player) => boolean): Player[] {
   const room = Math.max(0, REGULARS.busyStreet - realOnline);
-  if (!room) return [];
   const slot = Math.floor(now / (60 * 60_000));
-  return all
+  const scheduled = all
     .filter((p) => !p.dead && !inHospitalOrJail(p))
     .filter((p) => {
       const d = defFor(p);
       return !!d && scheduledOut(d, now);
     })
-    .sort((a, b) => hash(a.id + slot) - hash(b.id + slot))
-    .slice(0, room);
+    .sort((a, b) => hash(a.id + slot) - hash(b.id + slot));
+  // The heavies keep their own hours, however busy the street is.
+  const heavies = scheduled.filter((p) => defFor(p)?.heavy);
+  return [...heavies, ...scheduled.filter((p) => !defFor(p)?.heavy).slice(0, room)];
 }
+
+export const isHeavy = (p: Player) => !!defFor(p)?.heavy;
 
 /** Keeps a regular in shape: pocket money refills every few hours, and they don't hold heat. */
 /** Each regular's portrait (drawn from the Notionists set, CC0; see public/regulars/CREDITS.txt). */
@@ -141,12 +156,21 @@ export const regularPhoto = (country: string, key: string) => `/regulars/${count
 
 export function regularUpkeep(p: Player, now: number) {
   if (!p.regular) return;
+  if ((p.regular.v ?? 1) < REGULAR_VERSION) {
+    const def = defFor(p);
+    if (def) {
+      p.stats = { ...p.stats, ...regularStats(def) };
+      p.reputation = def.heavy?.rep ?? 5 + def.rank * 8;
+    }
+    p.regular.v = REGULAR_VERSION;
+  }
   const photo = regularPhoto(p.regular.country, p.regular.key);
   if (p.profile?.photo !== photo) p.profile = { ...(p.profile ?? {}), photo };
   const slot = Math.floor(now / REGULARS.refillMs);
   if (p.regular.slot !== slot) {
     p.regular.slot = slot;
-    p.cash = Math.round(REGULARS.cashMin + hash(p.id + slot) * (REGULARS.cashMax - REGULARS.cashMin));
+    const [lo, hi] = defFor(p)?.heavy?.cash ?? [REGULARS.cashMin, REGULARS.cashMax];
+    p.cash = Math.round(lo + hash(p.id + slot) * (hi - lo));
     p.dirty = 0;
     p.bank = 0;
   }
@@ -156,10 +180,20 @@ export function regularUpkeep(p: Player, now: number) {
 }
 
 /** Experience for a regular's stats: rank sets the level, their leanings add more. */
+/**
+ * Experience for a regular's stats, calibrated to how real players grow: a regular of rank N is
+ * about as strong as a player who reached rank N, in the stats their career uses. Heavies are a
+ * step above, a target for top players and crews.
+ */
 export function regularStats(def: RegularDef): Record<StatKey, number> {
-  const base = 18 * (def.rank + 1) ** 2;
-  return Object.fromEntries(STAT_KEYS.map((k) => [k, Math.round(base * (0.7 + hash(def.key + k) * 0.5) * (def.leans.includes(k) ? 1.8 : 1))])) as Record<StatKey, number>;
+  const base = 6 * def.rank ** 2 + 4;
+  return Object.fromEntries(
+    STAT_KEYS.map((k) => [k, Math.round(base * (0.8 + hash(def.key + k) * 0.4) * (def.leans.includes(k) ? (def.heavy ? 1.3 : 1.6) : 0.6))]),
+  ) as Record<StatKey, number>;
 }
+
+/** Bump when regularStats changes: existing regulars are recalibrated on their next update. */
+export const REGULAR_VERSION = 2;
 
 /** A line for city chat, or null if it isn't time yet. */
 export function chatLine(out: Player[], lastAt: number, now: number): { who: Player; text: string } | null {
@@ -172,7 +206,7 @@ export function chatLine(out: Player[], lastAt: number, now: number): { who: Pla
 }
 
 /** Ops that may target a regular. Everything else is refused. */
-export const REGULAR_OPS = new Set(["attack", "crime", "ambush_hire"]);
+export const REGULAR_OPS = new Set(["attack", "crime", "ambush_hire", "ambush_plan"]);
 
 const DOING: Record<string, string[]> = {
   police: ["is walking a beat in", "is asking questions around", "stopped a car in"],

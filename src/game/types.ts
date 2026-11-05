@@ -187,7 +187,7 @@ export interface Player {
   encounter?: { id: string; key: string; country: CountryId; name: string; district: string; at: number; expiresAt: number } | null;
   encounterAt?: number;
   /** Set on street regulars (characters the game runs). See regulars.ts. */
-  regular?: { country: CountryId; key: string; slot: number };
+  regular?: { country: CountryId; key: string; slot: number; v?: number };
   /** Recent repetitions of each job or exercise (fades over time), for diminishing returns. */
   practice?: Record<string, { n: number; at: number }>;
   /**

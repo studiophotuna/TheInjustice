@@ -33,7 +33,7 @@ type Profile = {
   contract?: { cost: number; block: string | null } | null;
   ambush?: string | null;
   surgery?: { fee: number; block: string | null } | null;
-  regular?: { out: boolean; line: string | null };
+  regular?: { out: boolean; line: string | null; heavy?: boolean };
   tie?: { score: number; label: string; tone: string; memo: string } | null;
   hire?: ("attacker" | "driver" | "lookout")[];
   rat?: boolean;
@@ -446,6 +446,7 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
               <div className="person-head">
                 <b>{p.name}</b>
                 {p.crewTag && <span className="crew-tag">[{p.crewTag}]</span>}
+                {p.regular?.heavy && <span className="chip chip-heavy" title="One of the city's heavies: dangerous, well-known, and carrying real money.">👑 Heavy</span>}
                 {p.regular && <span className="chip chip-regular" title="A street regular: one of the city's characters, run by the game.">Regular{p.regular.out ? " · out now" : ""}</span>}
                 {p.protected && <span className="chip chip-green"><Shield size={11} /> New</span>}
                 {p.bounty > 0 && <span className="chip chip-red">Wanted · ${p.bounty}</span>}

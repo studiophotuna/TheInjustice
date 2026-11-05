@@ -215,7 +215,7 @@ export function crimeBlock(a: Player, t: Player, kind: CrimeKind, now: number): 
   if (now < protectedUntil(t)) return "They're new in town. The street protects newcomers for a while.";
   if (kind === "mug" && now < (t.immuneUntil ?? 0)) return "They just survived a fight. The street leaves them alone for a while.";
   if (now < protectedUntil(a)) return "You're still new in town. Learn the streets first.";
-  if (a.reputation > t.reputation * 3 + 15) return "Robbing someone that small would ruin your name.";
+  if (!t.regular && a.reputation > t.reputation * 3 + 15) return "Robbing someone that small would ruin your name.";
   if (now - (a.attackLog?.[`crime:${t.id}`] ?? 0) < BALANCE.crime.cooldownMs) return "They'd recognize you. Give it time.";
   if (a.energy < CRIMES[kind].energy) return "You're too tired.";
   if (kind === "mug" && a.hp < 20) return "You're too hurt to corner anyone.";

@@ -65,7 +65,7 @@ export function attackBlock(a: Player, t: Player, now: number): string | null {
   if (!rat && now < protectedUntil(t)) return "They're new in town. The street protects newcomers for a while.";
   if (!rat && now < (t.immuneUntil ?? 0)) return "They just survived a fight. The street leaves them alone for a while.";
   if (now < protectedUntil(a)) return "You're still new in town. Attacking now would end your protection... and your reputation.";
-  if (!rat && a.reputation > t.reputation * 3 + 15) return "Picking on someone that small would ruin your name.";
+  if (!t.regular && !rat && a.reputation > t.reputation * 3 + 15) return "Picking on someone that small would ruin your name.";
   const last = a.attackLog?.[t.id] ?? 0;
   if (now - last < BALANCE.pvp.cooldownMs) return "You just fought them. Let it cool down.";
   if (a.energy < BALANCE.pvp.energy) return "You're too tired to start a fight.";

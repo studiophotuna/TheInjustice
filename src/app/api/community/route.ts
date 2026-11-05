@@ -9,9 +9,11 @@ import { buildLab, flagLaundering, flagsView, frisk, friskBlock, isBankStaff, la
 import { isDrug } from "@/game/drugs";
 import { cancelHeist, heistView, planHeist, runHeist, takeRole } from "@/game/heist";
 import * as AM from "@/game/ambush";
-import { ambientLines, chatLine, defFor, isRegularId, REGULAR_OPS, REGULARS } from "@/game/regulars";
+import { ambientLines, chatLine, defFor, isHeavy, isRegularId, REGULAR_OPS, REGULARS } from "@/game/regulars";
+
+const HEAVY_WIN_REP = 8;
 import { DISTRICTS } from "@/game/content/districts";
-import { tieOf, tieShift, tieView } from "@/game/journal";
+import { addJournal, tieOf, tieShift, tieView } from "@/game/journal";
 import { COUNTRY_BY_ID } from "@/game/content/world";
 import { realOnlineCount, regularsOnStreet } from "@/server/regulars";
 import { assertNotAlt } from "@/game/anticheat";
@@ -310,8 +312,17 @@ export async function GET(req: Request) {
       // The street feed (what's happening in the city) and what your crew needs from you.
       const country = countryOf(p);
       const [city, real, myCrew] = await Promise.all([store.getCity(country), store.listPlayers(country, 40), p.crewId ? store.getCrew(p.crewId) : null]);
-      const { out } = await regularsOnStreet(store, country, realOnlineCount(real, now), now);
+      const { out, all } = await regularsOnStreet(store, country, realOnlineCount(real, now), now);
       const districts = DISTRICTS.filter((d) => d.country === country).map((d) => d.name);
+      const outIds = new Set(out.map((o) => o.id));
+      const heavies = all.filter(isHeavy).map((o) => {
+        const prof = profileFor(p, o, now);
+        return {
+          id: o.id, name: o.name, photo: o.profile?.photo ?? null, title: prof.title, path: o.path,
+          out: outIds.has(o.id), status: prof.status, danger: prof.danger, read: prof.read, canAttack: prof.canAttack,
+          hours: defFor(o)?.hours ?? null, reputation: o.reputation, tie: o.regular ? tieView(p, o.regular.country, o.regular.key) : null,
+        };
+      });
       const feed = [...(city?.log ?? []).slice(0, 10).map((l) => ({ at: l.at, text: l.text, kind: "city" as const })), ...ambientLines(out, districts, now).map((l) => ({ ...l, kind: "street" as const }))]
         .filter((l) => now - l.at < 24 * 60 * 60_000)
         .sort((x, y) => y.at - x.at)
@@ -328,7 +339,7 @@ export async function GET(req: Request) {
       if (myCrew && h && !Object.values(h.roles).some((x) => x?.id === p.id)) needs.push({ kind: "heist", text: `Your crew is planning a bank job in ${COUNTRY_BY_ID[h.country].capital}.`, cta: "Join the job", go: "people:crew", until: null });
       const br = myCrew?.breakout;
       if (myCrew && br && !br.team.some((x) => x.id === p.id)) needs.push({ kind: "breakout", text: `Your crew is breaking ${br.targetName} out of prison.`, cta: "Join in", go: "people:crew", until: null });
-      return NextResponse.json({ feed, needs });
+      return NextResponse.json({ feed, needs, heavies });
     }
     if (url.searchParams.get("online")) {
       // Players in this city with the game open right now, with quick actions.
@@ -355,6 +366,7 @@ export async function GET(req: Request) {
             canCrime: Object.fromEntries(CRIME_KINDS.map((k) => [k, crimeBlock(p, o, k, now)])),
             bounty: prof.bounty,
             regular: !!o.regular,
+            heavy: !!o.regular && isHeavy(o),
             tie: o.regular ? tieView(p, o.regular.country, o.regular.key) : null,
           };
         });
@@ -395,10 +407,12 @@ export async function GET(req: Request) {
       return {
         ...prof,
         lastSeen: outIds.has(o.id) ? now : prof.lastSeen,
-        regular: { out: outIds.has(o.id), line: defFor(o)?.lines[0] ?? null },
+        regular: { out: outIds.has(o.id), line: defFor(o)?.lines[0] ?? null, heavy: isHeavy(o) },
         tie: o.regular ? tieView(p, o.regular.country, o.regular.key) : null,
         crewTag: null, canInvite: false, canForum: false, canCourtMartial: "n/a", canSellGun: false, lawyerFee: null, canFrisk: "n/a",
-        canVouch: "n/a", torch: [], contract: null, ambush: "n/a", surgery: null, bounty: 0,
+        canVouch: "n/a", torch: [], contract: null, surgery: null, bounty: 0,
+        // Crews can plan to jump one of the city's heavies.
+        ambush: leading && isHeavy(o) && !myCrew?.ambush ? AM.planBlock(leading, p, o, now) : "n/a",
         canCrime: Object.fromEntries(CRIME_KINDS.map((k) => [k, crimeBlock(p, o, k, now)])),
         hire,
       };
@@ -605,8 +619,20 @@ export async function POST(req: Request) {
         const target = str(b.targetId);
         events = await store.transaction((tx) =>
           withPair(tx, playerId, target, now, (a, t) => {
+            const small = !!t.regular && a.reputation > t.reputation * 3 + 15;
             const out = attackPlayer(a, t, now, Math.random).events;
-            if (t.regular) tieShift(a, t.regular.country, t.regular.key, -2, "You attacked them.", now);
+            if (t.regular) {
+              tieShift(a, t.regular.country, t.regular.key, -2, "You attacked them.", now);
+              const won = !!out.find((e) => e.fight)?.fight?.won;
+              if (small) {
+                a.reputation = Math.max(0, a.reputation - 2);
+                out.push({ tone: "info", text: "Beating up nobodies doesn't impress anyone. -2 reputation." });
+              } else if (won && isHeavy(t)) {
+                a.reputation += HEAVY_WIN_REP;
+                addJournal(a, now, "street", `Took down ${t.name}, one of the city's heavies.`);
+                out.push({ tone: "story", text: `You put ${t.name} on the ground. The whole city will hear about this. +${HEAVY_WIN_REP} reputation.` });
+              }
+            }
             return out;
           }),
         );
@@ -640,7 +666,10 @@ export async function POST(req: Request) {
           witnesses.forEach((w) => tick(w, now));
           const out = commitCrime(a, t, kind, now, Math.random, { caseId, district: crimeDistrict(a, Math.random), crewTag, witnesses, crackdown: crack });
           if (out.caseFile) regularsTalk(witnesses, out.caseFile, a, now);
-          if (t.regular) tieShift(a, t.regular.country, t.regular.key, -2, `You tried to ${kind} them.`, now);
+          if (t.regular) {
+            tieShift(a, t.regular.country, t.regular.key, -2, `You tried to ${kind} them.`, now);
+            if (a.reputation > t.reputation * 3 + 15) a.reputation = Math.max(0, a.reputation - 1);
+          }
           await tx.putPlayer(a);
           await tx.putPlayer(t);
           if (out.caseFile) {

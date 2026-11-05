@@ -15,13 +15,14 @@ const mk = (id: string, name: string) => {
   tick(p, LATER);
   return p;
 };
-const allRegulars = (now: number) => ROSTER.varrow.map((d) => makeRegular("varrow", d.key, now));
+const allRegulars = (now: number) => ROSTER.varrow.filter((d) => !d.heavy).map((d) => makeRegular("varrow", d.key, now));
 
 describe("street regulars", () => {
   it("every city has ten, with unique ids, and they're never protected newcomers", () => {
     for (const list of Object.values(ROSTER)) {
-      expect(list).toHaveLength(10);
-      expect(new Set(list.map((d) => d.key)).size).toBe(10);
+      expect(list).toHaveLength(12);
+      expect(new Set(list.map((d) => d.key)).size).toBe(12);
+      expect(list.filter((d) => d.heavy)).toHaveLength(2);
     }
     const r = makeRegular("varrow", "dutch", LATER);
     expect(isRegularId(r.id)).toBe(true);
@@ -112,5 +113,48 @@ describe("first-day checklist", () => {
     expect(p.cash).toBe(cash + 30);
     expect(tutorialView(p)).toBeNull();
     expect(() => claimTutorial(p, "all")).toThrow();
+  });
+});
+
+describe("roster", () => {
+  it("every regular in every city can actually be created", () => {
+    for (const [country, list] of Object.entries(ROSTER)) for (const d of list) expect(() => makeRegular(country as "varrow", d.key, LATER)).not.toThrow();
+  });
+});
+
+describe("regulars are fair game, and the heavies are worth it", () => {
+  it("a top player can still fight and rob small regulars, but not small real players", () => {
+    const top = mk("top", "Top Dog");
+    top.reputation = 150;
+    top.energy = 100;
+    const gus = makeRegular("varrow", "gus", LATER);
+    expect(attackBlock(top, gus, LATER)).toBeNull();
+    const small = mk("s", "Small Fry");
+    small.reputation = 10;
+    expect(attackBlock(top, small, LATER)).toMatch(/small/);
+  });
+
+  it("regulars are about as strong as players of their rank; heavies are a step above", () => {
+    const rosa = makeRegular("varrow", "rosa", LATER);
+    const crowe = makeRegular("varrow", "crowe", LATER);
+    expect(rosa.stats.perception).toBeLessThan(80);
+    expect(crowe.stats.strength).toBeGreaterThan(250);
+    expect(crowe.reputation).toBeGreaterThanOrEqual(150);
+    expect(crowe.cash).toBeGreaterThanOrEqual(300);
+  });
+
+  it("heavies keep their hours even when the street is busy", () => {
+    const all = ROSTER.varrow.map((d) => makeRegular("varrow", d.key, LATER));
+    const hours = Array.from({ length: 24 }, (_, h) => LATER + h * 3_600_000);
+    const seen = hours.flatMap((t) => regularsOut(all, 50, t, () => false).map((r) => r.regular!.key));
+    expect(new Set(seen)).toEqual(new Set(["crowe", "webb"]));
+  });
+
+  it("old regulars are recalibrated on their next update", () => {
+    const r = makeRegular("varrow", "dutch", LATER);
+    r.stats.strength = 641;
+    r.regular!.v = 1;
+    tick(r, LATER + 1000);
+    expect(r.stats.strength).toBeLessThan(200);
   });
 });

@@ -20,6 +20,7 @@ type Person = {
   canAttack: string | null;
   canCrime: Record<CrimeKind, string | null>;
   regular?: boolean;
+  heavy?: boolean;
   tie?: { label: string; tone: string; memo: string } | null;
 };
 
@@ -159,7 +160,7 @@ export function CityMap({ game, go, feed }: { game: GameApi; go: (t: string) => 
           {pins.map(({ p, x, y }, k) => (
             <span key={p.id} className="map-pos" style={{ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` }}>
             <motion.button
-              className={`map-pin d${p.danger}${sel?.kind === "person" && sel.id === p.id ? " on" : ""}`}
+              className={`map-pin d${p.danger}${p.heavy ? " heavy" : ""}${sel?.kind === "person" && sel.id === p.id ? " on" : ""}`}
               style={{ ["--rim" as string]: p.path ? PATH_LOOKS[p.path]?.rim : "#8a93a6" }}
               initial={{ scale: 0 }}
               animate={{ scale: 1, y: [0, -2, 0] }}
@@ -181,7 +182,7 @@ export function CityMap({ game, go, feed }: { game: GameApi; go: (t: string) => 
             <div className="map-sheet-body">
               <div className="row">
                 <b className="map-name">{person.name}</b>
-                {person.regular && <span className="chip chip-regular">Regular</span>}
+                {person.heavy ? <span className="chip chip-heavy">👑 Heavy</span> : person.regular && <span className="chip chip-regular">Regular</span>}
                 {person.tie && <span className={`tie-badge tie-${person.tie.tone}`}>{person.tie.label}</span>}
                 <span className={`danger-pill d${person.danger}`}>{DANGER[person.danger]}</span>
               </div>

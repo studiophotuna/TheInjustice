@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { BALANCE } from "./balance";
 import { chooseEncounter, ENCOUNTERS, encounterView, maybeEncounter } from "./encounters";
 import { createPlayer, tick } from "./engine";
-import { regularUpkeep } from "./regulars";
+import { regularUpkeep, ROSTER } from "./regulars";
 import { friendsIn, tieOf, tieShift, tieView } from "./journal";
 import { makeRegular } from "@/server/regulars";
 
@@ -123,7 +123,7 @@ describe("the regulars remember you", () => {
 
   it("people you've crossed stop coming over", () => {
     const p = mk();
-    for (const d of ["gus", "rosa", "dutch", "ivy", "teo", "mags", "lenny", "bea", "sully", "nico"]) tieShift(p, "varrow", d, -5, "You robbed them.", LATER);
+    for (const d of ROSTER.varrow) tieShift(p, "varrow", d.key, -5, "You robbed them.", LATER);
     expect(maybeEncounter(p, "varrow", LATER, () => 0, 10)).toEqual([]);
   });
 });
