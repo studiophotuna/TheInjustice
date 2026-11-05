@@ -23,6 +23,13 @@ export type PathId = "police" | "enforcer" | "courts" | "vigilante" | "medicine"
 export type CountryId = "varrow" | "solmarra" | "kestrova" | "meridian";
 export type TravelMode = "bus" | "train" | "plane" | "car";
 
+/** What's hidden at home in one city. */
+export interface Stash {
+  cash: number;
+  dirty: number;
+  drugs: Partial<Record<"herb" | "pills" | "powder", number>>;
+}
+
 export type CarModel = "hatch" | "sedan" | "van" | "coupe" | "suv";
 export type GoodId = "smokes" | "liquor" | "phones" | "pistols";
 
@@ -251,6 +258,8 @@ export interface Player {
   country?: CountryId;
   /** A trip in progress; the player can't work or fight until it ends. */
   travel?: Trip | null;
+  /** Hidden at home, in each city where you have a place. */
+  stash?: Partial<Record<CountryId, Stash>>;
   /** Cars you own, wherever they're parked. */
   garage?: Car[];
   /** Summary of the last finished trip, shown once on arrival. */
@@ -704,6 +713,7 @@ export type Action =
   | { type: "apply"; school: string }
   | { type: "travel"; to: CountryId; mode: TravelMode }
   | { type: "drive"; to: CountryId; carId: string }
+  | { type: "stash"; op: "put" | "take" | "put_all"; what?: "cash" | "dirty" | "herb" | "pills" | "powder"; amount?: number }
   | { type: "car_buy"; model: CarModel }
   | { type: "car_sell" | "car_repair" | "car_compartment"; carId: string }
   | { type: "cargo_buy" | "cargo_sell"; carId: string; good: GoodId; qty: number }

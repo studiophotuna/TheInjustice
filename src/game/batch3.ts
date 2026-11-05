@@ -7,6 +7,7 @@ import { countryOf, inHospital, inJail, shiftIntegrity } from "./engine";
 import { notify } from "./social";
 import { canPayIllegal, earnDirty, payIllegal } from "./money";
 import { sv } from "./stats";
+import { seizeStash } from "./stash";
 import { GameError, type CaseFile, type GameEvent, type Player, type Rng } from "./types";
 
 const S = BALANCE.search;
@@ -49,8 +50,10 @@ export function searchHome(
   c.searches = [...(c.searches ?? []), { searcherId: o.id, suspectId: suspect.id, suspectName: suspect.name, found, at: now }];
   const what = CRIMES[c.kind].name.toLowerCase();
   if (found) {
-    notify(suspect, `The police searched your place with a warrant. They found things from the ${what} in ${c.district}.`, "bad", o, now);
-    return [{ tone: "good", text: `Warrant served. In ${suspect.name}'s place: things from the ${what}. That will hold up in court.` }];
+    const seized = seizeStash(suspect, c.country);
+    const extra = [seized.dirty ? `$${seized.dirty.toLocaleString()} in dirty money` : "", seized.units ? `${seized.units} units of product` : ""].filter(Boolean).join(" and ");
+    notify(suspect, `The police searched your place with a warrant. They found things from the ${what} in ${c.district}${extra ? `, and your stash: ${extra}, seized` : ""}.`, "bad", o, now);
+    return [{ tone: "good", text: `Warrant served. In ${suspect.name}'s place: things from the ${what}${extra ? `, and a stash: ${extra}. Seized` : ""}. That will hold up in court.` }];
   }
   suspect.reputation += 1;
   o.reputation = Math.max(0, o.reputation - 1);

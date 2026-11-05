@@ -28,6 +28,7 @@ import { CHAPTERS } from "./content/story";
 import { SCHOOL_BY_ID, SCHOOLS } from "./content/schools";
 import { COUNTRIES, COUNTRY_BY_ID, TRAVEL_MODES, tripCost, tripMs } from "./content/world";
 import { docksView, driveRoutes } from "./vehicles";
+import { stashView } from "./stash";
 import type { Arrival, CountryId, TravelMode } from "./types";
 import { PROPERTIES } from "./content/properties";
 import { countryOf, dayKey, propertyIncome, FIGHT_ENERGY, inHospital, itemPrice, jobLock } from "./engine";
@@ -226,6 +227,8 @@ export interface PublicView {
   }[];
   /** Your cars, the lot, and the smuggling fences in this city. */
   docks: ReturnType<typeof docksView>;
+  /** What's hidden at home here. */
+  stash: ReturnType<typeof stashView>;
   /** Rank progress for the career ladder. */
   ladder: { ranks: string[]; current: number; graduationRank: number | null } | null;
 }
@@ -524,6 +527,7 @@ export function toView(p: Player, now: number): PublicView {
       drives: c.id === here ? [] : driveRoutes(p, here, c.id),
     })),
     docks: docksView(p, here, now),
+    stash: stashView(p),
     ladder: p.path
       ? { ranks: PATHS[p.path].ranks, current: p.rank, graduationRank: PATHS[p.path].graduationRank ?? null }
       : null,

@@ -1,5 +1,21 @@
 # Changelog
 
+## 3.2.0: the home stash
+
+- **Your Place:** a new building in every city. Wherever you have somewhere to live, you can hide
+  clean cash, dirty money and product at home. Muggers, robbers and customs only get what's on you,
+  and dirty money can't go in a bank, so this is where it waits until you launder it.
+- **Bigger homes hide more:** a sock in the sleeping bag ($1,500 and 10 units), a loose floorboard,
+  the bathroom tiles, a safe in the cellar wall, up to a panic room ($1,000,000 and 200 units).
+  A cardboard box hides nothing.
+- **Each city's stash is separate.** You have to be there to reach it; the card lists what's waiting
+  elsewhere.
+- **Hide everything risky** in one tap, from Your Place or from the ready strip on Home when you're
+  carrying dirty money or product.
+- **The risk:** a detective with a warrant and the right suspect now also finds the stash in that
+  city. Dirty money and product are seized; clean cash is left alone.
+- Losing a life empties every stash.
+
 ## 3.1.0: cars and smuggling
 
 - **The Docks:** a new building in every city with your garage, a car lot and the fences.

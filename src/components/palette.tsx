@@ -20,6 +20,7 @@ const PLACES: [string, string, string][] = [
   ["prison", "Prison", "jail cell yard breakout"],
   ["street", "The Street", "dealers rackets contracts cold cases drugs"],
   ["station", "Station", "travel bus train plane country drive"],
+  ["home", "Your Place", "home stash hide dirty money drugs safe"],
   ["docks", "The Docks", "car garage vehicle smuggle cargo fence drive"],
 ];
 

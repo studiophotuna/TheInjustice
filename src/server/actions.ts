@@ -20,6 +20,12 @@ export function parseAction(body: unknown): Action {
     case "travel":
       if (!COUNTRY_IDS.includes(b.to as CountryId) || !MODES.includes(b.mode as TravelMode)) throw new GameError("Bad request.");
       return { type: "travel", to: b.to as CountryId, mode: b.mode as TravelMode };
+    case "stash": {
+      if (b.op !== "put" && b.op !== "take" && b.op !== "put_all") throw new GameError("Bad request.");
+      if (b.op !== "put_all" && !["cash", "dirty", "herb", "pills", "powder"].includes(b.what as string)) throw new GameError("Bad request.");
+      const amount = b.amount === undefined || b.amount === null ? undefined : Number(b.amount);
+      return { type: "stash", op: b.op, what: b.what as "cash" | undefined, amount };
+    }
     case "drive":
       if (!COUNTRY_IDS.includes(b.to as CountryId)) throw new GameError("Bad request.");
       return { type: "drive", to: b.to as CountryId, carId: str(b.carId) };
