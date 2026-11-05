@@ -5,6 +5,8 @@
 import { COUNTRY_BY_ID, COUNTRIES, distance } from "./content/world";
 import { canPayIllegal, earnDirty, payIllegal } from "./money";
 import { specTier } from "./specialties";
+import { DRUG_IDS, streetPrice } from "./drugs";
+import { countryOf } from "./engine";
 import { GameError, type Car, type CarModel, type CountryId, type GameEvent, type GoodId, type Player, type Rng, type TripIncident } from "./types";
 
 export interface CarDef {
@@ -195,18 +197,35 @@ export function concealment(p: Player, car: Car): number {
  * The highway between cities. Rolled at departure, revealed on arrival.
  * `ambush` is the road-gang fight shared with the bus.
  */
-export function rollDrive(p: Player, car: Car, now: number, rng: Rng, ambush: () => TripIncident | null): TripIncident | null {
+export function rollDrive(
+  p: Player,
+  car: Car,
+  now: number,
+  rng: Rng,
+  ambush: () => TripIncident | null,
+  officers: { id: string; name: string; eye: number }[] = [],
+): TripIncident | null {
   const k = CAR.checkpoint;
-  const chance = Math.min(k.max, k.base + p.heat * k.perHeat);
+  const manned = officers.length > 0;
+  const chance = manned ? Math.min(0.85, k.base + p.heat * k.perHeat + 0.25) : Math.min(k.max, k.base + p.heat * k.perHeat);
   if (rng() < chance) {
     const units = cargoUnits(car) + drugsOn(p);
+    // The sharpest officer on duty does the search.
+    const officer = manned ? officers.reduce((a, b) => (b.eye > a.eye ? b : a)) : null;
+    const who = officer ? `Customs officer ${officer.name}` : "They";
+    const credit = (value: number, what: string) => {
+      if (officer) p.customsSeizure = { officerId: officer.id, value, what };
+    };
+    const drugValue = DRUG_IDS.reduce((s, d) => s + (p.drugs?.[d] ?? 0) * streetPrice(d, countryOf(p), now), 0);
     if (car.hot) {
       if (CARS[car.model].outrun && rng() < CARS[car.model].outrun! + specTier(p, "wheelman") * 0.1) {
         return { kind: "checkpoint", text: "A checkpoint ahead, and your plates are on their list. You floor it and blow straight through.", heat: k.outrunHeat * 1.5 };
       }
+      credit(Math.round(car.boughtFor * 0.25) + cargoValue(car, car.country, now) + drugValue, `a stolen ${CARS[car.model].name.toLowerCase()}`);
       return {
         kind: "checkpoint",
-        text: `A checkpoint on the highway. They run your plates: the car is stolen. They impound it${units ? " with everything in it" : ""} and you finish the trip on foot and a bus.`,
+        officer: officer ? { id: officer.id, name: officer.name } : undefined,
+        text: `A checkpoint on the highway. ${who} run${officer ? "s" : ""} your plates: the car is stolen. The car is impounded${units ? " with everything in it" : ""} and you finish the trip on foot and a bus.`,
         seized: true,
         impounded: true,
         heat: k.heat * 1.5,
@@ -218,12 +237,16 @@ export function rollDrive(p: Player, car: Car, now: number, rng: Rng, ambush: ()
     if (def.outrun && rng() < def.outrun + specTier(p, "wheelman") * 0.1) {
       return { kind: "checkpoint", text: "Flashlights at a checkpoint ahead. You drop a gear and blow straight through it. Nobody catches a car like this, but they took your plates.", heat: k.outrunHeat };
     }
-    if (rng() < k.find * (1 - concealment(p, car))) {
+    // A real officer searches with their own eyes: sharper than the usual guard.
+    const find = officer ? Math.min(0.95, Math.max(k.find, 0.5 + (officer.eye - 10) / 60)) : k.find;
+    if (rng() < find * (1 - concealment(p, car))) {
       const value = cargoValue(car, car.country, now);
       const fine = Math.round(value * k.fineShare);
+      credit(value + drugValue, `${units} units from a car`);
       return {
         kind: "checkpoint",
-        text: `A checkpoint on the highway. They search the car and find it all: ${units} unit${units > 1 ? "s" : ""} seized${fine ? `, and a $${fine.toLocaleString()} fine` : ""}. They let you drive on, lighter.`,
+        officer: officer ? { id: officer.id, name: officer.name } : undefined,
+        text: `A checkpoint on the highway. ${who} search${officer ? "es" : ""} the car and find${officer ? "s" : ""} it all: ${units} unit${units > 1 ? "s" : ""} seized${fine ? `, and a $${fine.toLocaleString()} fine` : ""}. They let you drive on, lighter.`,
         seized: true,
         fine,
         heat: k.heat,

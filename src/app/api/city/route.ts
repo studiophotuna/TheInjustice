@@ -34,6 +34,7 @@ import { GameError, type DistrictId, type GameEvent, type Player } from "@/game/
 import { toView } from "@/game/view";
 import { assertJson } from "@/server/auth";
 import { readCity } from "@/server/city";
+import { customsView, endShift, startShift } from "@/game/customs";
 import { resolveIdentity } from "@/server/identity";
 import { getStore, StoreConfigError } from "@/server/store";
 
@@ -90,7 +91,7 @@ export async function GET() {
     // Detectives see reported threats (never who's behind them); the person who reported sees it's on file.
     const threats = !stakeoutBlock({ ...p, energy: 999 }, now) ? (c.threats ?? []).filter((t) => !t.solved).map((t) => ({ id: t.id, targetName: t.targetName, at: t.at })) : [];
     const myThreatReported = (c.threats ?? []).some((t) => t.targetId === p.id && !t.solved);
-    return NextResponse.json({ city: view, prisoners, officers, editorPicks, turf: turfView(c, p, crew, now), paper, residents, threats, myThreatReported });
+    return NextResponse.json({ customs: customsView(c, p, now), city: view, prisoners, officers, editorPicks, turf: turfView(c, p, crew, now), paper, residents, threats, myThreatReported });
   } catch (e) {
     return failure(e);
   }
@@ -280,6 +281,12 @@ export async function POST(req: Request) {
           if (hitCrew) await tx.putCrew(hitCrew);
           break;
         }
+        case "customs_duty":
+          out = startShift(c, p, now);
+          break;
+        case "customs_off":
+          out = endShift(c, p, now);
+          break;
         case "guard_bank":
           out = standGuard(c, p, now);
           break;

@@ -126,12 +126,19 @@ export function cook(p: Player, drug: DrugId, rng: Rng): GameEvent[] {
 }
 
 /** Customs and checkpoints: the faster the trip, the closer they look. Returns a message if seized. */
-export function smugglingCheck(p: Player, mode: TravelMode, rng: Rng): string | null {
+export function smugglingCheck(p: Player, mode: TravelMode, rng: Rng, officers: { id: string; name: string; eye: number }[] = [], now = Date.now()): string | null {
   const n = carried(p);
   if (!n) return null;
-  if (rng() >= D.seizeChance[mode]) return null;
+  const boost = officers.length ? 0.15 : 0;
+  if (rng() >= D.seizeChance[mode] + boost) return null;
+  const officer = officers.length ? officers[Math.floor(rng() * officers.length)] : null;
+  const value = DRUG_IDS.reduce((s, d) => s + (p.drugs?.[d] ?? 0) * streetPrice(d, countryOf(p), now), 0);
   p.drugs = {};
   p.heat += 10;
+  if (officer) {
+    p.customsSeizure = { officerId: officer.id, value, what: `${n} units of product from a passenger` };
+    return `Customs officer ${officer.name} goes through your bags at the station. ${n} units seized.`;
+  }
   return `${mode === "plane" ? "Customs" : mode === "train" ? "A sniffer dog at the station" : "A checkpoint on the highway"} found your stash. ${n} units seized.`;
 }
 

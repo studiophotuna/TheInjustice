@@ -1,6 +1,8 @@
 import type { Action, CountryId, PathId, TravelMode } from "@/game/types";
 import { GameError } from "@/game/types";
 import { PATHS } from "@/game/content/paths";
+import { isBackground } from "@/game/backgrounds";
+import type { BackgroundId } from "@/game/types";
 
 // Every career, straight from the career list, so a new one is never left out.
 const PATH_IDS = Object.keys(PATHS) as PathId[];
@@ -18,7 +20,8 @@ export function parseAction(body: unknown): Action {
   switch (b.type) {
     case "create":
       if (b.country !== undefined && !COUNTRY_IDS.includes(b.country as CountryId)) throw new GameError("Bad request.");
-      return { type: "create", name: str(b.name, 60), country: b.country as CountryId | undefined };
+      if (b.background !== undefined && !isBackground(b.background)) throw new GameError("Bad request.");
+      return { type: "create", name: str(b.name, 60), country: b.country as CountryId | undefined, background: b.background as BackgroundId | undefined };
     case "travel":
       if (!COUNTRY_IDS.includes(b.to as CountryId) || !MODES.includes(b.mode as TravelMode)) throw new GameError("Bad request.");
       return { type: "travel", to: b.to as CountryId, mode: b.mode as TravelMode };

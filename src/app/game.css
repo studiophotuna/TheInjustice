@@ -770,3 +770,17 @@ button.ready-chip { cursor: pointer; }
 .mech-row:first-of-type { border-top: 0; }
 .mech-row header { display: grid; gap: 2px; }
 .dog-card .stash-amount { margin-bottom: 6px; }
+
+/* ─── Background pick and card ─────────────────────────────────────── */
+.background-pick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+@media (min-width: 700px) { .background-pick { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.background-pick button { display: grid; gap: 2px; text-align: left; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2); color: inherit; cursor: pointer; }
+.background-pick button span { font-size: 11px; color: var(--muted); }
+.background-pick button.on { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(255, 194, 75, 0.35) inset; }
+.background-story { margin: 6px 0 0; min-height: 2.6em; }
+.old-life { border-left: 3px solid var(--gold); }
+.old-life p { margin: 4px 0; }
+
+/* ─── Customs ──────────────────────────────────────────────────────── */
+.customs-line { display: flex; gap: 6px; align-items: center; color: var(--muted); }
+.customs-line.manned { color: var(--gold); }

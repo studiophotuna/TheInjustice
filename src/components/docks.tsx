@@ -6,6 +6,7 @@ import { Vehicle } from "./art/Vehicles";
 import type { GameApi } from "./useGame";
 import { ParkedCars } from "./property";
 import { HireMechanic, MyGarage } from "./garage";
+import { CustomsLine } from "./customs";
 
 const money = (n: number) => `$${n.toLocaleString()}`;
 
@@ -108,6 +109,7 @@ export function Docks({ game, go }: { game: GameApi; go?: (to: string) => void }
             Loading into your <b>{car.name.toLowerCase()}</b> · {room} of {car.trunk} free{parked.length > 1 ? " (tap a car above to switch)" : ""}.
           </p>
         )}
+        <CustomsLine />
         <div className="goods">
           {d.goods.map((g) => {
             const have = car?.cargo.find((x) => x.id === g.id)?.qty ?? 0;

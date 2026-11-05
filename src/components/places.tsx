@@ -6,6 +6,7 @@ import { Docks } from "./docks";
 import { DogCard, StashCard } from "./stash";
 import { BreakIns } from "./property";
 import { Directory } from "./directory";
+import { CustomsCard } from "./customs";
 import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { Scene, type SceneKind } from "./art/Scenes";
 import { CityHall } from "./cityhall";
@@ -160,7 +161,12 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
         </div>
       );
     case "station":
-      return <TravelContent game={game} onRead={onRead} />;
+      return (
+        <div className="stack">
+          <CustomsCard game={game} />
+          <TravelContent game={game} onRead={onRead} />
+        </div>
+      );
     case "directory":
       return <Directory />;
     case "home":

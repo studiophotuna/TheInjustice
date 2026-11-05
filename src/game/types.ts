@@ -23,6 +23,9 @@ export type PathId = "police" | "enforcer" | "courts" | "vigilante" | "medicine"
 export type CountryId = "varrow" | "solmarra" | "kestrova" | "meridian";
 export type TravelMode = "bus" | "train" | "plane" | "car";
 
+/** Who you were before prison (picked at character creation). */
+export type BackgroundId = "street" | "boxer" | "cadet" | "nurse" | "paralegal" | "clerk" | "garage" | "watch";
+
 export type DogBreed = "mutt" | "shepherd" | "mastiff";
 
 /** A guard dog at one home. */
@@ -272,6 +275,10 @@ export interface Player {
   travel?: Trip | null;
   /** A stolen car the police impounded from you, waiting to go back to its owner. */
   impounded?: { ownerId: string; car: Car } | null;
+  /** Transient: a customs officer seized something from you; they're paid after the action is saved. */
+  customsSeizure?: { officerId: string; value: number; what: string } | null;
+  /** Who you were before prison. */
+  background?: BackgroundId;
   /** Mechanics: your garage, open to customers at a rate against the dealer's price. */
   garageService?: { open: boolean; rate: number; earned: number; jobs: number };
   /** A guard dog at your place, per city. */
@@ -646,6 +653,8 @@ export interface TripIncident {
   seized?: boolean;
   /** Checkpoint ran the plates on a stolen car and kept it. */
   impounded?: boolean;
+  /** A player customs officer made the stop. */
+  officer?: { id: string; name: string };
   heat?: number;
   text: string;
   fight?: FightSummary;
@@ -719,7 +728,7 @@ export interface GameEvent {
 export type Rng = () => number;
 
 export type Action =
-  | { type: "create"; name: string; country?: CountryId }
+  | { type: "create"; name: string; country?: CountryId; background?: BackgroundId }
   | { type: "job"; jobId: string }
   | { type: "buy"; itemId: string; maxPrice?: number }
   | { type: "use"; itemId: string }
@@ -801,7 +810,18 @@ export interface ShopHold {
   offers: ShopOffer[];
 }
 
+/** A player on a customs shift at the city's checkpoints. */
+export interface CustomsPost {
+  id: string;
+  name: string;
+  until: number;
+  /** Perception when they took the shift: sharper eyes find more. */
+  eye: number;
+}
+
 export interface City {
+  /** Officers on customs duty. */
+  customs?: CustomsPost[];
   /** Player-run storefronts. */
   shops?: Partial<Record<ShopKind, ShopHold>>;
   /** Last time a street regular spoke in city chat. */

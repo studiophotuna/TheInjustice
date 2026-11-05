@@ -1,5 +1,23 @@
 # Changelog
 
+## 3.6.0: who you were, and customs at the border
+
+- **Starting background:** character creation now asks who you were before they locked you up.
+  Eight backgrounds (raised on the street, amateur boxer, police cadet, nursing student,
+  paralegal, bank clerk, grew up in a garage, neighborhood watch), each with a line of story,
+  a small head start in two stats, and a career that fits. It's optional and never skips the
+  work: offers still come from doing the job.
+- **Your old life:** until a career finds you, Home shows a card with the first job that gets the
+  right person to notice you, with a button straight to it (or to the station, if it's in another
+  city).
+- **Customs officers:** police and soldiers (rank 2 and up) can take a one-hour customs shift at
+  the Station. While anyone is on duty, more drivers leaving the city are stopped, the officer does
+  the searching (sharp eyes find more, even with a false floor), stolen plates get run, and the
+  station checks more passengers' bags. The officer gets a message and a 25% bounty on every
+  seizure, paid by the city, and it counts toward their promotion.
+- **Smugglers can see it coming:** the Station and the Docks say whether customs is on duty, and
+  who. A stop by an officer names them.
+
 ## 3.5.0: the Directory, mechanics, and guard dogs
 
 - **The Directory:** a new building in every city listing everyone who offers a service, and

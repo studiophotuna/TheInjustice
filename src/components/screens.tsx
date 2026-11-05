@@ -1,5 +1,9 @@
 "use client";
 
+import { BACKGROUNDS } from "@/game/backgrounds";
+import { PATHS } from "@/game/content/paths";
+import type { BackgroundId } from "@/game/types";
+
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowRight, KeyRound, LogIn, Skull, UserPlus, Wallet } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -125,13 +129,15 @@ export function AuthForm({
 function NameForm({ game, label = "Start" }: { game: GameApi; label?: string }) {
   const [name, setName] = useState("");
   const [country, setCountry] = useState<CountryId>("varrow");
+  const [background, setBackground] = useState<BackgroundId | null>(null);
   const chosen = COUNTRIES.find((c) => c.id === country)!;
+  const bg = BACKGROUNDS.find((b) => b.id === background) ?? null;
   return (
     <form
       className="name-form"
       onSubmit={(e) => {
         e.preventDefault();
-        game.act({ type: "create", name, country });
+        game.act({ type: "create", name, country, background: background ?? undefined });
       }}
     >
       <label className="field">
@@ -164,6 +170,20 @@ function NameForm({ game, label = "Start" }: { game: GameApi; label?: string }) 
             <dt>Law</dt><dd>{chosen.laws}</dd>
           </dl>
         </div>
+      </div>
+      <div className="field">
+        <span>Who were you before they locked you up?</span>
+        <div className="background-pick">
+          {BACKGROUNDS.map((b) => (
+            <button type="button" key={b.id} className={b.id === background ? "on" : ""} onClick={() => setBackground(b.id === background ? null : b.id)}>
+              <b>{b.name}</b>
+              <span>{PATHS[b.career].name}</span>
+            </button>
+          ))}
+        </div>
+        <p className="fine muted background-story">
+          {bg ? `Before the judge put you away, you ${bg.story} A small head start, and ${PATHS[bg.career].contact} may come looking for someone like you.` : "Optional. It gives you a small head start and points you to a career that fits. You can still become anything."}
+        </p>
       </div>
       <button className="btn btn-primary btn-lg" disabled={game.busy || name.trim().length < 2}>
         {label} <ArrowRight size={18} />

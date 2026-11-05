@@ -13,6 +13,9 @@ import { payTax, payTurf, returnImpounded, taxRates, turfMap, withCity } from "@
 import { flagLaundering } from "@/game/batch6";
 import { countryOf } from "@/game/engine";
 import { creditSale, shopMarkups } from "@/game/shops";
+import { applyBackground } from "@/game/backgrounds";
+import { creditSeizure, onDuty } from "@/game/customs";
+import { notify } from "@/game/social";
 import type { ShopKind } from "@/game/types";
 import { getStore, StoreConfigError } from "@/server/store";
 
@@ -110,18 +113,27 @@ export async function POST(req: Request) {
     // Player-run shops set their own prices.
     const buyer = action.type === "buy" ? await store.get(playerId!) : null;
     const markups = buyer ? shopMarkups(await store.getCity(countryOf(buyer))) : undefined;
+    // Officers on customs duty in the city you're leaving.
+    const leaver = action.type === "travel" || action.type === "drive" ? await store.get(playerId!) : null;
+    const customs = leaver ? onDuty(await store.getCity(countryOf(leaver)), now, playerId!).map((x) => ({ id: x.id, name: x.name, eye: x.eye })) : [];
+    let seizure: { officerId: string; value: number; what: string; from: string } | null = null;
     let launderFlag: { amount: number; method: string } | null = null;
     const out = await store.update(playerId!, (p) => {
       if (action.type === "create") {
         if (p) throw new GameError("You already have a character.");
         const fresh = createPlayer(playerId!, action.name, now, action.country);
+        if (action.background) applyBackground(fresh, action.background);
         trackDevice(fresh, deviceId, ipHash);
         return { player: fresh, result: { view: toView(fresh, now), events: [] as GameEvent[] } };
       }
       if (!p) throw new GameError("Create a character first.");
       assertActive(p, now);
       trackDevice(p, deviceId, ipHash);
-      const events = applyAction(p, action, now, Math.random, { taxRates: rates, turf, allies, shopMarkups: markups });
+      const events = applyAction(p, action, now, Math.random, { taxRates: rates, turf, allies, shopMarkups: markups, customs });
+      if (p.customsSeizure) {
+        seizure = { ...p.customsSeizure, from: p.name };
+        p.customsSeizure = null;
+      }
       if (p.impounded) impounded = true;
       if (p.shopSale) {
         sale = p.shopSale;
@@ -160,6 +172,19 @@ export async function POST(req: Request) {
     if (s && s.amount > 0) await withCity(store, s.country, now, (c) => creditSale(c, s.kind, s.amount, now)).catch((e) => console.error(e));
     // A stolen car the police impounded goes home.
     if (impounded) await returnImpounded(store, playerId!, now).catch((e) => console.error(e));
+    // The customs officer who made the seizure gets their bounty.
+    const sz = seizure as { officerId: string; value: number; what: string; from: string } | null;
+    if (sz) {
+      await store
+        .update(sz.officerId, (o) => {
+          if (!o) return { player: o, result: null };
+          tick(o, now);
+          const bounty = creditSeizure(o, sz.value, sz.from, sz.what, now);
+          notify(o, `Customs: you stopped ${sz.from} and seized ${sz.what}. Bounty +$${bounty.toLocaleString()}.`, "good", undefined, now);
+          return { player: o, result: null };
+        })
+        .catch((e) => console.error(e));
+    }
     // Withheld city tax goes to the treasury.
     const o = owed as { country: import("@/game/types").CountryId; amount: number } | null;
     if (o) await payTax(store, o, now).catch((e) => console.error(e));

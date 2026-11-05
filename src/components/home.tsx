@@ -78,6 +78,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
       <RightNow game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} />
       <ReadyStrip game={game} go={go} />
       <TutorialCard game={game} go={go} />
+      <OldLife game={game} go={go} />
       {view.event && (
         <section className="card city-event">
           <b>{view.event.name} in {view.location.city}</b>
@@ -130,6 +131,30 @@ function ThreatCard({ game }: { game: GameApi }) {
           </button>
         )}
       </div>
+    </section>
+  );
+}
+
+/** Until a career finds them: who they were, and the work that gets them noticed. */
+function OldLife({ game, go }: { game: GameApi; go: (t: string) => void }) {
+  const b = game.view!.background;
+  if (!b?.show) return null;
+  return (
+    <section className="card old-life">
+      <p className="eyebrow">Your old life · {b.name}</p>
+      <p className="fine">Before the judge put you away, you {b.story}</p>
+      <p className="fine muted">
+        {b.career} fits you. {b.jobId ? <>Start with <b>&ldquo;{b.job}&rdquo;</b> ({b.where})</> : <>{b.job}</>} and {b.contact} will notice. You still need to be good at it.
+      </p>
+      {b.jobId && b.here && (
+        <button className="btn btn-ghost btn-sm" onClick={() => go(`job:${b.jobId}`)}>Show me the job</button>
+      )}
+      {b.jobId && !b.here && (
+        <button className="btn btn-ghost btn-sm" onClick={() => go("place:station")}>That's in another city · Travel</button>
+      )}
+      {!b.jobId && (
+        <button className="btn btn-ghost btn-sm" onClick={() => go("tab:fight")}>To the gym</button>
+      )}
     </section>
   );
 }

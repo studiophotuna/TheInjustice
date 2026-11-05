@@ -31,6 +31,7 @@ import { docksView, driveRoutes } from "./vehicles";
 import { stashView } from "./stash";
 import { dogView } from "./dogs";
 import { MECH, servicesFor } from "./mechanic";
+import { backgroundView } from "./backgrounds";
 import type { Arrival, CountryId, TravelMode } from "./types";
 import { PROPERTIES } from "./content/properties";
 import { countryOf, dayKey, propertyIncome, FIGHT_ENERGY, inHospital, itemPrice, jobLock } from "./engine";
@@ -233,6 +234,8 @@ export interface PublicView {
   stash: ReturnType<typeof stashView>;
   /** Your guard dog here, and the breeds for sale. */
   dog: ReturnType<typeof dogView>;
+  /** Who you were before prison, and the career it points to. */
+  background: ReturnType<typeof backgroundView>;
   /** Mechanics: your garage for customers. */
   garage: { open: boolean; rate: number; earned: number; jobs: number; services: string[]; next: { name: string; rank: string } | null } | null;
   /** Rank progress for the career ladder. */
@@ -536,6 +539,7 @@ export function toView(p: Player, now: number): PublicView {
     docks: docksView(p, here, now),
     stash: stashView(p),
     dog: dogView(p, now),
+    background: backgroundView(p),
     garage:
       p.path === "mechanic" && p.rank >= 1
         ? {

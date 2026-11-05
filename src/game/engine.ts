@@ -372,7 +372,7 @@ function roadAmbush(p: Player, rng: Rng, by: "bus" | "car"): TripIncident {
   return { kind: "ambush", text: `A gang ${car ? "runs you off the road" : "stops the bus"}. You lose the fight and $${lost}, but keep your life.`, fight, hpAfter: res.playerHp, cashLost: lost };
 }
 
-function startTrip(p: Player, to: CountryId, mode: TravelMode, now: number, rng: Rng, events: GameEvent[]) {
+function startTrip(p: Player, to: CountryId, mode: TravelMode, now: number, rng: Rng, events: GameEvent[], ctx: ActionContext = {}) {
   const from = countryOf(p);
   if (!COUNTRY_BY_ID[to] || !MODE_BY_ID[mode]) throw new GameError("Unknown destination.");
   if (to === from) throw new GameError("You're already here.");
@@ -380,7 +380,7 @@ function startTrip(p: Player, to: CountryId, mode: TravelMode, now: number, rng:
   if (p.cash < cost) throw new GameError(`A ${MODE_BY_ID[mode].name.toLowerCase()} ticket costs $${cost}. Cash only.`);
   p.cash -= cost;
   const incident = rollIncident(p, mode, rng, now);
-  const seized = smugglingCheck(p, mode, rng);
+  const seized = smugglingCheck(p, mode, rng, ctx.customs, now);
   if (seized) events.push({ tone: "bad", text: seized });
   p.travel = { from, to, mode, departAt: now, arriveAt: now + Math.round(tripMs(from, to, mode) * travelFactor(p)) + (incident?.delayMs ?? 0), incident };
   p.arrival = null;
@@ -391,10 +391,10 @@ function startTrip(p: Player, to: CountryId, mode: TravelMode, now: number, rng:
 }
 
 /** Drive your own car to another country: fuel instead of a ticket, checkpoints instead of customs. */
-function drive(p: Player, to: CountryId, carId: string, now: number, rng: Rng, events: GameEvent[]) {
+function drive(p: Player, to: CountryId, carId: string, now: number, rng: Rng, events: GameEvent[], ctx: ActionContext = {}) {
   const from = countryOf(p);
   const { car, fuel, ms } = startDrive(p, carId, from, to, rng);
-  const incident = rollDrive(p, car, now, rng, () => roadAmbush(p, rng, "car"));
+  const incident = rollDrive(p, car, now, rng, () => roadAmbush(p, rng, "car"), ctx.customs);
   p.travel = { from, to, mode: "car", carId, departAt: now, arriveAt: now + Math.round(ms * travelFactor(p)) + (incident?.delayMs ?? 0), incident };
   p.arrival = null;
   events.push({ tone: "info", text: `You pull out onto the highway toward ${COUNTRY_BY_ID[to].capital}. Fuel $${fuel}.` });
@@ -758,6 +758,8 @@ export interface ActionContext {
   allies?: string[];
   /** Player-run shops in the player's city (owner and price level). */
   shopMarkups?: ShopMarkups;
+  /** Officers on customs duty in the player's city (not including the player). */
+  customs?: { id: string; name: string; eye: number }[];
 }
 
 /** Withholds city tax from income earned in `country`. Returns what's left. */
@@ -1219,7 +1221,7 @@ function applyActionInner(p: Player, action: Action, now: number, rng: Rng, ctx:
       break;
     case "travel":
       if (action.mode === "car") throw new GameError("Pick which car to drive.");
-      startTrip(p, action.to, action.mode, now, rng, events);
+      startTrip(p, action.to, action.mode, now, rng, events, ctx);
       break;
     case "car_chop":
       events.push(...chopCar(p, action.carId));
@@ -1246,7 +1248,7 @@ function applyActionInner(p: Player, action: Action, now: number, rng: Rng, ctx:
       events.push(...(action.op === "put_all" ? stashAll(p) : useStash(p, action.op, action.what!, action.amount)));
       break;
     case "drive":
-      drive(p, action.to, action.carId, now, rng, events);
+      drive(p, action.to, action.carId, now, rng, events, ctx);
       break;
     case "car_buy":
       events.push(...buyCar(p, action.model, countryOf(p), now));
