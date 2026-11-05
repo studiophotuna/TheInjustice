@@ -48,6 +48,9 @@ function soundFor(body: Record<string, unknown>, events: GameEvent[], cashDelta:
   play("tap");
 }
 
+/** Something changed: panels that show the city (side panel, map, People) refresh now. */
+const changed = () => window.dispatchEvent(new Event("conspira:changed"));
+
 export const LAST_JOB = "cns_last_job";
 export const LAST_GYM = "cns_last_gym";
 
@@ -128,7 +131,10 @@ export function useGame() {
 
   const act = useCallback(
     async (body: Record<string, unknown>) => {
-      if (busy) return null;
+      if (busy) {
+        pushToasts([{ tone: "info", text: "One thing at a time. Still working on the last move." }]);
+        return null;
+      }
       setBusy(true);
       const cashBefore = view?.cash ?? 0;
       try {
@@ -162,6 +168,7 @@ export function useGame() {
         }
         vibrate(delta > 0 ? 15 : 40);
         soundFor(body, events, delta);
+        changed();
         return v;
       } catch {
         pushToasts([{ tone: "bad", text: "Connection lost. Try again." }]);
@@ -176,7 +183,10 @@ export function useGame() {
   /** Actions that involve other players (attacks, chat, crews). */
   const social = useCallback(
     async (body: Record<string, unknown>, endpoint = "/api/community") => {
-      if (busy) return null;
+      if (busy) {
+        pushToasts([{ tone: "info", text: "One thing at a time. Still working on the last move." }]);
+        return null;
+      }
       setBusy(true);
       try {
         const res = await fetch(endpoint, {
@@ -198,6 +208,7 @@ export function useGame() {
           setTimeout(() => pushToasts(events), 2600);
         } else pushToasts(events);
         soundFor(body, events, 0);
+        changed();
         return data.view as PublicView;
       } catch {
         pushToasts([{ tone: "bad", text: "Connection lost. Try again." }]);

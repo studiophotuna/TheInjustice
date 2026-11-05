@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.6.1: fixes and fewer interruptions
+
+- **Fixed: the +$ / -$ pops next to your cash never went away.** Each pop now clears itself after
+  a second and a half.
+- **Fixed: planning an ambush sometimes showed no confirmation.** The confirmation was showing,
+  but behind the person's file. Notifications now always sit on top, and the file closes once an
+  action goes through so you see the result.
+- **Fixed: after giving the signal, the side panel kept showing the ambush until a refresh.** The
+  side panel, the map and People now refresh the moment you do something.
+- Your crew gets a message when you plan an ambush, so they can take a role in time.
+- Tapping while the last move is still going through tells you so, instead of silently doing
+  nothing.
+- New story chapters no longer pop up over what you're doing. Open them from the notification,
+  the Right now card or the board, when you're ready.
+
 ## 2.6.0: real sounds, item art, steady scrolling
 
 - **Real sound effects** (recorded, CC0; see public/sfx/CREDITS.txt), 120 KB in all, loaded on

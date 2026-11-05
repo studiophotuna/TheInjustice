@@ -78,7 +78,11 @@ export function CityMap({ game, go, feed }: { game: GameApi; go: (t: string) => 
   useEffect(() => {
     load();
     const t = setInterval(() => document.visibilityState === "visible" && load(), 45_000);
-    return () => clearInterval(t);
+    window.addEventListener("conspira:changed", load);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener("conspira:changed", load);
+    };
   }, [load, view.location.country]);
 
   const districts = view.districts;

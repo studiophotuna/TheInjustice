@@ -581,3 +581,6 @@ html.scroll-locked, html.scroll-locked body { overflow: hidden; overscroll-behav
 .person-file, .palette-list, .enc-sheet, .modal { overscroll-behavior: contain; }
 /* No accidental horizontal scrolling on phones. */
 html, body { overflow-x: clip; }
+
+/* Notifications always show above sheets, popups and the encounter dock. */
+.toasts { z-index: 95 !important; }

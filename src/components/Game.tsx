@@ -136,13 +136,8 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
     view.application && view.application.status !== "pending" ? `${view.application.schoolName}:${view.application.status}` : null;
   const live = game.live!;
 
-  // A newly unlocked chapter opens by itself once nothing else is on screen.
-  useEffect(() => {
-    if (view.unreadChapter && !game.fight && !view.offers.length) {
-      const t = setTimeout(() => setReading((r) => r ?? view.unreadChapter), game.toasts.length ? 1200 : 300);
-      return () => clearTimeout(t);
-    }
-  }, [view.unreadChapter, view.offers.length, game.fight, game.toasts.length]);
+  // New chapters wait to be opened (a toast with "Read", the Right now card, the board):
+  // they never pop up over what you're doing.
 
   const closeChapter = () => {
     const id = reading;
@@ -451,18 +446,19 @@ function Meter({ tone, icon, value, max, note }: { tone: string; icon: React.Rea
 
 /** A number that floats up next to a value when it changes (+$24, -$60). */
 function Delta({ value, prefix = "" }: { value: number; prefix?: string }) {
-  const [prev, setPrev] = useState(value);
+  const prev = useRef(value);
+  const timers = useRef<number[]>([]);
   const [pops, setPops] = useState<{ id: number; d: number }[]>([]);
   useEffect(() => {
-    if (value !== prev) {
-      const d = value - prev;
-      const id = Date.now();
-      setPops((x) => [...x.slice(-2), { id, d }]);
-      setPrev(value);
-      const t = setTimeout(() => setPops((x) => x.filter((p) => p.id !== id)), 1600);
-      return () => clearTimeout(t);
-    }
-  }, [value, prev]);
+    if (value === prev.current) return;
+    const d = value - prev.current;
+    prev.current = value;
+    const id = Date.now() + Math.random();
+    setPops((x) => [...x.slice(-2), { id, d }]);
+    // Each pop removes itself; re-renders don't cancel it.
+    timers.current.push(window.setTimeout(() => setPops((x) => x.filter((p) => p.id !== id)), 1600));
+  }, [value]);
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
   return (
     <span className="deltas" aria-hidden>
       <AnimatePresence>

@@ -270,11 +270,11 @@ export function useHub(game: GameApi) {
   useEffect(() => {
     loadHub();
   }, [loadHub, view.location.country, view.crewId]);
-  const social = async (body: Record<string, unknown>) => {
-    const v = await game.social(body);
-    if (v) loadHub();
-    return v;
-  };
+  useEffect(() => {
+    window.addEventListener("conspira:changed", loadHub);
+    return () => window.removeEventListener("conspira:changed", loadHub);
+  }, [loadHub]);
+  const social = (body: Record<string, unknown>) => game.social(body);
   return { hub, error, loadHub, social };
 }
 
@@ -469,7 +469,7 @@ function PersonFile({ game, hub, p, social, onClose }: { game: GameApi; hub: Hub
   const { primary, groups } = personActions(game, hub, p, social);
   useScrollLock(true);
   const run = async (fn: () => unknown) => {
-    await fn();
+    if (await fn()) onClose();
   };
   return (
     <motion.div className="file-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>

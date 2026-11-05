@@ -32,7 +32,11 @@ export function usePulse(country: string) {
     const t = setInterval(() => {
       if (document.visibilityState === "visible") load();
     }, 60_000);
-    return () => clearInterval(t);
+    window.addEventListener("conspira:changed", load);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener("conspira:changed", load);
+    };
   }, [load, country]);
   return pulse;
 }

@@ -1624,7 +1624,9 @@ export async function POST(req: Request) {
         }
         const caseId = randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase();
         events = await store.transaction(async (tx) => {
-          const ids = [...new Set([playerId, ...roleIds, ...(targetId ? [targetId] : []), ...(hireId ? [hireId] : []), ...backupIds, ...witnessIds])];
+          // Planning tells the whole crew, so they can take a role in time.
+          const memberIds = b.op === "ambush_plan" ? crewNow.members.map((m) => m.id) : [];
+          const ids = [...new Set([playerId, ...roleIds, ...memberIds, ...(targetId ? [targetId] : []), ...(hireId ? [hireId] : []), ...backupIds, ...witnessIds])];
           const rows = await tx.getPlayers(ids);
           const byId = new Map(rows.filter((r): r is Player => !!r).map((r) => [r.id, r]));
           byId.forEach((r) => tick(r, now));
@@ -1637,6 +1639,10 @@ export async function POST(req: Request) {
             const t = byId.get(targetId!);
             if (!t) throw new GameError("That player doesn't exist.");
             out = AM.planAmbush(crew, me, t, now);
+            for (const id of memberIds) {
+              const m = byId.get(id);
+              if (m && m.id !== me.id) notify(m, `${me.name} is planning to jump ${t.name}. Take a role in the Crew tab: you have two hours.`, "info", me, now);
+            }
           } else if (b.op === "ambush_role") {
             const role = b.role as AmbushRole;
             if (!["attacker", "driver", "lookout"].includes(role)) throw new GameError("Bad request.");
