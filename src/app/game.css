@@ -713,3 +713,34 @@ button.ready-chip { cursor: pointer; }
 .offer-row { gap: 8px; }
 .offer-row input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: inherit; font-variant-numeric: tabular-nums; }
 .link { background: none; border: 0; padding: 0; color: var(--gold, #e8b84a); text-decoration: underline; cursor: pointer; font: inherit; }
+
+/* ─── Docks: garage, fences, lot ───────────────────────────────────── */
+.garage, .lot { display: grid; gap: 10px; margin: 10px 0; }
+@media (min-width: 700px) { .garage, .lot { grid-template-columns: 1fr 1fr; } }
+.garage-car, .lot-car { display: grid; grid-template-columns: 96px 1fr; gap: 6px 12px; padding: 12px; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--border); align-items: center; }
+.garage-car { cursor: pointer; }
+.garage-car.on { border-color: rgba(255, 194, 75, 0.6); box-shadow: 0 0 0 1px rgba(255, 194, 75, 0.25) inset; }
+.garage-car.away { opacity: 0.7; cursor: default; }
+.garage-art { width: 96px; height: auto; }
+.garage-body { display: grid; gap: 3px; min-width: 0; }
+.garage-body .wear-bar { margin: 2px 0; }
+.cargo-line { display: inline-flex; gap: 4px; align-items: center; color: var(--gold); }
+.garage-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.lot-car { grid-template-columns: 96px 1fr auto; }
+.lot-car p { margin: 2px 0 0; }
+.goods { display: grid; gap: 10px; margin: 10px 0; }
+@media (min-width: 700px) { .goods { grid-template-columns: 1fr 1fr; } }
+.good { display: grid; gap: 8px; padding: 12px; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--border); }
+.good header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.good-prices { display: flex; gap: 14px; font-size: 13px; color: var(--muted); }
+.good-prices b { color: var(--text, #fff); font-variant-numeric: tabular-nums; }
+.price-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.price-board span { display: grid; padding: 5px 6px; border-radius: 8px; background: rgba(255,255,255,0.04); text-align: center; }
+.price-board em { font-style: normal; font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.price-board b { font-size: 13px; font-variant-numeric: tabular-nums; }
+.price-board .here { outline: 1px dashed var(--border); }
+.price-board .best { background: rgba(62, 224, 143, 0.12); }
+.price-board .best b { color: var(--green); }
+.good-row { gap: 6px; }
+.good-row input { width: 64px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: inherit; }
+.route.drive { border-color: rgba(255, 159, 67, 0.4); }

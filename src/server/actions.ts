@@ -20,6 +20,20 @@ export function parseAction(body: unknown): Action {
     case "travel":
       if (!COUNTRY_IDS.includes(b.to as CountryId) || !MODES.includes(b.mode as TravelMode)) throw new GameError("Bad request.");
       return { type: "travel", to: b.to as CountryId, mode: b.mode as TravelMode };
+    case "drive":
+      if (!COUNTRY_IDS.includes(b.to as CountryId)) throw new GameError("Bad request.");
+      return { type: "drive", to: b.to as CountryId, carId: str(b.carId) };
+    case "car_buy":
+      if (!["hatch", "sedan", "van", "coupe", "suv"].includes(b.model as string)) throw new GameError("Bad request.");
+      return { type: "car_buy", model: b.model as "hatch" };
+    case "car_sell":
+    case "car_repair":
+    case "car_compartment":
+      return { type: b.type, carId: str(b.carId) };
+    case "cargo_buy":
+    case "cargo_sell":
+      if (!["smokes", "liquor", "phones", "pistols"].includes(b.good as string)) throw new GameError("Bad request.");
+      return { type: b.type, carId: str(b.carId), good: b.good as "smokes", qty: Number(b.qty) };
     case "ack_arrival":
       return { type: "ack_arrival" };
     case "claim_daily":

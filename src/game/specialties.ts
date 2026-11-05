@@ -90,9 +90,9 @@ export const SPECIALTIES: SpecDef[] = [
     tiers: [80, 250, 600],
     progress: (p) => careerWork(p, "military") + careerWork(p, "vigilante") + c(p, "crime:snatch"),
     perks: [
-      "As an ambush driver, your getaway is 10% more likely to go clean.",
-      "Your getaways are 20% more likely to go clean.",
-      "Your getaways are 30% more likely to go clean.",
+      "As an ambush driver, your getaway is 10% more likely to go clean. Behind your own wheel, checkpoints find less.",
+      "Your getaways are 20% more likely to go clean. Checkpoints find even less in your car.",
+      "Your getaways are 30% more likely to go clean. You can hide cargo from almost anyone.",
     ],
   },
   {

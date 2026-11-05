@@ -61,7 +61,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
           {view.jail
             ? view.jail.custodyCase ? "Behind bars, waiting for a verdict." : "Behind bars, doing your time."
             : view.travel
-            ? `On the ${view.travel.mode} to ${view.travel.city}.`
+            ? `${view.travel.mode === "car" ? "Driving" : `On the ${view.travel.mode}`} to ${view.travel.city}.`
             : view.threat.morgueUntil
               ? `In the morgue for ${fmt(view.threat.morgueUntil - Date.now())}. Someone put out a contract on you.`
               : live.hospital > 0

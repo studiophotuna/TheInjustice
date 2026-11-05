@@ -21,7 +21,23 @@ export type HiddenStats = Record<StatKey, number> & {
 
 export type PathId = "police" | "enforcer" | "courts" | "vigilante" | "medicine" | "banking" | "military";
 export type CountryId = "varrow" | "solmarra" | "kestrova" | "meridian";
-export type TravelMode = "bus" | "train" | "plane";
+export type TravelMode = "bus" | "train" | "plane" | "car";
+
+export type CarModel = "hatch" | "sedan" | "van" | "coupe" | "suv";
+export type GoodId = "smokes" | "liquor" | "phones" | "pistols";
+
+/** A car in the player's garage, parked in one city. */
+export interface Car {
+  id: string;
+  model: CarModel;
+  country: CountryId;
+  /** 0–100: every drive wears it down. */
+  condition: number;
+  cargo: Partial<Record<GoodId, number>>;
+  /** A false floor: harder to search, a little less room. */
+  compartment?: boolean;
+  boughtFor: number;
+}
 export type DistrictId =
   | "gutter"
   | "old_market"
@@ -235,6 +251,8 @@ export interface Player {
   country?: CountryId;
   /** A trip in progress; the player can't work or fight until it ends. */
   travel?: Trip | null;
+  /** Cars you own, wherever they're parked. */
+  garage?: Car[];
   /** Summary of the last finished trip, shown once on arrival. */
   arrival?: Arrival | null;
   /** Housing owned in each country; `housing` mirrors the current country's. */
@@ -583,7 +601,10 @@ export interface Daily {
 }
 
 export interface TripIncident {
-  kind: "ambush" | "pickpocket" | "customs";
+  kind: "ambush" | "pickpocket" | "customs" | "checkpoint";
+  /** Checkpoint found the cargo (and anything on you). */
+  seized?: boolean;
+  heat?: number;
   text: string;
   fight?: FightSummary;
   hpAfter?: number;
@@ -599,6 +620,8 @@ export interface Trip {
   from: CountryId;
   to: CountryId;
   mode: TravelMode;
+  /** Driving your own car. */
+  carId?: string;
   departAt: number;
   arriveAt: number;
   /** Decided at departure, applied on arrival. */
@@ -680,6 +703,10 @@ export type Action =
   | { type: "rebirth"; name?: string }
   | { type: "apply"; school: string }
   | { type: "travel"; to: CountryId; mode: TravelMode }
+  | { type: "drive"; to: CountryId; carId: string }
+  | { type: "car_buy"; model: CarModel }
+  | { type: "car_sell" | "car_repair" | "car_compartment"; carId: string }
+  | { type: "cargo_buy" | "cargo_sell"; carId: string; good: GoodId; qty: number }
   | { type: "ack_arrival" }
   | { type: "claim_daily" }
   | { type: "claim_contract"; id: string }

@@ -29,6 +29,7 @@ import { claimTutorial } from "./tutorial";
 import { bumpSeason } from "./season";
 import { familyGate, passTest } from "./family";
 import { ownerCut, shopKindFor, shopPrice, type ShopMarkups } from "./shops";
+import { arriveByCar, buyCar, buyCargo, fitCompartment, repairCar, rollDrive, sellCar, sellCargo, startDrive } from "./vehicles";
 import { emptyStats, statValue, sv, tierOf, TIER_UP_LINES } from "./stats";
 import {
   GameError,
@@ -324,13 +325,26 @@ function rollIncident(p: Player, mode: TravelMode, rng: Rng, departAt: number): 
     const lost = Math.floor(p.cash * 0.4);
     return { kind: "pickpocket", text: `Somewhere between stations, a pickpocket lifts $${lost} from your coat.`, cashLost: lost };
   }
-  // Bus: a planned ambush by a road gang.
+  return roadAmbush(p, rng, "bus");
+}
+
+/** A planned ambush by a road gang: on the bus, or on the highway in your own car. */
+function roadAmbush(p: Player, rng: Rng, by: "bus" | "car"): TripIncident {
+  const car = by === "car";
   const me = playerFighter(p, playerMaxHp(p));
   const gang = roadGang(power(me));
   const res = resolveFight(me, npcFighter(gang), rng);
   const fight: FightSummary = { opponent: gang.name, icon: gang.icon, won: res.won, lines: res.lines, outcome: "win" };
   if (res.won) {
-    return { kind: "ambush", text: "The bus stops in the middle of nowhere. A gang climbs aboard, looking for you. You fight your way off.", fight, hpAfter: res.playerHp, cashLost: 0 };
+    return {
+      kind: "ambush",
+      text: car
+        ? "A truck slews across the road ahead. A gang climbs out, looking for you. You fight them off and drive on."
+        : "The bus stops in the middle of nowhere. A gang climbs aboard, looking for you. You fight your way off.",
+      fight,
+      hpAfter: res.playerHp,
+      cashLost: 0,
+    };
   }
   const lost = Math.floor(p.cash * 0.6);
   if (res.playerHp <= 0) {
@@ -339,7 +353,9 @@ function rollIncident(p: Player, mode: TravelMode, rng: Rng, departAt: number): 
     return {
       kind: "ambush",
       text: died
-        ? "The ambush was planned. They knew your seat number. You never reach your stop."
+        ? car
+          ? "The ambush was planned. They knew your plates. You never reach the next city."
+          : "The ambush was planned. They knew your seat number. You never reach your stop."
         : `The ambush was planned. They beat you, take $${lost}, and leave you by the road. A farmer drives you to a hospital.`,
       fight,
       hpAfter: 0,
@@ -349,7 +365,7 @@ function rollIncident(p: Player, mode: TravelMode, rng: Rng, departAt: number): 
     };
   }
   fight.outcome = "loss";
-  return { kind: "ambush", text: `A gang stops the bus. You lose the fight and $${lost}, but keep your life.`, fight, hpAfter: res.playerHp, cashLost: lost };
+  return { kind: "ambush", text: `A gang ${car ? "runs you off the road" : "stops the bus"}. You lose the fight and $${lost}, but keep your life.`, fight, hpAfter: res.playerHp, cashLost: lost };
 }
 
 function startTrip(p: Player, to: CountryId, mode: TravelMode, now: number, rng: Rng, events: GameEvent[]) {
@@ -370,6 +386,16 @@ function startTrip(p: Player, to: CountryId, mode: TravelMode, now: number, rng:
   });
 }
 
+/** Drive your own car to another country: fuel instead of a ticket, checkpoints instead of customs. */
+function drive(p: Player, to: CountryId, carId: string, now: number, rng: Rng, events: GameEvent[]) {
+  const from = countryOf(p);
+  const { car, fuel, ms } = startDrive(p, carId, from, to, rng);
+  const incident = rollDrive(p, car, now, rng, () => roadAmbush(p, rng, "car"));
+  p.travel = { from, to, mode: "car", carId, departAt: now, arriveAt: now + Math.round(ms * travelFactor(p)) + (incident?.delayMs ?? 0), incident };
+  p.arrival = null;
+  events.push({ tone: "info", text: `You pull out onto the highway toward ${COUNTRY_BY_ID[to].capital}. Fuel $${fuel}.` });
+}
+
 /** Finishes a trip whose time is up, applying whatever happened on the way. */
 function arrive(p: Player) {
   const trip = p.travel;
@@ -383,9 +409,11 @@ function arrive(p: Player) {
   p.country = trip.to;
   p.housing = p.homes[trip.to] ?? 0;
   p.energy = Math.min(p.energy, maxEnergy(p.housing));
+  if (trip.mode === "car") arriveByCar(p, trip.carId, trip.to, inc);
+  if (inc?.heat) p.heat += inc.heat;
   if (inc) {
     p.cash = Math.max(0, p.cash - (inc.cashLost ?? 0) - (inc.fine ?? 0));
-    if (inc.fine) p.heat = Math.max(0, p.heat - 5);
+    if (inc.fine && inc.kind === "customs") p.heat = Math.max(0, p.heat - 5);
     if (inc.hpAfter !== undefined) p.hp = inc.hpAfter;
     if (inc.fight) {
       grantXp(p, { toughness: 0.8, strength: inc.fight.won ? 1 : 0.4, nerve: 0.8 }, 1, []);
@@ -502,6 +530,7 @@ function rebirth(p: Player, rawName: string | undefined, now: number, events: Ga
   p.dead = null;
   p.cash = 0;
   p.inventory = {};
+  p.garage = [];
   p.housing = 0;
   p.homes = { [countryOf(p)]: 0 };
   p.path = null;
@@ -1073,7 +1102,7 @@ function ledgerLabel(action: Action, events: GameEvent[]): string {
   const named: Partial<Record<Action["type"], string>> = {
     job: "Work", fight: "Street fight", buy: "Shop", bank: "Bank", launder: "Laundering", claim_daily: "Daily reward",
     collect_property: "Business income", buy_property: "Bought a business", train: "Gym", travel: "Travel", use: "Used an item",
-    repair: "Repairs", drug_buy: "Bought product", drug_sell: "Sold product", encounter: "On the street", tutorial: "First-day reward",
+    repair: "Repairs", drug_buy: "Bought product", drug_sell: "Sold product", drive: "Fuel", car_buy: "Bought a car", car_sell: "Sold a car", car_repair: "Mechanic", car_compartment: "Mechanic", cargo_buy: "Bought cargo", cargo_sell: "Sold cargo", encounter: "On the street", tutorial: "First-day reward",
     claim_contract: "Contract reward", hire_bodyguards: "Bodyguards", lie_low: "Safe house",
   };
   const base = named[action.type] ?? action.type.replace(/_/g, " ");
@@ -1085,9 +1114,9 @@ function applyActionInner(p: Player, action: Action, now: number, rng: Rng, ctx:
   if (isDead(p) && action.type !== "rebirth" && action.type !== "flag") {
     throw new GameError("You're dead. Start a new life to keep playing.");
   }
-  const blockedInHospital = action.type === "job" || action.type === "fight" || action.type === "bank" || action.type === "travel";
+  const blockedInHospital = action.type === "job" || action.type === "fight" || action.type === "bank" || action.type === "travel" || action.type === "drive";
   if (blockedInHospital && inHospital(p, now)) throw new GameError("You're in the hospital. Rest up.");
-  const blockedOnTheRoad = ["job", "fight", "bank", "buy", "apply", "travel", "enroll", "train", "launder", "drug_buy", "drug_sell", "buy_supplies", "cook"].includes(action.type);
+  const blockedOnTheRoad = ["job", "fight", "bank", "buy", "apply", "travel", "enroll", "train", "launder", "drug_buy", "drug_sell", "buy_supplies", "cook", "drive", "car_buy", "car_sell", "car_repair", "car_compartment", "cargo_buy", "cargo_sell"].includes(action.type);
   if (action.type === "train" && inHospital(p, now)) throw new GameError("You're in the hospital. Rest up.");
   if (blockedOnTheRoad && traveling(p)) throw new GameError("You're still on the road. Wait until you arrive.");
   if (blockedOnTheRoad && inJail(p, now)) throw new GameError(p.custodyCase ? "You're held for trial. Wait for the verdict." : "You're in a cell. Serve your time.");
@@ -1180,7 +1209,29 @@ function applyActionInner(p: Player, action: Action, now: number, rng: Rng, ctx:
       enroll(p, events);
       break;
     case "travel":
+      if (action.mode === "car") throw new GameError("Pick which car to drive.");
       startTrip(p, action.to, action.mode, now, rng, events);
+      break;
+    case "drive":
+      drive(p, action.to, action.carId, now, rng, events);
+      break;
+    case "car_buy":
+      events.push(...buyCar(p, action.model, countryOf(p), now));
+      break;
+    case "car_sell":
+      events.push(...sellCar(p, action.carId, countryOf(p)));
+      break;
+    case "car_repair":
+      events.push(...repairCar(p, action.carId, countryOf(p)));
+      break;
+    case "car_compartment":
+      events.push(...fitCompartment(p, action.carId, countryOf(p)));
+      break;
+    case "cargo_buy":
+      events.push(...buyCargo(p, action.carId, action.good, action.qty, countryOf(p), now));
+      break;
+    case "cargo_sell":
+      events.push(...sellCargo(p, action.carId, action.good, action.qty, countryOf(p), now));
       break;
     case "ack_arrival":
       p.arrival = null;

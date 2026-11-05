@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "motion/react";
-import { ArrowLeft, Building2, GraduationCap, HeartPulse, Landmark, Lock, Scale, Shield, Siren, Train } from "lucide-react";
+import { Anchor, ArrowLeft, Building2, GraduationCap, HeartPulse, Landmark, Lock, Scale, Shield, Siren, Train } from "lucide-react";
+import { Docks } from "./docks";
 import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { Scene, type SceneKind } from "./art/Scenes";
 import { CityHall } from "./cityhall";
@@ -12,7 +13,7 @@ import { ItemArt } from "./art/ItemArt";
 import { LaunderCard, StreetMarket } from "./underworld";
 import type { GameApi } from "./useGame";
 
-export type Building = "police" | "court" | "hospital" | "bank" | "academy" | "cityhall" | "prison" | "street" | "station";
+export type Building = "police" | "court" | "hospital" | "bank" | "academy" | "cityhall" | "prison" | "street" | "station" | "docks";
 
 const BUILDINGS: { id: Building; name: string; scene: SceneKind; poster: string; Icon: ComponentType<{ size?: number }>; tagline: string }[] = [
   { id: "police", name: "Police Station", scene: "police", poster: "police", Icon: Siren, tagline: "Report what you saw. Case files, arrests, internal affairs." },
@@ -23,7 +24,8 @@ const BUILDINGS: { id: Building; name: string; scene: SceneKind; poster: string;
   { id: "cityhall", name: "City Hall", scene: "cityhall", poster: "cityhall", Icon: Building2, tagline: "The mayor, the vote, the paper, the turf." },
   { id: "prison", name: "Prison", scene: "prison", poster: "prison", Icon: Lock, tagline: "The yard, and anyone doing time." },
   { id: "street", name: "The Street", scene: "street", poster: "street", Icon: Shield, tagline: "Dealers, rackets, contracts, cold cases." },
-  { id: "station", name: "Station", scene: "station", poster: "station", Icon: Train, tagline: "Bus, train or plane to another country." },
+  { id: "station", name: "Station", scene: "station", poster: "station", Icon: Train, tagline: "Bus, train or plane to another country. Or drive." },
+  { id: "docks", name: "The Docks", scene: "marina", poster: "marina", Icon: Anchor, tagline: "Your cars, the lot, and fences who move cargo between cities." },
 ];
 
 /** The City tab: buildings you walk into. Each one holds everything that happens there. */
@@ -153,6 +155,8 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
       );
     case "station":
       return <TravelContent game={game} onRead={onRead} />;
+    case "docks":
+      return <Docks game={game} go={(to) => window.dispatchEvent(new CustomEvent("injustice:go", { detail: to }))} />;
   }
 }
 

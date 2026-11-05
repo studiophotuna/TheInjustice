@@ -255,7 +255,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
         {view.travel && (
           <div className="travel-banner">
             <div className="travel-top">
-              <span>On the {view.travel.mode === "plane" ? "plane" : view.travel.mode} to <b>{view.travel.city}</b></span>
+              <span>{view.travel.mode === "car" ? "Driving" : `On the ${view.travel.mode}`} to <b>{view.travel.city}</b></span>
               <b>{fmt(live.travel)}</b>
             </div>
             <div className="travel-track">
@@ -563,7 +563,7 @@ const OUTCOME = {
 } as const;
 
 /** Plays the fight: both fighters face off, the blow-by-blow lines appear, then the result bursts in. */
-const MODE_WORDS = { bus: "bus", train: "train", plane: "flight" } as const;
+const MODE_WORDS = { bus: "bus", train: "train", plane: "flight", car: "drive" } as const;
 
 function ArrivalCard({ view, onDone }: { view: PublicView; onDone: () => void }) {
   const a = view.arrival!;

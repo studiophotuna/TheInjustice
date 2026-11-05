@@ -27,6 +27,7 @@ import { sellableGear } from "./military";
 import { CHAPTERS } from "./content/story";
 import { SCHOOL_BY_ID, SCHOOLS } from "./content/schools";
 import { COUNTRIES, COUNTRY_BY_ID, TRAVEL_MODES, tripCost, tripMs } from "./content/world";
+import { docksView, driveRoutes } from "./vehicles";
 import type { Arrival, CountryId, TravelMode } from "./types";
 import { PROPERTIES } from "./content/properties";
 import { countryOf, dayKey, propertyIncome, FIGHT_ENERGY, inHospital, itemPrice, jobLock } from "./engine";
@@ -221,7 +222,10 @@ export interface PublicView {
     home: string;
     schools: { name: string; career: string; open: boolean }[];
     routes: { mode: TravelMode; name: string; cost: number; minutes: number; risk: string }[];
+    drives: ReturnType<typeof driveRoutes>;
   }[];
+  /** Your cars, the lot, and the smuggling fences in this city. */
+  docks: ReturnType<typeof docksView>;
   /** Rank progress for the career ladder. */
   ladder: { ranks: string[]; current: number; graduationRank: number | null } | null;
 }
@@ -510,14 +514,16 @@ export function toView(p: Player, now: number): PublicView {
       routes:
         c.id === here
           ? []
-          : TRAVEL_MODES.map((m) => ({
+          : TRAVEL_MODES.filter((m) => m.id !== "car").map((m) => ({
               mode: m.id,
               name: m.name,
               cost: tripCost(here, c.id, m.id),
               minutes: Math.round(tripMs(here, c.id, m.id) / 60_000),
               risk: m.risk,
             })),
+      drives: c.id === here ? [] : driveRoutes(p, here, c.id),
     })),
+    docks: docksView(p, here, now),
     ladder: p.path
       ? { ranks: PATHS[p.path].ranks, current: p.rank, graduationRank: PATHS[p.path].graduationRank ?? null }
       : null,

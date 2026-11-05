@@ -2,7 +2,20 @@ import type { TravelMode } from "@/game/types";
 
 // Small side-view vehicles for the travel screens.
 
-export function Vehicle({ mode, className = "" }: { mode: TravelMode; className?: string }) {
+export function Vehicle({ mode, className = "", color = "#ff9f43" }: { mode: TravelMode; className?: string; color?: string }) {
+  if (mode === "car") {
+    return (
+      <svg viewBox="0 0 120 50" className={`vehicle ${className}`} aria-hidden>
+        <path d="M6 34 V27 Q6 23 12 22 L30 19 L44 8 H78 Q84 8 88 13 L96 20 L110 22 Q116 23 116 28 V34 Z" fill={color} stroke="#000" strokeWidth="2" />
+        <path d="M47 11 H62 V20 H36Z" fill="#1d2a3d" />
+        <path d="M66 11 H78 Q81 11 84 14 L89 20 H66Z" fill="#1d2a3d" />
+        <rect x="108" y="25" width="7" height="4" rx="1" fill="#ffe08a" />
+        <rect x="6" y="26" width="5" height="4" rx="1" fill="#ff5a5a" />
+        <circle className="wheel-turn" cx="30" cy="36" r="8" fill="#111" stroke="#666" strokeWidth="2" />
+        <circle className="wheel-turn" cx="92" cy="36" r="8" fill="#111" stroke="#666" strokeWidth="2" />
+      </svg>
+    );
+  }
   if (mode === "bus") {
     return (
       <svg viewBox="0 0 120 50" className={`vehicle ${className}`} aria-hidden>

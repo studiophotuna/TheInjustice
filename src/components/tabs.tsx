@@ -824,12 +824,28 @@ export function WorldCard({ game }: { game: GameApi }) {
                     <span className="route-risk">{r.risk}</span>
                   </button>
                 ))}
+                {c.drives.map((r) => (
+                  <button
+                    key={r.carId}
+                    className="route drive"
+                    disabled={blocked || !r.canDrive || view.cash < r.fuel}
+                    title={r.canDrive ? "Your own car. Highway checkpoints search cars." : "Needs a mechanic first (the Docks)."}
+                    onClick={() => game.act({ type: "drive", to: c.id, carId: r.carId })}
+                  >
+                    <Vehicle mode="car" />
+                    <span className="route-name">Drive · {r.name}</span>
+                    <span className="route-meta">${r.fuel} fuel · {r.minutes} min</span>
+                    <span className="route-risk">
+                      {!r.canDrive ? "Won't make it. Get it repaired at the Docks." : r.cargo ? `${r.cargo} units in the trunk. Checkpoints search cars.` : "Your own wheels. Checkpoints on the highway."}
+                    </span>
+                  </button>
+                ))}
               </div>
             )}
           </article>
         ))}
       </div>
-      <p className="fine">Tickets are paid in cash. Times are shortened for testing.</p>
+      <p className="fine">Tickets and fuel are paid in cash. Buy a car at the Docks to drive yourself. Times are shortened for testing.</p>
     </section>
   );
 }

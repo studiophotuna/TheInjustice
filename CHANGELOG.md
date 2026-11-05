@@ -1,5 +1,25 @@
 # Changelog
 
+## 3.1.0: cars and smuggling
+
+- **The Docks:** a new building in every city with your garage, a car lot and the fences.
+- **Five cars**, from a rust-bucket hatchback to an armored SUV. Each has its own speed and
+  trunk size: the family sedan looks innocent, the panel van carries the most, the sports coupe can
+  blow through checkpoints, and road gangs leave the armored SUV alone. Garage holds three.
+  Paid in clean money, cash first and then the bank.
+- **Drive yourself** from the Station: fuel instead of a ticket. Your car (and its trunk) comes with
+  you and stays parked in the new city. Every drive wears the car; get it repaired at the Docks
+  before it gives out.
+- **Cross-city smuggling:** untaxed cigarettes, bootleg liquor, grey-market phones and
+  unregistered pistols. Each is cheap where it's made and dear where it's banned, and prices move
+  every hour. Fences take dirty money or cash and pay in dirty money. A price board shows what
+  every city's fences pay this hour.
+- **Highway checkpoints** replace customs for drivers. A search can find your cargo and anything
+  on you: it's seized, you pay a fine and carry the heat. A false floor makes searches much
+  harder; the Wheelman specialty helps too.
+- Road gangs can ambush cars on the highway, like the bus.
+- Losing a life loses the garage.
+
 ## 3.0.0: player-run shops
 
 - **Every counter in town can be run by a player.** Each city has a gun shop, an armor outfitter,

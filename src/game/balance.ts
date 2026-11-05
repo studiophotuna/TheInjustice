@@ -102,7 +102,7 @@ export const BALANCE = {
     maxCarry: 50,
     supplyPrice: 15,
     /** Chance a trip finds your stash. */
-    seizeChance: { bus: 0.05, train: 0.15, plane: 0.35 },
+    seizeChance: { bus: 0.05, train: 0.15, plane: 0.35, car: 0 },
   },
   /** Bank heists. */
   heist: { energy: 20, cooldownMs: 24 * 60 * 60_000, baseTake: 3000, perRole: 0.25, heat: 15, caughtMs: 30 * 60_000 },

@@ -19,7 +19,8 @@ const PLACES: [string, string, string][] = [
   ["cityhall", "City Hall", "mayor vote election seats newspaper"],
   ["prison", "Prison", "jail cell yard breakout"],
   ["street", "The Street", "dealers rackets contracts cold cases drugs"],
-  ["station", "Station", "travel bus train plane country"],
+  ["station", "Station", "travel bus train plane country drive"],
+  ["docks", "The Docks", "car garage vehicle smuggle cargo fence drive"],
 ];
 
 /** Scores how well `q` matches `text`: words must all appear; earlier and tighter is better. */
