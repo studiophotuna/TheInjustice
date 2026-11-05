@@ -48,7 +48,15 @@ describe("changing careers", () => {
     don.cash = BALANCE.crew.createCost;
     family(don).madeAt = LATER;
     createCrew(don, "c", "Iron Row", "IRW", LATER);
-    expect(() => applyAction(don, { type: "leave_career" }, LATER, always(0.5))).toThrow(/Leave your crew/);
+    // Nobody just walks out of the family: first get out, then get clean, then leave the crew.
+    expect(() => applyAction(don, { type: "leave_career" }, LATER, always(0.5))).toThrow(/getting out/);
+    applyAction(don, { type: "start_exit" }, LATER, always(0.5));
+    expect(() => applyAction(don, { type: "leave_career" }, LATER, always(0.5))).toThrow(/Not clean yet/);
+    don.exiting = { at: LATER, jobs: 40 };
+    don.heat = 0;
+    don.dirty = 0;
+    don.stats.integrity = 0;
+    expect(() => applyAction(don, { type: "leave_career" }, LATER, always(0.5))).toThrow(/walk away from the crew/);
     don.crewId = null;
     applyAction(don, { type: "leave_career" }, LATER, always(0.5));
     expect(don.family?.madeAt).toBeUndefined();

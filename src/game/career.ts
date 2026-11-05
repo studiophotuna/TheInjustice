@@ -8,6 +8,8 @@
 
 import { PATHS } from "./content/paths";
 import { inJail, issueGear } from "./engine";
+import { BALANCE } from "./balance";
+import { dirtyOf } from "./money";
 import { GameError, type GameEvent, type PathId, type Player } from "./types";
 
 export const CAREER = {
@@ -33,10 +35,87 @@ export function veteranFactor(p: Player): number {
 export const legacies = (p: Player): PathId[] => p.legacy ?? [];
 export const legacyPayBonus = (p: Player) => 1 + CAREER.legacyPay * Math.min(CAREER.legacyMax, legacies(p).length);
 
+// ── Getting out ────────────────────────────────────────────────────────────
+//
+// You can't just walk out of a dirty life. The Mafia always has to get clean first, and so does
+// anyone in a legit career whose record is dirty (a cop on the take, a banker washing mob money).
+// The checklist is about the record, not the badge: an honest lawyer simply resigns.
+
+export const EXIT = {
+  /** Honest jobs needed per rank: the higher you climbed, the longer the way back. */
+  jobsPerRank: { enforcer: 5, other: 3 },
+  /** Conscience you have to get back to (-100..100): not a saint, someone who can live with it. */
+  conscience: -25,
+  /** Each honest job while getting out mends the conscience a little. */
+  consciencePerJob: 2,
+};
+
+/** A record the city would call dirty. */
+export const dirtyRecord = (p: Player) => p.heat >= BALANCE.cleanRecordHeat || dirtyOf(p) > 0 || p.stats.integrity < EXIT.conscience;
+
+/** Does leaving this career need the checklist at all? */
+export function mustGetOut(p: Player): boolean {
+  if (!p.path) return false;
+  return p.path === "enforcer" || dirtyRecord(p) || !!p.exiting;
+}
+
+export function exitJobsNeeded(p: Player): number {
+  return Math.max(1, p.rank) * (p.path === "enforcer" ? EXIT.jobsPerRank.enforcer : EXIT.jobsPerRank.other);
+}
+
+/** The checklist for getting out. */
+export function exitChecklist(p: Player, now: number) {
+  const need = exitJobsNeeded(p);
+  const done = p.exiting?.jobs ?? 0;
+  const items = [
+    { id: "jobs", label: `Do ${need} honest jobs`, detail: `${Math.min(done, need)} of ${need}. Any crooked job sets you back to zero.`, done: !!p.exiting && done >= need },
+    { id: "heat", label: "Let the heat die down", detail: p.heat >= BALANCE.cleanRecordHeat ? "The police still know your name. Heat fades with time and clean work." : "Clean.", done: p.heat < BALANCE.cleanRecordHeat },
+    { id: "dirty", label: "Get rid of the dirty money", detail: dirtyOf(p) > 0 ? `$${dirtyOf(p).toLocaleString("en")} still dirty. Launder it at the bank, or spend it.` : "None left.", done: dirtyOf(p) <= 0 },
+    { id: "conscience", label: "Clear your conscience", detail: p.stats.integrity < EXIT.conscience ? "It's still heavy. Every honest job eases it, and so do good choices on the street." : "You can live with yourself.", done: p.stats.integrity >= EXIT.conscience },
+    { id: "case", label: "No open case against you", detail: p.onBail || p.custodyCase ? "You're out on bail. The trial has to end first." : "Nothing pending.", done: !p.onBail && !p.custodyCase && !inJail(p, now) },
+  ];
+  if (p.path === "enforcer") {
+    items.push({ id: "crew", label: "Walk away from the crew", detail: p.crewId ? "Leave your crew first. If you were made, the family will remember." : "You're on your own now.", done: !p.crewId });
+  }
+  return items;
+}
+
+/** Starts getting out: from now on, honest jobs count. */
+export function startExit(p: Player, now: number): GameEvent[] {
+  if (!p.path) throw new GameError("You don't have a career to leave.");
+  if (p.exiting) throw new GameError("You're already getting out.");
+  p.exiting = { at: now, jobs: 0 };
+  return [{ tone: "story", text: p.path === "enforcer" ? "You've decided to get out. Nobody in the family can know yet. Start living straight." : "You've decided to clean up before you resign. Start living straight." }];
+}
+
+export function abandonExit(p: Player): GameEvent[] {
+  if (!p.exiting) throw new GameError("You weren't getting out.");
+  p.exiting = null;
+  return [{ tone: "info", text: "You put the idea away. Back to the life." }];
+}
+
+/** Called after every job: honest work counts, crooked work resets the count. */
+export function exitJobDone(p: Player, criminal: boolean, events: GameEvent[]) {
+  if (!p.exiting) return;
+  if (criminal) {
+    if (p.exiting.jobs > 0) events.push({ tone: "bad", text: "One crooked job and you're back at square one. Getting out means getting out." });
+    p.exiting.jobs = 0;
+  } else {
+    p.exiting.jobs += 1;
+    p.stats.integrity = Math.min(100, p.stats.integrity + EXIT.consciencePerJob);
+    const need = exitJobsNeeded(p);
+    if (p.exiting.jobs === need) events.push({ tone: "good", text: `${need} honest jobs. People are starting to believe you've changed.` });
+  }
+}
+
 export function leaveBlock(p: Player, now: number): string | null {
   if (!p.path) return "You don't have a career to leave.";
   if (p.custodyCase || inJail(p, now)) return "Not from a cell. Finish what you're in for first.";
-  if (p.path === "enforcer" && p.crewId) return "Leave your crew first. The family doesn't let you walk out with its secrets.";
+  if (mustGetOut(p)) {
+    if (!p.exiting) return p.path === "enforcer" ? "Nobody just walks out of the family. Start getting out first." : "Your record is dirty. Clean up before you resign.";
+    const left = exitChecklist(p, now).filter((i) => !i.done);
+    if (left.length) return `Not clean yet: ${left.map((i) => i.label.toLowerCase()).join(", ")}.`;
+  }
   return null;
 }
 
@@ -56,6 +135,7 @@ export function leaveCareer(p: Player, now: number): GameEvent[] {
   p.school = null;
   p.application = null;
   p.careerChangeAt = now;
+  p.exiting = null;
   // The street notices again: old offers are gone, and refusals are forgotten.
   p.offers = [];
   p.flags = p.flags.filter((f) => !f.startsWith("declined_"));
@@ -93,6 +173,9 @@ export function careerRecordView(p: Player, now: number) {
     legacy: legacies(p).map((path) => `Retired ${PATHS[path].ranks[PATHS[path].ranks.length - 1]}`),
     legacyBonus: Math.round((legacyPayBonus(p) - 1) * 100),
     canLeave: leaveBlock(p, now),
+    exit: mustGetOut(p)
+      ? { started: !!p.exiting, items: exitChecklist(p, now), ready: !!p.exiting && exitChecklist(p, now).every((i) => i.done) }
+      : null,
     veteran: p.path ? bestRank(p, p.path) > p.rank : false,
     gap: careerGapBlock(p, now),
   };

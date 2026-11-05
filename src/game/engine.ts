@@ -5,7 +5,7 @@ import { regularUpkeep } from "./regulars";
 import { journalTick } from "./journal";
 import { chooseEncounter, maybeEncounter } from "./encounters";
 import { addWound, healWounds, playerMaxHp } from "./wounds";
-import { careerGapBlock, leaveCareer, legacyPayBonus, veteranFactor } from "./career";
+import { abandonExit, careerGapBlock, exitJobDone, leaveCareer, legacyPayBonus, startExit, veteranFactor } from "./career";
 import { updateProfile } from "./profile";
 import { hireBodyguards, lieLow } from "./hit";
 import { ensureEquipped, equip, equippedId, repair, unequip, usesLeft, wearGear } from "./gear";
@@ -743,6 +743,8 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
       grantXp(p, jobXp(job), falloff * 0.5, events);
       if (job.path) p.jobsSinceRank += jobMerit(p, job, false);
       events.push({ tone: "bad", text: job.risk.failText });
+      // Trying counts: a botched crooked job still resets getting out.
+      if ((job.integrity ?? 0) < 0 || (job.heat ?? 0) > 0) exitJobDone(p, true, events);
       if (job.risk.failHp) {
         events.push(...wearGear(p, ["armor"]));
         p.hp -= job.risk.failHp;
@@ -772,6 +774,7 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
   p.heat += (job.heat ?? 0) * COUNTRY_BY_ID[countryOf(p)].heatMult;
   p.reputation += job.reputation ?? 0;
   shiftIntegrity(p, job.integrity);
+  exitJobDone(p, criminal, events);
   events.push({
     tone: "good",
     text: `${pick(rng, job.lines)} +$${net}${criminal ? " dirty" : ""}${tax ? ` (city tax $${tax})` : ""}${cut ? ` (protection money $${cut})` : ""}`,
@@ -1094,6 +1097,12 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng, ct
       break;
     case "leave_career":
       events.push(...leaveCareer(p, now));
+      break;
+    case "start_exit":
+      events.push(...startExit(p, now));
+      break;
+    case "abandon_exit":
+      events.push(...abandonExit(p));
       break;
     case "lie_low":
       events.push(...lieLow(p, now));

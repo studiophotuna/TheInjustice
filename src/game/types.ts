@@ -183,6 +183,8 @@ export interface Player {
   jsnap?: { path: PathId | null; rank: number; crew: string | null; jailed: boolean; clinic: boolean; clinics: number; story: number; money: number; country: string; deaths: number };
   /** What each street regular thinks of you: -5..5 and the last thing they remember. */
   ties?: Record<string, { t: number; memo: string; at: number }>;
+  /** Getting out of a dirty career: when it started, and honest jobs done since. */
+  exiting?: { at: number; jobs: number } | null;
   /** A regular who stopped you in the street with a choice (see encounters.ts). */
   encounter?: { id: string; key: string; country: CountryId; name: string; district: string; at: number; expiresAt: number } | null;
   encounterAt?: number;
@@ -646,6 +648,8 @@ export type Action =
   | { type: "hire_bodyguards" }
   | { type: "profile"; bio?: string; photo?: string | null }
   | { type: "leave_career" }
+  | { type: "start_exit" }
+  | { type: "abandon_exit" }
   | { type: "lie_low" }
   | { type: "bank"; op: "open" | "deposit" | "withdraw"; amount?: number }
   | { type: "fight"; npcId: string }

@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.7.0: getting out
+
+- **Nobody just walks out of the family.** To leave the Mafia you start **getting out** (Me ->
+  Career record) and work through a checklist:
+  - honest jobs: 5 per rank (an Associate needs 5, a Consigliere 35). Any crooked job, even a
+    botched one, sets the count back to zero;
+  - heat down to Clean;
+  - no dirty money (launder it or spend it);
+  - a conscience you can live with (each honest job while getting out mends it a little);
+  - no case pending;
+  - out of the crew (and if you were made, omerta still applies).
+  When every box is ticked you can leave and become a nobody again, free to apply anywhere.
+- **Legit careers just resign, unless their record is dirty.** An honest lawyer, banker or cop
+  hands in the badge as before. A cop on the take or a banker washing mob money (heat, dirty
+  money, or a heavy conscience) goes through the same checklist, with 3 honest jobs per rank.
+- You can change your mind and go back to the life at any time.
+- While getting out, the quick bar's job slot only offers honest work, and Right now shows how
+  far along you are.
+
 ## 2.6.1: fixes and fewer interruptions
 
 - **Fixed: the +$ / -$ pops next to your cash never went away.** Each pop now clears itself after

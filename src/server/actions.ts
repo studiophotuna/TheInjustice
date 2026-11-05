@@ -47,6 +47,10 @@ export function parseAction(body: unknown): Action {
       return { type: "repair", itemId: str(b.itemId) };
     case "leave_career":
       return { type: "leave_career" };
+    case "start_exit":
+      return { type: "start_exit" };
+    case "abandon_exit":
+      return { type: "abandon_exit" };
     case "profile":
       return {
         type: "profile",

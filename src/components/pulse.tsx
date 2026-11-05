@@ -113,6 +113,18 @@ export function RightNow({ game, go, needs, onRead }: { game: GameApi; go: (t: s
       },
     });
   }
+  const exit = view.careerRecord.exit;
+  if (exit?.started) {
+    const done = exit.items.filter((i) => i.done).length;
+    moves.push({
+      key: "exit",
+      icon: Sparkles,
+      tone: exit.ready ? "money" : "normal",
+      title: exit.ready ? "You're clean. You can leave your career now." : `Getting out: ${done} of ${exit.items.length} done.`,
+      cta: exit.ready ? "Leave" : "See what's left",
+      run: () => go("tab:profile"),
+    });
+  }
   const unread = view.chapters.find((c) => c.unlocked && !c.read);
   if (unread) moves.push({ key: "story", icon: Sparkles, tone: "normal", title: `New chapter: ${unread.title}`, cta: "Read", run: () => onRead(unread.id) });
 

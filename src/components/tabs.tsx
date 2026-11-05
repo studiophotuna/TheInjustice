@@ -1062,10 +1062,11 @@ function CareerRecord({ game }: { game: GameApi }) {
         <p className="muted fine">Your first career. Finish it (reach the top rank) and leave, and you keep a legacy: a title and better pay on every job, for good.</p>
       )}
       {r.gap && <p className="fine muted">{r.gap}</p>}
-      {view.path && (
+      {view.path && r.exit && <GettingOut game={game} />}
+      {view.path && (!r.exit || r.exit.ready) && (
         <>
           <button
-            className="btn btn-ghost btn-sm"
+            className={`btn btn-sm ${r.exit?.ready ? "btn-primary" : "btn-ghost"}`}
             disabled={game.busy || !!r.canLeave}
             title={r.canLeave ?? ""}
             onClick={() =>
@@ -1076,9 +1077,55 @@ function CareerRecord({ game }: { game: GameApi }) {
           >
             Leave this career
           </button>
-          {r.canLeave && <p className="fine muted">{r.canLeave}</p>}
+          {r.canLeave && !r.exit && <p className="fine muted">{r.canLeave}</p>}
         </>
       )}
     </section>
+  );
+}
+
+/** Getting out of a dirty career: a checklist that fills in as you live straight. */
+function GettingOut({ game }: { game: GameApi }) {
+  const view = game.view!;
+  const exit = view.careerRecord.exit!;
+  const mafia = view.path?.id === "enforcer";
+  if (!exit.started) {
+    return (
+      <div className="getting-out">
+        <b className="go-title">{mafia ? "Nobody just walks out of the family" : "Your record is dirty"}</b>
+        <p className="fine muted">
+          {mafia
+            ? "To leave, you have to get clean first: honest work (more the higher you've climbed), no heat, no dirty money, a clear conscience, no case pending and no crew."
+            : "A clean record lets you resign any time. Yours isn't clean, so you'll have to straighten out first."}
+        </p>
+        <button className="btn btn-primary btn-sm" disabled={game.busy} onClick={() => game.act({ type: "start_exit" })}>Start getting out</button>
+      </div>
+    );
+  }
+  const done = exit.items.filter((i) => i.done).length;
+  return (
+    <div className="getting-out on">
+      <div className="row between">
+        <b className="go-title">Getting out</b>
+        <span className="go-count">{done}/{exit.items.length}</span>
+      </div>
+      <div className="go-bar"><span style={{ width: `${(done / exit.items.length) * 100}%` }} /></div>
+      <ul className="go-list">
+        {exit.items.map((i) => (
+          <li key={i.id} className={i.done ? "done" : ""}>
+            <span className="go-check" aria-hidden>{i.done ? "✓" : ""}</span>
+            <span>
+              <b>{i.label}</b>
+              <small>{i.detail}</small>
+            </span>
+          </li>
+        ))}
+      </ul>
+      {exit.ready ? (
+        <p className="fine" style={{ color: "var(--cash)" }}>You're clean. You can walk away now.</p>
+      ) : (
+        <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => game.act({ type: "abandon_exit" })}>Change your mind</button>
+      )}
+    </div>
   );
 }

@@ -31,7 +31,13 @@ export function QuickBar({ game }: { game: GameApi }) {
   }, [game.view]);
 
   const away = view.jail ? "You're in a cell." : view.travel ? "You're on the road." : live.hospital > 0 ? `In the clinic for ${fmt(live.hospital)}.` : null;
-  const job = view.jobs.find((j) => j.id === lastJob && !j.locked) ?? view.jobs.find((j) => j.id === view.recommendedJobId) ?? null;
+  const straight = !!view.careerRecord.exit?.started;
+  const ok = (j: (typeof view.jobs)[number]) => !j.locked && (!straight || !j.crime);
+  const job =
+    view.jobs.find((j) => j.id === lastJob && ok(j)) ??
+    view.jobs.find((j) => j.id === view.recommendedJobId && ok(j)) ??
+    (straight ? [...view.jobs].filter(ok).sort((a, b) => b.pay[1] - a.pay[1])[0] : null) ??
+    null;
   const food = view.shop
     .filter((i) => i.kind === "food" && i.price <= view.cash)
     .sort((a, b) => b.price - a.price)[0];
