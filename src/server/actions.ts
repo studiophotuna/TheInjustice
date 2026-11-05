@@ -42,6 +42,15 @@ export function parseAction(body: unknown): Action {
       return { type: b.type, carId: str(b.carId) };
     case "fit_alarm":
       return { type: "fit_alarm" };
+    case "dog_buy":
+      if (!["mutt", "shepherd", "mastiff"].includes(b.breed as string)) throw new GameError("Bad request.");
+      return { type: "dog_buy", breed: b.breed as "mutt", name: str(b.name, 40) };
+    case "garage_set":
+      if (typeof b.open !== "boolean") throw new GameError("Bad request.");
+      return { type: "garage_set", open: b.open, rate: Number(b.rate) };
+    case "dog_feed":
+    case "dog_give_away":
+      return { type: b.type };
     case "cargo_buy":
     case "cargo_sell":
       if (!["smokes", "liquor", "phones", "pistols"].includes(b.good as string)) throw new GameError("Bad request.");

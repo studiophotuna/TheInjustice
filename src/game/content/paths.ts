@@ -228,6 +228,32 @@ export const PATHS: Record<PathId, PathDef> = {
     accepted: 'Brann signs your papers with a pen he clearly stole. "Ironmoor, then. Bring boots that fit."',
     promotion: (t) => `Brann pins the new stripes on your collar himself. "${t}. Don't make me regret it."`,
   },
+  mechanic: {
+    id: "mechanic",
+    name: "Mechanic",
+    side: "law",
+    ranks: ["Grease Monkey", "Apprentice", "Mechanic", "Senior Mechanic", "Master Mechanic", "Shop Foreman", "Garage Owner"],
+    keyStats: ["wits", "agility", "strength"],
+    promotionThresholds: [20, 27, 34, 42, 51, 60],
+    jobsPerRank: 8,
+    contact: "Vera Dobrev",
+    contactId: "dobrev",
+    blurb: "Fix what the city breaks: cars, locks, burned-out shops. Everyone needs a mechanic. Even the people you'd rather not know.",
+    examStats: ["wits", "agility"],
+    examName: "Shop report",
+    qualifies: (p) =>
+      p.heat < BALANCE.cleanRecordHeat &&
+      (p.jobCounts.garage_hand ?? 0) >= 5 &&
+      sv(p, "wits") + sv(p, "agility") >= 40,
+    offer: [
+      "A woman with a wrench in her back pocket watches you put a carburetor back together without the manual.",
+      "\"Vera Dobrev. That's my name on the sign. You've got hands, and you don't talk while you work.\"",
+      "\"I need someone on the floor. Cars, locks, alarms. Later, maybe, the jobs people pay extra not to talk about.\"",
+      "She wipes her hands on a rag. \"Half this city's cars have been through my shop. I know whose. Useful, sometimes.\"",
+    ],
+    accepted: 'Dobrev tosses you a pair of overalls with someone else\'s name stitched on. "Iron Row, seven sharp. Late is a broken engine."',
+    promotion: (t) => `Dobrev hangs a new hook on the wall with your name over it. "${t}. The good tools are yours now. Don't lend them."`,
+  },
 };
 
 export function rankTitle(p: Player): string | null {

@@ -152,6 +152,17 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
     if (kind === "story") setReading(id);
+    if (kind === "person") {
+      setTab("people");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      // People may not be on screen yet: leave the request where it will find it when it mounts.
+      try {
+        sessionStorage.setItem("conspira:openfile", id);
+      } catch {
+        /* storage blocked: the event below still works if People is already open */
+      }
+      setTimeout(() => window.dispatchEvent(new CustomEvent("conspira:openfile", { detail: id })), 120);
+    }
     if (kind === "encounter") openEncounter();
     // "people:crew" opens People on a section (people, chat, crew, inbox).
     if (kind === "people") {

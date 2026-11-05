@@ -209,7 +209,7 @@ export function executeAmbush(
   crew.lastAmbushAt = now;
   target.ambushedAt = now;
 
-  // A Wheelman drives cleaner; a Private eye misses less.
+  // A Wheelman drives cleaner; a Bloodhound misses less.
   const driverOk = !!driver && crewHere.includes(driver) && rng() < Math.min(0.97, roleOdds(driver, "agility") + roleBonus(driver, "wheelman"));
   const lookoutOk = !!lookout && crewHere.includes(lookout) && rng() < Math.min(0.97, roleOdds(lookout, "perception") + roleBonus(lookout, "private_eye"));
   const backup = lookoutOk ? [] : ctx.backup.filter((b) => b.id !== target.id && countryOf(b) === a.country && !inJail(b, now) && !inHospital(b, now));

@@ -27,6 +27,7 @@ export const SEAT_TITLES: Record<PathId, string> = {
   medicine: "Medical Director",
   banking: "Governor of the Exchange",
   military: "General of the Garrison",
+  mechanic: "Master of the Yards",
   vigilante: "The Symbol",
 };
 
@@ -38,6 +39,7 @@ export const SEAT_POWERS: Record<PathId, { name: string; text: string; target: b
   medicine: { name: "Discharge a patient", text: "Send one patient home from the hospital, healed.", target: true },
   banking: { name: "Freeze the money", text: "Freeze one player's dirty money for a day: no laundering anywhere.", target: true },
   military: { name: "Deploy troops", text: "Three squads guard the banks for two hours. Bank jobs get much harder.", target: false },
+  mechanic: { name: "Service day", text: "Every car one player has parked in this city gets a full service, free.", target: true },
   vigilante: { name: "Call them out", text: "Publicly name a player with a dirty record: +15 heat and a headline.", target: true },
 };
 
@@ -189,6 +191,14 @@ export function usePower(c: City, p: Player, target: Player | null, now: number)
       c.log = [{ at: now, text: `General ${p.name} deploys troops to guard the banks.` }, ...c.log].slice(0, 20);
       events = [{ tone: "good", text: "Three squads take position at the banks for two hours." }];
       break;
+    case "mechanic": {
+      const cars = (target!.garage ?? []).filter((x) => x.country === c.country);
+      if (!cars.some((x) => x.condition < 100)) throw new GameError("Their cars here are already in perfect shape.");
+      for (const x of cars) x.condition = 100;
+      notify(target!, `The Master of the Yards gave your cars in ${city} a full service. On the house.`, "good", p, now);
+      events = [{ tone: "good", text: `${target!.name}'s cars run like new.` }];
+      break;
+    }
     case "vigilante":
       if (target!.heat < BALANCE.cleanRecordHeat) throw new GameError("Their record is clean. Calling them out would only hurt you.");
       target!.heat += 15;

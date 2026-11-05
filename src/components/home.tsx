@@ -23,6 +23,7 @@ const CHARACTER_FOR: Record<PathId, CharacterKind> = {
   vigilante: "vigilante",
   enforcer: "thug",
   military: "vigilante",
+  mechanic: "bum",
 };
 
 /** Each city gets its own backdrop. */

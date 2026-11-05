@@ -154,6 +154,7 @@ export function leaveCareer(p: Player, now: number): GameEvent[] {
     medicine: "You hand back your badge at St. Brigid's. Your hands still know the work.",
     banking: "You resign. Your access cards stop working before you reach the lobby.",
     military: "Honorable discharge. You hand in your rifle and walk out of the gate a civilian.",
+    mechanic: "You hang your overalls on Dobrev's hook one last time. The grease will take weeks to come off.",
   };
   const events: GameEvent[] = [{ tone: "story", text: `${lines[path]} You were a ${title}. Everything you learned stays with you.` }];
   if (finished) events.push({ tone: "good", text: `Legacy: a retired ${title}. People remember. You earn ${Math.round(CAREER.legacyPay * 100)}% more on every job, for good.` });
@@ -215,6 +216,10 @@ export const PROMO_PICKS: Record<PathId, [Pick, Pick]> = {
   military: [
     { label: "Assault", text: "Drills made you faster and hit harder.", stats: ["strength", "agility"] },
     { label: "Endurance", text: "Marches and cold nights taught you to outlast.", stats: ["toughness", "nerve"] },
+  ],
+  mechanic: [
+    { label: "The engine", text: "Hours inside engines taught you how things really work.", stats: ["wits", "perception"] },
+    { label: "The heavy lifting", text: "Engine blocks and jacks made your hands strong and quick.", stats: ["strength", "agility"] },
   ],
 };
 interface Pick {

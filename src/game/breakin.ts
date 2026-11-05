@@ -12,6 +12,7 @@ import { earnDirty } from "./money";
 import { notify, protectedUntil } from "./social";
 import { specTier } from "./specialties";
 import { stashOf, STASH } from "./stash";
+import { dogAt, dogGuard } from "./dogs";
 import { sv } from "./stats";
 import { CARS, CAR, cargoUnits } from "./vehicles";
 import { roleOdds } from "./heist";
@@ -99,6 +100,7 @@ export function breakInOdds(a: Player, t: Player, country: CountryId, now: numbe
   const skill = (sv(a, "agility") + sv(a, "wits") - 20) / 120;
   let odds = BREAKIN.lock[homeIn(t, country)] * 0.9 + skill;
   if (hasAlarm(t, country)) odds -= BREAKIN.alarm.odds;
+  odds *= 1 - dogGuard(t, country, now);
   if (ownerHome(t, country, now)) odds *= 0.5;
   return clamp(odds, 0.08, 0.9);
 }
@@ -160,6 +162,7 @@ export function breakIn(a: Player, t: Player, now: number, rng: Rng, ctx: Proper
   const country = countryOf(a);
   const home = ownerHome(t, country, now);
   const alarm = hasAlarm(t, country);
+  const dog = dogAt(t, country, now);
   commit(a, BREAKIN.heat, BREAKIN.integrity, BREAKIN.energy);
   a.attackLog = { ...(a.attackLog ?? {}), [`burgle:${t.id}`]: now };
   a.jobCounts["crime:burglary"] = (a.jobCounts["crime:burglary"] ?? 0) + 1;
@@ -171,8 +174,30 @@ export function breakIn(a: Player, t: Player, now: number, rng: Rng, ctx: Proper
       notify(t, `You heard the lock and caught ${a.name} breaking into your place. They ran. +1 reputation.`, "good", a, now);
       return { events: [{ tone: "bad", text: `${t.name} was home. They saw your face before you got out the window.` }], caseFile: null };
     }
-    notify(t, alarm ? "Your alarm went off: someone tried to get into your place. They ran before they got in." : "Someone tried to get into your place. Scratches on the lock, nothing taken.", "info", undefined, now);
-    return { events: [{ tone: "bad", text: alarm ? "The alarm screams the moment the door gives. You run." : "The lock won't give, and a light comes on next door. You walk away fast." }], caseFile: null };
+    notify(
+      t,
+      dog
+        ? `${dog.name} went off like a siren: someone tried to get into your place. They ran before they got in. Good dog.`
+        : alarm
+          ? "Your alarm went off: someone tried to get into your place. They ran before they got in."
+          : "Someone tried to get into your place. Scratches on the lock, nothing taken.",
+      "info",
+      undefined,
+      now,
+    );
+    return {
+      events: [
+        {
+          tone: "bad",
+          text: dog
+            ? "A dog throws itself at the other side of the door, barking like it means it. Lights come on up and down the street. You run."
+            : alarm
+              ? "The alarm screams the moment the door gives. You run."
+              : "The lock won't give, and a light comes on next door. You walk away fast.",
+        },
+      ],
+      caseFile: null,
+    };
   }
 
   // Inside: the stash, if there is one, and whatever the burglar can carry.
@@ -248,11 +273,11 @@ export function stealCar(a: Player, t: Player, carId: string, now: number, rng: 
 }
 
 /** Owners: an alarm makes a break-in harder, and its camera gives the police a good clue. */
-export function fitAlarm(p: Player): GameEvent[] {
+export function fitAlarm(p: Player, price?: number): GameEvent[] {
   const country = countryOf(p);
   if (p.housing < 1) throw new GameError("There's nothing to wire an alarm to.");
   if (hasAlarm(p, country)) throw new GameError("It's already wired.");
-  const cost = Math.round(BREAKIN.alarm.cost * COUNTRY_BY_ID[country].priceMult);
+  const cost = price ?? Math.round(BREAKIN.alarm.cost * COUNTRY_BY_ID[country].priceMult);
   if (p.cash + (p.hasBankAccount ? p.bank : 0) < cost) throw new GameError(`An alarm costs $${cost.toLocaleString()}.`);
   const fromCash = Math.min(p.cash, cost);
   p.cash -= fromCash;
@@ -340,7 +365,8 @@ export function runHomeJob(
     muscle: roll("muscle"),
   };
   // Someone walks in on it: the owner if they're home, or a neighbor if nobody watched the street.
-  const interrupted = (home && !ok.lookout) || (!team.lookout && rng() < 0.3);
+  const dog = dogAt(t, country, now);
+  const interrupted = (home && !ok.lookout) || (!team.lookout && rng() < 0.3) || (!!dog && !ok.muscle && rng() < dogGuard(t, country, now) * 2);
   const members = Object.values(team).filter((x): x is Player => !!x);
   const capital = COUNTRY_BY_ID[country].capital;
   crew.heist = null;
@@ -370,7 +396,19 @@ export function runHomeJob(
     t.reputation += 2;
     notify(t, home ? `You walked in on a crew robbing your place and ran them off. You saw ${team.safecracker.name}'s face. +2 reputation.` : "A neighbor scared off a crew breaking into your place. Nothing was taken.", "good", home ? team.safecracker : undefined, now);
     crew.log = [{ at: now, text: `The job on ${t.name}'s place was interrupted. Nobody got anything.` }, ...crew.log].slice(0, 30);
-    return { events: [{ tone: "bad", text: home ? `${t.name} was home and walked in on you. You got out, empty-handed and bruised.` : "Someone walked in on the job. You got out with nothing." }], caseFile: null };
+    return {
+      events: [
+        {
+          tone: "bad",
+          text: home
+            ? `${t.name} was home and walked in on you. You got out, empty-handed and bruised.`
+            : dog
+              ? `${dog.name} wouldn't stop barking and the whole block woke up. You got out with nothing.`
+              : "Someone walked in on the job. You got out with nothing.",
+        },
+      ],
+      caseFile: null,
+    };
   }
 
   // Inside, and the safe either opens or it doesn't.

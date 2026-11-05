@@ -5,7 +5,7 @@ import { CarFront, DoorOpen } from "lucide-react";
 import { Vehicle } from "./art/Vehicles";
 import type { GameApi } from "./useGame";
 
-type HomeRow = { id: string; name: string; photo: string | null; home: string; tier: number; alarm: boolean; inTown: boolean; block: string | null; crewJob: string | null };
+type HomeRow = { id: string; name: string; photo: string | null; home: string; tier: number; alarm: boolean; dog: boolean; inTown: boolean; block: string | null; crewJob: string | null };
 type CarRow = { ownerId: string; ownerName: string; carId: string; model: string; name: string; color: string; block: string | null };
 
 /** Homes and parked cars in this city that belong to someone else. */
@@ -36,7 +36,7 @@ export function BreakIns({ game }: { game: GameApi }) {
     <section className="card breakins">
       <h3 className="card-title"><DoorOpen size={16} /> Homes in {view.location.city}</h3>
       <p className="muted fine">
-        Whatever people hide at home is there for the taking, if you get in. Bigger places have better locks, an alarm sticker means a camera,
+        Whatever people hide at home is there for the taking, if you get in. Bigger places have better locks, an alarm sticker means a camera, a dog means noise,
         and someone who&apos;s home will see your face. A break-in opens a case file like any other crime. Crew leaders can plan a crew job on the big places.
       </p>
       {data.homes.length === 0 ? (
@@ -49,7 +49,8 @@ export function BreakIns({ game }: { game: GameApi }) {
                 <b>{h.name}</b>
                 <span className="fine muted">
                   {h.home}
-                  {h.alarm ? " · alarm sticker" : ""} · {h.inTown ? "lights on" : "dark windows"}
+                  {h.alarm ? " · alarm sticker" : ""}
+                  {h.dog ? " · a dog behind the door" : ""} · {h.inTown ? "lights on" : "dark windows"}
                 </span>
               </span>
               <span className="row">

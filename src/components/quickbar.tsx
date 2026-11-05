@@ -77,7 +77,7 @@ export function QuickBar({ game }: { game: GameApi }) {
     {
       key: "4",
       label: !medkit && medic ? "Field dressing" : "Medkit",
-      sub: !medkit && medic ? (medic.ready ? "Combat medic" : "Restocking") : medkit ? `${medkit.count} left` : "None",
+      sub: !medkit && medic ? (medic.ready ? "Field surgeon" : "Restocking") : medkit ? `${medkit.count} left` : "None",
       tone: "health",
       Icon: HeartPulse,
       block:

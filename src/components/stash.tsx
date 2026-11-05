@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { EyeOff, Home } from "lucide-react";
+import { Dog, EyeOff, Home } from "lucide-react";
 import type { GameApi } from "./useGame";
 
 const money = (n: number) => `$${n.toLocaleString()}`;
@@ -103,6 +103,62 @@ export function StashCard({ game }: { game: GameApi }) {
           Also hidden: {s.elsewhere.map((e) => `${e.city} (${money(e.money)}${e.units ? `, ${e.units} units` : ""})`).join(" · ")}. You have to be there to get it.
         </p>
       )}
+    </section>
+  );
+}
+
+/** Your Place: a guard dog. */
+export function DogCard({ game }: { game: GameApi }) {
+  const view = game.view!;
+  const { dog, breeds } = view.dog;
+  const [name, setName] = useState("");
+  if (!view.stash.spot) return null;
+  if (dog && dog.state !== "gone") {
+    const hungry = dog.state === "hungry";
+    return (
+      <section className="card dog-card">
+        <h3 className="card-title"><Dog size={16} /> {dog.name} · {dog.breed}</h3>
+        <p className={`fine ${hungry ? "text-red" : "muted"}`}>
+          {hungry
+            ? `${dog.name} is hungry and guarding half as well. Feed them before ${new Date(dog.leavesAt).toLocaleDateString()} or they'll find a new home.`
+            : `Fed until ${new Date(dog.fedUntil).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })}. Burglars can hear ${dog.name} through the door, and ${dog.name} will let you know if anyone tries it.`}
+        </p>
+        <div className="row wrap">
+          <button className={`btn btn-sm ${hungry ? "btn-primary" : "btn-ghost"}`} disabled={game.busy || !dog.canFeed} title={dog.canFeed ? "" : `${dog.name} is still full.`} onClick={() => game.act({ type: "dog_feed" })}>
+            Feed {dog.name} · ${dog.foodCost}
+          </button>
+          <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => confirm(`Give ${dog.name} away to a good home?`) && game.act({ type: "dog_give_away" })}>
+            Give away
+          </button>
+        </div>
+      </section>
+    );
+  }
+  return (
+    <section className="card dog-card">
+      <h3 className="card-title"><Dog size={16} /> A dog for the door</h3>
+      <p className="muted fine">
+        A dog makes break-ins harder, barks when someone tries the door, and lets you know about it. It needs feeding every three days: a hungry dog guards
+        half as well, and one left alone for a week finds a new home.
+      </p>
+      <input className="stash-amount" placeholder="Name your dog" maxLength={16} value={name} onChange={(e) => setName(e.target.value)} />
+      <ul className="officials stash-rows">
+        {breeds.map((b) => (
+          <li key={b.id}>
+            <span>
+              <b>{b.name}</b> <span className="muted">· {b.blurb} Food ${b.food} every three days.</span>
+            </span>
+            <button
+              className="btn btn-ghost btn-xs"
+              disabled={game.busy || !name.trim() || view.cash < b.price}
+              title={!name.trim() ? "Give your dog a name first." : view.cash < b.price ? "Cash only." : ""}
+              onClick={() => game.act({ type: "dog_buy", breed: b.id as "mutt", name }).then(() => setName(""))}
+            >
+              ${b.price.toLocaleString()}
+            </button>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

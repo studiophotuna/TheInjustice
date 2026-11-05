@@ -18,7 +18,7 @@ export const SPECIALTY = {
   appeal: [0.3, 0.45, 0.6],
   /** Wheelman / lookout bonus to an ambush role's odds, per tier. */
   roleBonus: [0.1, 0.2, 0.3],
-  /** Money on my mind: laundering fees cut by this share, per tier. */
+  /** Ledger sense: laundering fees cut by this share, per tier. */
   launderCut: [0.15, 0.3, 0.45],
   /** Hard as nails: clinic stays cut by this share, per tier. */
   clinicCut: [0.15, 0.3, 0.45],
@@ -49,7 +49,7 @@ interface SpecDef {
 export const SPECIALTIES: SpecDef[] = [
   {
     id: "private_eye",
-    name: "Private eye",
+    name: "Bloodhound",
     how: "Police work: every shift counts, arrests and manhunts count triple.",
     tiers: [100, 300, 700],
     progress: (p) => careerWork(p, "police") + 3 * (c(p, "arrest") + c(p, "hunt")),
@@ -73,7 +73,7 @@ export const SPECIALTIES: SpecDef[] = [
   },
   {
     id: "combat_medic",
-    name: "Combat medic",
+    name: "Field surgeon",
     how: "Work as both a doctor and a soldier: the lesser of the two counts, twice.",
     tiers: [60, 200, 500],
     progress: (p) => 2 * Math.min(careerWork(p, "medicine"), careerWork(p, "military")),
@@ -97,7 +97,7 @@ export const SPECIALTIES: SpecDef[] = [
   },
   {
     id: "money_mind",
-    name: "Money on my mind",
+    name: "Ledger sense",
     how: "Work in Banking.",
     tiers: [100, 300, 700],
     progress: (p) => careerWork(p, "banking"),
@@ -105,7 +105,7 @@ export const SPECIALTIES: SpecDef[] = [
   },
   {
     id: "hard_as_nails",
-    name: "Hard as nails",
+    name: "Scar tissue",
     how: "Wake up in the clinic. Every time teaches your body something.",
     tiers: [5, 15, 40],
     progress: (p) => p.jsnap?.clinics ?? 0,
@@ -173,7 +173,7 @@ export function specialtyUps(p: Player): GameEvent[] {
 
 // ── The active ones ────────────────────────────────────────────────────────
 
-/** Combat medic: patch yourself up, no medkit needed. */
+/** Field surgeon: patch yourself up, no medkit needed. */
 export function fieldDressing(p: Player, maxHp: number, inClinic: boolean, now: number): GameEvent[] {
   const t = specTier(p, "combat_medic");
   if (!t) throw new GameError("You don't know how. Work as a doctor and as a soldier.");
@@ -207,7 +207,7 @@ export const travelFactor = (p: Player) => 1 - (specTier(p, "globetrotter") ? SP
 export const launderFactor = (p: Player) => 1 - (specTier(p, "money_mind") ? SPECIALTY.launderCut[specTier(p, "money_mind") - 1] : 0);
 export const roleBonus = (p: Player, id: "wheelman" | "private_eye") => (specTier(p, id) ? SPECIALTY.roleBonus[specTier(p, id) - 1] : 0);
 
-/** Private eye: how much of the robber's name you've worked out. */
+/** Bloodhound: how much of the robber's name you've worked out. */
 export function robberLead(p: Player, name: string): string | null {
   const t = specTier(p, "private_eye");
   if (!t || !name) return null;

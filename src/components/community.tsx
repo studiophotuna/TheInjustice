@@ -422,6 +422,27 @@ function personActions(game: GameApi, hub: Hub, p: Profile, social: (b: Record<s
 function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social: (b: Record<string, unknown>) => Promise<unknown> }) {
   const view = game.view!;
   const [openId, setOpenId] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      const pending = sessionStorage.getItem("conspira:openfile");
+      if (pending) {
+        sessionStorage.removeItem("conspira:openfile");
+        setOpenId(pending);
+      }
+    } catch {
+      /* storage blocked */
+    }
+    const onOpen = (e: Event) => {
+      try {
+        sessionStorage.removeItem("conspira:openfile");
+      } catch {
+        /* storage blocked */
+      }
+      setOpenId((e as CustomEvent<string>).detail);
+    };
+    window.addEventListener("conspira:openfile", onOpen);
+    return () => window.removeEventListener("conspira:openfile", onOpen);
+  }, []);
   if (!hub) return <p className="muted">Looking around {view.location.city}…</p>;
   const people = hub.players;
   if (!people.length) {
@@ -1348,7 +1369,7 @@ export function CasesPanel({ game, hub, place }: { game: GameApi; hub: Hub | nul
               <li key={r.caseId}>
                 <span>
                   #{r.caseId} · ${r.amount} in {r.district}
-                  {r.lead && <span className="pi-lead" title="Private eye: what you've worked out about who did it"> · 🔎 {r.lead}</span>}
+                  {r.lead && <span className="pi-lead" title="Bloodhound: what you've worked out about who did it"> · 🔎 {r.lead}</span>}
                 </span>
                 {r.contract ? (
                   <span className="muted fine">{r.contract.done ? "Contract done" : `$${r.contract.reward} contract out`}</span>

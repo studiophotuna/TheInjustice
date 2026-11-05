@@ -13,6 +13,9 @@ import { robberLead, specTier } from "@/game/specialties";
 import { dispose } from "@/game/daily_life";
 import { breakIn, breakInBlock, carTheftBlock, hasAlarm, homeIn, homeJobBlock, ownerHome, runHomeJob, stealCar } from "@/game/breakin";
 import { CARS } from "@/game/vehicles";
+import { dogAt } from "@/game/dogs";
+import { hireMechanic, isMechService, mechanicCard } from "@/game/mechanic";
+import { SHOP, SHOP_KINDS } from "@/game/shops";
 import { ambientLines, chatLine, defFor, isHeavy, isRegularId, REGULAR_OPS, REGULARS } from "@/game/regulars";
 
 const HEAVY_WIN_REP = 8;
@@ -213,7 +216,7 @@ export async function GET(req: Request) {
         const tags = new Map(crews.map((c) => [c.id, c.tag]));
         pool = people.filter((o) => o.id !== p.id).map((o) => ({ player: o, crewTag: o.crewId ? tags.get(o.crewId) ?? null : null }));
       }
-      // Private eyes work out (part of) who robbed them.
+      // Bloodhounds work out (part of) who robbed them.
       const leads = new Map<string, string>();
       if (specTier(p, "private_eye")) {
         for (const r of (p.robbedIn ?? []).slice(0, 8)) {
@@ -307,6 +310,30 @@ export async function GET(req: Request) {
         });
       return NextResponse.json({ inmates, open: true, channel: yardChannel(p) });
     }
+    if (url.searchParams.get("directory")) {
+      const country = countryOf(p);
+      const [locals, city] = await Promise.all([store.listPlayers(country, 200), store.getCity(country)]);
+      const here = locals.filter((o) => o.id !== p.id && !o.dead && !o.travel && !isBanned(o, now));
+      const online = (o: Player) => now - (o.seenAt ?? 0) < BALANCE.onlineMs;
+      const base = (o: Player) => ({ id: o.id, name: o.name, photo: o.profile?.photo ?? null, online: online(o), away: inJail(o, now) ? "In a cell" : inHospital(o, now) ? "In the clinic" : null });
+      const ownerIds = [...new Set(Object.values(city?.shops ?? {}).map((h) => h!.ownerId))];
+      const owners = new Map((await Promise.all(ownerIds.map((id) => store.get(id)))).filter((o): o is Player => !!o).map((o) => [o.id, o]));
+      return NextResponse.json({
+        city: COUNTRY_BY_ID[country].capital,
+        bankers: here.filter((o) => o.launderService).map((o) => ({ ...base(o), fee: o.launderService!.fee })),
+        lawyers: here
+          .filter((o) => o.path === "courts" && o.rank >= BALANCE.justice.lawyerRank)
+          .map((o) => ({ ...base(o), title: rankTitle(o) ?? "Attorney", fee: retainerFee(o) })),
+        doctors: here.filter((o) => o.backAlley).map((o) => ({ ...base(o), fee: backAlleyFee(o) })),
+        mechanics: here.filter((o) => o.path === "mechanic" && o.garageService?.open).map((o) => ({ ...base(o), ...mechanicCard(o, p, now) })),
+        shops: SHOP_KINDS.flatMap((k) => {
+          const h = city?.shops?.[k];
+          if (!h) return [];
+          const o = owners.get(h.ownerId);
+          return [{ kind: k, shop: SHOP.kinds[k].name, icon: SHOP.kinds[k].icon, id: h.ownerId, name: h.ownerName, markup: h.markup, online: o ? online(o) : false }];
+        }),
+      });
+    }
     if (url.searchParams.get("property")) {
       const country = countryOf(p);
       const myCrewNow = p.crewId ? await store.getCrew(p.crewId) : null;
@@ -323,6 +350,7 @@ export async function GET(req: Request) {
           home: BALANCE.housing[homeIn(o, country)].name,
           tier: homeIn(o, country),
           alarm: hasAlarm(o, country),
+          dog: !!dogAt(o, country, now),
           inTown: ownerHome(o, country, now),
           block: breakInBlock(p, o, now),
           crewJob: leading ? homeJobBlock(leading, p, o, now) ?? (leading.heist ? "Your crew already has a job planned." : null) : "Only a crew leader can plan a crew job.",
@@ -743,6 +771,25 @@ export async function POST(req: Request) {
             await tx.putCase(out.caseFile);
           }
           return out.events;
+        });
+        break;
+      }
+      case "mech_hire": {
+        const mechId = str(b.mechanicId);
+        if (!isMechService(b.service)) throw new GameError("Bad request.");
+        const service = b.service;
+        const target = typeof b.target === "string" && b.target.length <= 80 ? b.target : undefined;
+        events = await store.transaction(async (tx) => {
+          const [me, m] = await tx.getPlayers([playerId, mechId]);
+          if (!me) throw new GameError("Create a character first.");
+          if (!m) throw new GameError("That mechanic doesn't exist.");
+          tick(me, now);
+          tick(m, now);
+          if (me.travel) throw new GameError("You're on the road.");
+          const out = hireMechanic(m, me, service, target, now);
+          await tx.putPlayer(me);
+          await tx.putPlayer(m);
+          return out;
         });
         break;
       }

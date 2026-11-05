@@ -1,10 +1,11 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Anchor, ArrowLeft, BedDouble, Building2, GraduationCap, HeartPulse, Landmark, Lock, Scale, Shield, Siren, Train } from "lucide-react";
+import { Anchor, ArrowLeft, BedDouble, BookUser, Building2, GraduationCap, HeartPulse, Landmark, Lock, Scale, Shield, Siren, Train } from "lucide-react";
 import { Docks } from "./docks";
-import { StashCard } from "./stash";
+import { DogCard, StashCard } from "./stash";
 import { BreakIns } from "./property";
+import { Directory } from "./directory";
 import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { Scene, type SceneKind } from "./art/Scenes";
 import { CityHall } from "./cityhall";
@@ -15,9 +16,10 @@ import { ItemArt } from "./art/ItemArt";
 import { LaunderCard, StreetMarket } from "./underworld";
 import type { GameApi } from "./useGame";
 
-export type Building = "police" | "court" | "hospital" | "bank" | "academy" | "cityhall" | "prison" | "street" | "station" | "docks" | "home";
+export type Building = "police" | "court" | "hospital" | "bank" | "academy" | "cityhall" | "prison" | "street" | "station" | "docks" | "home" | "directory";
 
 const BUILDINGS: { id: Building; name: string; scene: SceneKind; poster: string; Icon: ComponentType<{ size?: number }>; tagline: string }[] = [
+  { id: "directory", name: "The Directory", scene: "city", poster: "city", Icon: BookUser, tagline: "Who in town launders, defends, patches up, repairs or sells, and for how much." },
   { id: "home", name: "Your Place", scene: "southside", poster: "southside", Icon: BedDouble, tagline: "Where you sleep, and where you hide what can't go in a bank." },
   { id: "police", name: "Police Station", scene: "police", poster: "police", Icon: Siren, tagline: "Report what you saw. Case files, arrests, internal affairs." },
   { id: "court", name: "Courthouse", scene: "court", poster: "court", Icon: Scale, tagline: "Trials, bail, lawyers, the court record." },
@@ -159,8 +161,15 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
       );
     case "station":
       return <TravelContent game={game} onRead={onRead} />;
+    case "directory":
+      return <Directory />;
     case "home":
-      return <StashCard game={game} />;
+      return (
+        <div className="stack">
+          <StashCard game={game} />
+          <DogCard game={game} />
+        </div>
+      );
     case "docks":
       return <Docks game={game} go={(to) => window.dispatchEvent(new CustomEvent("injustice:go", { detail: to }))} />;
   }

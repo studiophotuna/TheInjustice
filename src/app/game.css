@@ -759,3 +759,14 @@ button.ready-chip { cursor: pointer; }
 .alarm-row p { margin: 0; }
 
 .offer-wait { color: var(--gold); }
+
+/* ─── Directory and mechanics ──────────────────────────────────────── */
+.dir-intro { display: flex; gap: 6px; align-items: center; margin: 0; }
+.dir-row { display: grid; gap: 2px; min-width: 0; }
+.dir-who { display: inline-flex; gap: 6px; align-items: center; }
+.dir-who .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex: none; }
+.dir-who .dot.on { background: var(--green); box-shadow: 0 0 6px rgba(62, 224, 143, 0.6); }
+.mech-row { display: grid; gap: 6px; padding: 10px 0; border-top: 1px solid var(--border); }
+.mech-row:first-of-type { border-top: 0; }
+.mech-row header { display: grid; gap: 2px; }
+.dog-card .stash-amount { margin-bottom: 6px; }

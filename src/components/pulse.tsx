@@ -409,6 +409,8 @@ export function ReadyStrip({ game, go }: { game: GameApi; go: (t: string) => voi
   if (view.threat.canLieLow && view.heatLabel !== "Clean") items.push({ key: "lowlie", label: "Lie low", ready: true, go: "tab:home" });
   const risky = view.dirty > 0 || view.stash.drugs.some((d) => d.onYou > 0);
   if (risky && view.stash.spot && !view.travel && !view.jail) items.push({ key: "stash", label: view.dirty > 0 ? `Hide $${view.dirty.toLocaleString()} dirty` : "Hide your product", ready: true, run: () => game.act({ type: "stash", op: "put_all" }) });
+  const dog = view.dog.dog;
+  if (dog && dog.state === "hungry" && !view.travel) items.push({ key: "dog", label: `Feed ${dog.name}`, ready: true, run: () => game.act({ type: "dog_feed" }) });
   if (live.hospital > 0) items.push({ key: "clinic", label: "Out of the clinic", ready: false, until: Date.now() + live.hospital });
   if (view.travel) items.push({ key: "travel", label: `Arrive in ${view.travel.city}`, ready: false, until: Date.now() + live.travel });
   const readyNow = items.filter((i) => i.ready);

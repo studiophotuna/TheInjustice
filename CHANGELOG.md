@@ -1,5 +1,27 @@
 # Changelog
 
+## 3.5.0: the Directory, mechanics, and guard dogs
+
+- **The Directory:** a new building in every city listing everyone who offers a service, and
+  what they charge: mechanics, bankers who launder, lawyers on retainer, back-alley doctors and
+  player-run shops. Online players have a green dot. Tap a name to open their file, or jump
+  straight to where you hire them.
+- **New career: Mechanic.** Start by lending a hand at Dobrev's garage in Iron Row; Vera Dobrev
+  makes the offer. Seven ranks from Grease Monkey to Garage Owner, with work at every rank.
+- **Player garages:** a mechanic opens their garage from the Docks and sets a rate against the
+  dealer (from half price to 50% over). Other players hire them for car repairs, then false
+  floors and home alarms (Mechanic rank), then rebuilding a business after a fire (Senior
+  Mechanic). The mechanic keeps the whole fee, and every job counts toward their next promotion.
+  Mechanics fix their own cars at the dealer for parts only. The city seat, Master of the Yards,
+  can give one player's cars a free full service once a day.
+- **Guard dogs:** get a dog for Your Place (a pound mutt, a shepherd or a mastiff) and give it a
+  name. Break-ins get harder, burglars can hear it through the door, a failed break-in ends with
+  the dog barking and you getting a message, and a crew job is likelier to wake the street. Feed it
+  every three days: a hungry dog guards half as well (Home reminds you), and one left for a week
+  finds a new home.
+- Four specialties have new names: Bloodhound, Field surgeon, Ledger sense and Scar tissue. What
+  they do hasn't changed.
+
 ## 3.4.1: career offer fixes
 
 - **Fixed:** answering a Military career offer (accept or turn down) failed with "Bad request".

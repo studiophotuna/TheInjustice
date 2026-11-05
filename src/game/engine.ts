@@ -31,6 +31,8 @@ import { familyGate, passTest } from "./family";
 import { ownerCut, shopKindFor, shopPrice, type ShopMarkups } from "./shops";
 import { stashAll, useStash } from "./stash";
 import { chopCar, fitAlarm, newPlates } from "./breakin";
+import { buyDog, feedDog, giveAwayDog } from "./dogs";
+import { setGarage } from "./mechanic";
 import { arriveByCar, buyCar, buyCargo, fitCompartment, repairCar, rollDrive, sellCar, sellCargo, startDrive } from "./vehicles";
 import { emptyStats, statValue, sv, tierOf, TIER_UP_LINES } from "./stats";
 import {
@@ -535,6 +537,7 @@ function rebirth(p: Player, rawName: string | undefined, now: number, events: Ga
   p.garage = [];
   p.stash = {};
   p.alarms = [];
+  p.dogs = {};
   p.housing = 0;
   p.homes = { [countryOf(p)]: 0 };
   p.path = null;
@@ -1108,7 +1111,7 @@ function ledgerLabel(action: Action, events: GameEvent[]): string {
   const named: Partial<Record<Action["type"], string>> = {
     job: "Work", fight: "Street fight", buy: "Shop", bank: "Bank", launder: "Laundering", claim_daily: "Daily reward",
     collect_property: "Business income", buy_property: "Bought a business", train: "Gym", travel: "Travel", use: "Used an item",
-    repair: "Repairs", drug_buy: "Bought product", drug_sell: "Sold product", drive: "Fuel", car_buy: "Bought a car", car_sell: "Sold a car", car_repair: "Mechanic", car_compartment: "Mechanic", cargo_buy: "Bought cargo", cargo_sell: "Sold cargo", stash: "Home stash", car_chop: "Chop shop", car_plates: "New plates", fit_alarm: "Home alarm", encounter: "On the street", tutorial: "First-day reward",
+    repair: "Repairs", drug_buy: "Bought product", drug_sell: "Sold product", drive: "Fuel", car_buy: "Bought a car", car_sell: "Sold a car", car_repair: "Mechanic", car_compartment: "Mechanic", cargo_buy: "Bought cargo", cargo_sell: "Sold cargo", stash: "Home stash", car_chop: "Chop shop", car_plates: "New plates", fit_alarm: "Home alarm", dog_buy: "Bought a dog", dog_feed: "Dog food", encounter: "On the street", tutorial: "First-day reward",
     claim_contract: "Contract reward", hire_bodyguards: "Bodyguards", lie_low: "Safe house",
   };
   const base = named[action.type] ?? action.type.replace(/_/g, " ");
@@ -1122,7 +1125,7 @@ function applyActionInner(p: Player, action: Action, now: number, rng: Rng, ctx:
   }
   const blockedInHospital = action.type === "job" || action.type === "fight" || action.type === "bank" || action.type === "travel" || action.type === "drive";
   if (blockedInHospital && inHospital(p, now)) throw new GameError("You're in the hospital. Rest up.");
-  const blockedOnTheRoad = ["job", "fight", "bank", "buy", "apply", "travel", "enroll", "train", "launder", "drug_buy", "drug_sell", "buy_supplies", "cook", "drive", "car_buy", "car_sell", "car_repair", "car_compartment", "cargo_buy", "cargo_sell", "stash", "car_chop", "car_plates", "fit_alarm"].includes(action.type);
+  const blockedOnTheRoad = ["job", "fight", "bank", "buy", "apply", "travel", "enroll", "train", "launder", "drug_buy", "drug_sell", "buy_supplies", "cook", "drive", "car_buy", "car_sell", "car_repair", "car_compartment", "cargo_buy", "cargo_sell", "stash", "car_chop", "car_plates", "fit_alarm", "dog_buy", "dog_feed", "dog_give_away"].includes(action.type);
   if (action.type === "train" && inHospital(p, now)) throw new GameError("You're in the hospital. Rest up.");
   if (blockedOnTheRoad && traveling(p)) throw new GameError("You're still on the road. Wait until you arrive.");
   if (blockedOnTheRoad && inJail(p, now)) throw new GameError(p.custodyCase ? "You're held for trial. Wait for the verdict." : "You're in a cell. Serve your time.");
@@ -1226,6 +1229,18 @@ function applyActionInner(p: Player, action: Action, now: number, rng: Rng, ctx:
       break;
     case "fit_alarm":
       events.push(...fitAlarm(p));
+      break;
+    case "garage_set":
+      events.push(...setGarage(p, action.open, action.rate));
+      break;
+    case "dog_buy":
+      events.push(...buyDog(p, action.breed, action.name, now));
+      break;
+    case "dog_feed":
+      events.push(...feedDog(p, now));
+      break;
+    case "dog_give_away":
+      events.push(...giveAwayDog(p));
       break;
     case "stash":
       events.push(...(action.op === "put_all" ? stashAll(p) : useStash(p, action.op, action.what!, action.amount)));

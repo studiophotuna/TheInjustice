@@ -1,0 +1,134 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { BookUser, Landmark, Scale, Stethoscope, Store, Wrench } from "lucide-react";
+import type { GameApi } from "./useGame";
+
+type Base = { id: string; name: string; photo: string | null; online: boolean; away: string | null };
+export type MechanicRow = Base & { title: string; rate: number; services: ("repair" | "floor" | "alarm" | "rebuild")[]; jobs: number; block: string | null };
+type DirectoryData = {
+  city: string;
+  bankers: (Base & { fee: number })[];
+  lawyers: (Base & { title: string; fee: number })[];
+  doctors: (Base & { fee: number })[];
+  mechanics: MechanicRow[];
+  shops: { kind: string; shop: string; icon: string; id: string; name: string; markup: number; online: boolean }[];
+};
+
+/** Every player service in this city. Reloads when anything changes. */
+export function useDirectory() {
+  const [data, setData] = useState<DirectoryData | null>(null);
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch("/api/community?directory=1", { cache: "no-store" });
+      if (res.ok) setData(await res.json());
+    } catch {
+      /* keep what we had */
+    }
+  }, []);
+  useEffect(() => {
+    load();
+    window.addEventListener("conspira:changed", load);
+    return () => window.removeEventListener("conspira:changed", load);
+  }, [load]);
+  return data;
+}
+
+const go = (to: string) => window.dispatchEvent(new CustomEvent("injustice:go", { detail: to }));
+const pct = (r: number) => {
+  const p = Math.round((r - 1) * 100);
+  return p === 0 ? "dealer prices" : `${Math.abs(p)}% ${p < 0 ? "under" : "over"} the dealer`;
+};
+const SERVICE_NAMES = { repair: "repairs", floor: "false floors", alarm: "alarms", rebuild: "rebuilds after fires" };
+
+function Who({ r }: { r: Base }) {
+  return (
+    <span className="dir-who">
+      <span className={`dot ${r.online ? "on" : ""}`} aria-label={r.online ? "Online" : "Offline"} />
+      <button className="link" onClick={() => go(`person:${r.id}`)}>{r.name}</button>
+      {r.away && <span className="fine muted"> · {r.away}</span>}
+    </span>
+  );
+}
+
+function Section({ icon, title, empty, children, count }: { icon: React.ReactNode; title: string; empty: string; children: React.ReactNode; count: number }) {
+  return (
+    <section className="card dir-section">
+      <h3 className="card-title">{icon} {title}</h3>
+      {count ? <ul className="officials dir-list">{children}</ul> : <p className="fine muted">{empty}</p>}
+    </section>
+  );
+}
+
+/** The Directory: who in town will launder, defend, patch up, repair or sell to you. */
+export function Directory() {
+  const d = useDirectory();
+  if (!d) return <p className="muted center">Opening the directory…</p>;
+  return (
+    <div className="stack directory">
+      <p className="muted fine dir-intro">
+        <BookUser size={14} /> Everyone in {d.city} who offers a service, and what they charge. Tap a name to open their file.
+      </p>
+      <Section icon={<Wrench size={16} />} title="Mechanics" count={d.mechanics.length} empty="No garage open in this city yet. Mechanics open theirs from the Docks.">
+        {d.mechanics.map((m) => (
+          <li key={m.id}>
+            <span className="dir-row">
+              <Who r={m} />
+              <span className="fine muted">{m.title} · {pct(m.rate)} · {m.services.map((s) => SERVICE_NAMES[s]).join(", ")}{m.jobs ? ` · ${m.jobs} jobs done` : ""}</span>
+            </span>
+            <button className="btn btn-ghost btn-xs" onClick={() => go("place:docks")}>At the Docks</button>
+          </li>
+        ))}
+      </Section>
+      <Section icon={<Landmark size={16} />} title="Bankers who launder" count={d.bankers.length} empty="No banker in this city launders for clients right now. Bankers offer it from the Bank.">
+        {d.bankers.map((b) => (
+          <li key={b.id}>
+            <span className="dir-row">
+              <Who r={b} />
+              <span className="fine muted">Cleans dirty money for a {Math.round(b.fee * 100)}% fee</span>
+            </span>
+            <button className="btn btn-ghost btn-xs" onClick={() => go("place:bank")}>At the Bank</button>
+          </li>
+        ))}
+      </Section>
+      <Section icon={<Scale size={16} />} title="Lawyers" count={d.lawyers.length} empty="No attorneys in this city right now.">
+        {d.lawyers.map((l) => (
+          <li key={l.id}>
+            <span className="dir-row">
+              <Who r={l} />
+              <span className="fine muted">{l.title} · on retainer for ${l.fee.toLocaleString()} a week</span>
+            </span>
+            <button className="btn btn-ghost btn-xs" onClick={() => go(`person:${l.id}`)}>Hire</button>
+          </li>
+        ))}
+      </Section>
+      <Section icon={<Stethoscope size={16} />} title="Back-alley doctors" count={d.doctors.length} empty="No doctor here treats patients off the books right now.">
+        {d.doctors.map((x) => (
+          <li key={x.id}>
+            <span className="dir-row">
+              <Who r={x} />
+              <span className="fine muted">Gets you out of the clinic early for ${x.fee.toLocaleString()}, no records</span>
+            </span>
+            <button className="btn btn-ghost btn-xs" onClick={() => go("place:hospital")}>At the Hospital</button>
+          </li>
+        ))}
+      </Section>
+      <Section icon={<Store size={16} />} title="Shops" count={d.shops.length} empty="Every counter in town is still run by city hall. Anyone can take one over from Shop → Businesses.">
+        {d.shops.map((s) => {
+          const p = Math.round((s.markup - 1) * 100);
+          return (
+            <li key={s.kind}>
+              <span className="dir-row">
+                <span className="dir-who">
+                  <span className={`dot ${s.online ? "on" : ""}`} /> {s.icon} <b>{s.shop}</b>
+                </span>
+                <span className="fine muted">Run by {s.name} · {p === 0 ? "usual prices" : `prices ${p > 0 ? "+" : ""}${p}%`}</span>
+              </span>
+              <button className="btn btn-ghost btn-xs" onClick={() => go("tab:shop")}>Shop</button>
+            </li>
+          );
+        })}
+      </Section>
+    </div>
+  );
+}

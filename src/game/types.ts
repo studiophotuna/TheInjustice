@@ -19,9 +19,19 @@ export type HiddenStats = Record<StatKey, number> & {
   integrity: number;
 };
 
-export type PathId = "police" | "enforcer" | "courts" | "vigilante" | "medicine" | "banking" | "military";
+export type PathId = "police" | "enforcer" | "courts" | "vigilante" | "medicine" | "banking" | "military" | "mechanic";
 export type CountryId = "varrow" | "solmarra" | "kestrova" | "meridian";
 export type TravelMode = "bus" | "train" | "plane" | "car";
+
+export type DogBreed = "mutt" | "shepherd" | "mastiff";
+
+/** A guard dog at one home. */
+export interface Dog {
+  breed: DogBreed;
+  name: string;
+  fedAt: number;
+  since: number;
+}
 
 /** What's hidden at home in one city. */
 export interface Stash {
@@ -262,6 +272,10 @@ export interface Player {
   travel?: Trip | null;
   /** A stolen car the police impounded from you, waiting to go back to its owner. */
   impounded?: { ownerId: string; car: Car } | null;
+  /** Mechanics: your garage, open to customers at a rate against the dealer's price. */
+  garageService?: { open: boolean; rate: number; earned: number; jobs: number };
+  /** A guard dog at your place, per city. */
+  dogs?: Partial<Record<CountryId, Dog>>;
   /** Cities where your place has an alarm. */
   alarms?: CountryId[];
   /** Hidden at home, in each city where you have a place. */
@@ -736,6 +750,9 @@ export type Action =
   | { type: "car_buy"; model: CarModel }
   | { type: "car_sell" | "car_repair" | "car_compartment" | "car_chop" | "car_plates"; carId: string }
   | { type: "fit_alarm" }
+  | { type: "dog_buy"; breed: DogBreed; name: string }
+  | { type: "dog_feed" | "dog_give_away" }
+  | { type: "garage_set"; open: boolean; rate: number }
   | { type: "cargo_buy" | "cargo_sell"; carId: string; good: GoodId; qty: number }
   | { type: "ack_arrival" }
   | { type: "claim_daily" }

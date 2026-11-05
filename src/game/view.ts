@@ -29,6 +29,8 @@ import { SCHOOL_BY_ID, SCHOOLS } from "./content/schools";
 import { COUNTRIES, COUNTRY_BY_ID, TRAVEL_MODES, tripCost, tripMs } from "./content/world";
 import { docksView, driveRoutes } from "./vehicles";
 import { stashView } from "./stash";
+import { dogView } from "./dogs";
+import { MECH, servicesFor } from "./mechanic";
 import type { Arrival, CountryId, TravelMode } from "./types";
 import { PROPERTIES } from "./content/properties";
 import { countryOf, dayKey, propertyIncome, FIGHT_ENERGY, inHospital, itemPrice, jobLock } from "./engine";
@@ -229,6 +231,10 @@ export interface PublicView {
   docks: ReturnType<typeof docksView>;
   /** What's hidden at home here. */
   stash: ReturnType<typeof stashView>;
+  /** Your guard dog here, and the breeds for sale. */
+  dog: ReturnType<typeof dogView>;
+  /** Mechanics: your garage for customers. */
+  garage: { open: boolean; rate: number; earned: number; jobs: number; services: string[]; next: { name: string; rank: string } | null } | null;
   /** Rank progress for the career ladder. */
   ladder: { ranks: string[]; current: number; graduationRank: number | null } | null;
 }
@@ -529,6 +535,21 @@ export function toView(p: Player, now: number): PublicView {
     })),
     docks: docksView(p, here, now),
     stash: stashView(p),
+    dog: dogView(p, now),
+    garage:
+      p.path === "mechanic" && p.rank >= 1
+        ? {
+            open: !!p.garageService?.open,
+            rate: p.garageService?.rate ?? 1,
+            earned: p.garageService?.earned ?? 0,
+            jobs: p.garageService?.jobs ?? 0,
+            services: servicesFor(p).map((s) => MECH.services[s].name),
+            next: (() => {
+              const n = Object.values(MECH.services).find((s) => s.rank > p.rank);
+              return n ? { name: n.name, rank: PATHS.mechanic.ranks[n.rank - 1] } : null;
+            })(),
+          }
+        : null,
     ladder: p.path
       ? { ranks: PATHS[p.path].ranks, current: p.rank, graduationRank: PATHS[p.path].graduationRank ?? null }
       : null,

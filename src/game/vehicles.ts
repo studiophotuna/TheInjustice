@@ -140,20 +140,21 @@ export function sellCar(p: Player, carId: string, country: CountryId): GameEvent
   return [{ tone: "info", text: `The lot gives you $${pay.toLocaleString()} for the ${CARS[car.model].name.toLowerCase()}.` }];
 }
 
-export function repairCar(p: Player, carId: string, country: CountryId): GameEvent[] {
+export function repairCar(p: Player, carId: string, country: CountryId, price?: number): GameEvent[] {
   const car = here(p, carId, country);
   if (car.condition >= 100) throw new GameError("It runs fine.");
-  const cost = repairCost(car);
+  // A player mechanic's price, or the dealer's (mechanics pay parts only on their own cars).
+  const cost = price ?? Math.ceil(repairCost(car) * (p.path === "mechanic" && p.rank >= 1 ? 0.5 : 1));
   payClean(p, cost, "The repair");
   car.condition = 100;
   return [{ tone: "good", text: `🔧 The mechanic works it over. Good as new. -$${cost.toLocaleString()}` }];
 }
 
-export function fitCompartment(p: Player, carId: string, country: CountryId): GameEvent[] {
+export function fitCompartment(p: Player, carId: string, country: CountryId, price?: number): GameEvent[] {
   const car = here(p, carId, country);
   if (car.compartment) throw new GameError("It already has one.");
   if (cargoUnits(car) > Math.floor(CARS[car.model].trunk * (1 - CAR.compartment.trunkLoss))) throw new GameError("Unload some cargo first: the compartment takes up trunk space.");
-  const cost = Math.round(CAR.compartment.cost * COUNTRY_BY_ID[country].priceMult);
+  const cost = price ?? Math.round(CAR.compartment.cost * COUNTRY_BY_ID[country].priceMult);
   payClean(p, cost, "A hidden compartment");
   car.compartment = true;
   return [{ tone: "good", text: `A mechanic who doesn't ask questions builds a false floor. Searches get a lot harder. -$${cost.toLocaleString()}` }];
@@ -282,7 +283,9 @@ export function docksView(p: Player, country: CountryId, now: number) {
       trunk: trunkSize(car),
       used: cargoUnits(car),
       cargo: GOOD_IDS.filter((g) => (car.cargo?.[g] ?? 0) > 0).map((g) => ({ id: g, name: GOODS[g].name, unit: GOODS[g].unit, qty: car.cargo![g]! })),
-      repairCost: repairCost(car),
+      repairCost: Math.ceil(repairCost(car) * (p.path === "mechanic" && p.rank >= 1 ? 0.5 : 1)),
+      /** What the dealer charges anyone else (player mechanics quote against this). */
+      dealerRepair: repairCost(car),
       resale: resaleValue(car),
       hot: !!car.hot,
       stolenFrom: car.hot?.fromName ?? null,

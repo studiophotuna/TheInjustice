@@ -5,6 +5,7 @@ import { Car as CarIcon, PackageOpen, Store, TrendingUp } from "lucide-react";
 import { Vehicle } from "./art/Vehicles";
 import type { GameApi } from "./useGame";
 import { ParkedCars } from "./property";
+import { HireMechanic, MyGarage } from "./garage";
 
 const money = (n: number) => `$${n.toLocaleString()}`;
 
@@ -90,6 +91,9 @@ export function Docks({ game, go }: { game: GameApi; go?: (to: string) => void }
           <button className="btn btn-primary btn-sm" onClick={() => go?.("place:station")}>Drive somewhere</button>
         )}
       </section>
+
+      <MyGarage game={game} />
+      <HireMechanic game={game} />
 
       <section className="card smuggle">
         <h3 className="card-title"><TrendingUp size={16} /> The fences · {view.location.city}</h3>
