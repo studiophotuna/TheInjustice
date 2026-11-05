@@ -20,6 +20,7 @@ type Person = {
   canAttack: string | null;
   canCrime: Record<CrimeKind, string | null>;
   regular?: boolean;
+  tie?: { label: string; tone: string; memo: string } | null;
 };
 
 const DANGER = ["Easy", "Favorable", "Even", "Risky", "Deadly"];
@@ -181,9 +182,11 @@ export function CityMap({ game, go, feed }: { game: GameApi; go: (t: string) => 
               <div className="row">
                 <b className="map-name">{person.name}</b>
                 {person.regular && <span className="chip chip-regular">Regular</span>}
+                {person.tie && <span className={`tie-badge tie-${person.tie.tone}`}>{person.tie.label}</span>}
                 <span className={`danger-pill d${person.danger}`}>{DANGER[person.danger]}</span>
               </div>
               <span className="muted fine">{person.title} · {districts[placeOf(person.id)]?.name} · “{person.read}”</span>
+              {person.tie && <span className={`tie tie-${person.tie.tone} fine`}>{person.tie.memo}</span>}
               <div className="row map-actions">
                 <button className="btn btn-danger btn-sm" disabled={game.busy || !!person.canAttack} title={person.canAttack ?? ""} onClick={() => act("attack", person.id)}><Swords size={14} /> Attack</button>
                 {(["pickpocket", "snatch", "mug"] as const).map((k) => (

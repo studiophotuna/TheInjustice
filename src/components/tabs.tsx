@@ -1,5 +1,6 @@
 "use client";
 
+import { StoryLine } from "./storyline";
 import { ProfileEditor } from "./ProfileEditor";
 import { CareerPortrait } from "./art/CareerPortrait";
 import { CityHall } from "./cityhall";
@@ -421,6 +422,8 @@ export function ProfileTab({ game }: { game: GameApi }) {
           <p className="quote">“{view.feel.conscience}”</p>
         </div>
       </section>
+
+      <StoryLine game={game} />
 
       <ProfileEditor game={game} />
 

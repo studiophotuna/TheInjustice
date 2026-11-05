@@ -2,6 +2,7 @@
 // API route today and a database function (or worker) later without changes.
 
 import { regularUpkeep } from "./regulars";
+import { journalTick } from "./journal";
 import { chooseEncounter, maybeEncounter } from "./encounters";
 import { addWound, healWounds, playerMaxHp } from "./wounds";
 import { careerGapBlock, leaveCareer, legacyPayBonus, veteranFactor } from "./career";
@@ -134,6 +135,7 @@ export function tick(p: Player, now: number): void {
   issueGear(p);
   ensureEquipped(p);
   regularUpkeep(p, now);
+  journalTick(p, now);
 }
 
 /**

@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.3.0: the city remembers you
+
+- **The regulars remember you:** every encounter choice, mugging and fight changes how that
+  regular feels about you (Friend, Knows you, Wary of you, Hostile) and what they remember ("You
+  told the police about them."). It shows on their card, on the map and when they stop you.
+  - Friends who see you commit a crime keep quiet (and you hear about it). Regulars you've
+    crossed always talk to the police.
+  - When you're hot, a friend in town may pull you aside to warn you a detective is asking
+    about you.
+  - Regulars who can't stand you stop coming over to talk.
+- **The story so far (Me):** your character's life is written down as you play, grouped by day
+  since your release: your career moves and promotions, joining a crew, getting locked up, the
+  first time you woke up in the clinic, each chapter you uncover, money milestones, moving city,
+  and the choices you made on the street. **Share** sends it as a few lines of text.
+
 ## 2.2.0: every move has an agenda
 
 - **Street encounters:** now and then while you work (about one every half hour of play,

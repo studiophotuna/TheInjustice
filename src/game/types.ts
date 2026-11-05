@@ -178,6 +178,11 @@ export interface Player {
   trophiesPublic?: boolean;
   /** Last time the player had the game open (for "online now"). */
   seenAt?: number;
+  /** Your life so far (see journal.ts) and the snapshot it's compared against. */
+  journal?: { at: number; kind: string; text: string }[];
+  jsnap?: { path: PathId | null; rank: number; crew: string | null; jailed: boolean; clinic: boolean; clinics: number; story: number; money: number; country: string; deaths: number };
+  /** What each street regular thinks of you: -5..5 and the last thing they remember. */
+  ties?: Record<string, { t: number; memo: string; at: number }>;
   /** A regular who stopped you in the street with a choice (see encounters.ts). */
   encounter?: { id: string; key: string; country: CountryId; name: string; district: string; at: number; expiresAt: number } | null;
   encounterAt?: number;

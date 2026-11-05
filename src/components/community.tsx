@@ -34,6 +34,7 @@ type Profile = {
   ambush?: string | null;
   surgery?: { fee: number; block: string | null } | null;
   regular?: { out: boolean; line: string | null };
+  tie?: { score: number; label: string; tone: string; memo: string } | null;
   hire?: ("attacker" | "driver" | "lookout")[];
   rat?: boolean;
   streetTitle: string | null;
@@ -459,6 +460,11 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
                 {p.streetTitle && <em className="street-title"> · {p.streetTitle}</em>}
               </p>
               {p.bio && <p className={`person-bio${expanded ? "" : " clamp"}`}>“{p.bio}”</p>}
+              {p.tie && (
+                <p className={`tie tie-${p.tie.tone}`}>
+                  <span className="tie-badge">{p.tie.label}</span> <span className="tie-memo">{p.tie.memo}</span>
+                </p>
+              )}
               <div className="person-actions">
                 <span className={`danger-pill d${p.danger}`} title={p.read}>{DANGER[p.danger]}</span>
                 {primary ? (

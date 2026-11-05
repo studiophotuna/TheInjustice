@@ -3,6 +3,7 @@ import { BALANCE } from "./balance";
 import { chooseEncounter, ENCOUNTERS, encounterView, maybeEncounter } from "./encounters";
 import { createPlayer, tick } from "./engine";
 import { regularUpkeep } from "./regulars";
+import { friendsIn, tieOf, tieShift, tieView } from "./journal";
 import { makeRegular } from "@/server/regulars";
 
 const T0 = 1_800_000_000_000;
@@ -74,5 +75,55 @@ describe("street encounters", () => {
     const r = makeRegular("kestrova", "anya", LATER);
     regularUpkeep(r, LATER);
     expect(r.profile?.photo).toBe("/regulars/kestrova-anya.svg");
+  });
+});
+
+
+describe("the story so far", () => {
+  it("starts with your release, then writes down career moves, promotions, jail and money", () => {
+    const p = mk();
+    expect(p.journal?.[0].text).toMatch(/Released/);
+    p.path = "enforcer";
+    p.rank = 1;
+    tick(p, LATER + 1000);
+    p.rank = 2;
+    p.jailUntil = LATER + 60 * 60_000;
+    p.jailReason = "Caught pickpocketing.";
+    p.bank = 1500;
+    tick(p, LATER + 2000);
+    const texts = (p.journal ?? []).map((e) => e.text).join(" | ");
+    expect(texts).toMatch(/Started over as .* in the Mafia/);
+    expect(texts).toMatch(/Promoted to/);
+    expect(texts).toMatch(/Locked up: Caught pickpocketing/);
+    expect(texts).toMatch(/First \$1,000/);
+    // Nothing is written twice.
+    const n = p.journal!.length;
+    tick(p, LATER + 3000);
+    expect(p.journal!.length).toBe(n);
+  });
+});
+
+describe("the regulars remember you", () => {
+  it("choices move how a regular feels about you, and friends tip you off", () => {
+    const p = mk();
+    p.encounter = { id: "lost_wallet", key: "rosa", country: "varrow", name: "Rosa Vint", district: "The Gutter", at: LATER, expiresAt: LATER + ENCOUNTERS.ttlMs };
+    chooseEncounter(p, 1, LATER + 1, () => 0.9);
+    expect(tieOf(p, "varrow", "rosa")?.t).toBe(1);
+    expect(tieView(p, "varrow", "rosa")?.label).toBe("Knows you");
+    expect(p.journal?.at(-1)?.text).toMatch(/Rosa Vint: you handed in a wallet/);
+    tieShift(p, "varrow", "rosa", 3, "You helped.", LATER);
+    expect(friendsIn(p, "varrow")).toEqual(["rosa"]);
+    // Hot, with a friend in town: the friend comes to warn you.
+    p.heat = 30;
+    p.encounterAt = 0;
+    maybeEncounter(p, "varrow", LATER + 10, () => 0, 10);
+    expect(p.encounter?.id).toBe("friend_tip");
+    expect(p.encounter?.key).toBe("rosa");
+  });
+
+  it("people you've crossed stop coming over", () => {
+    const p = mk();
+    for (const d of ["gus", "rosa", "dutch", "ivy", "teo", "mags", "lenny", "bea", "sully", "nico"]) tieShift(p, "varrow", d, -5, "You robbed them.", LATER);
+    expect(maybeEncounter(p, "varrow", LATER, () => 0, 10)).toEqual([]);
   });
 });

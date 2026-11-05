@@ -444,3 +444,27 @@ input:focus { border-color: var(--info) !important; box-shadow: 0 0 0 3px rgba(7
 
 .board-more { position: relative; z-index: 2; margin: 10px auto 0; display: flex; }
 @media (max-width: 520px) { .hud .hud-sound { display: none; } }
+
+/* ─── Ties with the regulars ────────────────────────────────────────────── */
+.tie { margin: 0; display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.tie-badge { display: inline-flex; align-items: center; padding: 1px 7px; border-radius: 6px; font-family: var(--display); font-weight: 800; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; border: 1px solid currentColor; }
+.tie-friend .tie-badge, .tie-badge.tie-friend { color: var(--cash); background: rgba(61, 220, 132, 0.1); }
+.tie-known .tie-badge, .tie-badge.tie-known { color: var(--info); background: rgba(76, 201, 240, 0.08); }
+.tie-wary .tie-badge, .tie-badge.tie-wary { color: var(--heat); background: rgba(255, 138, 61, 0.1); }
+.tie-hostile .tie-badge, .tie-badge.tie-hostile { color: var(--health); background: rgba(255, 77, 94, 0.12); }
+.tie-memo { font-style: italic; }
+
+/* ─── The story so far ──────────────────────────────────────────────────── */
+.storyline { display: grid; gap: 8px; }
+.storyline .card-title { margin-bottom: 0; }
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.timeline ul { list-style: none; margin: 6px 0 0; padding: 0 0 0 12px; border-left: 2px solid var(--border-strong); display: grid; gap: 8px; }
+.tl-day { font-family: var(--display); font-weight: 800; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--energy); }
+.timeline ul li { position: relative; display: flex; gap: 8px; align-items: flex-start; font-size: 14px; line-height: 1.35; }
+.tl-icon { flex: none; width: 22px; height: 22px; margin-left: -24px; border-radius: 50%; display: grid; place-items: center; background: var(--panel-2); border: 1px solid var(--border-strong); color: var(--muted); }
+.tl-rank .tl-icon, .tl-career .tl-icon { color: var(--energy); border-color: rgba(255, 204, 51, 0.4); }
+.tl-money .tl-icon { color: var(--cash); border-color: rgba(61, 220, 132, 0.4); }
+.tl-jail .tl-icon, .tl-death .tl-icon, .tl-clinic .tl-icon { color: var(--health); border-color: rgba(255, 77, 94, 0.4); }
+.tl-story .tl-icon { color: var(--rep); border-color: rgba(167, 139, 250, 0.4); }
+.tl-street .tl-icon { color: var(--info); border-color: rgba(76, 201, 240, 0.4); }
+@media (min-width: 960px) { .profile > .storyline { grid-column: span 2; } }

@@ -139,6 +139,9 @@ export interface PublicView {
   /** Past careers, legacies, and whether you can leave the current one. */
   careerRecord: ReturnType<typeof import("./career").careerRecordView>;
   woundHint: string | null;
+  /** Your life so far, oldest first, and when it started. */
+  journal: { at: number; kind: string; text: string }[];
+  startedAt: number;
   /** A regular who stopped you with a choice. */
   encounter: ReturnType<typeof encounterView>;
   /** Doctors: your surgery fee, if you're operating. */
@@ -270,6 +273,8 @@ export function toView(p: Player, now: number): PublicView {
     maxHp: playerMaxHp(p),
     woundHint: woundHint(p),
     encounter: encounterView(p, now),
+    journal: p.journal ?? [],
+    startedAt: p.createdAt,
     surgeryFee: p.surgeryFee ?? null,
     hospitalMs: hospital ? p.hospitalUntil - now : 0,
     fullMs: Math.max(0, p.fullUntil - now),

@@ -11,6 +11,7 @@ import { cancelHeist, heistView, planHeist, runHeist, takeRole } from "@/game/he
 import * as AM from "@/game/ambush";
 import { ambientLines, chatLine, defFor, isRegularId, REGULAR_OPS, REGULARS } from "@/game/regulars";
 import { DISTRICTS } from "@/game/content/districts";
+import { tieOf, tieShift, tieView } from "@/game/journal";
 import { COUNTRY_BY_ID } from "@/game/content/world";
 import { realOnlineCount, regularsOnStreet } from "@/server/regulars";
 import { assertNotAlt } from "@/game/anticheat";
@@ -354,6 +355,7 @@ export async function GET(req: Request) {
             canCrime: Object.fromEntries(CRIME_KINDS.map((k) => [k, crimeBlock(p, o, k, now)])),
             bounty: prof.bounty,
             regular: !!o.regular,
+            tie: o.regular ? tieView(p, o.regular.country, o.regular.key) : null,
           };
         });
       return NextResponse.json({ online });
@@ -394,6 +396,7 @@ export async function GET(req: Request) {
         ...prof,
         lastSeen: outIds.has(o.id) ? now : prof.lastSeen,
         regular: { out: outIds.has(o.id), line: defFor(o)?.lines[0] ?? null },
+        tie: o.regular ? tieView(p, o.regular.country, o.regular.key) : null,
         crewTag: null, canInvite: false, canForum: false, canCourtMartial: "n/a", canSellGun: false, lawyerFee: null, canFrisk: "n/a",
         canVouch: "n/a", torch: [], contract: null, ambush: "n/a", surgery: null, bounty: 0,
         canCrime: Object.fromEntries(CRIME_KINDS.map((k) => [k, crimeBlock(p, o, k, now)])),
@@ -501,8 +504,14 @@ async function regularWitnesses(store: ReturnType<typeof getStore>, country: Cou
 function regularsTalk(witnesses: Player[], c: CaseFile, culprit: Player | null, now: number) {
   for (const w of witnesses) {
     if (!w.regular || !(w.sightings ?? []).some((s) => s.caseId === c.id)) continue;
-    if (Math.random() < REGULARS.reportChance) reportSighting(w, c, culprit && culprit.id !== w.id ? culprit : null, now, Math.random);
-    else w.sightings = (w.sightings ?? []).filter((s) => s.caseId !== c.id);
+    // Friends keep quiet; people you've crossed can't wait to talk.
+    const tie = culprit ? tieOf(culprit, w.regular.country, w.regular.key)?.t ?? 0 : 0;
+    const chance = tie >= 2 ? 0 : tie <= -2 ? 1 : REGULARS.reportChance;
+    if (Math.random() < chance) reportSighting(w, c, culprit && culprit.id !== w.id ? culprit : null, now, Math.random);
+    else {
+      w.sightings = (w.sightings ?? []).filter((s) => s.caseId !== c.id);
+      if (culprit && tie >= 2) notify(culprit, `${w.name} saw what you did. They won't say a word.`, "good", undefined, now);
+    }
   }
 }
 
@@ -595,7 +604,11 @@ export async function POST(req: Request) {
       case "attack": {
         const target = str(b.targetId);
         events = await store.transaction((tx) =>
-          withPair(tx, playerId, target, now, (a, t) => attackPlayer(a, t, now, Math.random).events),
+          withPair(tx, playerId, target, now, (a, t) => {
+            const out = attackPlayer(a, t, now, Math.random).events;
+            if (t.regular) tieShift(a, t.regular.country, t.regular.key, -2, "You attacked them.", now);
+            return out;
+          }),
         );
         break;
       }
@@ -627,6 +640,7 @@ export async function POST(req: Request) {
           witnesses.forEach((w) => tick(w, now));
           const out = commitCrime(a, t, kind, now, Math.random, { caseId, district: crimeDistrict(a, Math.random), crewTag, witnesses, crackdown: crack });
           if (out.caseFile) regularsTalk(witnesses, out.caseFile, a, now);
+          if (t.regular) tieShift(a, t.regular.country, t.regular.key, -2, `You tried to ${kind} them.`, now);
           await tx.putPlayer(a);
           await tx.putPlayer(t);
           if (out.caseFile) {

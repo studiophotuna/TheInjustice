@@ -53,7 +53,10 @@ export function EncounterDock({ game }: { game: GameApi }) {
               <PlayerAvatar name={e.name} path={e.path} photo={e.photo} className="enc-face lg" />
               <div>
                 <b className="enc-name">{e.name}</b>
-                <span className="chip chip-regular">Regular</span>
+                <span className="row">
+                  <span className="chip chip-regular">Regular</span>
+                  {e.tie && <span className={`tie-badge tie-${e.tie.tone}`} title={e.tie.memo}>{e.tie.label}</span>}
+                </span>
               </div>
               <button className="enc-close" aria-label="Later" onClick={() => setOpen(false)}><ChevronDown size={18} /></button>
             </div>
