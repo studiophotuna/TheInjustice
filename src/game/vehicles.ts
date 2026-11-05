@@ -242,6 +242,7 @@ export function arriveByCar(p: Player, carId: string | undefined, to: CountryId,
   car.country = to;
   if (inc?.impounded) {
     p.garage = (p.garage ?? []).filter((c) => c !== car);
+    if (car.hot) p.impounded = { ownerId: car.hot.fromId, car: { ...car, cargo: {}, hot: undefined } };
     p.drugs = {};
     return;
   }

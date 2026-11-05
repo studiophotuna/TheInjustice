@@ -14,7 +14,9 @@ import { specTier } from "./specialties";
 import { stashOf, STASH } from "./stash";
 import { sv } from "./stats";
 import { CARS, CAR, cargoUnits } from "./vehicles";
-import { GameError, type Car, type CaseFile, type CountryId, type GameEvent, type Player, type Rng } from "./types";
+import { roleOdds } from "./heist";
+import { crewJob } from "./family";
+import { GameError, type Crew, type HeistRole, type Car, type CaseFile, type CountryId, type GameEvent, type Player, type Rng } from "./types";
 
 export const BREAKIN = {
   energy: 20,
@@ -235,6 +237,7 @@ export function stealCar(a: Player, t: Player, carId: string, now: number, rng: 
   a.garage = [...(a.garage ?? []), stolen];
   a.reputation += 1;
   const c = openCase(a, t, "car_theft", car!.boughtFor, ctx, now, rng, null);
+  c.car = { id: stolen.id, name: CARS[car!.model].name };
   notify(t, `Your ${name} was stolen in ${COUNTRY_BY_ID[car!.country].capital}${loaded ? `, with ${loaded} units still in the trunk` : ""}. The police opened case #${c.id}.`, "bad", undefined, now);
   const events: GameEvent[] = [
     { tone: "good", text: `You're driving ${t.name}'s ${name}${loaded ? `, with ${loaded} units of cargo in the trunk` : ""}. It's hot: change the plates or sell it to a chop shop at the Docks.` },
@@ -282,4 +285,145 @@ export function newPlates(p: Player, carId: string): GameEvent[] {
   p.cash -= cost - fromDirty;
   car.hot = undefined;
   return [{ tone: "good", text: `New plates, a new VIN, papers that say it's yours. -$${cost.toLocaleString()}` }];
+}
+
+// ── Crew home jobs ────────────────────────────────────────────────────────────
+
+export const HOME_JOB = {
+  /** Only places this big are worth a crew. */
+  minTier: 3,
+  /** Share of the stash a crew carries out. */
+  share: [0.6, 0.9] as const,
+  heat: 14,
+  caughtMs: 25 * 60_000,
+};
+
+/** Why a crew can't plan a job on this home. */
+export function homeJobBlock(crew: Crew, leader: Player, t: Player, now: number): string | null {
+  if (crew.leaderId !== leader.id) return "Only the crew leader plans a job.";
+  if (crew.members.some((m) => m.id === t.id)) return "That's one of your own.";
+  const b = baseBlock(leader, t, now);
+  if (b) return b;
+  if (homeIn(t, countryOf(leader)) < HOME_JOB.minTier) return "A place that small isn't worth a crew. Break in yourself.";
+  if (now - (leader.attackLog?.[`burgle:${t.id}`] ?? 0) < BREAKIN.cooldownMs) return "You hit that place recently. The neighbors are watching.";
+  return null;
+}
+
+/**
+ * The crew hits a big home. The safecracker gets in and opens the safe (harder with better locks and
+ * an alarm), the lookout keeps the owner from walking in on it, muscle handles them if they do, and
+ * the driver gets everyone away. The safecracker is the face on the case file.
+ */
+export function runHomeJob(
+  crew: Crew,
+  leader: Player,
+  team: Partial<Record<HeistRole, Player>>,
+  t: Player,
+  now: number,
+  rng: Rng,
+  ctx: PropertyCrimeContext,
+): { events: GameEvent[]; caseFile: CaseFile | null } {
+  const h = crew.heist;
+  if (!h?.target) throw new GameError("There's no home job planned.");
+  if (crew.leaderId !== leader.id) throw new GameError("Only the leader gives the word.");
+  if (!team.driver || !team.safecracker) throw new GameError("You need at least a driver and a safecracker.");
+  const country = h.country;
+  const tier = homeIn(t, country);
+  const alarm = hasAlarm(t, country);
+  const home = ownerHome(t, country, now);
+  const lock = BREAKIN.lock[tier] / BREAKIN.lock[HOME_JOB.minTier];
+  const roll = (role: HeistRole, mult = 1) => !!team[role] && rng() < roleOdds(team[role]!, role) * mult;
+  const ok = {
+    driver: roll("driver"),
+    safecracker: roll("safecracker", Math.min(1.2, lock + 0.25) * (alarm ? 0.85 : 1)),
+    lookout: roll("lookout"),
+    muscle: roll("muscle"),
+  };
+  // Someone walks in on it: the owner if they're home, or a neighbor if nobody watched the street.
+  const interrupted = (home && !ok.lookout) || (!team.lookout && rng() < 0.3);
+  const members = Object.values(team).filter((x): x is Player => !!x);
+  const capital = COUNTRY_BY_ID[country].capital;
+  crew.heist = null;
+  crew.lastHeistAt = now;
+  leader.attackLog = { ...(leader.attackLog ?? {}), [`burgle:${t.id}`]: now };
+  for (const p of members) {
+    p.heat += HOME_JOB.heat * COUNTRY_BY_ID[country].heatMult * (ok.lookout ? 1 : 1.5);
+    shiftIntegrity(p, BREAKIN.integrity);
+  }
+
+  if (!ok.driver) {
+    for (const p of members) {
+      p.jailUntil = Math.max(p.jailUntil ?? 0, now + Math.round(HOME_JOB.caughtMs * COUNTRY_BY_ID[country].heatMult));
+      p.jailReason = `Caught leaving ${t.name}'s place in ${capital}.`;
+      crewJob(p, "heist", false);
+      if (p.id !== leader.id) notify(p, `The getaway car never came. Everyone on the job at ${t.name}'s place got caught.`, "bad", undefined, now);
+    }
+    notify(t, `The police caught a crew breaking into your place in ${capital}. Nothing was taken.`, "good", undefined, now);
+    crew.log = [{ at: now, text: `The job on ${t.name}'s place went wrong. Everyone got caught.` }, ...crew.log].slice(0, 30);
+    return { events: [{ tone: "bad", text: "The getaway car never came. You're all caught at the door." }], caseFile: null };
+  }
+  if (interrupted && !ok.muscle) {
+    for (const p of members) {
+      p.hp = Math.max(5, p.hp - 25);
+      crewJob(p, "heist", false);
+    }
+    t.reputation += 2;
+    notify(t, home ? `You walked in on a crew robbing your place and ran them off. You saw ${team.safecracker.name}'s face. +2 reputation.` : "A neighbor scared off a crew breaking into your place. Nothing was taken.", "good", home ? team.safecracker : undefined, now);
+    crew.log = [{ at: now, text: `The job on ${t.name}'s place was interrupted. Nobody got anything.` }, ...crew.log].slice(0, 30);
+    return { events: [{ tone: "bad", text: home ? `${t.name} was home and walked in on you. You got out, empty-handed and bruised.` : "Someone walked in on the job. You got out with nothing." }], caseFile: null };
+  }
+
+  // Inside, and the safe either opens or it doesn't.
+  let take = 0;
+  const took: string[] = [];
+  if (ok.safecracker) {
+    const s = stashOf(t, country);
+    const share = HOME_JOB.share[0] + rng() * (HOME_JOB.share[1] - HOME_JOB.share[0]);
+    const cash = Math.floor(s.cash * share);
+    const dirty = Math.floor(s.dirty * share);
+    take = cash + dirty;
+    const left = { cash: s.cash - cash, dirty: s.dirty - dirty, drugs: { ...s.drugs } };
+    // Product goes to whoever has room, safecracker first.
+    for (const d of DRUG_IDS) {
+      let n = Math.floor((s.drugs?.[d] ?? 0) * share);
+      if (n > 0) took.push(`${n} × ${DRUGS[d].name}`);
+      for (const p of [team.safecracker, ...members]) {
+        if (n <= 0) break;
+        const room = BALANCE.drugs.maxCarry - DRUG_IDS.reduce((x, k) => x + (p.drugs?.[k] ?? 0), 0);
+        const give = Math.min(room, n);
+        if (give <= 0) continue;
+        p.drugs = { ...(p.drugs ?? {}), [d]: (p.drugs?.[d] ?? 0) + give };
+        left.drugs[d] = (left.drugs[d] ?? 0) - give;
+        n -= give;
+      }
+    }
+    t.stash = { ...(t.stash ?? {}), [country]: left };
+    if (take) took.unshift(`$${take.toLocaleString()}`);
+  }
+  const cut = members.length ? Math.floor(take / members.length) : 0;
+  for (const p of members) {
+    earnDirty(p, cut);
+    crewJob(p, "heist", take > 0);
+    p.reputation += take ? 3 : 1;
+    addMerit(p, "enforcer", take ? 2.5 : 1);
+    if (p.id !== leader.id) notify(p, take ? `The job on ${t.name}'s place worked. Your cut: $${cut.toLocaleString()}, dirty.` : `You got into ${t.name}'s place, but the safe wouldn't open.`, take ? "good" : "info", undefined, now);
+  }
+  const c = openCase(team.safecracker, t, "burglary", take, ctx, now, rng, alarm ? "The alarm camera" : null);
+  notify(
+    t,
+    took.length
+      ? `A crew hit your place in ${capital} and cracked the safe: ${took.join(", ")} gone. The police opened case #${c.id}.`
+      : `A crew broke into your place in ${capital}, but couldn't open your hiding spot. The police opened case #${c.id}.`,
+    "bad",
+    undefined,
+    now,
+  );
+  crew.log = [{ at: now, text: take ? `The job on ${t.name}'s place: $${take.toLocaleString()} split ${members.length} ways.` : `The job on ${t.name}'s place: in and out, safe shut.` }, ...crew.log].slice(0, 30);
+  const events: GameEvent[] = [
+    took.length
+      ? { tone: "good", text: `You find the hiding spot ${STASH.spots[tier]} and open it: ${took.join(", ")}. Your cut is $${cut.toLocaleString()}, dirty.` }
+      : { tone: "info", text: "In and out, but the hiding spot won't give. You leave with nothing." },
+  ];
+  if (!ok.lookout) events.push({ tone: "bad", text: "Nobody watched the street. Half the block saw your crew leave." });
+  return { events, caseFile: c };
 }

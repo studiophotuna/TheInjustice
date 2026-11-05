@@ -260,6 +260,8 @@ export interface Player {
   country?: CountryId;
   /** A trip in progress; the player can't work or fight until it ends. */
   travel?: Trip | null;
+  /** A stolen car the police impounded from you, waiting to go back to its owner. */
+  impounded?: { ownerId: string; car: Car } | null;
   /** Cities where your place has an alarm. */
   alarms?: CountryId[];
   /** Hidden at home, in each city where you have a place. */
@@ -382,6 +384,8 @@ export interface CaseFile {
   hunt?: { hunterId: string; hunterName: string; suspectId: string; suspectName: string; won: boolean; at: number; restitution: number };
   /** The victim's reward for whoever gets their money back (revenge contract). */
   contract?: { posterId: string; posterName: string; reward: number; at: number; tried: string[]; done: boolean };
+  /** Car theft: the stolen car as it sits in the thief's garage. */
+  car?: { id: string; name: string };
   /** Homes searched with a warrant for this case. */
   searches?: { searcherId: string; suspectId: string; suspectName: string; found: boolean; at: number }[];
   /** City hall put the witnesses under police protection: nobody can lean on them. */
@@ -428,6 +432,8 @@ export interface Trial {
   restitution?: number;
   /** Server-only: the judge took the envelope. Evidence for internal affairs later. */
   bribed?: boolean;
+  /** Car theft: the stolen car went back to its owner. */
+  carReturned?: { name: string; city: string };
 }
 
 export type CrewPolicy = "open" | "request" | "invite";
@@ -532,7 +538,14 @@ export interface Crew {
   /** The crew's drug lab. */
   lab?: { country: CountryId; district: DistrictId; districtName: string; builtAt: number; heat: number; heatAt: number; batches: number } | null;
   /** A bank job being planned. */
-  heist?: { country: CountryId; plannerId: string; roles: Partial<Record<HeistRole, { id: string; name: string }>>; createdAt: number } | null;
+  heist?: {
+    country: CountryId;
+    plannerId: string;
+    roles: Partial<Record<HeistRole, { id: string; name: string }>>;
+    createdAt: number;
+    /** A home job instead of a bank: whose place, and what kind. */
+    target?: { id: string; name: string; home: string } | null;
+  } | null;
   lastHeistAt?: number;
   /** A planned prison break for a jailed member (one at a time). */
   breakout?: Breakout | null;

@@ -21,6 +21,14 @@ export const ROLES: { id: HeistRole; name: string; stat: StatKey; job: string }[
   { id: "muscle", name: "Muscle", stat: "strength", job: "Handles the guards." },
 ];
 
+/** What each role does on a home job. */
+const HOME_ROLE_JOB: Record<HeistRole, string> = {
+  driver: "Gets everyone out.",
+  safecracker: "Finds the hiding spot and opens it.",
+  lookout: "Makes sure nobody walks in on you.",
+  muscle: "Handles the owner if they do.",
+};
+
 const isMember = (c: Crew, id: string) => c.members.some((m) => m.id === id);
 
 export function planHeistBlock(crew: Crew, p: Player, now: number): string | null {
@@ -31,11 +39,12 @@ export function planHeistBlock(crew: Crew, p: Player, now: number): string | nul
   return null;
 }
 
-export function planHeist(crew: Crew, p: Player, now: number): GameEvent[] {
+export function planHeist(crew: Crew, p: Player, now: number, target?: { id: string; name: string; home: string } | null): GameEvent[] {
   const block = planHeistBlock(crew, p, now);
   if (block) throw new GameError(block);
-  crew.heist = { country: countryOf(p), plannerId: p.id, roles: {}, createdAt: now };
-  crew.log = [{ at: now, text: `${p.name} is planning a bank job in ${COUNTRY_BY_ID[countryOf(p)].capital}. Driver, safecracker, lookout, muscle: who's in?` }, ...crew.log].slice(0, 30);
+  crew.heist = { country: countryOf(p), plannerId: p.id, roles: {}, createdAt: now, target: target ?? null };
+  const what = target ? `a job on ${target.name}'s ${target.home.toLowerCase()}` : "a bank job";
+  crew.log = [{ at: now, text: `${p.name} is planning ${what} in ${COUNTRY_BY_ID[countryOf(p)].capital}. Driver, safecracker, lookout, muscle: who's in?` }, ...crew.log].slice(0, 30);
   return [{ tone: "good", text: "The job is on. Get your crew into the roles, then give the word." }];
 }
 
@@ -140,8 +149,9 @@ export function heistView(crew: Crew, viewer: Player, now: number) {
     plan: h
       ? {
           city: COUNTRY_BY_ID[h.country].capital,
+          target: h.target ? `${h.target.name}'s ${h.target.home.toLowerCase()}` : null,
           isLeader: crew.leaderId === viewer.id,
-          roles: ROLES.map((r) => ({ id: r.id, name: r.name, job: r.job, who: h.roles[r.id]?.name ?? null, canTake: roleBlock(crew, viewer, r.id, now) })),
+          roles: ROLES.map((r) => ({ id: r.id, name: r.name, job: h.target ? HOME_ROLE_JOB[r.id] : r.job, who: h.roles[r.id]?.name ?? null, canTake: roleBlock(crew, viewer, r.id, now) })),
           ready: !!h.roles.driver && !!h.roles.safecracker,
         }
       : null,

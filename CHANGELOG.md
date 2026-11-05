@@ -1,5 +1,20 @@
 # Changelog
 
+## 3.4.0: getting your car back, and crew home jobs
+
+- **Stolen cars come home.** When a car thief is found guilty, the court returns the car itself
+  (clean plates, wherever it's parked now) instead of money. If the thief already got rid of it,
+  the owner is paid its value as before.
+- **Checkpoints recover stolen cars.** A hot car impounded at a highway checkpoint goes straight
+  back into its owner's garage, and they get a message.
+- **Crew home jobs.** A crew leader can plan a job on a big home (studio apartment and up) from the
+  homes list at The Street ("Crew job"). The crew takes the usual roles: the driver gets everyone
+  away, the safecracker finds the hiding spot and opens it, the lookout makes sure nobody walks in,
+  and the muscle handles the owner if they do. A crew carries off 60–90% of the stash, split
+  between the team; product goes to whoever has room.
+- It's still a crime: the safecracker is the face on the case file, an alarm camera helps the
+  police, and the mark is told. No driver means everyone is caught at the door.
+
 ## 3.3.0: break-ins and car theft
 
 - **Break-ins:** The Street lists the homes other players keep in this city: what kind of place,

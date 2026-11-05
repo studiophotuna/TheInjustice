@@ -55,3 +55,23 @@ export async function payTax(store: PlayerStore, owed: { country: CountryId; amo
   if (owed.amount <= 0) return;
   await withCity(store, owed.country, now, (c) => depositTax(c, owed));
 }
+
+/** A stolen car the police impounded goes back into its owner's garage. */
+export async function returnImpounded(store: PlayerStore, thiefId: string, now: number) {
+  await store.transaction(async (tx) => {
+    const [thief] = await tx.getPlayers([thiefId]);
+    const imp = thief?.impounded;
+    if (!thief || !imp) return;
+    thief.impounded = null;
+    const [owner] = await tx.getPlayers([imp.ownerId]);
+    if (owner && !owner.dead) {
+      owner.garage = [...(owner.garage ?? []), imp.car];
+      const { notify } = await import("@/game/social");
+      const { CARS } = await import("@/game/vehicles");
+      const city = COUNTRIES.find((c) => c.id === imp.car.country)?.capital ?? "the city";
+      notify(owner, `Good news: police stopped your stolen ${CARS[imp.car.model].name.toLowerCase()} at a checkpoint. It's back in your garage, parked in ${city}.`, "good", undefined, now);
+      await tx.putPlayer(owner);
+    }
+    await tx.putPlayer(thief);
+  });
+}

@@ -248,15 +248,23 @@ export function decideTrial(
       s.jailUntil = now + sentence;
       s.jailReason = `Serving ${minutes(sentence)} for the ${crime} in ${c.district}.`;
       s.heat = Math.max(0, s.heat - 10);
+      // A stolen car still in the thief's garage goes back to its owner instead of money.
+      const car = c.kind === "car_theft" && c.car ? (s.garage ?? []).find((x) => x.id === c.car!.id) : undefined;
+      if (car && parties.victim && parties.victim.id !== s.id) {
+        s.garage = (s.garage ?? []).filter((x) => x !== car);
+        parties.victim.garage = [...(parties.victim.garage ?? []), { ...car, hot: undefined }];
+        t.carReturned = { name: c.car!.name, city: COUNTRY_BY_ID[car.country].capital };
+      }
       // Pay the victim back from cash first, then savings.
-      const fromDirty = Math.min(s.dirty ?? 0, c.amount);
+      const owed = t.carReturned ? 0 : c.amount;
+      const fromDirty = Math.min(s.dirty ?? 0, owed);
       s.dirty = (s.dirty ?? 0) - fromDirty;
-      const fromCash = Math.min(s.cash, c.amount - fromDirty);
-      const fromBank = Math.min(s.bank, c.amount - fromDirty - fromCash);
+      const fromCash = Math.min(s.cash, owed - fromDirty);
+      const fromBank = Math.min(s.bank, owed - fromDirty - fromCash);
       s.cash -= fromCash;
       s.bank -= fromBank;
       t.restitution = fromDirty + fromCash + fromBank;
-      notify(s, `Guilty, says ${t.decidedBy}. ${minutes(sentence)} in a cell${t.restitution ? `, and $${t.restitution} goes back to ${c.victimName}` : ""}.`, "bad", undefined, now);
+      notify(s, `Guilty, says ${t.decidedBy}. ${minutes(sentence)} in a cell${t.carReturned ? `, and the ${t.carReturned.name.toLowerCase()} goes back to ${c.victimName}` : t.restitution ? `, and $${t.restitution} goes back to ${c.victimName}` : ""}.`, "bad", undefined, now);
       if (s.path === "military") courtMartial(s, `convicted of ${crime}`, now);
     } else {
       s.jailUntil = now;
@@ -278,7 +286,7 @@ export function decideTrial(
     notify(
       v,
       verdict === "guilty"
-        ? `Case #${c.id}: ${t.suspectName} was found guilty of the ${crime}.${t.restitution ? ` $${t.restitution} was returned to your bank.` : ""}`
+        ? `Case #${c.id}: ${t.suspectName} was found guilty of the ${crime}.${t.carReturned ? ` Your ${t.carReturned.name.toLowerCase()} is back: it's parked in ${t.carReturned.city}.` : ""}${t.restitution ? ` $${t.restitution} was returned to your bank.` : ""}`
         : `Case #${c.id}: ${t.suspectName} was found not guilty. Whoever robbed you is still out there.`,
       verdict === "guilty" ? "good" : "bad",
       undefined,

@@ -11,7 +11,7 @@ import { cancelHeist, heistView, planHeist, runHeist, takeRole } from "@/game/he
 import * as AM from "@/game/ambush";
 import { robberLead, specTier } from "@/game/specialties";
 import { dispose } from "@/game/daily_life";
-import { breakIn, breakInBlock, carTheftBlock, hasAlarm, homeIn, ownerHome, stealCar } from "@/game/breakin";
+import { breakIn, breakInBlock, carTheftBlock, hasAlarm, homeIn, homeJobBlock, ownerHome, runHomeJob, stealCar } from "@/game/breakin";
 import { CARS } from "@/game/vehicles";
 import { ambientLines, chatLine, defFor, isHeavy, isRegularId, REGULAR_OPS, REGULARS } from "@/game/regulars";
 
@@ -309,6 +309,8 @@ export async function GET(req: Request) {
     }
     if (url.searchParams.get("property")) {
       const country = countryOf(p);
+      const myCrewNow = p.crewId ? await store.getCrew(p.crewId) : null;
+      const leading = myCrewNow?.leaderId === p.id ? myCrewNow : null;
       const owners = (await store.listPropertyOwners(country, 60)).filter((o) => o.id !== p.id);
       owners.forEach((o) => tick(o, now));
       const homes = owners
@@ -323,6 +325,7 @@ export async function GET(req: Request) {
           alarm: hasAlarm(o, country),
           inTown: ownerHome(o, country, now),
           block: breakInBlock(p, o, now),
+          crewJob: leading ? homeJobBlock(leading, p, o, now) ?? (leading.heist ? "Your crew already has a job planned." : null) : "Only a crew leader can plan a crew job.",
         }));
       const cars = owners
         .flatMap((o) => (o.garage ?? []).filter((c) => c.country === country && o.travel?.carId !== c.id).map((c) => ({ o, c })))
@@ -336,7 +339,7 @@ export async function GET(req: Request) {
           color: CARS[c.model].color,
           block: carTheftBlock(p, o, c, now),
         }));
-      return NextResponse.json({ homes, cars });
+      return NextResponse.json({ homes, cars, crewLeader: !!leading });
     }
     if (url.searchParams.get("bankers")) {
       const bankers = (await store.listPlayers(countryOf(p), 200))
@@ -382,7 +385,7 @@ export async function GET(req: Request) {
         else if (!inIt && open.length) needs.push({ kind: "ambush", text: `Your crew is jumping ${am.targetName}. They need ${open.join(", ")}.`, cta: "Take a role", go: "people:crew", until: am.expiresAt });
       }
       const h = myCrew?.heist;
-      if (myCrew && h && !Object.values(h.roles).some((x) => x?.id === p.id)) needs.push({ kind: "heist", text: `Your crew is planning a bank job in ${COUNTRY_BY_ID[h.country].capital}.`, cta: "Join the job", go: "people:crew", until: null });
+      if (myCrew && h && !Object.values(h.roles).some((x) => x?.id === p.id)) needs.push({ kind: "heist", text: h.target ? `Your crew is planning a job on ${h.target.name}'s ${h.target.home.toLowerCase()} in ${COUNTRY_BY_ID[h.country].capital}.` : `Your crew is planning a bank job in ${COUNTRY_BY_ID[h.country].capital}.`, cta: "Join the job", go: "people:crew", until: null });
       const br = myCrew?.breakout;
       if (myCrew && br && !br.team.some((x) => x.id === p.id)) needs.push({ kind: "breakout", text: `Your crew is breaking ${br.targetName} out of prison.`, cta: "Join in", go: "people:crew", until: null });
       return NextResponse.json({ feed, needs, heavies });
@@ -1640,8 +1643,19 @@ export async function POST(req: Request) {
         const crewNow = await store.getCrew(self.crewId);
         if (!crewNow) throw new GameError("Your crew is gone.");
         const teamIds = Object.values(crewNow.heist?.roles ?? {}).map((x) => x!.id);
+        const targetId = b.op === "heist_plan" && typeof b.targetId === "string" ? str(b.targetId) : b.op === "heist_go" ? crewNow.heist?.target?.id ?? null : null;
+        // Witnesses for a home job, the same as any break-in.
+        const country = countryOf(self);
+        const nearby = targetId && b.op === "heist_go"
+          ? (await store.listPlayers(country, 40))
+              .filter((o) => o.id !== targetId && !teamIds.includes(o.id) && !o.dead && !o.travel && now - o.tickAt < BALANCE.crime.witnessWindowMs)
+              .sort(() => Math.random() - 0.5)
+              .slice(0, BALANCE.crime.maxWitnesses)
+              .map((o) => o.id)
+          : [];
+        const caseId = randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase();
         events = await store.transaction(async (tx) => {
-          const rows = await tx.getPlayers([...new Set([playerId, ...teamIds])]);
+          const rows = await tx.getPlayers([...new Set([playerId, ...teamIds, ...(targetId ? [targetId] : []), ...nearby])]);
           const byId = new Map(rows.filter((r): r is Player => !!r).map((r) => [r.id, r]));
           byId.forEach((r) => tick(r, now));
           const me = byId.get(playerId);
@@ -1650,7 +1664,14 @@ export async function POST(req: Request) {
           if (!crew) throw new GameError("Your crew is gone.");
           let out: GameEvent[];
           let city = null;
-          if (b.op === "heist_plan") out = planHeist(crew, me, now);
+          const target = targetId ? byId.get(targetId) ?? null : null;
+          let caseFile: CaseFile | null = null;
+          if (b.op === "heist_plan" && targetId) {
+            if (!target || target.regular) throw new GameError("That player doesn't exist.");
+            const block = homeJobBlock(crew, me, target, now);
+            if (block) throw new GameError(block);
+            out = planHeist(crew, me, now, { id: target.id, name: target.name, home: BALANCE.housing[homeIn(target, countryOf(me))].name });
+          } else if (b.op === "heist_plan") out = planHeist(crew, me, now);
           else if (b.op === "heist_role") {
             const role = b.role as HeistRole;
             if (!["driver", "safecracker", "lookout", "muscle"].includes(role)) throw new GameError("Bad request.");
@@ -1659,12 +1680,25 @@ export async function POST(req: Request) {
           else {
             const roles = crew.heist?.roles ?? {};
             const team = Object.fromEntries(Object.entries(roles).map(([r, x]) => [r, byId.get(x!.id)]).filter(([, v]) => !!v));
-            city = crew.heist ? await tx.getCity(crew.heist.country) : null;
-            out = runHeist(crew, me, team, city, now, Math.random);
+            if (crew.heist?.target) {
+              if (!target || target.dead) {
+                crew.heist = null;
+                throw new GameError("They're not around anymore. The job is off.");
+              }
+              const witnesses = nearby.map((id) => byId.get(id)).filter((w): w is Player => !!w && countryOf(w) === crew.heist!.country);
+              const crewTag = crew.tag ?? null;
+              const res = runHomeJob(crew, me, team, target, now, Math.random, { caseId, district: crimeDistrict(me, Math.random), crewTag, witnesses });
+              out = res.events;
+              caseFile = res.caseFile;
+            } else {
+              city = crew.heist ? await tx.getCity(crew.heist.country) : null;
+              out = runHeist(crew, me, team, city, now, Math.random);
+            }
           }
           for (const r of byId.values()) await tx.putPlayer(r);
           await tx.putCrew(crew);
           if (city) await tx.putCity(city);
+          if (caseFile) await tx.putCase(caseFile);
           return out;
         });
         break;

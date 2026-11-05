@@ -216,6 +216,7 @@ type Hub = {
     canPlan: string | null;
     plan: {
       city: string;
+      target: string | null;
       isLeader: boolean;
       roles: { id: string; name: string; job: string; who: string | null; canTake: string | null }[];
       ready: boolean;
@@ -914,10 +915,12 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
         )}
         {hub.heist && (hub.heist.plan || !hub.heist.canPlan) && (
           <section className="card heist">
-            <h3 className="card-title">🏦 Bank job</h3>
+            <h3 className="card-title">{hub.heist.plan?.target ? "🏠 Home job" : "🏦 Bank job"}</h3>
             {hub.heist.plan ? (
               <>
-                <p className="muted">A bank in {hub.heist.plan.city}. Every role that goes right makes it safer and richer.</p>
+                <p className="muted">
+                  {hub.heist.plan.target ? `${hub.heist.plan.target} in ${hub.heist.plan.city}.` : `A bank in ${hub.heist.plan.city}.`} Every role that goes right makes it safer and richer.
+                </p>
                 <ul className="officials">
                   {hub.heist.plan.roles.map((r) => (
                     <li key={r.id}>
@@ -936,10 +939,17 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
                     <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => social({ op: "heist_cancel" })}>Call it off</button>
                   </div>
                 )}
-                <p className="fine muted">Driver: no getaway, everyone's caught. Safecracker: no vault, no money. Lookout: double heat. Muscle: everyone gets hurt, less money.</p>
+                <p className="fine muted">
+                  {hub.heist.plan.target
+                    ? "Driver: no getaway, everyone's caught. Safecracker: opens the hiding spot. Lookout: keeps the owner from walking in on you. Muscle: handles them if they do."
+                    : "Driver: no getaway, everyone's caught. Safecracker: no vault, no money. Lookout: double heat. Muscle: everyone gets hurt, less money."}
+                </p>
               </>
             ) : (
-              <button className="btn btn-danger btn-sm" disabled={game.busy} onClick={() => social({ op: "heist_plan" })}>Plan a bank job</button>
+              <>
+                <button className="btn btn-danger btn-sm" disabled={game.busy} onClick={() => social({ op: "heist_plan" })}>Plan a bank job</button>
+                <p className="fine muted">Or pick a big home to hit from the list at The Street.</p>
+              </>
             )}
           </section>
         )}
