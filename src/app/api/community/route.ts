@@ -16,6 +16,7 @@ import { CARS } from "@/game/vehicles";
 import { dogAt } from "@/game/dogs";
 import { hireMechanic, isMechService, mechanicCard } from "@/game/mechanic";
 import { SHOP, SHOP_KINDS } from "@/game/shops";
+import { buyFront, collectFront, crewCap, frontView, isFrontKind, launderAtFront } from "@/game/fronts";
 import { ambientLines, chatLine, defFor, isHeavy, isRegularId, REGULAR_OPS, REGULARS } from "@/game/regulars";
 
 const HEAVY_WIN_REP = 8;
@@ -305,7 +306,7 @@ export async function GET(req: Request) {
         .slice(0, 40)
         .map((o) => {
           tick(o, now);
-          const canInvite = !!leading && !o.crewId && !(leading.invites ?? []).some((i) => i.id === o.id) && leading.members.length < BALANCE.crew.maxMembers;
+          const canInvite = !!leading && !o.crewId && !(leading.invites ?? []).some((i) => i.id === o.id) && leading.members.length < crewCap(leading);
           return inmateView(p, o, now, o.crewId ? tags.get(o.crewId) ?? null : null, canInvite);
         });
       return NextResponse.json({ inmates, open: true, channel: yardChannel(p) });
@@ -533,6 +534,7 @@ export async function GET(req: Request) {
       hit: myCrew ? hitView(myCrew, p, now) : null,
       hitmen: leading ? await hitmenFor(store, leading, p) : [],
       lab: myCrew ? labView(myCrew, p, now) : null,
+      front: myCrew ? frontView(myCrew, p, now) : null,
       labBuild: myCrew && myCrew.leaderId === p.id && !myCrew.lab,
       police: p.path === "police" && p.rank >= BALANCE.drugBust.minRank,
       channels: channelsFor(p),
@@ -1005,6 +1007,30 @@ export async function POST(req: Request) {
       case "frisk": {
         const target = str(b.targetId);
         events = await store.transaction((tx) => withPair(tx, playerId, target, now, (o, t) => frisk(o, t, now, Math.random)));
+        break;
+      }
+      case "front_buy":
+      case "front_collect":
+      case "front_launder": {
+        const self = await store.get(playerId);
+        if (!self?.crewId) throw new GameError("You're not in a crew.");
+        const crewId = self.crewId;
+        events = await store.transaction(async (tx) => {
+          const [me] = await tx.getPlayers([playerId]);
+          if (!me) throw new GameError("Create a character first.");
+          tick(me, now);
+          const crew = await tx.getCrew(crewId);
+          if (!crew) throw new GameError("Your crew is gone.");
+          let out: GameEvent[];
+          if (b.op === "front_buy") {
+            if (!isFrontKind(b.kind)) throw new GameError("Bad request.");
+            out = buyFront(crew, me, b.kind, now);
+          } else if (b.op === "front_collect") out = collectFront(crew, me, now);
+          else out = launderAtFront(crew, me, Number(b.amount), now);
+          await tx.putPlayer(me);
+          await tx.putCrew(crew);
+          return out;
+        });
         break;
       }
       case "lab_build":

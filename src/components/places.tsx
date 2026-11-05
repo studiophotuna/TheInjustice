@@ -7,6 +7,7 @@ import { DogCard, StashCard } from "./stash";
 import { BreakIns } from "./property";
 import { Directory } from "./directory";
 import { CustomsCard } from "./customs";
+import { InsideCard } from "./inside";
 import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { Scene, type SceneKind } from "./art/Scenes";
 import { CityHall } from "./cityhall";
@@ -140,6 +141,7 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
       return view.jail ? (
         <div className="stack">
           <JailCard game={game} />
+          <InsideCard game={game} />
           <Yard game={game} hub={hub} social={social} />
         </div>
       ) : (

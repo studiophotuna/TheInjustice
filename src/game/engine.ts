@@ -33,6 +33,7 @@ import { stashAll, useStash } from "./stash";
 import { chopCar, fitAlarm, newPlates } from "./breakin";
 import { buyDog, feedDog, giveAwayDog } from "./dogs";
 import { setGarage } from "./mechanic";
+import { digTunnel, makeShank, paroleHearing } from "./prisonlife";
 import { arriveByCar, buyCar, buyCargo, fitCompartment, repairCar, rollDrive, sellCar, sellCargo, startDrive } from "./vehicles";
 import { emptyStats, statValue, sv, tierOf, TIER_UP_LINES } from "./stats";
 import {
@@ -1231,6 +1232,15 @@ function applyActionInner(p: Player, action: Action, now: number, rng: Rng, ctx:
       break;
     case "fit_alarm":
       events.push(...fitAlarm(p));
+      break;
+    case "tunnel_dig":
+      events.push(...digTunnel(p, now, rng));
+      break;
+    case "make_shank":
+      events.push(...makeShank(p, now, rng));
+      break;
+    case "parole_hearing":
+      events.push(...paroleHearing(p, now, rng));
       break;
     case "garage_set":
       events.push(...setGarage(p, action.open, action.rate));

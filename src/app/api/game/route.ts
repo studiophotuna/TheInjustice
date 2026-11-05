@@ -14,7 +14,7 @@ import { flagLaundering } from "@/game/batch6";
 import { countryOf } from "@/game/engine";
 import { creditSale, shopMarkups } from "@/game/shops";
 import { applyBackground } from "@/game/backgrounds";
-import { creditSeizure, onDuty } from "@/game/customs";
+import { creditSeizure, searchingOfficers } from "@/game/customs";
 import { notify } from "@/game/social";
 import type { ShopKind } from "@/game/types";
 import { getStore, StoreConfigError } from "@/server/store";
@@ -115,7 +115,7 @@ export async function POST(req: Request) {
     const markups = buyer ? shopMarkups(await store.getCity(countryOf(buyer))) : undefined;
     // Officers on customs duty in the city you're leaving.
     const leaver = action.type === "travel" || action.type === "drive" ? await store.get(playerId!) : null;
-    const customs = leaver ? onDuty(await store.getCity(countryOf(leaver)), now, playerId!).map((x) => ({ id: x.id, name: x.name, eye: x.eye })) : [];
+    const customs = leaver ? searchingOfficers(await store.getCity(countryOf(leaver)), now, playerId!).map((x) => ({ id: x.id, name: x.name, eye: x.eye })) : [];
     let seizure: { officerId: string; value: number; what: string; from: string } | null = null;
     let launderFlag: { amount: number; method: string } | null = null;
     const out = await store.update(playerId!, (p) => {

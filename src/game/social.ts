@@ -16,6 +16,7 @@ import { countryOf, inHospital, inJail } from "./engine";
 import { canPayIllegal, earnDirty, payIllegal, takeCarried } from "./money";
 import { bumpSeason } from "./season";
 import { streetTitle } from "./titles";
+import { crewCap } from "./fronts";
 import { GameError, type Crew, type CrewPolicy, type FightSummary, type GameEvent, type GameEventTone, type Player, type Rng } from "./types";
 
 export function notify(p: Player, text: string, tone: GameEventTone, from?: Player, now = Date.now()) {
@@ -270,7 +271,7 @@ export function crewLog(c: Crew, text: string, now: number) {
 export const policyOf = (c: Crew): CrewPolicy => c.policy ?? "request";
 
 export function addMember(c: Crew, p: Player, now: number) {
-  if (c.members.length >= BALANCE.crew.maxMembers) throw new GameError("That crew is full.");
+  if (c.members.length >= crewCap(c)) throw new GameError("That crew is full.");
   p.crewId = c.id;
   p.crewInvites = (p.crewInvites ?? []).filter((i) => i.crewId !== c.id);
   c.requests = c.requests.filter((r) => r.id !== p.id);
@@ -310,7 +311,7 @@ export function inviteToCrew(c: Crew, leader: Player, target: Player, now: numbe
   if (target.crewId) throw new GameError(`${target.name} is already in a crew.`);
   if (crewJoinBlock(target)) throw new GameError(`${target.name} isn't family. Only the Mafia joins crews; invite them to your secret forum instead.`);
   if ((c.invites ?? []).some((i) => i.id === target.id)) throw new GameError("Already invited.");
-  if (c.members.length >= BALANCE.crew.maxMembers) throw new GameError("The crew is full.");
+  if (c.members.length >= crewCap(c)) throw new GameError("The crew is full.");
   c.invites = [...(c.invites ?? []), { id: target.id, name: target.name, at: now }].slice(-30);
   target.crewInvites = [
     ...(target.crewInvites ?? []).filter((i) => i.crewId !== c.id),
@@ -329,7 +330,7 @@ export function requestJoin(c: Crew, p: Player, now: number) {
   const block = crewJoinBlock(p);
   if (block) throw new GameError(block);
   if (c.requests.some((r) => r.id === p.id)) throw new GameError("You already asked. Wait for an answer.");
-  if (c.members.length >= BALANCE.crew.maxMembers) throw new GameError("That crew is full.");
+  if (c.members.length >= crewCap(c)) throw new GameError("That crew is full.");
   c.requests = [...c.requests, { id: p.id, name: p.name, at: now }].slice(-20);
 }
 

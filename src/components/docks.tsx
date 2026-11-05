@@ -109,7 +109,7 @@ export function Docks({ game, go }: { game: GameApi; go?: (to: string) => void }
             Loading into your <b>{car.name.toLowerCase()}</b> · {room} of {car.trunk} free{parked.length > 1 ? " (tap a car above to switch)" : ""}.
           </p>
         )}
-        <CustomsLine />
+        <CustomsLine game={game} />
         <div className="goods">
           {d.goods.map((g) => {
             const have = car?.cargo.find((x) => x.id === g.id)?.qty ?? 0;

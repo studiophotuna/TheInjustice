@@ -7,6 +7,7 @@ import { BALANCE } from "./balance";
 import { playerFighter, resolveFight } from "./combat";
 import { countryOf, inJail, practiceFalloff } from "./engine";
 import { notify } from "./social";
+import { INSIDE, earnRespect, shankEdge, stay } from "./prisonlife";
 import { GameError, type FightSummary, type GameEvent, type Player, type Rng } from "./types";
 
 const Y = BALANCE.yard;
@@ -33,7 +34,14 @@ export function yardFight(a: Player, t: Player, now: number, rng: Rng): { events
   if (block) throw new GameError(block);
   a.energy -= Y.fightEnergy;
   a.attackLog = { ...(a.attackLog ?? {}), [`yard:${t.id}`]: now };
-  const res = resolveFight(playerFighter(a, playerMaxHp(a)), { ...playerFighter(t, playerMaxHp(t)), hp: t.hp }, rng);
+  stay(a, now).lastFightAt = now;
+  stay(t, now).lastFightAt = now;
+  // A shank is an edge, if a shakedown doesn't find it first.
+  const mine = shankEdge(a, now, rng);
+  const theirs = shankEdge(t, now, rng);
+  const af = playerFighter(a, playerMaxHp(a));
+  const tf = playerFighter(t, playerMaxHp(t));
+  const res = resolveFight({ ...af, strength: af.strength + mine.edge }, { ...tf, strength: tf.strength + theirs.edge, hp: t.hp }, rng);
   const fight: FightSummary = { opponent: t.name, icon: "🧍", won: res.won, lines: res.lines, outcome: res.won ? "win" : "loss" };
   // The guards break it up before anyone dies: nobody drops below a few points of health.
   a.hp = Math.max(5, res.playerHp);
@@ -41,6 +49,7 @@ export function yardFight(a: Player, t: Player, now: number, rng: Rng): { events
   const loser = res.won ? t : a;
   if (res.won) t.hp = Math.max(5, t.hp - Math.max(25, t.hp * 0.5));
   winner.reputation += Y.respect;
+  earnRespect(winner, INSIDE.respect.fightWin, now);
   winner.stats.nerve += 0.4;
   winner.stats.strength += 0.3;
   loser.stats.toughness += 0.3;
@@ -51,8 +60,11 @@ export function yardFight(a: Player, t: Player, now: number, rng: Rng): { events
     a,
     now,
   );
+  if (theirs.caught) notify(t, "A shakedown found the shank under your bunk. More time on your sentence.", "bad", undefined, now);
   return {
     events: [
+      ...(mine.caught ? [{ tone: "bad" as const, text: "A shakedown before the fight: the guards find your shank. More time, and no edge." }] : []),
+      ...(mine.edge ? [{ tone: "info" as const, text: "You keep the shank low and out of sight." }] : []),
       { tone: res.won ? "good" : "bad", text: `Yard fight: ${t.name}`, fight },
       res.won
         ? { tone: "good", text: `You win. The yard saw it. +${Y.respect} reputation.` }
@@ -67,6 +79,9 @@ export function prisonWork(p: Player, now: number, rng: Rng): GameEvent[] {
   if (!inJail(p, now)) throw new GameError("You're not behind bars.");
   if (p.energy < Y.workEnergy) throw new GameError("You're too tired to work.");
   p.energy -= Y.workEnergy;
+  const s = stay(p, now);
+  s.work = (s.work ?? 0) + 1;
+  earnRespect(p, INSIDE.respect.work, now);
   const pay = Y.workPay[0] + Math.floor(rng() * (Y.workPay[1] - Y.workPay[0] + 1));
   p.cash += pay;
   const falloff = practiceFalloff(p, "prison_work", now);

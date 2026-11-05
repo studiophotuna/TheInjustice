@@ -277,6 +277,19 @@ export interface Player {
   impounded?: { ownerId: string; car: Car } | null;
   /** Transient: a customs officer seized something from you; they're paid after the action is saved. */
   customsSeizure?: { officerId: string; value: number; what: string } | null;
+  /** Life inside: standing in the yard (kept), and this stay's tunnel, shank and parole hearing. */
+  inside?: {
+    respect: number;
+    stayAt?: number;
+    stayUntil?: number;
+    tunnel?: number;
+    work?: number;
+    paroleTried?: boolean;
+    shank?: boolean;
+    lastFightAt?: number;
+  };
+  /** Customs bribes taken: internal affairs can find them. */
+  customsTake?: { at: number; amount: number; exposed?: boolean }[];
   /** Who you were before prison. */
   background?: BackgroundId;
   /** Mechanics: your garage, open to customers at a rate against the dealer's price. */
@@ -556,6 +569,8 @@ export interface Crew {
   vault: number;
   log: { at: number; text: string }[];
   createdAt: number;
+  /** The crew's front business: income, quiet laundering, more members. */
+  front?: { kind: FrontKind; since: number; collectedAt: number; laundered?: { day: number; amount: number } } | null;
   /** The crew's drug lab. */
   lab?: { country: CountryId; district: DistrictId; districtName: string; builtAt: number; heat: number; heatAt: number; batches: number } | null;
   /** A bank job being planned. */
@@ -762,6 +777,7 @@ export type Action =
   | { type: "dog_buy"; breed: DogBreed; name: string }
   | { type: "dog_feed" | "dog_give_away" }
   | { type: "garage_set"; open: boolean; rate: number }
+  | { type: "tunnel_dig" | "make_shank" | "parole_hearing" }
   | { type: "cargo_buy" | "cargo_sell"; carId: string; good: GoodId; qty: number }
   | { type: "ack_arrival" }
   | { type: "claim_daily" }
@@ -810,6 +826,9 @@ export interface ShopHold {
   offers: ShopOffer[];
 }
 
+/** A crew's front business. */
+export type FrontKind = "laundromat" | "trattoria" | "construction" | "freight";
+
 /** A player on a customs shift at the city's checkpoints. */
 export interface CustomsPost {
   id: string;
@@ -817,6 +836,10 @@ export interface CustomsPost {
   until: number;
   /** Perception when they took the shift: sharper eyes find more. */
   eye: number;
+  /** What it costs to be waved through this officer's lane (null: not for sale). */
+  price?: number | null;
+  /** Who paid this shift. */
+  passes?: string[];
 }
 
 export interface City {

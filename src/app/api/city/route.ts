@@ -34,7 +34,7 @@ import { GameError, type DistrictId, type GameEvent, type Player } from "@/game/
 import { toView } from "@/game/view";
 import { assertJson } from "@/server/auth";
 import { readCity } from "@/server/city";
-import { customsView, endShift, startShift } from "@/game/customs";
+import { customsView, endShift, payOfficer, setPrice, startShift } from "@/game/customs";
 import { resolveIdentity } from "@/server/identity";
 import { getStore, StoreConfigError } from "@/server/store";
 
@@ -127,7 +127,7 @@ export async function POST(req: Request) {
       const fighters = war ? [...war.attackers, ...war.defenders, ...(war.peacekeepers ?? [])].map((x) => x.id) : [];
       const ids = [
         playerId,
-        ...(b.op === "pardon" || b.op === "appoint_chief" || b.op === "buy_vote" || b.op === "appoint_editor" ? [str(b.playerId)] : []),
+        ...(b.op === "pardon" || b.op === "appoint_chief" || b.op === "buy_vote" || b.op === "appoint_editor" || b.op === "customs_bribe" ? [str(b.playerId)] : []),
         ...(editorId ? [editorId] : []),
         ...stakeIds,
         ...(seatHolder && seatHolder !== playerId ? [seatHolder] : []),
@@ -287,6 +287,16 @@ export async function POST(req: Request) {
         case "customs_off":
           out = endShift(c, p, now);
           break;
+        case "customs_price":
+          out = setPrice(c, p, b.price === null ? null : Number(b.price), now);
+          break;
+        case "customs_bribe": {
+          if (!other) throw new GameError("That officer isn't around.");
+          tick(other, now);
+          out = payOfficer(c, p, other as Player, now);
+          await tx.putPlayer(other);
+          break;
+        }
         case "guard_bank":
           out = standGuard(c, p, now);
           break;

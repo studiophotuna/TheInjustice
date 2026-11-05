@@ -1,5 +1,26 @@
 # Changelog
 
+## 3.7.0: envelopes, life inside, and crew fronts
+
+- **Customs bribes:** an officer on a customs shift can name a price to look the other way. Word
+  gets around: the Docks and the Station show who can be persuaded and for how much. Pay it
+  (dirty money first) and that officer waves you through for the rest of their shift, trunk and
+  bags. Other officers on duty still search you. The officer gets dirty money and loses some
+  conscience, and every envelope is on record: internal affairs can audit anyone who took one,
+  even a rank-2 soldier.
+- **Life inside:** a new card in the Prison.
+  - Standing in the yard: Fresh fish, Known face, Trusted, Shot-caller. Respect comes from prison
+    shifts, yard fights you win, and escaping; higher standing makes the guards look elsewhere.
+  - The tunnel: dig a little each session. If the guards find it, it's filled in and time is
+    added. Finish it and you're out, with a lot of heat on you.
+  - A shank: an edge in yard fights, until a shakedown finds it (and adds time).
+  - The parole board: one hearing per sentence, once you've worked two shifts and stayed out of
+    fights for a while. Effort, standing and a clean conscience help.
+- **Crew fronts:** the leader buys a front from the vault: laundromat, trattoria, construction firm
+  or freight company. It earns for the vault every hour, lets members clean dirty money through
+  its books (the fee goes to the vault, and nobody files a report), and makes room for 2 to 8 more
+  members. Trade up any time; the old front sells for half.
+
 ## 3.6.0: who you were, and customs at the border
 
 - **Starting background:** character creation now asks who you were before they locked you up.

@@ -3,7 +3,9 @@
 // officer (sharp eyes find more), and the station watches passengers. The officer earns a bounty
 // on every seizure, paid by the city, and the work counts toward their promotion.
 
-import { addMerit, countryOf, inHospital, inJail } from "./engine";
+import { addMerit, countryOf, inHospital, inJail, shiftIntegrity } from "./engine";
+import { canPayIllegal, earnDirty, payIllegal } from "./money";
+import { notify } from "./social";
 import { sv } from "./stats";
 import { GameError, type City, type CustomsPost, type GameEvent, type Player } from "./types";
 
@@ -20,6 +22,7 @@ export const CUSTOMS = {
   bountyShare: 0.25,
   merit: 2,
   shiftMerit: 0.5,
+  bribe: { min: 50, max: 20_000, integrity: -3 },
 };
 
 const canServe = (p: Player) => (p.path === "police" || p.path === "military") && p.rank >= CUSTOMS.minRank;
@@ -50,6 +53,42 @@ export function startShift(c: City, p: Player, now: number): GameEvent[] {
   return events;
 }
 
+/** An officer on duty names a price to look the other way (or takes it back with null). */
+export function setPrice(c: City, p: Player, price: number | null, now: number): GameEvent[] {
+  const post = onDuty(c, now).find((x) => x.id === p.id);
+  if (!post) throw new GameError("You're not on a shift.");
+  if (price === null) {
+    post.price = null;
+    return [{ tone: "info", text: "You're clean again. Nobody gets waved through for money." }];
+  }
+  const v = Math.floor(price);
+  if (!Number.isFinite(v) || v < CUSTOMS.bribe.min || v > CUSTOMS.bribe.max) throw new GameError(`Name a price between $${CUSTOMS.bribe.min} and $${CUSTOMS.bribe.max.toLocaleString()}.`);
+  post.price = v;
+  return [{ tone: "info", text: `Word gets around: for $${v.toLocaleString()}, you don't look in the trunk. Internal affairs listens to that kind of word too.` }];
+}
+
+/** A smuggler pays an officer to be waved through their lane for the rest of the shift. */
+export function payOfficer(c: City, p: Player, officer: Player, now: number): GameEvent[] {
+  const post = onDuty(c, now).find((x) => x.id === officer.id);
+  if (!post || !post.price) throw new GameError("That officer isn't taking anything.");
+  if (officer.id === p.id) throw new GameError("You can't bribe yourself.");
+  if (countryOf(p) !== c.country) throw new GameError("You're not in this city.");
+  if ((post.passes ?? []).includes(p.id)) throw new GameError("You've already paid. They'll wave you through.");
+  if (!canPayIllegal(p, post.price)) throw new GameError(`That's $${post.price.toLocaleString()}. Dirty money or cash.`);
+  payIllegal(p, post.price);
+  earnDirty(officer, post.price);
+  officer.customsTake = [...(officer.customsTake ?? []), { at: now, amount: post.price }].slice(-30);
+  shiftIntegrity(officer, CUSTOMS.bribe.integrity);
+  post.passes = [...(post.passes ?? []), p.id];
+  notify(officer, `Someone slipped you $${post.price.toLocaleString()} to look the other way. Dirty money.`, "info", undefined, now);
+  return [{ tone: "good", text: `An envelope changes hands. ${officer.name} won't look in your trunk, or your bags, until the shift ends at ${new Date(post.until).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}.` }];
+}
+
+/** Officers on duty who'll actually search this player (those they paid off wave them through). */
+export function searchingOfficers(c: City | null | undefined, now: number, playerId: string) {
+  return onDuty(c, now, playerId).filter((x) => !(x.passes ?? []).includes(playerId));
+}
+
 export function endShift(c: City, p: Player, now: number): GameEvent[] {
   if (!onDuty(c, now).some((x) => x.id === p.id)) throw new GameError("You're not on a shift.");
   c.customs = onDuty(c, now, p.id);
@@ -71,7 +110,13 @@ export function customsView(c: City, p: Player, now: number) {
   return {
     onDuty: posts.length,
     officers: posts.map((x) => x.name),
+    /** Officers on duty who can be persuaded (never yourself). */
+    forSale: posts
+      .filter((x) => x.price && x.id !== p.id)
+      .map((x) => ({ id: x.id, name: x.name, price: x.price!, paid: (x.passes ?? []).includes(p.id), until: x.until })),
     mine: mine ? mine.until : null,
+    myPrice: mine?.price ?? null,
+    myPasses: mine ? (mine.passes ?? []).length : 0,
     eligible: canServe(p),
     block: mine ? null : customsBlock(c, p, now),
     seizures: p.jobCounts["customs:seize"] ?? 0,

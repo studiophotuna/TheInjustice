@@ -2,7 +2,7 @@
 
 import { ReportButton } from "./ReportButton";
 import { AnimatePresence, motion } from "motion/react";
-import { Ban, Crown, Eye, EyeOff, ShieldAlert, ShieldCheck, FileSearch, Footprints, Gavel, Flame, Hand, Handshake, Landmark, MessagesSquare, Moon, Stethoscope, Inbox, Lock, MessageSquare, Search, Send, Shield, Siren, Swords, UserCheck, Users, Vault } from "lucide-react";
+import { Ban, Building, Crown, Eye, EyeOff, ShieldAlert, ShieldCheck, FileSearch, Footprints, Gavel, Flame, Hand, Handshake, Landmark, MessagesSquare, Moon, Stethoscope, Inbox, Lock, MessageSquare, Search, Send, Shield, Siren, Swords, UserCheck, Users, Vault } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 import { takePeopleSection } from "./pulse";
@@ -184,6 +184,14 @@ type Hub = {
   lender: "bank" | "shark" | null;
   lab: { district: string; city: string; batches: number; suspicion: string; cook: { id: string; name: string; block: string | null }[] } | null;
   labBuild: boolean;
+  front: {
+    front: { kind: string; name: string; perHour: number; waiting: number; launderLeft: number; launderPerDay: number; fee: number; since: number } | null;
+    cap: number;
+    members: number;
+    vault: number;
+    leader: boolean;
+    options: { kind: string; name: string; price: number; perHour: number; launderPerDay: number; fee: number; slots: number }[];
+  } | null;
   police: boolean;
   hit: {
     targetName: string;
@@ -909,6 +917,7 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
             </div>
           </div>
         </section>
+        {hub.front && <FrontCard game={game} f={hub.front} social={social} />}
         {(hub.lab || hub.labBuild) && (
           <section className="card lab has-banner">
             <Scene kind="lab" className="banner-scene" />
@@ -1916,6 +1925,68 @@ function YourPeople({ hub, onOpen }: { hub: Hub; onOpen: (id: string) => void })
           </button>
         ))}
       </div>
+    </section>
+  );
+}
+
+/** The crew's front business: income for the vault, quiet laundering, more seats at the table. */
+function FrontCard({ game, f, social }: { game: GameApi; f: NonNullable<Hub["front"]>; social: (b: Record<string, unknown>) => Promise<unknown> }) {
+  const [amount, setAmount] = useState("");
+  const dirty = game.view!.dirty;
+  const money = (n: number) => `$${n.toLocaleString()}`;
+  return (
+    <section className="card front-card">
+      <h3 className="card-title"><Building size={16} /> {f.front ? `The front · ${f.front.name}` : "A front for the crew"}</h3>
+      {f.front ? (
+        <>
+          <p className="muted fine">
+            Earns about {money(f.front.perHour)} an hour for the vault. Members clean dirty money through its books for {Math.round(f.front.fee * 100)}% (the fee
+            goes to the vault), and nobody files a report on it. {f.members}/{f.cap} members.
+          </p>
+          <div className="row wrap">
+            {f.leader && (
+              <button className="btn btn-primary btn-sm" disabled={game.busy || f.front.waiting < 1} onClick={() => social({ op: "front_collect" })}>
+                Collect {money(f.front.waiting)}
+              </button>
+            )}
+          </div>
+          <div className="row wrap front-launder">
+            <input inputMode="numeric" placeholder={`Dirty money (you have ${money(dirty)})`} value={amount} onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))} />
+            <button
+              className="btn btn-ghost btn-sm"
+              disabled={game.busy || dirty < 1 || f.front.launderLeft < 1}
+              onClick={async () => {
+                await social({ op: "front_launder", amount: Number(amount || Math.min(dirty, f.front!.launderLeft)) });
+                setAmount("");
+              }}
+            >
+              Clean it
+            </button>
+          </div>
+          <p className="fine muted">{money(f.front.launderLeft)} of {money(f.front.launderPerDay)} left on the books today, shared by the crew.</p>
+        </>
+      ) : (
+        <p className="muted fine">
+          A business that looks clean: it earns for the vault, gives members a quiet place to launder (no bank, no detectives reading the deposits), and makes room
+          for more members. {f.members}/{f.cap} members now.
+        </p>
+      )}
+      {f.leader && f.options.length > 0 && (
+        <ul className="officials front-options">
+          {f.options.map((o) => (
+            <li key={o.kind}>
+              <span>
+                <b>{o.name}</b>{" "}
+                <span className="muted fine">· ~{money(o.perHour)}/h · cleans {money(o.launderPerDay)}/day at {Math.round(o.fee * 100)}% · +{o.slots} members</span>
+              </span>
+              <button className="btn btn-ghost btn-xs" disabled={game.busy || f.vault < o.price} title={f.vault < o.price ? `The vault has ${money(f.vault)}.` : ""} onClick={() => social({ op: "front_buy", kind: o.kind })}>
+                {f.front ? "Trade up" : "Buy"} · {money(o.price)}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {f.leader && f.front && <p className="fine muted">Trading up sells the old front for half what it cost.</p>}
     </section>
   );
 }

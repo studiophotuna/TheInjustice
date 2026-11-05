@@ -7,7 +7,10 @@ import type { GameApi } from "./useGame";
 type CustomsData = {
   onDuty: number;
   officers: string[];
+  forSale: { id: string; name: string; price: number; paid: boolean; until: number }[];
   mine: number | null;
+  myPrice: number | null;
+  myPasses: number;
   eligible: boolean;
   block: string | null;
   seizures: number;
@@ -37,17 +40,69 @@ export function useCustoms() {
 
 const time = (at: number) => new Date(at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
-/** A one-line heads-up for anyone about to travel with something to hide. */
-export function CustomsLine() {
+/** A heads-up for anyone about to travel with something to hide, and who can be persuaded. */
+export function CustomsLine({ game }: { game: GameApi }) {
   const d = useCustoms();
   if (!d) return null;
   return (
-    <p className={`fine customs-line ${d.onDuty ? "manned" : ""}`}>
-      <ShieldCheck size={13} />{" "}
-      {d.onDuty
-        ? `Customs is on duty: ${d.officers.join(", ")}. More stops, and real eyes doing the searching.`
-        : "Nobody is on customs duty right now. Just the usual guards."}
-    </p>
+    <div className="customs-block">
+      <p className={`fine customs-line ${d.onDuty ? "manned" : ""}`}>
+        <ShieldCheck size={13} />{" "}
+        {d.onDuty
+          ? `Customs is on duty: ${d.officers.join(", ")}. More stops, and real eyes doing the searching.`
+          : "Nobody is on customs duty right now. Just the usual guards."}
+      </p>
+      {d.forSale.length > 0 && (
+        <ul className="officials bribe-list">
+          {d.forSale.map((o) => (
+            <li key={o.id}>
+              <span className="fine">
+                {o.paid ? (
+                  <>✅ <b>{o.name}</b> will wave you through until {time(o.until)}.</>
+                ) : (
+                  <>Word is <b>{o.name}</b> doesn&apos;t look in trunks for <b>${o.price.toLocaleString()}</b>.</>
+                )}
+              </span>
+              {!o.paid && (
+                <button
+                  className="btn btn-ghost btn-xs"
+                  disabled={game.busy || game.view!.dirty + game.view!.cash < o.price}
+                  title="Dirty money first, then cash. Good for the rest of their shift."
+                  onClick={() => confirm(`Slip ${o.name} $${o.price.toLocaleString()} to look the other way?`) && game.social({ op: "customs_bribe", playerId: o.id }, "/api/city")}
+                >
+                  Slip an envelope
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/** An officer on duty: take money to look the other way, or don't. */
+function PriceControl({ game, d }: { game: GameApi; d: CustomsData }) {
+  const [price, setPrice] = useState(String(d.myPrice ?? 500));
+  return (
+    <div className="bribe-control">
+      {d.myPrice ? (
+        <p className="fine text-red">
+          You&apos;re waving people through for ${d.myPrice.toLocaleString()}{d.myPasses ? ` (${d.myPasses} paid so far)` : ""}. Internal affairs can find every envelope.
+        </p>
+      ) : (
+        <p className="fine muted">Some officers take envelopes to look the other way. It pays well, until internal affairs comes asking.</p>
+      )}
+      <div className="row wrap">
+        <input inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value.replace(/\D/g, ""))} aria-label="Your price" />
+        <button className="btn btn-ghost btn-xs" disabled={game.busy || !Number(price)} onClick={() => game.social({ op: "customs_price", price: Number(price) }, "/api/city")}>
+          {d.myPrice ? "Change price" : "Take envelopes"}
+        </button>
+        {d.myPrice && (
+          <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => game.social({ op: "customs_price", price: null }, "/api/city")}>Stay clean</button>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -55,7 +110,7 @@ export function CustomsLine() {
 export function CustomsCard({ game }: { game: GameApi }) {
   const d = useCustoms();
   if (!d) return null;
-  if (!d.eligible) return <CustomsLine />;
+  if (!d.eligible) return <CustomsLine game={game} />;
   return (
     <section className="card customs-card">
       <h3 className="card-title"><ShieldCheck size={16} /> Customs desk</h3>
@@ -68,10 +123,13 @@ export function CustomsCard({ game }: { game: GameApi }) {
         {d.onDuty ? `On duty now: ${d.officers.join(", ")}.` : "Nobody is on duty right now."} {d.seizures ? `Your seizures so far: ${d.seizures}.` : ""}
       </p>
       {d.mine ? (
-        <div className="row wrap">
-          <span className="chip chip-green">On duty until {time(d.mine)}</span>
-          <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.social({ op: "customs_off" }, "/api/city")}>End shift</button>
-        </div>
+        <>
+          <div className="row wrap">
+            <span className="chip chip-green">On duty until {time(d.mine)}</span>
+            <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.social({ op: "customs_off" }, "/api/city")}>End shift</button>
+          </div>
+          <PriceControl game={game} d={d} />
+        </>
       ) : (
         <button className="btn btn-primary btn-sm" disabled={game.busy || !!d.block} title={d.block ?? ""} onClick={() => game.social({ op: "customs_duty" }, "/api/city")}>
           Take a shift · ⚡{d.energy}

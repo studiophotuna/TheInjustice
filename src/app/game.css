@@ -784,3 +784,17 @@ button.ready-chip { cursor: pointer; }
 /* ─── Customs ──────────────────────────────────────────────────────── */
 .customs-line { display: flex; gap: 6px; align-items: center; color: var(--muted); }
 .customs-line.manned { color: var(--gold); }
+
+.customs-block { display: grid; gap: 4px; }
+.bribe-list { margin: 0; }
+.bribe-control { display: grid; gap: 6px; padding-top: 8px; border-top: 1px dashed var(--border); }
+.bribe-control p { margin: 0; }
+.bribe-control input { width: 110px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: inherit; }
+
+/* ─── Life inside ──────────────────────────────────────────────────── */
+.inside-block { display: grid; gap: 4px; padding-top: 10px; margin-top: 8px; border-top: 1px solid var(--border); justify-items: start; }
+.inside-block .wear-bar { width: 100%; }
+
+/* ─── Crew fronts ──────────────────────────────────────────────────── */
+.front-launder input { flex: 1; min-width: 0; padding: 7px 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: inherit; }
+.front-options { margin-top: 8px; }
