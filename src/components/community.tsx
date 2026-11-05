@@ -6,6 +6,7 @@ import { Ban, Crown, Eye, EyeOff, ShieldAlert, ShieldCheck, FileSearch, Footprin
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 import { takePeopleSection } from "./pulse";
+import { useScrollLock } from "./scrollLock";
 import { Scene } from "./art/Scenes";
 import type { GameApi } from "./useGame";
 
@@ -466,6 +467,7 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
 /** Someone's file: who they are, what they think of you, and everything you can do. */
 function PersonFile({ game, hub, p, social, onClose }: { game: GameApi; hub: Hub; p: Profile; social: (b: Record<string, unknown>) => Promise<unknown>; onClose: () => void }) {
   const { primary, groups } = personActions(game, hub, p, social);
+  useScrollLock(true);
   const run = async (fn: () => unknown) => {
     await fn();
   };

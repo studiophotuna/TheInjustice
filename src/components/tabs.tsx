@@ -1,6 +1,7 @@
 "use client";
 
 import { StoryLine } from "./storyline";
+import { ItemArt } from "./art/ItemArt";
 import { ProfileEditor } from "./ProfileEditor";
 import { CareerPortrait } from "./art/CareerPortrait";
 import { CityHall } from "./cityhall";
@@ -292,7 +293,7 @@ export function ShopTab({ game }: { game: GameApi }) {
         <div className="properties">
           {view.properties.map((pr) => (
             <article key={pr.id} className={`property ${pr.owned ? "owned" : ""}`}>
-              <div className="shop-emoji">{pr.icon}</div>
+              <ItemArt id={pr.id} icon={pr.icon} name={pr.name} price={pr.price} className="shop-art" />
               <div className="shop-body">
                 <span className="chip">{pr.city}</span>
                 <h3>{pr.name}</h3>
@@ -319,7 +320,7 @@ export function ShopTab({ game }: { game: GameApi }) {
     <motion.div key={cat} className="shop-grid" variants={list} initial="hidden" animate="show">
       {view.shop.filter((i) => kinds.includes(i.kind)).map((i) => (
         <motion.article key={i.id} variants={item} className={`shop-item ${i.owned ? "owned" : ""}`}>
-          <div className="shop-emoji">{i.icon}</div>
+          <ItemArt id={i.id} icon={i.icon} name={i.name} price={i.price} className="shop-art" />
           <div className="shop-body">
             <span className="chip">{KIND_LABEL[i.kind]}</span>
             <h3>{i.name}</h3>
@@ -354,7 +355,7 @@ export function GearCard({ game }: { game: GameApi }) {
               <span className="crime-label">{s === "weapon" ? "Weapon" : "Armor"}</span>
               {g ? (
                 <>
-                  <b>{g.icon} {g.name}</b>
+                  <b className="gear-name"><ItemArt id={g.id} icon={g.icon} name={g.name} className="art-sm" /> {g.name}</b>
                   <div className="wear-bar" title={`${g.condition}% condition`}><span style={{ width: `${g.condition}%` }} className={g.condition <= 25 ? "low" : ""} /></div>
                   <span className="fine">{g.broken ? "Broken: useless until repaired" : `${g.condition}% condition`}</span>
                 </>
@@ -372,7 +373,7 @@ export function GearCard({ game }: { game: GameApi }) {
           {gear.map((g) => (
             <li key={g.id}>
               <span>
-                {g.icon} {g.name} <span className="muted">· {g.broken ? "broken" : `${g.condition}%`}{g.issued ? " · issued" : ""}</span>
+                <ItemArt id={g.id} icon={g.icon} name={g.name} className="art-xs" /> {g.name} <span className="muted">· {g.broken ? "broken" : `${g.condition}%`}{g.issued ? " · issued" : ""}</span>
               </span>
               <span className="row">
                 {!g.equipped && (
@@ -499,7 +500,7 @@ export function ProfileTab({ game }: { game: GameApi }) {
         {view.inventory.length === 0 && <p className="muted">Empty. Like your stomach.</p>}
         {view.inventory.map((i) => (
           <div key={i.id} className="row between inv-row">
-            <span>{i.icon} {i.name} <span className="muted">×{i.count}</span></span>
+            <span className="inv-name"><ItemArt id={i.id} icon={i.icon} name={i.name} className="art-xs" /> {i.name} <span className="muted">×{i.count}</span></span>
             {i.usable && <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.act({ type: "use", itemId: i.id })}>Use</button>}
           </div>
         ))}

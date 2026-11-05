@@ -4,6 +4,7 @@ import { CornerDownLeft, Search } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { setSound, soundOn } from "./sfx";
+import { useScrollLock } from "./scrollLock";
 import { fmt, type GameApi } from "./useGame";
 
 type Cmd = { id: string; group: string; label: string; hint?: string; keywords?: string; run: () => unknown; block?: string | null };
@@ -43,6 +44,7 @@ export function CommandPalette({ game, go, open, setOpen }: { game: GameApi; go:
   const [i, setI] = useState(0);
   const [online, setOnline] = useState<Online[]>([]);
   const input = useRef<HTMLInputElement>(null);
+  useScrollLock(open);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

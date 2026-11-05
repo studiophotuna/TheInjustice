@@ -1,0 +1,12 @@
+Sound effects: CC0 1.0 (public domain) recordings from sfxmint.com, trimmed and mixed for Conspira:
+  coin.mp3   impact-coins-03
+  cash.mp3   office-cash-register-05
+  fight.mp3  impact-punch-04 + impact-punch-05 + impact-thud-11
+  run.mp3    footsteps-concrete-20
+  jail.mp3   door-close-32 + door-lock-10
+  busted.mp3 mechanical-siren-02
+  promo.mp3  feedback-level-up-36
+  story.mp3  paper-fabric-page-turn-33
+  bad.mp3    impact-thud-04
+  tap.mp3    ui-click-08
+https://creativecommons.org/publicdomain/zero/1.0/

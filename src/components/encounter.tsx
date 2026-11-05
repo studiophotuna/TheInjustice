@@ -4,6 +4,7 @@ import { ChevronDown, MessageCircle } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
+import { useScrollLock } from "./scrollLock";
 import { fmt, type GameApi } from "./useGame";
 
 export const openEncounter = () => window.dispatchEvent(new Event("conspira:encounter"));
@@ -15,6 +16,7 @@ export const openEncounter = () => window.dispatchEvent(new Event("conspira:enco
 export function EncounterDock({ game }: { game: GameApi }) {
   const e = game.view?.encounter ?? null;
   const [open, setOpen] = useState(false);
+  useScrollLock(open && !!e);
   useEffect(() => {
     const on = () => setOpen(true);
     window.addEventListener("conspira:encounter", on);

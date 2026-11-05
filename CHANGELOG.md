@@ -1,5 +1,27 @@
 # Changelog
 
+## 2.6.0: real sounds, item art, steady scrolling
+
+- **Real sound effects** (recorded, CC0; see public/sfx/CREDITS.txt), 120 KB in all, loaded on
+  your first tap:
+  - coins dropping when you earn; a cash register for daily rewards, business income and big
+    payouts;
+  - a soft scuffle (two punches and a body falling) for fights;
+  - running footsteps when you pickpocket, snatch or mug, then coins or a thud;
+  - a cell door slamming and locking when you're locked up; a short siren when the police
+    catch you;
+  - a level-up fanfare for promotions, a page turning for story moments, a wooden click for
+    everything else.
+- **Item art:** every shop item, issued weapon, piece of armor, home and business has its own
+  illustrated tile (game-icons.net, CC BY 3.0; see public/items/CREDITS.txt), coloured by type
+  and framed by price (grey, green, blue, gold). Shown in the Shop, businesses, gear, pockets and
+  black-market offers.
+- **Fixed: the page jumped while scrolling.** When the HUD shrank as you scrolled, the whole page
+  got 80px shorter and jumped under your finger (and could flicker near the switch point). The
+  HUD now floats over the page with a fixed space reserved for it, and shrinks/grows at two
+  different points. The page behind a sheet or popup (someone's file, the search, an encounter,
+  any dialog) no longer scrolls along with it.
+
 ## 2.5.0: the lineup
 
 - **No more odds.** The Easy / Favorable / Even / Risky / Deadly labels and the "gut read" lines

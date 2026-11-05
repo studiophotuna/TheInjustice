@@ -555,3 +555,29 @@ input:focus { border-color: var(--info) !important; box-shadow: 0 0 0 3px rgba(7
 .home-hero { height: 190px; }
 .home-title { font-size: clamp(26px, 7vw, 42px); }
 @media (min-width: 960px) { .hud { grid-template-columns: minmax(400px, 1fr) minmax(300px, 1.1fr); } .hud-sub { flex-direction: column; align-items: flex-end; gap: 0; } }
+
+/* ─── Item art ──────────────────────────────────────────────────────────── */
+.item-art { display: block; flex: none; border-radius: 14px; object-fit: cover; }
+.item-art.emoji { display: grid; place-items: center; font-size: 30px; background: var(--panel-3); }
+.shop-art { grid-row: span 2; width: 72px; height: 72px; box-shadow: 0 8px 18px -8px rgba(0, 0, 0, 0.8); }
+.item-art.tier-1 { box-shadow: 0 0 0 2px #5d6576, 0 8px 18px -8px rgba(0, 0, 0, 0.8); }
+.item-art.tier-2 { box-shadow: 0 0 0 2px #3ddc84, 0 8px 18px -8px rgba(0, 0, 0, 0.8); }
+.item-art.tier-3 { box-shadow: 0 0 0 2px #4cc9f0, 0 8px 18px -8px rgba(0, 0, 0, 0.8); }
+.item-art.tier-4 { box-shadow: 0 0 0 2px #ffcc33, 0 0 18px rgba(255, 204, 51, 0.25); }
+.art-sm { display: inline-block; width: 34px; height: 34px; border-radius: 8px; vertical-align: middle; }
+.art-xs { display: inline-block; width: 26px; height: 26px; border-radius: 7px; vertical-align: middle; }
+.gear-name, .inv-name { display: inline-flex; align-items: center; gap: 8px; }
+.shop-item { align-items: center; }
+
+/* ─── Scrolling ─────────────────────────────────────────────────────────── */
+/* The HUD is fixed; .hud-spacer keeps its place in the page. */
+.hud { position: fixed; top: 0; left: 0; right: 0; margin: 0; padding-top: calc(10px + env(safe-area-inset-top)); transition: padding 0.18s; }
+.hud.compact { padding-top: calc(6px + env(safe-area-inset-top)); }
+.hud-spacer { flex: none; }
+@media (min-width: 960px) { .hud { left: 220px; margin: 0; } }
+@media (min-width: 1280px) { .hud { right: var(--rail-w); } }
+/* Sheets and popups: the page behind stays put. */
+html.scroll-locked, html.scroll-locked body { overflow: hidden; overscroll-behavior: none; }
+.person-file, .palette-list, .enc-sheet, .modal { overscroll-behavior: contain; }
+/* No accidental horizontal scrolling on phones. */
+html, body { overflow-x: clip; }

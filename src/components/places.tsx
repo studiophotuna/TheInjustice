@@ -8,6 +8,7 @@ import { CityHall } from "./cityhall";
 import { BackAlleyCard, CasesPanel, JailCard, Sightings, useHub, Yard } from "./community";
 import { AcademyContent, BankAccountCard, DocMercyCard, LoansCard, TravelContent } from "./tabs";
 import { ConspiracyBoard } from "./board";
+import { ItemArt } from "./art/ItemArt";
 import { LaunderCard, StreetMarket } from "./underworld";
 import type { GameApi } from "./useGame";
 
@@ -194,7 +195,7 @@ function GunOffers({ game }: { game: GameApi }) {
       <ul className="officials">
         {view.gunOffers.map((o) => (
           <li key={o.id}>
-            <span>{o.icon} {o.itemName} from <b>{o.sellerName}</b> · ${o.price}</span>
+            <span className="inv-name"><ItemArt id={o.itemId} icon={o.icon} name={o.itemName} className="art-xs" /> {o.itemName} from <b>{o.sellerName}</b> · ${o.price}</span>
             <span className="row">
               <button className="btn btn-primary btn-xs" disabled={game.busy} onClick={() => game.social({ op: "gun_buy", offerId: o.id, sellerId: o.sellerId })}>Buy</button>
               <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => game.social({ op: "gun_decline", offerId: o.id })}>Pass</button>

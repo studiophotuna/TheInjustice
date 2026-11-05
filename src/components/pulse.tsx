@@ -2,6 +2,7 @@
 
 import { ArrowRight, Briefcase, Coins, Crown, Gift, MessageCircle, Radio, Siren, Sparkles, X, Zap } from "lucide-react";
 import { PlayerAvatar } from "./art/Portraits";
+import { useScrollLock } from "./scrollLock";
 import { motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { fmt, type GameApi } from "./useGame";
@@ -198,6 +199,7 @@ const write = (s: Snapshot) => {
 /** When you come back after a while: what happened, in a few lines. */
 export function AwayRecap({ game }: { game: GameApi }) {
   const [recap, setRecap] = useState<{ gone: number; lines: { tone: string; text: string }[] } | null>(null);
+  useScrollLock(!!recap);
   const view = game.view;
 
   useEffect(() => {

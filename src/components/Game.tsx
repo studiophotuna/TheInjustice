@@ -27,7 +27,7 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { FightSummary } from "@/game/types";
 import type { PublicView } from "@/game/view";
 import { NpcPortrait, PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
@@ -40,9 +40,10 @@ import { CommunityTab } from "./community";
 import { HomeTab } from "./home";
 import { AwayRecap, GuestChip, LiveRail, setPeopleSection } from "./pulse";
 import { QuickBar } from "./quickbar";
+import { useScrollLock } from "./scrollLock";
 import { CommandPalette } from "./palette";
 import { EncounterDock, openEncounter } from "./encounter";
-import { play, setSound, soundOn } from "./sfx";
+import { play, preloadSounds, setSound, soundOn } from "./sfx";
 import { fmt, useGame, type GameApi } from "./useGame";
 
 type Tab = "home" | "jobs" | "fight" | "shop" | "people" | "city" | "profile";
@@ -179,6 +180,12 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
       setTimeout(() => document.getElementById(`job-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
       setTimeout(() => setHighlight(null), 3500);
     }
+  }, []);
+
+  // Sounds load on the first tap (browsers only allow audio after one).
+  useEffect(() => {
+    window.addEventListener("pointerdown", preloadSounds, { once: true });
+    return () => window.removeEventListener("pointerdown", preloadSounds);
   }, []);
 
   // Toast buttons and notification deep links (/?go=job:cans).
@@ -344,13 +351,31 @@ function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonN
   // Scrolling down, the HUD tucks away its details so the screen is for the game.
   const [compact, setCompact] = useState(false);
   useEffect(() => {
-    const on = () => setCompact(window.scrollY > 120);
+    // Two thresholds, so it doesn't flicker when you stop near one.
+    const on = () => setCompact((c) => (c ? window.scrollY > 40 : window.scrollY > 140));
     on();
     window.addEventListener("scroll", on, { passive: true });
     return () => window.removeEventListener("scroll", on);
   }, []);
+  // The HUD floats over the page; a spacer of its full height holds its place, so shrinking it
+  // never moves what's under your finger.
+  const ref = useRef<HTMLElement>(null);
+  const [full, setFull] = useState(0);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => {
+      if (!el.classList.contains("compact")) setFull(el.offsetHeight);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   return (
-    <header className={`hud${compact ? " compact" : ""}`}>
+    <>
+    <div className="hud-spacer" style={{ height: full }} aria-hidden />
+    <header ref={ref} className={`hud${compact ? " compact" : ""}`}>
       <div className="hud-top">
         <button className="hud-avatar" onClick={onProfile} aria-label="Open your profile" style={{ ["--p" as string]: `${progress}%`, ["--rim" as string]: view.path ? PATH_LOOKS[view.path.id]?.rim : "#8d96a8" }}>
           <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo} className="avatar-sm" />
@@ -390,6 +415,7 @@ function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonN
         {view.onBail && <span className="tag tag-warn">On bail</span>}
       </div>
     </header>
+    </>
   );
 }
 
@@ -478,6 +504,7 @@ function Counter({ value, prefix = "", className }: { value: number; prefix?: st
 }
 
 function Modal({ children, onClose }: { children: React.ReactNode; onClose?: () => void }) {
+  useScrollLock(true);
   return (
     <motion.div className="modal-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
       <motion.div

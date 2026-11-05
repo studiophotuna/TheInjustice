@@ -28,14 +28,24 @@ function vibrate(ms: number | number[]) {
   }
 }
 
-/** One sound per action, picked by what happened (a fight beats money beats a bad outcome). */
-function soundFor(events: GameEvent[], cashDelta: number) {
-  if (events.some((e) => e.fight)) play("hit");
-  else if (events.some((e) => e.tone === "story" && /^(You are now|New chapter|Promoted|You're now)/.test(e.text))) play("promo");
-  else if (events.some((e) => e.tone === "story")) play("story");
-  else if (cashDelta > 0) play("cash");
-  else if (events.some((e) => e.tone === "bad")) play("bad");
-  else play("tap");
+/** One sound per action, picked by what happened. */
+function soundFor(body: Record<string, unknown>, events: GameEvent[], cashDelta: number) {
+  const text = events.map((e) => e.text).join(" ");
+  const bad = events.some((e) => e.tone === "bad");
+  if (events.some((e) => e.fight)) return play("fight");
+  if (bad && /\b(cell|jail|locked up|behind bars|arrested|custody)\b/i.test(text)) return play("jail");
+  if (bad && /\b(busted|police|cops?|caught)\b/i.test(text)) return play("busted");
+  // Street crime: footsteps as you make your move, then the take (or the thud).
+  if (body.op === "crime") {
+    play("run");
+    return play(bad ? "bad" : "coin", 0.9);
+  }
+  if (events.some((e) => e.tone === "story" && /^(You are now|Graduation|Promoted)/.test(e.text))) return play("promo");
+  if (events.some((e) => e.tone === "story")) return play("story");
+  if (body.type === "claim_daily" || body.type === "collect_property" || cashDelta >= 200) return play("cash");
+  if (cashDelta > 0) return play("coin");
+  if (bad) return play("bad");
+  play("tap");
 }
 
 export const LAST_JOB = "cns_last_job";
@@ -151,7 +161,7 @@ export function useGame() {
           else if (events.some((e) => e.tone === "bad")) floatText("Busted!", "bad");
         }
         vibrate(delta > 0 ? 15 : 40);
-        soundFor(events, delta);
+        soundFor(body, events, delta);
         return v;
       } catch {
         pushToasts([{ tone: "bad", text: "Connection lost. Try again." }]);
@@ -187,7 +197,7 @@ export function useGame() {
           setFight(fightEvent.fight);
           setTimeout(() => pushToasts(events), 2600);
         } else pushToasts(events);
-        soundFor(events, 0);
+        soundFor(body, events, 0);
         return data.view as PublicView;
       } catch {
         pushToasts([{ tone: "bad", text: "Connection lost. Try again." }]);
