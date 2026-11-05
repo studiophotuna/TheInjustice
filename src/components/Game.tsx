@@ -24,6 +24,8 @@ import {
   Zap,
   ShieldCheck,
   Search,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { FightSummary } from "@/game/types";
@@ -39,6 +41,8 @@ import { HomeTab } from "./home";
 import { AwayRecap, GuestChip, LiveRail, setPeopleSection } from "./pulse";
 import { QuickBar } from "./quickbar";
 import { CommandPalette } from "./palette";
+import { EncounterDock, openEncounter } from "./encounter";
+import { play, setSound, soundOn } from "./sfx";
 import { fmt, useGame, type GameApi } from "./useGame";
 
 type Tab = "home" | "jobs" | "fight" | "shop" | "people" | "city" | "profile";
@@ -152,6 +156,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
     if (kind === "story") setReading(id);
+    if (kind === "encounter") openEncounter();
     // "people:crew" opens People on a section (people, chat, crew, inbox).
     if (kind === "people") {
       setTab("people");
@@ -254,6 +259,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
         <LiveRail game={game} go={go} onRead={setReading} />
       </aside>
 
+      <EncounterDock game={game} />
       <QuickBar game={game} />
       <CommandPalette game={game} go={go} open={paletteOpen} setOpen={setPaletteOpen} />
 
@@ -357,6 +363,7 @@ function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonN
         <button className="hud-search" onClick={onSearch} aria-label="Search and do anything (Ctrl+K)" title="Do anything (Ctrl+K)">
           <Search size={18} />
         </button>
+        <SoundToggle />
         <div className="hud-cash">
           <Delta value={view.cash} prefix="$" />
           <Counter value={view.cash} className="cash" prefix="$" />
@@ -385,6 +392,22 @@ function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonN
         {view.onBail && <span className="tag tag-warn">On bail</span>}
       </div>
     </header>
+  );
+}
+
+/** Sound on/off, remembered on this device. */
+function SoundToggle() {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const sync = () => setOn(soundOn());
+    sync();
+    window.addEventListener("conspira:sound", sync);
+    return () => window.removeEventListener("conspira:sound", sync);
+  }, []);
+  return (
+    <button className="hud-search hud-sound" onClick={() => { setSound(!on); if (!on) play("cash"); }} aria-label={on ? "Mute sound" : "Turn sound on"} title={on ? "Sound on" : "Sound off"}>
+      {on ? <Volume2 size={17} /> : <VolumeX size={17} />}
+    </button>
   );
 }
 

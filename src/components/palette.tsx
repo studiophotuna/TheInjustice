@@ -3,6 +3,7 @@
 import { CornerDownLeft, Search } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { setSound, soundOn } from "./sfx";
 import { fmt, type GameApi } from "./useGame";
 
 type Cmd = { id: string; group: string; label: string; hint?: string; keywords?: string; run: () => unknown; block?: string | null };
@@ -94,6 +95,7 @@ export function CommandPalette({ game, go, open, setOpen }: { game: GameApi; go:
         run: () => game.act({ type: "buy", itemId: s.id }),
       })),
       { id: "daily", group: "Quick", label: "Collect daily reward", block: view.daily.canClaim ? null : "Already collected today.", run: () => game.act({ type: "claim_daily" }) },
+      { id: "sound", group: "Settings", label: soundOn() ? "Turn sound off" : "Turn sound on", keywords: "mute audio volume sfx", run: () => setSound(!soundOn()) },
       { id: "medkit", group: "Quick", label: "Use a medkit", block: view.inventory.some((x) => x.id === "medkit") ? null : "You have no medkits.", run: () => game.act({ type: "use", itemId: "medkit" }) },
       ...online.flatMap((o) => [
         { id: `atk-${o.id}`, group: "People out now", label: `Attack ${o.name}`, hint: o.regular ? "Regular" : undefined, keywords: "fight", block: o.canAttack, run: () => game.social({ op: "attack", targetId: o.id }) },

@@ -178,6 +178,9 @@ export interface Player {
   trophiesPublic?: boolean;
   /** Last time the player had the game open (for "online now"). */
   seenAt?: number;
+  /** A regular who stopped you in the street with a choice (see encounters.ts). */
+  encounter?: { id: string; key: string; country: CountryId; name: string; district: string; at: number; expiresAt: number } | null;
+  encounterAt?: number;
   /** Set on street regulars (characters the game runs). See regulars.ts. */
   regular?: { country: CountryId; key: string; slot: number };
   /** Recent repetitions of each job or exercise (fades over time), for diminishing returns. */
@@ -662,7 +665,8 @@ export type Action =
   | { type: "drug_sell"; drug: "herb" | "pills" | "powder"; qty: number }
   | { type: "buy_supplies"; qty: number }
   | { type: "cook"; drug: "herb" | "pills" | "powder" }
-  | { type: "tutorial"; step: string };
+  | { type: "tutorial"; step: string }
+  | { type: "encounter"; choice: number };
 
 export class GameError extends Error {}
 

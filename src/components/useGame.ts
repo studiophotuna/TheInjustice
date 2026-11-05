@@ -1,5 +1,6 @@
 "use client";
 
+import { play } from "./sfx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FightSummary, GameEvent } from "@/game/types";
 import type { PublicView } from "@/game/view";
@@ -25,6 +26,16 @@ function vibrate(ms: number | number[]) {
   } catch {
     /* unsupported */
   }
+}
+
+/** One sound per action, picked by what happened (a fight beats money beats a bad outcome). */
+function soundFor(events: GameEvent[], cashDelta: number) {
+  if (events.some((e) => e.fight)) play("hit");
+  else if (events.some((e) => e.tone === "story" && /^(You are now|New chapter|Promoted|You're now)/.test(e.text))) play("promo");
+  else if (events.some((e) => e.tone === "story")) play("story");
+  else if (cashDelta > 0) play("cash");
+  else if (events.some((e) => e.tone === "bad")) play("bad");
+  else play("tap");
 }
 
 export const LAST_JOB = "cns_last_job";
@@ -140,6 +151,7 @@ export function useGame() {
           else if (events.some((e) => e.tone === "bad")) floatText("Busted!", "bad");
         }
         vibrate(delta > 0 ? 15 : 40);
+        soundFor(events, delta);
         return v;
       } catch {
         pushToasts([{ tone: "bad", text: "Connection lost. Try again." }]);
@@ -175,6 +187,7 @@ export function useGame() {
           setFight(fightEvent.fight);
           setTimeout(() => pushToasts(events), 2600);
         } else pushToasts(events);
+        soundFor(events, 0);
         return data.view as PublicView;
       } catch {
         pushToasts([{ tone: "bad", text: "Connection lost. Try again." }]);

@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.2.0: every move has an agenda
+
+- **Street encounters:** now and then while you work (about one every half hour of play,
+  never in your first few jobs), a regular stops you with a choice. Their face slides in above
+  the quick bar on any screen; open it to hear them out. Ten situations, each tied to the
+  regular's career: a hot watch from a collector, off-the-books painkillers from a nurse, a cop
+  who wants a name, a back-room card game, a found wallet, a law clerk selling a page from your
+  old case file, a banker offering a quick clean, a vigilante asking for help, a collection job,
+  a soldier who wants to spar. Each choice shows what it costs up front; what it really costs
+  (heat, conscience, reputation, a clue) you find out after. They move on after 20 minutes.
+- **The board · who framed you (City):** your story as an evidence wall. Each chapter is a piece
+  of evidence tied with red string to the suspects it names; suspects stay "Unknown" until a
+  chapter unmasks them. Missing evidence says exactly how to find it ("Reach rank 3 in the
+  Courts career"), so the board is also your long-term goal list. Clues bought on the street
+  are pinned there too.
+- **Sound:** short synthesized effects (coins, a punch, a rising chord for promotions, a low
+  one for story moments). Toggle with the speaker button in the HUD (desktop) or "sound" in the
+  do-anything search.
+
 ## 2.1.0: faces, a live map and do-anything search
 
 - **Faces for the street regulars:** all 40 regulars have their own drawn portrait (the

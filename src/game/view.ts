@@ -1,3 +1,4 @@
+import { encounterView } from "./encounters";
 import { playerMaxHp, woundHint } from "./wounds";
 import { careerRecordView } from "./career";
 import { publicProfile } from "./profile";
@@ -138,6 +139,8 @@ export interface PublicView {
   /** Past careers, legacies, and whether you can leave the current one. */
   careerRecord: ReturnType<typeof import("./career").careerRecordView>;
   woundHint: string | null;
+  /** A regular who stopped you with a choice. */
+  encounter: ReturnType<typeof encounterView>;
   /** Doctors: your surgery fee, if you're operating. */
   surgeryFee: number | null;
   /** Your intro and photo. */
@@ -266,6 +269,7 @@ export function toView(p: Player, now: number): PublicView {
     hp: Math.floor(p.hp),
     maxHp: playerMaxHp(p),
     woundHint: woundHint(p),
+    encounter: encounterView(p, now),
     surgeryFee: p.surgeryFee ?? null,
     hospitalMs: hospital ? p.hospitalUntil - now : 0,
     fullMs: Math.max(0, p.fullUntil - now),

@@ -6,7 +6,8 @@ import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { Scene, type SceneKind } from "./art/Scenes";
 import { CityHall } from "./cityhall";
 import { BackAlleyCard, CasesPanel, JailCard, Sightings, useHub, Yard } from "./community";
-import { AcademyContent, BankAccountCard, DocMercyCard, LoansCard, StoryCard, TravelContent } from "./tabs";
+import { AcademyContent, BankAccountCard, DocMercyCard, LoansCard, TravelContent } from "./tabs";
+import { ConspiracyBoard } from "./board";
 import { LaunderCard, StreetMarket } from "./underworld";
 import type { GameApi } from "./useGame";
 
@@ -75,7 +76,7 @@ export function CityPlaces({ game, place, setPlace, onRead }: { game: GameApi; p
           </motion.button>
         ))}
       </div>
-      <StoryCard game={game} onRead={onRead} />
+      <ConspiracyBoard game={game} onRead={onRead} />
     </div>
   );
 }

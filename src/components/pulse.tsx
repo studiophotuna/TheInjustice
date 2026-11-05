@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Briefcase, Coins, Gift, Radio, Siren, Sparkles, X, Zap } from "lucide-react";
+import { ArrowRight, Briefcase, Coins, Gift, MessageCircle, Radio, Siren, Sparkles, X, Zap } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { OnlineNow } from "./online";
@@ -78,6 +78,10 @@ export function RightNow({ game, go, needs, onRead }: { game: GameApi; go: (t: s
       cta: n.cta,
       run: () => go(n.go),
     });
+  }
+  if (view.encounter) {
+    const e = view.encounter;
+    moves.push({ key: "encounter", icon: MessageCircle, tone: "urgent", title: `${e.name} wants a word.`, text: `${fmt(e.expiresAt - Date.now())} before they move on`, cta: "Hear them out", run: () => window.dispatchEvent(new Event("conspira:encounter")) });
   }
   if (view.sightings.length) {
     moves.push({ key: "sighting", icon: Siren, tone: "urgent", title: "You saw something. The police would like to know.", cta: "Decide", run: () => go("people:inbox") });

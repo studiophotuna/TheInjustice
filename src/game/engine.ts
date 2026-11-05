@@ -2,6 +2,7 @@
 // API route today and a database function (or worker) later without changes.
 
 import { regularUpkeep } from "./regulars";
+import { chooseEncounter, maybeEncounter } from "./encounters";
 import { addWound, healWounds, playerMaxHp } from "./wounds";
 import { careerGapBlock, leaveCareer, legacyPayBonus, veteranFactor } from "./career";
 import { updateProfile } from "./profile";
@@ -786,6 +787,7 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
   }
   checkProgress(p, events);
   maybeMugging(p, job, now, rng, events);
+  if (!inHospital(p, now)) events.push(...maybeEncounter(p, countryOf(p), now, rng, totalJobs(p)));
 }
 
 /** Income waiting at a property, capped so absent owners don't pile up forever. */
@@ -1183,6 +1185,9 @@ export function applyAction(p: Player, action: Action, now: number, rng: Rng, ct
       break;
     case "tutorial":
       events.push(...claimTutorial(p, action.step));
+      break;
+    case "encounter":
+      events.push(...chooseEncounter(p, Number(action.choice), now, rng));
       break;
     case "create":
       throw new GameError("You already have a character.");

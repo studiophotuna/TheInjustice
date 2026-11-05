@@ -88,6 +88,11 @@ export function parseAction(body: unknown): Action {
       return { type: "cook", drug: b.drug as "herb" };
     case "tutorial":
       return { type: "tutorial", step: str(b.step) };
+    case "encounter": {
+      const choice = Number(b.choice);
+      if (!Number.isInteger(choice) || choice < 0 || choice > 5) throw new GameError("Bad request.");
+      return { type: "encounter", choice };
+    }
     case "bank": {
       const op = b.op;
       if (op !== "open" && op !== "deposit" && op !== "withdraw") throw new GameError("Bad request.");
