@@ -15,8 +15,6 @@ type Person = {
   path: string | null;
   photo?: string | null;
   status: string;
-  read: string;
-  danger: number;
   canAttack: string | null;
   canCrime: Record<CrimeKind, string | null>;
   regular?: boolean;
@@ -24,7 +22,6 @@ type Person = {
   tie?: { label: string; tone: string; memo: string } | null;
 };
 
-const DANGER = ["Easy", "Favorable", "Even", "Risky", "Deadly"];
 /** Each district gets its own tint on the board. */
 const TINTS = ["#2b3a55", "#4a2f3a", "#2e4a3c", "#4a4130", "#3a2f52", "#283f4a", "#4a3427"];
 
@@ -160,7 +157,7 @@ export function CityMap({ game, go, feed }: { game: GameApi; go: (t: string) => 
           {pins.map(({ p, x, y }, k) => (
             <span key={p.id} className="map-pos" style={{ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` }}>
             <motion.button
-              className={`map-pin d${p.danger}${p.heavy ? " heavy" : ""}${sel?.kind === "person" && sel.id === p.id ? " on" : ""}`}
+              className={`map-pin${p.heavy ? " heavy" : ""}${sel?.kind === "person" && sel.id === p.id ? " on" : ""}`}
               style={{ ["--rim" as string]: p.path ? PATH_LOOKS[p.path]?.rim : "#8a93a6" }}
               initial={{ scale: 0 }}
               animate={{ scale: 1, y: [0, -2, 0] }}
@@ -184,9 +181,8 @@ export function CityMap({ game, go, feed }: { game: GameApi; go: (t: string) => 
                 <b className="map-name">{person.name}</b>
                 {person.heavy ? <span className="chip chip-heavy">👑 Heavy</span> : person.regular && <span className="chip chip-regular">Regular</span>}
                 {person.tie && <span className={`tie-badge tie-${person.tie.tone}`}>{person.tie.label}</span>}
-                <span className={`danger-pill d${person.danger}`}>{DANGER[person.danger]}</span>
               </div>
-              <span className="muted fine">{person.title} · {districts[placeOf(person.id)]?.name} · “{person.read}”</span>
+              <span className="muted fine">{person.title} · {districts[placeOf(person.id)]?.name}</span>
               {person.tie && <span className={`tie tie-${person.tie.tone} fine`}>{person.tie.memo}</span>}
               <div className="row map-actions">
                 <button className="btn btn-danger btn-sm" disabled={game.busy || !!person.canAttack} title={person.canAttack ?? ""} onClick={() => act("attack", person.id)}><Swords size={14} /> Attack</button>

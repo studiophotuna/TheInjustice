@@ -218,8 +218,6 @@ function JobCard({ job, energy, blocked, best, flash, onWork }: {
 
 // ─── Fight ─────────────────────────────────────────────────────────────────
 
-const DANGER = ["Easy", "Favorable", "Even", "Risky", "Deadly"];
-
 export function FightTab({ game }: { game: GameApi }) {
   const view = game.view!;
   const blocked = game.busy || game.live!.hospital > 0;
@@ -229,21 +227,17 @@ export function FightTab({ game }: { game: GameApi }) {
       <div className="callout glass">
         <Eye size={18} />
         <p>
-          You never see the numbers. Trust your gut. It gets sharper the more you notice things.{" "}
+          Nobody wears their strength on their sleeve. Size them up from who they are and what they do.{" "}
           <b className="text-red">Losing badly to someone far stronger can kill you.</b>
         </p>
       </div>
       <motion.div className="fight-grid" variants={list} initial="hidden" animate="show">
         {view.fights.map((n) => (
-          <motion.article key={n.id} variants={item} className={`fighter ${n.locked ? "is-locked" : ""} danger-${n.danger}`}>
+          <motion.article key={n.id} variants={item} className={`fighter ${n.locked ? "is-locked" : ""}`}>
             <NpcPortrait id={n.id} className="fighter-portrait" />
             <div className="fighter-body">
               <h3>{n.name}</h3>
               <p className="muted">{n.description}</p>
-              <div className="gut">
-                <span className={`danger-pill d${n.danger}`}>{n.danger >= 4 && <Skull size={12} />} {DANGER[n.danger]}</span>
-                <span className="muted">“{n.read}”</span>
-              </div>
               {n.locked ? (
                 <p className="job-lock"><Lock size={12} /> {n.locked}</p>
               ) : (

@@ -319,7 +319,7 @@ export async function GET(req: Request) {
         const prof = profileFor(p, o, now);
         return {
           id: o.id, name: o.name, photo: o.profile?.photo ?? null, title: prof.title, path: o.path,
-          out: outIds.has(o.id), status: prof.status, danger: prof.danger, read: prof.read, canAttack: prof.canAttack,
+          out: outIds.has(o.id), status: prof.status, canAttack: prof.canAttack,
           hours: defFor(o)?.hours ?? null, reputation: o.reputation, tie: o.regular ? tieView(p, o.regular.country, o.regular.key) : null,
         };
       });
@@ -360,8 +360,6 @@ export async function GET(req: Request) {
             crewTag: o.crewId ? tags.get(o.crewId) ?? null : null,
             status: prof.status,
             protected: prof.protected,
-            read: prof.read,
-            danger: prof.danger,
             canAttack: prof.canAttack,
             canCrime: Object.fromEntries(CRIME_KINDS.map((k) => [k, crimeBlock(p, o, k, now)])),
             bounty: prof.bounty,

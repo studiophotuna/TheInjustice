@@ -382,8 +382,6 @@ function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonN
       <div className="hud-tags">
         <span className={`tag tag-heat heat-${heatTone}`}><Flame size={12} /> {view.heatLabel}</span>
         <span className="tag tag-rep"><Star size={12} /> {view.reputation} rep</span>
-        <span className="tag"><MapPin size={12} /> {view.location.city}</span>
-        <span className="tag"><Home size={12} /> {view.housing}</span>
         {view.immuneUntil > Date.now() && (
           <span className="tag tag-good" title="You survived a fight. Nobody can attack or mug you for a while. Attacking someone ends it.">
             <ShieldCheck size={12} /> Safe {fmt(view.immuneUntil - Date.now())}

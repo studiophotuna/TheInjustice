@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.5.0: the lineup
+
+- **No more odds.** The Easy / Favorable / Even / Risky / Deadly labels and the "gut read" lines
+  are gone everywhere (People, the map, Big fish, street fights), and the server no longer sends
+  them. You size people up from who they are: their career, their reputation, what the street
+  calls them.
+- **People is a lineup:** everyone stands against a height chart, faces first, with a number
+  placard, their crew tag, what they think of you, and a light for who's out now. Tap a face to
+  pull their file: bio, what they remember about you, one big main action and everything else
+  grouped below.
+- **Less noise:**
+  - "Online now" is gone; the map and the lineup already show who's out.
+  - The live ticker is only on Home (and the desktop side panel).
+  - Home loses its Career and Inbox cards (the HUD ring and People cover them).
+  - The HUD shows only heat and reputation.
+  - The Home banner is shorter.
+
 ## 2.4.0: big fish
 
 - **Fixed: strong players couldn't attack anyone.** Two things combined:

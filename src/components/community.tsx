@@ -5,8 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Ban, Crown, Eye, EyeOff, ShieldAlert, ShieldCheck, FileSearch, Footprints, Gavel, Flame, Hand, Handshake, Landmark, MessagesSquare, Moon, Stethoscope, Inbox, Lock, MessageSquare, Search, Send, Shield, Siren, Swords, UserCheck, Users, Vault } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
-import { OnlineNow } from "./online";
-import { StreetFeed, takePeopleSection, usePulse } from "./pulse";
+import { takePeopleSection } from "./pulse";
 import { Scene } from "./art/Scenes";
 import type { GameApi } from "./useGame";
 
@@ -20,8 +19,6 @@ type Profile = {
   status: "ok" | "hospital" | "traveling" | "dead";
   crewTag: string | null;
   protected: boolean;
-  read: string;
-  danger: number;
   lastSeen: number;
   canAttack: string | null;
   canVouch: string | null;
@@ -243,7 +240,6 @@ const POLICIES = [
 ] as const;
 type Message = { id: number; channel: string; authorId: string; authorName: string; body: string; at: number };
 
-const DANGER = ["Easy", "Favorable", "Even", "Risky", "Deadly"];
 const STATUS: Record<Profile["status"], string> = { ok: "", hospital: "In the clinic", traveling: "On the road", dead: "Gone" };
 
 function ago(t: number) {
@@ -286,7 +282,6 @@ export function CommunityTab({ game }: { game: GameApi }) {
   type Section = "people" | "chat" | "crew" | "inbox";
   const [section, setSection] = useState<Section>(() => (takePeopleSection() as Section | null) ?? "people");
   const { hub, error, social } = useHub(game);
-  const pulse = usePulse(view.location.country);
   useEffect(() => {
     const on = (e: Event) => {
       const s = (e as CustomEvent<string>).detail as Section;
@@ -320,8 +315,6 @@ export function CommunityTab({ game }: { game: GameApi }) {
         ))}
       </div>
       {error && <p className="form-error">{error}</p>}
-      {section === "people" && <StreetFeed feed={pulse?.feed} />}
-      {section === "people" && <OnlineNow game={game} />}
       {section === "people" && <People game={game} hub={hub} social={social} />}
       {section === "chat" && hub && <Chat game={game} hub={hub} />}
       {section === "crew" && <CrewPanel game={game} hub={hub} social={social} />}
@@ -419,11 +412,16 @@ function personActions(game: GameApi, hub: Hub, p: Profile, social: (b: Record<s
   return { primary, groups };
 }
 
+/**
+ * The lineup: everyone in the city stands against the height chart, faces first. No stats, no
+ * odds; you size people up from who they are. Tap someone to pull their file and act.
+ */
 function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social: (b: Record<string, unknown>) => Promise<unknown> }) {
   const view = game.view!;
-  const [open, setOpen] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
   if (!hub) return <p className="muted">Looking around {view.location.city}…</p>;
-  if (!hub.players.length) {
+  const people = hub.players;
+  if (!people.length) {
     return (
       <section className="card empty">
         <Users size={28} />
@@ -431,83 +429,106 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
       </section>
     );
   }
+  const open = people.find((p) => p.id === openId) ?? null;
+  const outNow = (p: Profile) => (p.regular ? p.regular.out : Date.now() - p.lastSeen < 10 * 60_000);
   return (
-    <div className="people">
-      <h3 className="card-title list-title"><Users size={16} /> Everyone in {view.location.city}</h3>
-      <p className="muted">Most recently active first. Tap ⋯ for everything you can do.</p>
-      {hub.players.map((p) => {
-        const { primary, groups } = personActions(game, hub, p, social);
-        const expanded = open === p.id;
-        const more = groups.reduce((n, g) => n + g.acts.length, 0);
-        return (
-          <motion.article key={p.id} className={`person compact${expanded ? " open" : ""}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-            <PlayerAvatar name={p.name} path={p.path} photo={p.photo} className="avatar-md" />
-            <div className="person-body">
-              <div className="person-head">
-                <b>{p.name}</b>
-                {p.crewTag && <span className="crew-tag">[{p.crewTag}]</span>}
-                {p.regular?.heavy && <span className="chip chip-heavy" title="One of the city's heavies: dangerous, well-known, and carrying real money.">👑 Heavy</span>}
-                {p.regular && <span className="chip chip-regular" title="A street regular: one of the city's characters, run by the game.">Regular{p.regular.out ? " · out now" : ""}</span>}
-                {p.protected && <span className="chip chip-green"><Shield size={11} /> New</span>}
-                {p.bounty > 0 && <span className="chip chip-red">Wanted · ${p.bounty}</span>}
-                {p.rat && <span className="chip chip-red" title="Walked out on the family. Fair game for their old crew.">🐀 Rat</span>}
-                {p.trophies?.map((t, i) => (
-                  <span key={i} className="chip chip-gold" title={`${t.label}, ${t.seasonName}`}>🏆 #{t.place} {t.label}</span>
-                ))}
-                {STATUS[p.status] && <span className="chip">{STATUS[p.status]}</span>}
-              </div>
-              <p className="muted person-line" style={{ color: p.path ? PATH_LOOKS[p.path]?.rim : undefined }}>
-                {p.title} · ★ {p.reputation} · {p.regular ? (p.regular.out ? "out now" : "off the street") : `seen ${ago(p.lastSeen)}`}
-                {p.streetTitle && <em className="street-title"> · {p.streetTitle}</em>}
-              </p>
-              {p.bio && <p className={`person-bio${expanded ? "" : " clamp"}`}>“{p.bio}”</p>}
-              {p.tie && (
-                <p className={`tie tie-${p.tie.tone}`}>
-                  <span className="tie-badge">{p.tie.label}</span> <span className="tie-memo">{p.tie.memo}</span>
-                </p>
-              )}
-              <div className="person-actions">
-                <span className={`danger-pill d${p.danger}`} title={p.read}>{DANGER[p.danger]}</span>
-                {primary ? (
-                  <button className={`btn btn-sm ${primary.danger ? "btn-danger" : "btn-primary"}`} disabled={game.busy} title={primary.title} onClick={primary.run}>
-                    {primary.label}
-                  </button>
-                ) : (
-                  <span className="fine muted person-lock"><Lock size={11} /> {p.canAttack ?? "Nothing to do here right now."}</span>
-                )}
-                {more > 0 && (
-                  <button className="btn btn-ghost btn-sm more-btn" aria-expanded={expanded} onClick={() => setOpen(expanded ? null : p.id)}>
-                    {expanded ? "Less" : `⋯ ${more}`}
-                  </button>
-                )}
-                {!p.regular && <ReportButton game={game} targetId={p.id} targetName={p.name} />}
-              </div>
-              <AnimatePresence initial={false}>
-                {expanded && (
-                  <motion.div className="action-sheet" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
-                    <p className="muted fine">“{p.read}”</p>
-                    {groups.map((g) => (
-                      <div key={g.id} className="action-group">
-                        <span className="crime-label">{g.label}</span>
-                        <div className="row wrap">
-                          {g.acts.map((a) => (
-                            <button key={a.key} className={`btn btn-sm ${a.danger ? "btn-danger" : "btn-ghost"}`} disabled={game.busy} title={a.title} onClick={a.run}>
-                              {a.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                    {p.contract && hub.hitmen.length > 0 && <ContractButton game={game} target={p} hitmen={hub.hitmen} social={social} />}
-                    {p.canAttack && <p className="job-lock"><Lock size={11} /> {p.canAttack}</p>}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </motion.article>
-        );
-      })}
+    <div className="lineup-wrap">
+      <div className="lineup-head">
+        <h3 className="card-title list-title"><Users size={16} /> The lineup · {view.location.city}</h3>
+        <span className="fine muted">{people.filter(outNow).length} out on the street</span>
+      </div>
+      <div className="lineup">
+        {people.map((p, i) => (
+          <button key={p.id} className={`suspect-card${outNow(p) ? " out" : ""}${p.status !== "ok" ? " away" : ""}`} onClick={() => setOpenId(p.id)}>
+            <span className="lineup-wall" aria-hidden />
+            <PlayerAvatar name={p.name} path={p.path} photo={p.photo} className="lineup-face" />
+            <span className="placard">
+              <i>No. {String(i + 1).padStart(2, "0")}</i>
+              <b>{p.name}</b>
+            </span>
+            <span className="lineup-tags">
+              {p.regular?.heavy && <span className="tag-mini heavy">👑</span>}
+              {p.crewTag && <span className="tag-mini">[{p.crewTag}]</span>}
+              {p.tie && <span className={`tag-mini tie-${p.tie.tone}`}>{p.tie.label}</span>}
+              {p.bounty > 0 && <span className="tag-mini wanted">${p.bounty}</span>}
+            </span>
+            <span className={`presence ${p.status !== "ok" ? "away" : outNow(p) ? "on" : ""}`}>
+              {p.status !== "ok" ? STATUS[p.status] : outNow(p) ? "Out now" : p.regular ? "Off the street" : `Seen ${ago(p.lastSeen)}`}
+            </span>
+          </button>
+        ))}
+      </div>
+      <AnimatePresence>{open && <PersonFile key={open.id} game={game} hub={hub} p={open} social={social} onClose={() => setOpenId(null)} />}</AnimatePresence>
     </div>
+  );
+}
+
+/** Someone's file: who they are, what they think of you, and everything you can do. */
+function PersonFile({ game, hub, p, social, onClose }: { game: GameApi; hub: Hub; p: Profile; social: (b: Record<string, unknown>) => Promise<unknown>; onClose: () => void }) {
+  const { primary, groups } = personActions(game, hub, p, social);
+  const run = async (fn: () => unknown) => {
+    await fn();
+  };
+  return (
+    <motion.div className="file-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
+      <motion.div
+        className="person-file"
+        role="dialog"
+        aria-label={p.name}
+        initial={{ y: 60, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 40, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 280, damping: 28 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button className="file-x" aria-label="Close" onClick={onClose}>×</button>
+        <div className="file-top">
+          <PlayerAvatar name={p.name} path={p.path} photo={p.photo} className="file-face" />
+          <div className="file-who">
+            <b className="file-name">{p.name}</b>
+            <span className="file-title" style={{ color: p.path ? PATH_LOOKS[p.path]?.rim : undefined }}>
+              {p.title}{p.crewTag ? ` · [${p.crewTag}]` : ""}
+            </span>
+            <span className="row file-tags">
+              {p.regular?.heavy && <span className="chip chip-heavy">👑 Heavy</span>}
+              {p.regular && <span className="chip chip-regular">Regular</span>}
+              {p.protected && <span className="chip chip-green"><Shield size={11} /> New in town</span>}
+              {p.rat && <span className="chip chip-red">🐀 Rat</span>}
+              {p.bounty > 0 && <span className="chip chip-red">Wanted · ${p.bounty}</span>}
+              {p.trophies?.map((t, i) => <span key={i} className="chip chip-gold">🏆 #{t.place} {t.label}</span>)}
+            </span>
+          </div>
+        </div>
+        {p.bio && <p className="file-bio">“{p.bio}”</p>}
+        {p.streetTitle && <p className="fine muted">The street calls them: <em>{p.streetTitle}</em></p>}
+        {p.tie && (
+          <p className={`tie tie-${p.tie.tone}`}>
+            <span className="tie-badge">{p.tie.label}</span> <span className="tie-memo">{p.tie.memo}</span>
+          </p>
+        )}
+        {primary ? (
+          <button className={`btn btn-lg file-primary ${primary.danger ? "btn-danger" : "btn-primary"}`} disabled={game.busy} title={primary.title} onClick={() => run(primary.run)}>
+            {primary.label}
+          </button>
+        ) : (
+          p.canAttack && <p className="job-lock"><Lock size={11} /> {p.canAttack}</p>
+        )}
+        {groups.map((g) => (
+          <div key={g.id} className="action-group">
+            <span className="crime-label">{g.label}</span>
+            <div className="row wrap">
+              {g.acts.map((a) => (
+                <button key={a.key} className={`btn btn-sm ${a.danger ? "btn-danger" : "btn-ghost"}`} disabled={game.busy} title={a.title} onClick={() => run(a.run)}>
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+        {p.contract && hub.hitmen.length > 0 && <ContractButton game={game} target={p} hitmen={hub.hitmen} social={social} />}
+        {!p.regular && <div className="file-foot"><ReportButton game={game} targetId={p.id} targetName={p.name} /></div>}
+      </motion.div>
+    </motion.div>
   );
 }
 

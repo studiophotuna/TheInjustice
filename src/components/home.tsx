@@ -8,7 +8,6 @@ import type { CountryId, PathId } from "@/game/types";
 import { PATH_LOOKS } from "./art/Portraits";
 import { Scene, type CharacterKind, type SceneKind } from "./art/Scenes";
 import { BackAlleyCard, JailCard, Sightings } from "./community";
-import { OnlineNow } from "./online";
 import { BigFish, RightNow, StreetFeed, usePulse } from "./pulse";
 import { CityMap } from "./citymap";
 import { TutorialCard } from "./underworld";
@@ -87,52 +86,11 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
       <BackAlleyCard game={game} />
       <Sightings game={game} compact />
 
-      <div className="home-grid">
-        <section className="card">
-          <h3 className="card-title"><Briefcase size={16} /> Career</h3>
-          {view.path && view.ladder ? (
-            <>
-              <p style={{ color: PATH_LOOKS[view.path.id]?.rim }}><b>{view.path.rank}</b> · {view.path.name}</p>
-              <div className="rank-pips" style={{ ["--path" as string]: PATH_LOOKS[view.path.id]?.rim }}>
-                {view.ladder.ranks.map((r, i) => <span key={r} className={i < view.ladder!.current ? "on" : ""} title={r} />)}
-              </div>
-              <p className="muted">{nextRank ? `Next: ${nextRank}. ${view.path.promotion ?? ""}` : "Top of the ladder."}</p>
-            </>
-          ) : view.application ? (
-            <>
-              <p>Application to <b>{view.application.schoolName}</b></p>
-              <p className="muted">{view.application.status === "pending" ? `Decision in ${fmt(live.application)}.` : "A letter is waiting for you."}</p>
-              <button className="btn btn-ghost btn-sm" onClick={() => go("place:academy")}>Open</button>
-            </>
-          ) : (
-            <>
-              <p className="muted">No career yet. Pay for school, get someone to vouch for you, or impress the right person on the street.</p>
-              <button className="btn btn-ghost btn-sm" onClick={() => go("place:academy")}>Visit the Academy</button>
-            </>
-          )}
-        </section>
-      </div>
-
       <CityMap game={game} go={go} feed={pulse?.feed} />
       <BigFish game={game} heavies={pulse?.heavies} go={go} />
 
       <DailyCard game={game} />
 
-      <section className="card">
-        <div className="row between">
-          <h3 className="card-title"><Inbox size={16} /> Inbox</h3>
-          <button className="btn btn-ghost btn-sm" onClick={() => go("tab:people")}>Open People</button>
-        </div>
-        {recent.length === 0 ? (
-          <p className="muted">Quiet. Nobody has come looking for you. Yet.</p>
-        ) : (
-          <ul className="log">
-            {recent.map((n) => (
-              <li key={n.id} className={n.tone}>{n.text}</li>
-            ))}
-          </ul>
-        )}
-      </section>
     </div>
   );
 }

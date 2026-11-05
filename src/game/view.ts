@@ -24,9 +24,8 @@ import { CHAPTERS } from "./content/story";
 import { SCHOOL_BY_ID, SCHOOLS } from "./content/schools";
 import { COUNTRIES, COUNTRY_BY_ID, TRAVEL_MODES, tripCost, tripMs } from "./content/world";
 import type { Arrival, CountryId, TravelMode } from "./types";
-import { GUT_READS } from "./combat";
 import { PROPERTIES } from "./content/properties";
-import { countryOf, dayKey, propertyIncome, FIGHT_ENERGY, inHospital, itemPrice, jobLock, scout } from "./engine";
+import { countryOf, dayKey, propertyIncome, FIGHT_ENERGY, inHospital, itemPrice, jobLock } from "./engine";
 import { describe, integrityHint } from "./stats";
 import type { DistrictId, LogEntry, PathId, Player } from "./types";
 
@@ -88,9 +87,6 @@ export interface PublicView {
     icon: string;
     description: string;
     district: DistrictId;
-    read: string;
-    /** 0 (easy) … 4 (deadly), from the noisy gut read, not the true odds. */
-    danger: number;
     locked: string | null;
   }[];
   fightEnergy: number;
@@ -393,8 +389,6 @@ export function toView(p: Player, now: number): PublicView {
       icon: n.icon,
       description: n.description,
       district: n.district,
-      read: scout(p, n.id, now),
-      danger: GUT_READS.indexOf(scout(p, n.id, now) as (typeof GUT_READS)[number]),
       locked: lockedDistrict[n.district],
     })),
     fightEnergy: FIGHT_ENERGY,

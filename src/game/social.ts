@@ -8,7 +8,7 @@ import { wearGear } from "./gear";
 import { lyingLow, vendettaAgainst } from "./hit";
 import { breakOmerta, huntsRat, OMERTA, ratOf } from "./family";
 import { BALANCE } from "./balance";
-import { gutRead, GUT_READS, playerFighter, resolveFight } from "./combat";
+import { playerFighter, resolveFight } from "./combat";
 import { PATHS, rankTitle } from "./content/paths";
 import { COUNTRY_BY_ID } from "./content/world";
 import { countryOf, inHospital, inJail } from "./engine";
@@ -164,9 +164,6 @@ export interface PublicProfile {
   status: "ok" | "hospital" | "traveling" | "dead";
   crewId: string | null;
   protected: boolean;
-  /** Viewer's gut feeling about a fight with them. */
-  read: string;
-  danger: number;
   lastSeen: number;
   streetTitle: string | null;
   bounty: number;
@@ -183,7 +180,6 @@ export interface PublicProfile {
 }
 
 export function profileFor(viewer: Player, p: Player, now: number): PublicProfile {
-  const read = gutRead(viewer, playerFighter(viewer, playerMaxHp(viewer)), playerFighter(p, playerMaxHp(p)), `${viewer.id}:${p.id}:${Math.floor(now / 3_600_000)}`);
   let canVouch: string | null = null;
   const vp = viewer.path ? PATHS[viewer.path] : null;
   if (!vp?.school) canVouch = "Only school careers can vouch.";
@@ -201,8 +197,6 @@ export function profileFor(viewer: Player, p: Player, now: number): PublicProfil
     status: p.dead ? "dead" : p.travel ? "traveling" : inHospital(p, now) ? "hospital" : "ok",
     crewId: p.crewId ?? null,
     protected: now < protectedUntil(p),
-    read,
-    danger: GUT_READS.indexOf(read as (typeof GUT_READS)[number]),
     lastSeen: p.seenAt ?? p.tickAt,
     streetTitle: streetTitle(p),
     bounty: bountyOn(p),
