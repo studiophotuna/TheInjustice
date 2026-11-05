@@ -28,6 +28,7 @@ import { launder } from "./money";
 import { claimTutorial } from "./tutorial";
 import { bumpSeason } from "./season";
 import { familyGate, passTest } from "./family";
+import { ownerCut, shopKindFor, shopPrice, type ShopMarkups } from "./shops";
 import { emptyStats, statValue, sv, tierOf, TIER_UP_LINES } from "./stats";
 import {
   GameError,
@@ -717,6 +718,8 @@ export interface ActionContext {
   turf?: Partial<Record<DistrictId, string>>;
   /** Crews allied with the player's crew (they don't charge protection). */
   allies?: string[];
+  /** Player-run shops in the player's city (owner and price level). */
+  shopMarkups?: ShopMarkups;
 }
 
 /** Withholds city tax from income earned in `country`. Returns what's left. */
@@ -813,10 +816,16 @@ export function itemPrice(p: Player, base: number): number {
   return Math.round(base * COUNTRY_BY_ID[countryOf(p)].priceMult);
 }
 
-function buy(p: Player, itemId: string, events: GameEvent[]) {
+function buy(p: Player, itemId: string, events: GameEvent[], ctx: ActionContext = {}, maxPrice?: number) {
   const item = ITEM_BY_ID[itemId];
   if (!item || item.issued || item.contraband) throw new GameError("That item isn't for sale.");
-  const price = itemPrice(p, item.price);
+  const local = itemPrice(p, item.price);
+  const kind = shopKindFor(item.kind);
+  const run = ctx.shopMarkups?.[kind];
+  // Owners buy from their own shelves at the usual price; everyone else pays the owner's price.
+  const own = run?.ownerId === p.id;
+  const price = run && !own ? shopPrice(local, run.markup) : local;
+  if (maxPrice !== undefined && price > maxPrice) throw new GameError(`The owner just changed the prices: it's $${price.toLocaleString()} now. Check again.`);
   if (p.cash < price) throw new GameError("You can't afford that. (Cash on hand only.)");
   if (item.kind === "housing") {
     if (p.housing >= (item.housing ?? 0)) throw new GameError("You already have a better place here.");
@@ -833,6 +842,7 @@ function buy(p: Player, itemId: string, events: GameEvent[]) {
     p.inventory[item.id] = (p.inventory[item.id] ?? 0) + 1;
   }
   p.cash -= price;
+  if (run && !own) p.shopSale = { country: countryOf(p), kind, amount: ownerCut(local, price) };
   events.push({ tone: "good", text: `Bought ${item.icon} ${item.name}.` });
 }
 
@@ -1100,7 +1110,7 @@ function applyActionInner(p: Player, action: Action, now: number, rng: Rng, ctx:
       break;
     }
     case "buy":
-      buy(p, action.itemId, events);
+      buy(p, action.itemId, events, ctx, action.maxPrice);
       break;
     case "use":
       useItem(p, action.itemId, now, events);

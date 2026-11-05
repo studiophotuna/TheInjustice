@@ -680,3 +680,36 @@ button.ready-chip { cursor: pointer; }
 .main > *, .stack > *, main > * { min-width: 0; }
 .card .row { flex-wrap: wrap; }
 .card .row input { min-width: 0; flex: 1 1 140px; }
+
+/* ─── Player-run shops ─────────────────────────────────────────────── */
+.shop-strips { display: grid; gap: 6px; }
+.shop-strip { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; background: var(--surface-2); border: 1px dashed var(--border); font-size: 13px; }
+.shop-strip.run { border-style: solid; }
+.shop-strip.mine { border-style: solid; border-color: rgba(62, 224, 143, 0.45); background: linear-gradient(100deg, rgba(62, 224, 143, 0.10), var(--surface-2)); }
+.shop-strip-icon { font-size: 18px; }
+.shop-strip-text { flex: 1; min-width: 0; line-height: 1.35; }
+.price-tag { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.02em; background: var(--surface-3, rgba(255,255,255,0.06)); }
+.price-tag.up { color: var(--red); background: rgba(255, 90, 90, 0.12); }
+.price-tag.down { color: var(--green); background: rgba(62, 224, 143, 0.12); }
+.price-tag.even { color: var(--muted); }
+.city-shop-list { display: grid; gap: 10px; margin-top: 10px; }
+@media (min-width: 700px) { .city-shop-list { grid-template-columns: 1fr 1fr; } }
+.city-shop { display: grid; gap: 10px; padding: 14px; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--border); align-content: start; }
+.city-shop.mine { border-color: rgba(62, 224, 143, 0.45); background: linear-gradient(160deg, rgba(62, 224, 143, 0.08), var(--surface-2)); }
+.city-shop header { display: flex; gap: 12px; align-items: center; }
+.city-shop h4 { margin: 0; font-size: 15px; }
+.city-shop header p { margin: 2px 0 0; }
+.city-shop-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: rgba(255,255,255,0.05); font-size: 22px; flex: none; }
+.till-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.till-row > div { display: grid; gap: 2px; }
+.till-amount { font-size: 22px; color: var(--green); font-variant-numeric: tabular-nums; }
+.markup-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; }
+.markup-row input[type="range"] { width: 100%; accent-color: var(--gold, #e8b84a); }
+.markup-read { min-width: 86px; text-align: right; }
+.city-shop .offers { margin: 0; }
+.city-shop-sell { justify-self: start; }
+.city-shop-actions { display: grid; gap: 8px; }
+.city-shop-actions p { margin: 0; }
+.offer-row { gap: 8px; }
+.offer-row input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: inherit; font-variant-numeric: tabular-nums; }
+.link { background: none; border: 0; padding: 0; color: var(--gold, #e8b84a); text-decoration: underline; cursor: pointer; font: inherit; }

@@ -12,6 +12,8 @@ import { settleTrial } from "@/server/justice";
 import { payTax, payTurf, taxRates, turfMap, withCity } from "@/server/city";
 import { flagLaundering } from "@/game/batch6";
 import { countryOf } from "@/game/engine";
+import { creditSale, shopMarkups } from "@/game/shops";
+import type { ShopKind } from "@/game/types";
 import { getStore, StoreConfigError } from "@/server/store";
 
 export const dynamic = "force-dynamic";
@@ -99,6 +101,10 @@ export async function POST(req: Request) {
     const myCrew = self?.crewId ? await store.getCrew(self.crewId) : null;
     const allies = (myCrew?.allies ?? []).map((x) => x.id);
     let turfOwed: { crewId: string; amount: number } | null = null;
+    let sale: { country: import("@/game/types").CountryId; kind: ShopKind; amount: number } | null = null;
+    // Player-run shops set their own prices.
+    const buyer = action.type === "buy" ? await store.get(playerId!) : null;
+    const markups = buyer ? shopMarkups(await store.getCity(countryOf(buyer))) : undefined;
     let launderFlag: { amount: number; method: string } | null = null;
     const out = await store.update(playerId!, (p) => {
       if (action.type === "create") {
@@ -110,7 +116,11 @@ export async function POST(req: Request) {
       if (!p) throw new GameError("Create a character first.");
       assertActive(p, now);
       trackDevice(p, deviceId, ipHash);
-      const events = applyAction(p, action, now, Math.random, { taxRates: rates, turf, allies });
+      const events = applyAction(p, action, now, Math.random, { taxRates: rates, turf, allies, shopMarkups: markups });
+      if (p.shopSale) {
+        sale = p.shopSale;
+        p.shopSale = null;
+      }
       if (p.launderFlag) {
         launderFlag = p.launderFlag;
         p.launderFlag = null;
@@ -139,6 +149,9 @@ export async function POST(req: Request) {
     // Protection money goes to the crew that runs the district.
     const t = turfOwed as { crewId: string; amount: number } | null;
     if (t) await payTurf(store, t).catch((e) => console.error(e));
+    // The shop owner's margin lands in their till.
+    const s = sale as { country: import("@/game/types").CountryId; kind: ShopKind; amount: number } | null;
+    if (s && s.amount > 0) await withCity(store, s.country, now, (c) => creditSale(c, s.kind, s.amount, now)).catch((e) => console.error(e));
     // Withheld city tax goes to the treasury.
     const o = owed as { country: import("@/game/types").CountryId; amount: number } | null;
     if (o) await payTax(store, o, now).catch((e) => console.error(e));

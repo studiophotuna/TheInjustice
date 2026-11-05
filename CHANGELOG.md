@@ -1,5 +1,26 @@
 # Changelog
 
+## 3.0.0: player-run shops
+
+- **Every counter in town can be run by a player.** Each city has a gun shop, an armor outfitter,
+  a diner, a pharmacy and a real estate office. Buy the licence from city hall (from your bank)
+  and the shop is yours; the city announces it.
+- **You set the prices** with a slider, from 15% under the usual price to 50% over. Every sale
+  pays you what's left after stock (about 20% of a sale at usual prices), into the till. Collect
+  it when you like; city tax comes out like any other income.
+- **Shoppers see who runs the counter.** Each shop category shows the owner and their price
+  level ("Gun shop · run by Victor · prices +20%"), and the shelf prices include it. If the owner
+  changes prices while you're looking, the sale stops and tells you the new price instead of
+  charging you more.
+- **Owners shop their own shelves at the usual price.**
+- **Make an offer** for a shop someone else runs. The money stays in your bank until they accept;
+  the owner gets a message and answers from Shop → Businesses (sell or no).
+- **Use it or lose it:** an owner who hasn't been seen in a week can be replaced by anyone who
+  pays city hall for the licence (their takings go to their bank). Or sell back to city hall
+  for half the licence price.
+- Up to two shops per person, across all cities. Shops you run elsewhere are listed with what's
+  waiting in their tills.
+
 ## 2.9.0: clearer days, harder choices
 
 - **Next-rank progress:** the ring around your face in the HUD and a bar on your career card

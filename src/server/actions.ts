@@ -38,7 +38,7 @@ export function parseAction(body: unknown): Action {
     case "job":
       return { type: "job", jobId: str(b.jobId) };
     case "buy":
-      return { type: "buy", itemId: str(b.itemId) };
+      return { type: "buy", itemId: str(b.itemId), maxPrice: typeof b.maxPrice === "number" && Number.isFinite(b.maxPrice) ? b.maxPrice : undefined };
     case "use":
       return { type: "use", itemId: str(b.itemId) };
     case "equip":

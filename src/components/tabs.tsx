@@ -5,6 +5,7 @@ import { ItemArt } from "./art/ItemArt";
 import { ProfileEditor } from "./ProfileEditor";
 import { CareerPortrait } from "./art/CareerPortrait";
 import { CityHall } from "./cityhall";
+import { CityShops, ShopOwnerStrip, shelfPrice, shopFor, useShops } from "./shops";
 import { motion } from "motion/react";
 import {
   Backpack,
@@ -277,7 +278,14 @@ export function ShopTab({ game }: { game: GameApi }) {
   const view = game.view!;
   const [cat, setCat] = useState<(typeof SHOP_CATS)[number]["id"]>("supplies");
   const kinds = SHOP_CATS.find((c) => c.id === cat)!.kinds as readonly string[];
-  const waiting = view.properties.some((p) => p.owned && p.waiting >= 1);
+  const shops = useShops();
+  const mineWaiting = shops.data?.shops.some((s) => s.mine && ((s.till ?? 0) > 0 || s.offers.length > 0)) ?? false;
+  const waiting = view.properties.some((p) => p.owned && p.waiting >= 1) || mineWaiting;
+  const counters = (shops.data?.shops ?? []).filter((s) => kinds.includes(s.sells));
+  const manage = () => {
+    setCat("business");
+    setTimeout(() => document.getElementById("city-shops")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+  };
   return (
     <div className="stack">
       <div className="segmented shop-cats" role="tablist">
@@ -288,6 +296,12 @@ export function ShopTab({ game }: { game: GameApi }) {
           </button>
         ))}
       </div>
+      {cat === "business" && <CityShops game={game} data={shops.data} reload={shops.load} />}
+      {cat !== "business" && counters.length > 0 && (
+        <div className="shop-strips">
+          {counters.map((s) => <ShopOwnerStrip key={s.kind} row={s} onManage={manage} />)}
+        </div>
+      )}
       {cat === "business" && (
       <section className="card">
         <h3 className="card-title"><Building size={16} /> Businesses</h3>
@@ -320,19 +334,22 @@ export function ShopTab({ game }: { game: GameApi }) {
       )}
       {cat !== "business" && (
     <motion.div key={cat} className="shop-grid" variants={list} initial="hidden" animate="show">
-      {view.shop.filter((i) => kinds.includes(i.kind)).map((i) => (
+      {view.shop.filter((i) => kinds.includes(i.kind)).map((i) => {
+        const price = shelfPrice(i.price, shopFor(shops.data, i.kind));
+        return (
         <motion.article key={i.id} variants={item} className={`shop-item ${i.owned ? "owned" : ""}`}>
-          <ItemArt id={i.id} icon={i.icon} name={i.name} price={i.price} className="shop-art" />
+          <ItemArt id={i.id} icon={i.icon} name={i.name} price={price} className="shop-art" />
           <div className="shop-body">
             <span className="chip">{KIND_LABEL[i.kind]}</span>
             <h3>{i.name}</h3>
             <p className="muted">{i.description}</p>
           </div>
-          <motion.button whileTap={{ scale: 0.94 }} className="btn btn-primary btn-sm" disabled={game.busy || i.owned || view.cash < i.price} onClick={() => game.act({ type: "buy", itemId: i.id })}>
-            {i.owned ? "Owned" : view.gear.some((g) => g.id === i.id && g.broken) ? `Replace $${i.price}` : `$${i.price}`}
+          <motion.button whileTap={{ scale: 0.94 }} className="btn btn-primary btn-sm" disabled={game.busy || i.owned || view.cash < price} onClick={() => game.act({ type: "buy", itemId: i.id, maxPrice: price })}>
+            {i.owned ? "Owned" : view.gear.some((g) => g.id === i.id && g.broken) ? `Replace $${price.toLocaleString()}` : `$${price.toLocaleString()}`}
           </motion.button>
         </motion.article>
-      ))}
+        );
+      })}
     </motion.div>
       )}
       </div>

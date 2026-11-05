@@ -290,6 +290,8 @@ export interface Player {
   bounties?: { byId: string; byName: string; amount: number; at: number }[];
   /** City tax withheld from this player's pay, waiting to reach the city treasury. */
   taxOwed?: { country: CountryId; amount: number } | null;
+  /** Transient: the owner's cut of a shop sale, credited after the action is saved. */
+  shopSale?: { country: CountryId; kind: ShopKind; amount: number } | null;
   /** The player's own recent crimes (criminals know what they did). */
   myCases?: { caseId: string; at: number; kind: CrimeKind; district: string; victimName: string }[];
 }
@@ -654,7 +656,7 @@ export type Rng = () => number;
 export type Action =
   | { type: "create"; name: string; country?: CountryId }
   | { type: "job"; jobId: string }
-  | { type: "buy"; itemId: string }
+  | { type: "buy"; itemId: string; maxPrice?: number }
   | { type: "use"; itemId: string }
   | { type: "equip"; itemId: string }
   | { type: "unequip"; slot: "weapon" | "armor" }
@@ -700,7 +702,34 @@ export class GameError extends Error {}
 // ── City hall ──────────────────────────────────────────────────────────────
 
 /** One per country: an elected mayor, a treasury and city policies. */
+/** The city's storefronts a player can run. */
+export type ShopKind = "guns" | "armor" | "diner" | "pharmacy" | "realty";
+
+export interface ShopOffer {
+  fromId: string;
+  fromName: string;
+  amount: number;
+  at: number;
+}
+
+export interface ShopHold {
+  ownerId: string;
+  ownerName: string;
+  /** Price multiplier the owner set (1 = the usual local price). */
+  markup: number;
+  since: number;
+  /** Takings waiting to be collected. */
+  till: number;
+  sales: number;
+  /** Lifetime takings. */
+  earned: number;
+  lastSaleAt?: number;
+  offers: ShopOffer[];
+}
+
 export interface City {
+  /** Player-run storefronts. */
+  shops?: Partial<Record<ShopKind, ShopHold>>;
   /** Last time a street regular spoke in city chat. */
   regularChatAt?: number;
   country: CountryId;
