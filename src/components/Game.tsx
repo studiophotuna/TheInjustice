@@ -23,6 +23,7 @@ import {
   X,
   Zap,
   ShieldCheck,
+  Search,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { FightSummary } from "@/game/types";
@@ -37,6 +38,7 @@ import { CommunityTab } from "./community";
 import { HomeTab } from "./home";
 import { AwayRecap, GuestChip, LiveRail, setPeopleSection } from "./pulse";
 import { QuickBar } from "./quickbar";
+import { CommandPalette } from "./palette";
 import { fmt, useGame, type GameApi } from "./useGame";
 
 type Tab = "home" | "jobs" | "fight" | "shop" | "people" | "city" | "profile";
@@ -121,6 +123,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
   const [tab, setTab] = useState<Tab>("home");
   const [highlight, setHighlight] = useState<string | null>(null);
   const [saveOpen, setSaveOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [reading, setReading] = useState<string | null>(null);
   const [place, setPlace] = useState<Building | null>(null);
   const [letterSeen, setLetterSeen] = useState<string | null>(null);
@@ -204,7 +207,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
       </nav>
 
       <div className="main">
-        <Hud view={view} live={live} onProfile={() => go("tab:profile")} />
+        <Hud view={view} live={live} onProfile={() => go("tab:profile")} onSearch={() => setPaletteOpen(true)} />
 
         <GuestChip game={game} onSave={() => setSaveOpen(true)} />
 
@@ -252,6 +255,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
       </aside>
 
       <QuickBar game={game} />
+      <CommandPalette game={game} go={go} open={paletteOpen} setOpen={setPaletteOpen} />
 
       <AwayRecap game={game} />
 
@@ -326,7 +330,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
 }
 
 /** The game HUD: who you are, and every resource in its own colour, always in the same place. */
-function Hud({ view, live, onProfile }: { view: PublicView; live: NonNullable<GameApi["live"]>; onProfile: () => void }) {
+function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonNullable<GameApi["live"]>; onProfile: () => void; onSearch: () => void }) {
   const heatTone = { Clean: "ok", Noticed: "warn", Wanted: "hot", "Most wanted": "hot" }[view.heatLabel];
   const ladder = view.ladder;
   const progress = ladder ? Math.round((ladder.current / ladder.ranks.length) * 100) : 0;
@@ -350,6 +354,9 @@ function Hud({ view, live, onProfile }: { view: PublicView; live: NonNullable<Ga
           <b className="hud-name">{view.name}</b>
           <span className="hud-title">{view.path ? `${view.path.rank} · ${view.path.name}` : `Nobody · ${view.location.city}`}</span>
         </div>
+        <button className="hud-search" onClick={onSearch} aria-label="Search and do anything (Ctrl+K)" title="Do anything (Ctrl+K)">
+          <Search size={18} />
+        </button>
         <div className="hud-cash">
           <Delta value={view.cash} prefix="$" />
           <Counter value={view.cash} className="cash" prefix="$" />

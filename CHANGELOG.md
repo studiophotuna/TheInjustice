@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.1.0: faces, a live map and do-anything search
+
+- **Faces for the street regulars:** all 40 regulars have their own drawn portrait (the
+  Notionists set by Zoish, CC0), each picked to fit the character, on a background tinted by
+  their career. They show everywhere: People, Online now, the map, the side panel.
+- **Live city map (Home):** your city's districts as a board, with everyone out right now
+  standing in a district (they move around through the day), and you marked YOU. Districts
+  flash red where something happened in the last hour. Tap someone for instant actions
+  (attack, pickpocket, snatch, mug); tap a district for its news and "Work here".
+- **Do anything (Ctrl/⌘+K, "/", or the search button in the HUD):** type what you want and press
+  Enter: any screen or place, any job, gym exercise, anything in the shop, collect your daily
+  reward, use a medkit, or act on anyone out on the street ("mug bea", "steak", "bank").
+- The street feed rotates between different regulars instead of repeating one.
+
 ## 2.0.0: game feel
 
 A new look and layout built for long sessions: clear at a glance, fast to play.

@@ -136,8 +136,13 @@ export function regularsOut(all: Player[], realOnline: number, now: number, inHo
 }
 
 /** Keeps a regular in shape: pocket money refills every few hours, and they don't hold heat. */
+/** Each regular's portrait (drawn from the Notionists set, CC0; see public/regulars/CREDITS.txt). */
+export const regularPhoto = (country: string, key: string) => `/regulars/${country}-${key}.svg`;
+
 export function regularUpkeep(p: Player, now: number) {
   if (!p.regular) return;
+  const photo = regularPhoto(p.regular.country, p.regular.key);
+  if (p.profile?.photo !== photo) p.profile = { ...(p.profile ?? {}), photo };
   const slot = Math.floor(now / REGULARS.refillMs);
   if (p.regular.slot !== slot) {
     p.regular.slot = slot;
@@ -187,7 +192,8 @@ export function ambientLines(out: Player[], districts: string[], now: number): {
   const slot = Math.floor(now / slotMs);
   return [0, 1, 2].map((back) => {
     const s = slot - back;
-    const who = out[Math.floor(hash(`amb${s}`) * out.length)];
+    // Rotate through who's out so consecutive lines are about different people.
+    const who = out[(s * 7 + Math.floor(hash(`amb${s}`) * out.length)) % out.length];
     const verbs = DOING[who.path ?? "none"] ?? DOING.none;
     const verb = verbs[Math.floor(hash(`${who.id}v${s}`) * verbs.length)];
     const where = districts[Math.floor(hash(`${who.id}d${s}`) * districts.length)];

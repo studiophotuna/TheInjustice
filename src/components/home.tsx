@@ -10,6 +10,7 @@ import { Scene, type CharacterKind, type SceneKind } from "./art/Scenes";
 import { BackAlleyCard, JailCard, Sightings } from "./community";
 import { OnlineNow } from "./online";
 import { RightNow, StreetFeed, usePulse } from "./pulse";
+import { CityMap } from "./citymap";
 import { TutorialCard } from "./underworld";
 import { DailyCard } from "./tabs";
 import { fmt, type GameApi } from "./useGame";
@@ -112,7 +113,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
         </section>
       </div>
 
-      <OnlineNow game={game} limit={4} />
+      <CityMap game={game} go={go} feed={pulse?.feed} />
 
       <DailyCard game={game} />
 
