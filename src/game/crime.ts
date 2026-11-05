@@ -74,6 +74,9 @@ export const CRIMES: Record<CrimeKind, CrimeDef> = {
   murder: { id: "murder", name: "Murder", verb: "kill", energy: 0, share: [0, 0], heat: 40, integrity: -15, blurb: "" },
   attempted_murder: { id: "attempted_murder", name: "Attempted murder", verb: "try to kill", energy: 0, share: [0, 0], heat: 25, integrity: -10, blurb: "" },
   assault: { id: "assault", name: "Assault", verb: "jump", energy: 0, share: [0, 0], heat: 12, integrity: -5, blurb: "" },
+  // Property crimes (see breakin.ts).
+  burglary: { id: "burglary", name: "Break-in", verb: "break into the place of", energy: 20, share: [0, 0], heat: 10, integrity: -3, blurb: "" },
+  car_theft: { id: "car_theft", name: "Car theft", verb: "steal a car from", energy: 15, share: [0, 0], heat: 8, integrity: -2, blurb: "" },
 };
 
 /** The crimes a player can commit from the People list. */

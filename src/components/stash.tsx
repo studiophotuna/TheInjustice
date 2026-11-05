@@ -35,7 +35,7 @@ export function StashCard({ game }: { game: GameApi }) {
     <section className="card stash">
       <h3 className="card-title"><EyeOff size={16} /> The stash · {s.home}</h3>
       <p className="muted fine">
-        Hidden {s.spot}. Muggers, robbers and customs only get what&apos;s on you. A detective with a warrant and the right suspect will find dirty money and product here.
+        Hidden {s.spot}. Muggers, robbers and customs only get what&apos;s on you. Burglars and a detective with a warrant are another story.
       </p>
 
       <div className="stash-meters">
@@ -83,6 +83,18 @@ export function StashCard({ game }: { game: GameApi }) {
           </li>
         ))}
       </ul>
+      <div className="alarm-row">
+        {s.alarm ? (
+          <p className="fine">🚨 Alarm wired, camera over the door. Break-ins here are harder, and if one happens the camera gives the police a good look.</p>
+        ) : (
+          <>
+            <p className="fine muted">Other people can break in while you&apos;re out. An alarm makes it harder, and its camera helps the police.</p>
+            <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.act({ type: "fit_alarm" })}>
+              Fit an alarm · {money(s.alarmCost)}
+            </button>
+          </>
+        )}
+      </div>
       {s.nextSpot && (
         <p className="fine muted">A {s.nextSpot.home.toLowerCase()} would hide {money(s.nextSpot.money)} and {s.nextSpot.units} units.</p>
       )}

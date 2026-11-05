@@ -11,6 +11,8 @@ import { cancelHeist, heistView, planHeist, runHeist, takeRole } from "@/game/he
 import * as AM from "@/game/ambush";
 import { robberLead, specTier } from "@/game/specialties";
 import { dispose } from "@/game/daily_life";
+import { breakIn, breakInBlock, carTheftBlock, hasAlarm, homeIn, ownerHome, stealCar } from "@/game/breakin";
+import { CARS } from "@/game/vehicles";
 import { ambientLines, chatLine, defFor, isHeavy, isRegularId, REGULAR_OPS, REGULARS } from "@/game/regulars";
 
 const HEAVY_WIN_REP = 8;
@@ -304,6 +306,37 @@ export async function GET(req: Request) {
           return inmateView(p, o, now, o.crewId ? tags.get(o.crewId) ?? null : null, canInvite);
         });
       return NextResponse.json({ inmates, open: true, channel: yardChannel(p) });
+    }
+    if (url.searchParams.get("property")) {
+      const country = countryOf(p);
+      const owners = (await store.listPropertyOwners(country, 60)).filter((o) => o.id !== p.id);
+      owners.forEach((o) => tick(o, now));
+      const homes = owners
+        .filter((o) => homeIn(o, country) >= 1)
+        .slice(0, 20)
+        .map((o) => ({
+          id: o.id,
+          name: o.name,
+          photo: o.profile?.photo ?? null,
+          home: BALANCE.housing[homeIn(o, country)].name,
+          tier: homeIn(o, country),
+          alarm: hasAlarm(o, country),
+          inTown: ownerHome(o, country, now),
+          block: breakInBlock(p, o, now),
+        }));
+      const cars = owners
+        .flatMap((o) => (o.garage ?? []).filter((c) => c.country === country && o.travel?.carId !== c.id).map((c) => ({ o, c })))
+        .slice(0, 20)
+        .map(({ o, c }) => ({
+          ownerId: o.id,
+          ownerName: o.name,
+          carId: c.id,
+          model: c.model,
+          name: CARS[c.model].name,
+          color: CARS[c.model].color,
+          block: carTheftBlock(p, o, c, now),
+        }));
+      return NextResponse.json({ homes, cars });
     }
     if (url.searchParams.get("bankers")) {
       const bankers = (await store.listPlayers(countryOf(p), 200))
@@ -700,6 +733,42 @@ export async function POST(req: Request) {
             tieShift(a, t.regular.country, t.regular.key, -2, `You tried to ${kind} them.`, now);
             if (a.reputation > t.reputation * 3 + 15) a.reputation = Math.max(0, a.reputation - 1);
           }
+          await tx.putPlayer(a);
+          await tx.putPlayer(t);
+          if (out.caseFile) {
+            for (const w of witnesses) await tx.putPlayer(w);
+            await tx.putCase(out.caseFile);
+          }
+          return out.events;
+        });
+        break;
+      }
+      case "burgle":
+      case "steal_car": {
+        const target = str(b.targetId);
+        const carId = b.op === "steal_car" ? str(b.carId) : "";
+        const self = await store.get(playerId);
+        if (!self) throw new GameError("Create a character first.");
+        const country = countryOf(self);
+        const nearby = (await store.listPlayers(country, 40))
+          .filter((o) => o.id !== playerId && o.id !== target && !o.dead && !o.travel && now - o.tickAt < BALANCE.crime.witnessWindowMs)
+          .sort(() => Math.random() - 0.5)
+          .slice(0, Math.min(BALANCE.crime.maxWitnesses, cityEvent(country, now)?.maxWitnesses ?? 99))
+          .map((o) => o.id);
+        nearby.push(...(await regularWitnesses(store, country, now)).filter((id) => id !== target));
+        const crewTag = self.crewId ? (await store.getCrew(self.crewId))?.tag ?? null : null;
+        const caseId = randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase();
+        events = await store.transaction(async (tx) => {
+          const [a, t, ...rest] = await tx.getPlayers([playerId, target, ...nearby]);
+          if (!a) throw new GameError("Create a character first.");
+          if (!t || t.regular) throw new GameError("That player doesn't exist.");
+          tick(a, now);
+          tick(t, now);
+          const witnesses = rest.filter((w): w is Player => !!w && countryOf(w) === country);
+          witnesses.forEach((w) => tick(w, now));
+          const ctx = { caseId, district: crimeDistrict(a, Math.random), crewTag, witnesses };
+          const out = b.op === "burgle" ? breakIn(a, t, now, Math.random, ctx) : stealCar(a, t, carId, now, Math.random, ctx);
+          if (out.caseFile) regularsTalk(witnesses, out.caseFile, a, now);
           await tx.putPlayer(a);
           await tx.putPlayer(t);
           if (out.caseFile) {

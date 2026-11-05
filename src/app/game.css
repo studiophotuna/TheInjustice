@@ -751,3 +751,9 @@ button.ready-chip { cursor: pointer; }
 .stash-all { margin-bottom: 8px; }
 .stash-amount { width: 100%; margin: 4px 0 2px; }
 .stash-rows { margin-top: 6px; }
+
+/* ─── Break-ins and stolen cars ────────────────────────────────────── */
+.home-row { display: grid; gap: 2px; min-width: 0; }
+.hot-chip { margin-left: 6px; font-size: 10px; vertical-align: middle; }
+.alarm-row { display: grid; gap: 6px; margin: 8px 0; padding-top: 8px; border-top: 1px solid var(--border); }
+.alarm-row p { margin: 0; }

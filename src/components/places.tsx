@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { Anchor, ArrowLeft, BedDouble, Building2, GraduationCap, HeartPulse, Landmark, Lock, Scale, Shield, Siren, Train } from "lucide-react";
 import { Docks } from "./docks";
 import { StashCard } from "./stash";
+import { BreakIns } from "./property";
 import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { Scene, type SceneKind } from "./art/Scenes";
 import { CityHall } from "./cityhall";
@@ -25,7 +26,7 @@ const BUILDINGS: { id: Building; name: string; scene: SceneKind; poster: string;
   { id: "academy", name: "Academy", scene: "academy", poster: "academy", Icon: GraduationCap, tagline: "Enroll to earn the degree a career needs." },
   { id: "cityhall", name: "City Hall", scene: "cityhall", poster: "cityhall", Icon: Building2, tagline: "The mayor, the vote, the paper, the turf." },
   { id: "prison", name: "Prison", scene: "prison", poster: "prison", Icon: Lock, tagline: "The yard, and anyone doing time." },
-  { id: "street", name: "The Street", scene: "street", poster: "street", Icon: Shield, tagline: "Dealers, rackets, contracts, cold cases." },
+  { id: "street", name: "The Street", scene: "street", poster: "street", Icon: Shield, tagline: "Dealers, rackets, contracts, break-ins, cold cases." },
   { id: "station", name: "Station", scene: "station", poster: "station", Icon: Train, tagline: "Bus, train or plane to another country. Or drive." },
   { id: "docks", name: "The Docks", scene: "marina", poster: "marina", Icon: Anchor, tagline: "Your cars, the lot, and fences who move cargo between cities." },
 ];
@@ -151,6 +152,7 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
         <div className="stack">
           <GunOffers game={game} />
           <StreetMarket game={game} />
+          <BreakIns game={game} />
           <CasesPanel game={game} hub={hub} place="street" />
           <Sightings game={game} compact />
         </div>

@@ -43,6 +43,8 @@ export interface Car {
   cargo: Partial<Record<GoodId, number>>;
   /** A false floor: harder to search, a little less room. */
   compartment?: boolean;
+  /** Stolen: the plates are on a list until they're changed. */
+  hot?: { fromId: string; fromName: string };
   boughtFor: number;
 }
 export type DistrictId =
@@ -258,6 +260,8 @@ export interface Player {
   country?: CountryId;
   /** A trip in progress; the player can't work or fight until it ends. */
   travel?: Trip | null;
+  /** Cities where your place has an alarm. */
+  alarms?: CountryId[];
   /** Hidden at home, in each city where you have a place. */
   stash?: Partial<Record<CountryId, Stash>>;
   /** Cars you own, wherever they're parked. */
@@ -327,7 +331,7 @@ export interface Player {
 
 export type StreetCrime = "pickpocket" | "snatch" | "mug";
 /** Street crimes, plus the cases a contract hit leaves behind. */
-export type CrimeKind = StreetCrime | "murder" | "attempted_murder" | "assault";
+export type CrimeKind = StreetCrime | "murder" | "attempted_murder" | "assault" | "burglary" | "car_theft";
 /** Things a witness can notice about a criminal. */
 export type ClueTrait = "build" | "reflexes" | "nameStart" | "nameEnd" | "nameLength" | "crew";
 
@@ -613,6 +617,8 @@ export interface TripIncident {
   kind: "ambush" | "pickpocket" | "customs" | "checkpoint";
   /** Checkpoint found the cargo (and anything on you). */
   seized?: boolean;
+  /** Checkpoint ran the plates on a stolen car and kept it. */
+  impounded?: boolean;
   heat?: number;
   text: string;
   fight?: FightSummary;
@@ -715,7 +721,8 @@ export type Action =
   | { type: "drive"; to: CountryId; carId: string }
   | { type: "stash"; op: "put" | "take" | "put_all"; what?: "cash" | "dirty" | "herb" | "pills" | "powder"; amount?: number }
   | { type: "car_buy"; model: CarModel }
-  | { type: "car_sell" | "car_repair" | "car_compartment"; carId: string }
+  | { type: "car_sell" | "car_repair" | "car_compartment" | "car_chop" | "car_plates"; carId: string }
+  | { type: "fit_alarm" }
   | { type: "cargo_buy" | "cargo_sell"; carId: string; good: GoodId; qty: number }
   | { type: "ack_arrival" }
   | { type: "claim_daily" }

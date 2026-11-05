@@ -1,5 +1,23 @@
 # Changelog
 
+## 3.3.0: break-ins and car theft
+
+- **Break-ins:** The Street lists the homes other players keep in this city: what kind of place,
+  whether there's an alarm sticker, and whether the lights are on. Get in and you carry off part of
+  their stash (money as dirty money, and product). Bigger homes have better locks, an alarm makes it
+  harder, and an owner who's home sees your face if it goes wrong. The best time is when they're out
+  of town.
+- **Fit an alarm** at Your Place: break-ins get harder, and if one happens the camera gives the
+  police a good clue.
+- **Car theft:** the Docks lists cars other players left parked in this city. Steal one and it's
+  yours, trunk and all, with hot plates. A hot car can't go to the lot: pay for new plates and
+  papers, or sell it to the chop shop for dirty money. Drive it with hot plates and a checkpoint
+  will run them: the car is impounded with everything in it (a sports coupe can still floor it).
+  Armored SUVs are the hardest to take; the Wheelman specialty helps.
+- **Both are real crimes:** a success opens a case file with neighbors' and witnesses' tips, so
+  detectives can work it, arrest, and take it to trial. Victims get a message either way.
+  Newcomer protection applies, and you can't hit the same person twice in six hours.
+
 ## 3.2.0: the home stash
 
 - **Your Place:** a new building in every city. Wherever you have somewhere to live, you can hide

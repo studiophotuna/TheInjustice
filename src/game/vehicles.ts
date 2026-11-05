@@ -132,6 +132,7 @@ export function buyCar(p: Player, model: CarModel, country: CountryId, now: numb
 
 export function sellCar(p: Player, carId: string, country: CountryId): GameEvent[] {
   const car = here(p, carId, country);
+  if (car.hot) throw new GameError("No legit lot will touch a stolen car. New plates first, or the chop shop.");
   if (cargoUnits(car)) throw new GameError("Empty the trunk first.");
   const pay = resaleValue(car);
   p.cash += pay;
@@ -198,6 +199,19 @@ export function rollDrive(p: Player, car: Car, now: number, rng: Rng, ambush: ()
   const chance = Math.min(k.max, k.base + p.heat * k.perHeat);
   if (rng() < chance) {
     const units = cargoUnits(car) + drugsOn(p);
+    if (car.hot) {
+      if (CARS[car.model].outrun && rng() < CARS[car.model].outrun! + specTier(p, "wheelman") * 0.1) {
+        return { kind: "checkpoint", text: "A checkpoint ahead, and your plates are on their list. You floor it and blow straight through.", heat: k.outrunHeat * 1.5 };
+      }
+      return {
+        kind: "checkpoint",
+        text: `A checkpoint on the highway. They run your plates: the car is stolen. They impound it${units ? " with everything in it" : ""} and you finish the trip on foot and a bus.`,
+        seized: true,
+        impounded: true,
+        heat: k.heat * 1.5,
+        delayMs: k.delayMs * 4,
+      };
+    }
     if (!units) return { kind: "checkpoint", text: "A checkpoint on the highway. They look at your papers, look at you, and wave you through.", delayMs: k.delayMs };
     const def = CARS[car.model];
     if (def.outrun && rng() < def.outrun + specTier(p, "wheelman") * 0.1) {
@@ -226,6 +240,11 @@ export function arriveByCar(p: Player, carId: string | undefined, to: CountryId,
   const car = (p.garage ?? []).find((c) => c.id === carId);
   if (!car) return;
   car.country = to;
+  if (inc?.impounded) {
+    p.garage = (p.garage ?? []).filter((c) => c !== car);
+    p.drugs = {};
+    return;
+  }
   if (inc?.seized) {
     car.cargo = {};
     p.drugs = {};
@@ -264,6 +283,10 @@ export function docksView(p: Player, country: CountryId, now: number) {
       cargo: GOOD_IDS.filter((g) => (car.cargo?.[g] ?? 0) > 0).map((g) => ({ id: g, name: GOODS[g].name, unit: GOODS[g].unit, qty: car.cargo![g]! })),
       repairCost: repairCost(car),
       resale: resaleValue(car),
+      hot: !!car.hot,
+      stolenFrom: car.hot?.fromName ?? null,
+      chop: car.hot ? Math.floor(car.boughtFor * 0.35 * (0.5 + car.condition / 200)) : null,
+      plates: car.hot ? Math.round(car.boughtFor * 0.2) : null,
       looks: car.compartment ? "False floor fitted" : def.hidden >= 0.3 ? "Looks innocent" : def.outrun ? "Built to run" : def.armored ? "Armored" : "Plain",
     };
   });

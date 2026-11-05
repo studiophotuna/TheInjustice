@@ -6,6 +6,7 @@ import { COUNTRY_BY_ID } from "./content/world";
 import { BALANCE } from "./balance";
 import { DRUG_IDS, DRUGS, type DrugId } from "./drugs";
 import { countryOf } from "./engine";
+import { BREAKIN, hasAlarm } from "./breakin";
 import { GameError, type CountryId, type GameEvent, type Player, type Stash } from "./types";
 
 /** What each kind of home can hide, by housing tier (0 = nothing, a box hides nothing). */
@@ -105,6 +106,8 @@ export function stashView(p: Player) {
   const caps = stashCaps(p.housing);
   return {
     spot: STASH.spots[p.housing] || null,
+    alarm: hasAlarm(p, here),
+    alarmCost: Math.round(BREAKIN.alarm.cost * COUNTRY_BY_ID[here].priceMult),
     home: BALANCE.housing[p.housing].name,
     caps,
     cash: s.cash,

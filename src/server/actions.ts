@@ -35,7 +35,11 @@ export function parseAction(body: unknown): Action {
     case "car_sell":
     case "car_repair":
     case "car_compartment":
+    case "car_chop":
+    case "car_plates":
       return { type: b.type, carId: str(b.carId) };
+    case "fit_alarm":
+      return { type: "fit_alarm" };
     case "cargo_buy":
     case "cargo_sell":
       if (!["smokes", "liquor", "phones", "pistols"].includes(b.good as string)) throw new GameError("Bad request.");

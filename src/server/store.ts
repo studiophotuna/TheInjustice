@@ -76,6 +76,8 @@ export interface PlayerStore {
   listPlayers(country: string, limit: number): Promise<Player[]>;
   /** The street regulars living in a country (never included in listPlayers). */
   listRegulars(country: string): Promise<Player[]>;
+  /** Players with a home or a parked car in this city, wherever they are now. */
+  listPropertyOwners(country: string, limit: number): Promise<Player[]>;
   listCrews(limit: number): Promise<Crew[]>;
   getCrew(id: string): Promise<Crew | null>;
   postMessage(m: Omit<ChatMessage, "id" | "at">): Promise<void>;
@@ -295,6 +297,20 @@ export class FileStore implements PlayerStore {
       for (const c of all.slice(300)) delete d.cases[c.id];
       return result;
     });
+  }
+
+  async listPropertyOwners(country: string, limit: number) {
+    return Object.values((await this.load()).players)
+      .filter(
+        (p) =>
+          !p.regular &&
+          !p.dead &&
+          (((p.country ?? "varrow") === country ? p.housing : (p.homes?.[country as keyof typeof p.homes] ?? 0)) >= 1 ||
+            (p.garage ?? []).some((c) => c.country === country)),
+      )
+      .sort((a, b) => b.tickAt - a.tickAt)
+      .slice(0, limit)
+      .map((p) => structuredClone(p));
   }
 
   async listRegulars(country: string) {
@@ -562,6 +578,19 @@ class PostgresStore implements PlayerStore {
     const rows = await this.sql<{ data: Player }[]>`
       select data from injustice.players
       where coalesce(data->>'country', 'varrow') = ${country} and data->'regular' is null
+      order by updated_at desc limit ${limit}`;
+    return rows.map((r) => r.data);
+  }
+
+  async listPropertyOwners(country: string, limit: number) {
+    const rows = await this.sql<{ data: Player }[]>`
+      select data from injustice.players
+      where data->'regular' is null and coalesce(data->'dead', 'null'::jsonb) = 'null'::jsonb
+        and (
+          coalesce((data->'homes'->>${country})::int, 0) >= 1
+          or (coalesce(data->>'country', 'varrow') = ${country} and coalesce((data->>'housing')::int, 0) >= 1)
+          or coalesce(data->'garage', '[]'::jsonb) @> ${this.sql.json([{ country }])}
+        )
       order by updated_at desc limit ${limit}`;
     return rows.map((r) => r.data);
   }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Car as CarIcon, PackageOpen, Store, TrendingUp } from "lucide-react";
 import { Vehicle } from "./art/Vehicles";
 import type { GameApi } from "./useGame";
+import { ParkedCars } from "./property";
 
 const money = (n: number) => `$${n.toLocaleString()}`;
 
@@ -35,8 +36,8 @@ export function Docks({ game, go }: { game: GameApi; go?: (to: string) => void }
               <article key={c.id} className={`garage-car ${c.here ? "" : "away"} ${car?.id === c.id ? "on" : ""}`} onClick={() => c.here && setCarId(c.id)}>
                 <Vehicle mode="car" color={c.color} className="garage-art" />
                 <div className="garage-body">
-                  <b>{c.name}</b>
-                  <span className="fine muted">{c.here ? "Parked here" : `Parked in ${c.city}`} · {c.looks}</span>
+                  <b>{c.name} {c.hot && <span className="chip chip-red hot-chip">Hot</span>}</b>
+                  <span className="fine muted">{c.here ? "Parked here" : `Parked in ${c.city}`} · {c.hot ? `stolen from ${c.stolenFrom}` : c.looks}</span>
                   <div className="wear-bar" title={`${c.condition}% condition`}><span style={{ width: `${c.condition}%` }} className={c.condition < 35 ? "low" : ""} /></div>
                   <span className="fine">
                     {c.condition}% condition{!c.canDrive ? " · needs a mechanic" : ""} · trunk {c.used}/{c.trunk}
@@ -55,14 +56,30 @@ export function Docks({ game, go }: { game: GameApi; go?: (to: string) => void }
                         False floor {money(d.compartmentCost)}
                       </button>
                     )}
-                    <button
-                      className="btn btn-ghost btn-xs"
-                      disabled={game.busy || c.used > 0}
-                      title={c.used ? "Empty the trunk first." : ""}
-                      onClick={() => confirm(`Sell the ${c.name.toLowerCase()} for ${money(c.resale)}?`) && game.act({ type: "car_sell", carId: c.id })}
-                    >
-                      Sell {money(c.resale)}
-                    </button>
+                    {c.hot ? (
+                      <>
+                        <button className="btn btn-primary btn-xs" disabled={game.busy} title="Plates and papers that say it's yours." onClick={() => game.act({ type: "car_plates", carId: c.id })}>
+                          New plates {money(c.plates ?? 0)}
+                        </button>
+                        <button
+                          className="btn btn-ghost btn-xs"
+                          disabled={game.busy || c.used > 0}
+                          title={c.used ? "Empty the trunk first." : "Dirty money, no questions."}
+                          onClick={() => confirm(`Let the chop shop strip the ${c.name.toLowerCase()} for ${money(c.chop ?? 0)} dirty?`) && game.act({ type: "car_chop", carId: c.id })}
+                        >
+                          Chop shop {money(c.chop ?? 0)}
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        className="btn btn-ghost btn-xs"
+                        disabled={game.busy || c.used > 0}
+                        title={c.used ? "Empty the trunk first." : ""}
+                        onClick={() => confirm(`Sell the ${c.name.toLowerCase()} for ${money(c.resale)}?`) && game.act({ type: "car_sell", carId: c.id })}
+                      >
+                        Sell {money(c.resale)}
+                      </button>
+                    )}
                   </div>
                 )}
               </article>
@@ -132,6 +149,8 @@ export function Docks({ game, go }: { game: GameApi; go?: (to: string) => void }
         </div>
         <p className="fine muted">The board shows what fences in each city pay this hour. By the time you get there, it may have moved.</p>
       </section>
+
+      <ParkedCars game={game} />
 
       <section className="card">
         <h3 className="card-title"><Store size={16} /> The lot</h3>
