@@ -1,5 +1,17 @@
 # Changelog
 
+## 5.4.0: real fire, real current
+
+- **Wildfire is a ring of real fire now:** flame tongues rise and flicker all around your face,
+  white-hot at the base, then yellow, orange and red as they lick upward, over an ember glow.
+  The fire burns around and behind the face, never across it.
+- **Live wire is a current of electricity:** jagged bolts race around the ring and crackle as
+  they go, with sparks that jump off now and then, over a faint charged ring.
+- **Gold rush sparkles:** four-point stars glint around the turning gold ring and fade out.
+- These are drawn live and stay smooth: one shared animation runs every effect on the page,
+  faces off screen or in a hidden tab rest, and small faces (chat, map) use fewer particles.
+  With motion turned off on your device, they show as a still picture.
+
 ## 5.3.0: try it on before you buy
 
 - **Try it on:** tap any frame, name colour or banner in Shop → Style (or its price) and a

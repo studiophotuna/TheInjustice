@@ -681,3 +681,12 @@ button.style-preview:hover .try-hint, button.style-preview:focus-visible .try-hi
 .tryon-note { margin: -4px 0 0; }
 .tryon-acts { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
 .tryon-acts .btn { height: 48px; }
+
+/* ── Live effects (canvas): fire, current, sparkles ─────────────────────── */
+.fx-canvas { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 3; pointer-events: none; }
+/* The canvas draws the whole effect for these; the CSS layers step aside. */
+.portrait-photo.frame-wildfire::before, .portrait-photo.frame-wildfire::after,
+.portrait-photo.frame-livewire::before, .portrait-photo.frame-livewire::after,
+.portrait-photo.frame-goldrush::after { display: none; }
+/* People cards show the photo edge to edge: no ring effects there. */
+.lu-photo .portrait-photo.fx::before, .lu-photo .portrait-photo.fx::after { display: none; }

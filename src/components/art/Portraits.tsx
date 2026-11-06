@@ -1,4 +1,5 @@
 import { facePhoto } from "./Cutout";
+import { CANVAS_FX, FxRing, type FxKind } from "./FxRing";
 
 /** Frames with an animated effect around the face. */
 const FX_FRAMES = new Set(["goldrush", "wildfire", "livewire", "frostbite", "bloodmoon", "aurora"]);
@@ -202,6 +203,7 @@ export function PlayerAvatar({ name, path, photo, look: worn, className = "" }: 
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={photo} alt={name} />
         {upload && <img className="uframe" src={upload} alt="" />}
+        {worn?.frame && CANVAS_FX.has(worn.frame) && !className.includes("lineup-face") && <FxRing kind={worn.frame as FxKind} />}
       </div>
     );
   }
