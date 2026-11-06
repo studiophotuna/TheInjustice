@@ -4,6 +4,7 @@
 
 import { countryOf, inJail } from "./engine";
 import { sv } from "./stats";
+import { goOnTheRun } from "./fugitive";
 import { GameError, type GameEvent, type Player, type Rng } from "./types";
 
 export const INSIDE = {
@@ -96,9 +97,10 @@ export function digTunnel(p: Player, now: number, rng: Rng): GameEvent[] {
   s.stayUntil = now;
   s.respect = (s.respect ?? 0) + INSIDE.respect.tunnel;
   p.jobCounts["prison:escape"] = (p.jobCounts["prison:escape"] ?? 0) + 1;
+  goOnTheRun(p, now);
   return [
     { tone: "good", text: "The last of the dirt gives way. Cold air, a drainage ditch, and nobody behind you. You're out." },
-    { tone: "bad", text: "Every cop in the city has your description now. Keep your head down." },
+    { tone: "bad", text: "You're on the run for the next six hours: detectives are hunting you, customs knows your face, airports check papers and the bank has frozen your accounts. Stay hidden until the trail goes cold." },
   ];
 }
 

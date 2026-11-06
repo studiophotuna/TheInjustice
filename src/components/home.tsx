@@ -13,6 +13,7 @@ import { CityMap } from "./citymap";
 import { TutorialCard } from "./underworld";
 import { DailyCard } from "./tabs";
 import { fmt, type GameApi } from "./useGame";
+import { OnTheRun } from "./fugitives";
 
 /** Each career has its own character art; people without one are still on the street. */
 const CHARACTER_FOR: Record<PathId, CharacterKind> = {
@@ -76,6 +77,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
       <StreetFeed feed={pulse?.feed} />
       <DisposalCard game={game} />
       <RightNow game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} />
+      <OnTheRun game={game} />
       <ReadyStrip game={game} go={go} />
       <TutorialCard game={game} go={go} />
       <OldLife game={game} go={go} />

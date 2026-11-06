@@ -34,6 +34,7 @@ import { chopCar, fitAlarm, newPlates } from "./breakin";
 import { buyDog, feedDog, giveAwayDog } from "./dogs";
 import { setGarage } from "./mechanic";
 import { digTunnel, makeShank, paroleHearing } from "./prisonlife";
+import { customsSpotsFugitive, isFugitive, recapture } from "./fugitive";
 import { arriveByCar, buyCar, buyCargo, fitCompartment, repairCar, rollDrive, sellCar, sellCargo, startDrive } from "./vehicles";
 import { emptyStats, statValue, sv, tierOf, TIER_UP_LINES } from "./stats";
 import {
@@ -378,7 +379,16 @@ function startTrip(p: Player, to: CountryId, mode: TravelMode, now: number, rng:
   if (!COUNTRY_BY_ID[to] || !MODE_BY_ID[mode]) throw new GameError("Unknown destination.");
   if (to === from) throw new GameError("You're already here.");
   const cost = tripCost(from, to, mode);
+  if (mode === "plane" && isFugitive(p, now)) throw new GameError("Airports check papers, and yours say you escaped from prison. The bus or the train, then.");
   if (p.cash < cost) throw new GameError(`A ${MODE_BY_ID[mode].name.toLowerCase()} ticket costs $${cost}. Cash only.`);
+  // A customs officer on duty may know a fugitive's face.
+  const spotted = customsSpotsFugitive(p, ctx.customs ?? [], now, rng);
+  if (spotted) {
+    recapture(p, now, `recognized at the station by customs officer ${spotted.name}`);
+    p.customsSeizure = { officerId: spotted.id, value: 2_000, what: "an escaped prisoner at the station" };
+    events.push({ tone: "bad", text: `Customs officer ${spotted.name} looks at your face, then at a photo on the wall. You're back inside before the ${MODE_BY_ID[mode].name.toLowerCase()} leaves.` });
+    return;
+  }
   p.cash -= cost;
   const incident = rollIncident(p, mode, rng, now);
   const seized = smugglingCheck(p, mode, rng, ctx.customs, now);
@@ -394,6 +404,13 @@ function startTrip(p: Player, to: CountryId, mode: TravelMode, now: number, rng:
 /** Drive your own car to another country: fuel instead of a ticket, checkpoints instead of customs. */
 function drive(p: Player, to: CountryId, carId: string, now: number, rng: Rng, events: GameEvent[], ctx: ActionContext = {}) {
   const from = countryOf(p);
+  const spotted = customsSpotsFugitive(p, ctx.customs ?? [], now, rng);
+  if (spotted) {
+    recapture(p, now, `stopped at a checkpoint by customs officer ${spotted.name}`);
+    p.customsSeizure = { officerId: spotted.id, value: 2_000, what: "an escaped prisoner at the checkpoint" };
+    events.push({ tone: "bad", text: `Customs officer ${spotted.name} waves you over, reads your plates, then your face. You're back inside. The car stays where it is.` });
+    return;
+  }
   const { car, fuel, ms } = startDrive(p, carId, from, to, rng);
   const incident = rollDrive(p, car, now, rng, () => roadAmbush(p, rng, "car"), ctx.customs);
   p.travel = { from, to, mode: "car", carId, departAt: now, arriveAt: now + Math.round(ms * travelFactor(p)) + (incident?.delayMs ?? 0), incident };
@@ -539,6 +556,7 @@ function rebirth(p: Player, rawName: string | undefined, now: number, events: Ga
   p.stash = {};
   p.alarms = [];
   p.dogs = {};
+  p.fugitive = null;
   p.housing = 0;
   p.homes = { [countryOf(p)]: 0 };
   p.path = null;
@@ -912,6 +930,7 @@ function useItem(p: Player, itemId: string, now: number, events: GameEvent[]) {
 }
 
 function bank(p: Player, op: "open" | "deposit" | "withdraw", amount: number | undefined, now: number, events: GameEvent[]) {
+  if (isFugitive(p, now)) throw new GameError("Your accounts are frozen while you're on the run. Cash only, and keep moving.");
   if (op === "open") {
     if (p.hasBankAccount) throw new GameError("You already have an account.");
     if (p.cash < BALANCE.bankOpenCost) throw new GameError(`Opening an account costs $${BALANCE.bankOpenCost}.`);

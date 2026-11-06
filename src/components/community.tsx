@@ -184,8 +184,9 @@ type Hub = {
   lender: "bank" | "shark" | null;
   lab: { district: string; city: string; batches: number; suspicion: string; cook: { id: string; name: string; block: string | null }[] } | null;
   labBuild: boolean;
+  rivalFronts: { crewId: string; tag: string; crew: string; front: string; closed: boolean; block: string | null }[];
   front: {
-    front: { kind: string; name: string; perHour: number; waiting: number; launderLeft: number; launderPerDay: number; fee: number; since: number } | null;
+    front: { kind: string; name: string; perHour: number; waiting: number; launderLeft: number; launderPerDay: number; fee: number; since: number; city: string | null; closedUntil: number | null; rebuildCost: number } | null;
     cap: number;
     members: number;
     vault: number;
@@ -918,6 +919,7 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
           </div>
         </section>
         {hub.front && <FrontCard game={game} f={hub.front} social={social} />}
+        {hub.rivalFronts?.length > 0 && <RivalFronts game={game} rivals={hub.rivalFronts} social={social} />}
         {(hub.lab || hub.labBuild) && (
           <section className="card lab has-banner">
             <Scene kind="lab" className="banner-scene" />
@@ -1937,10 +1939,21 @@ function FrontCard({ game, f, social }: { game: GameApi; f: NonNullable<Hub["fro
   return (
     <section className="card front-card">
       <h3 className="card-title"><Building size={16} /> {f.front ? `The front · ${f.front.name}` : "A front for the crew"}</h3>
-      {f.front ? (
+      {f.front?.closedUntil ? (
+        <>
+          <p className="fine text-red">
+            🔥 Burned out by a rival crew. No income and nothing through the books until {new Date(f.front.closedUntil).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}, unless it&apos;s rebuilt.
+          </p>
+          {f.leader && (
+            <button className="btn btn-primary btn-sm" disabled={game.busy || f.vault < f.front.rebuildCost} onClick={() => social({ op: "front_rebuild" })}>
+              Rebuild now · {money(f.front.rebuildCost)} from the vault
+            </button>
+          )}
+        </>
+      ) : f.front ? (
         <>
           <p className="muted fine">
-            Earns about {money(f.front.perHour)} an hour for the vault. Members clean dirty money through its books for {Math.round(f.front.fee * 100)}% (the fee
+            {f.front.city ? `In ${f.front.city}. ` : ""}Earns about {money(f.front.perHour)} an hour for the vault. Members clean dirty money through its books for {Math.round(f.front.fee * 100)}% (the fee
             goes to the vault), and nobody files a report on it. {f.members}/{f.cap} members.
           </p>
           <div className="row wrap">
@@ -1987,6 +2000,30 @@ function FrontCard({ game, f, social }: { game: GameApi; f: NonNullable<Hub["fro
         </ul>
       )}
       {f.leader && f.front && <p className="fine muted">Trading up sells the old front for half what it cost.</p>}
+    </section>
+  );
+}
+
+/** Rival crews' fronts in this city: a gas can and a bad night for them. */
+function RivalFronts({ game, rivals, social }: { game: GameApi; rivals: NonNullable<Hub["rivalFronts"]>; social: (b: Record<string, unknown>) => Promise<unknown> }) {
+  return (
+    <section className="card rival-fronts">
+      <h3 className="card-title"><Flame size={16} /> Rival fronts in {game.view!.location.city}</h3>
+      <p className="muted fine">Burn one down and that crew loses its income and its quiet laundering until they pay to rebuild. Get caught with the can and it&apos;s a cell.</p>
+      <ul className="officials">
+        {rivals.map((r) => (
+          <li key={r.crewId}>
+            <span>
+              <b>[{r.tag}]</b> {r.front} <span className="muted fine">{r.closed ? "· already burned out" : `· ${r.crew}`}</span>
+            </span>
+            {!r.closed && (
+              <button className="btn btn-danger btn-xs" disabled={game.busy || !!r.block} title={r.block ?? ""} onClick={() => confirm(`Send yourself with a gas can to [${r.tag}]'s ${r.front.toLowerCase()}?`) && social({ op: "front_torch", crewId: r.crewId })}>
+                Torch it
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

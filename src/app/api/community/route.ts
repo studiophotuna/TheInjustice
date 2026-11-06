@@ -14,9 +14,10 @@ import { dispose } from "@/game/daily_life";
 import { breakIn, breakInBlock, carTheftBlock, hasAlarm, homeIn, homeJobBlock, ownerHome, runHomeJob, stealCar } from "@/game/breakin";
 import { CARS } from "@/game/vehicles";
 import { dogAt } from "@/game/dogs";
+import { huntBlock, huntFugitive, isFugitive } from "@/game/fugitive";
 import { hireMechanic, isMechService, mechanicCard } from "@/game/mechanic";
 import { SHOP, SHOP_KINDS } from "@/game/shops";
-import { buyFront, collectFront, crewCap, frontView, isFrontKind, launderAtFront } from "@/game/fronts";
+import { buyFront, collectFront, crewCap, frontView, isFrontKind, launderAtFront, rebuildFront, rivalFronts, torchFront } from "@/game/fronts";
 import { ambientLines, chatLine, defFor, isHeavy, isRegularId, REGULAR_OPS, REGULARS } from "@/game/regulars";
 
 const HEAVY_WIN_REP = 8;
@@ -311,6 +312,14 @@ export async function GET(req: Request) {
         });
       return NextResponse.json({ inmates, open: true, channel: yardChannel(p) });
     }
+    if (url.searchParams.get("fugitives")) {
+      const country = countryOf(p);
+      const locals = await store.listPlayers(country, 200);
+      const wanted = locals
+        .filter((o) => o.id !== p.id && isFugitive(o, now) && !o.travel)
+        .map((o) => ({ id: o.id, name: o.name, photo: o.profile?.photo ?? null, until: o.fugitive!.until, block: huntBlock(p, o, now) }));
+      return NextResponse.json({ wanted, detective: p.path === "police" && p.rank >= BALANCE.crime.detectiveRank });
+    }
     if (url.searchParams.get("directory")) {
       const country = countryOf(p);
       const [locals, city] = await Promise.all([store.listPlayers(country, 200), store.getCity(country)]);
@@ -535,6 +544,7 @@ export async function GET(req: Request) {
       hitmen: leading ? await hitmenFor(store, leading, p) : [],
       lab: myCrew ? labView(myCrew, p, now) : null,
       front: myCrew ? frontView(myCrew, p, now) : null,
+      rivalFronts: myCrew ? rivalFronts(await store.listCrews(60), p, now) : [],
       labBuild: myCrew && myCrew.leaderId === p.id && !myCrew.lab,
       police: p.path === "police" && p.rank >= BALANCE.drugBust.minRank,
       channels: channelsFor(p),
@@ -1009,8 +1019,45 @@ export async function POST(req: Request) {
         events = await store.transaction((tx) => withPair(tx, playerId, target, now, (o, t) => frisk(o, t, now, Math.random)));
         break;
       }
+      case "hunt_fugitive": {
+        const target = str(b.targetId);
+        events = await store.transaction(async (tx) => {
+          const [d, f] = await tx.getPlayers([playerId, target]);
+          if (!d) throw new GameError("Create a character first.");
+          if (!f) throw new GameError("That player doesn't exist.");
+          tick(d, now);
+          tick(f, now);
+          const city = await tx.getCity(countryOf(d));
+          const out = huntFugitive(d, f, city, now, Math.random);
+          await tx.putPlayer(d);
+          await tx.putPlayer(f);
+          if (city) await tx.putCity(city);
+          return out;
+        });
+        break;
+      }
+      case "front_torch": {
+        const crewId = str(b.crewId);
+        const self = await store.get(playerId);
+        if (!self) throw new GameError("Create a character first.");
+        events = await store.transaction(async (tx) => {
+          const [a] = await tx.getPlayers([playerId]);
+          if (!a) throw new GameError("Create a character first.");
+          tick(a, now);
+          const target = await tx.getCrew(crewId);
+          if (!target) throw new GameError("That crew is gone.");
+          const city = await tx.getCity(countryOf(a));
+          const out = torchFront(a, target, city, now, Math.random);
+          await tx.putPlayer(a);
+          await tx.putCrew(target);
+          if (city) await tx.putCity(city);
+          return out;
+        });
+        break;
+      }
       case "front_buy":
       case "front_collect":
+      case "front_rebuild":
       case "front_launder": {
         const self = await store.get(playerId);
         if (!self?.crewId) throw new GameError("You're not in a crew.");
@@ -1026,6 +1073,7 @@ export async function POST(req: Request) {
             if (!isFrontKind(b.kind)) throw new GameError("Bad request.");
             out = buyFront(crew, me, b.kind, now);
           } else if (b.op === "front_collect") out = collectFront(crew, me, now);
+          else if (b.op === "front_rebuild") out = rebuildFront(crew, me, now);
           else out = launderAtFront(crew, me, Number(b.amount), now);
           await tx.putPlayer(me);
           await tx.putCrew(crew);

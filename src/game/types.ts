@@ -288,6 +288,8 @@ export interface Player {
     shank?: boolean;
     lastFightAt?: number;
   };
+  /** Escaped from prison and on the run until then. */
+  fugitive?: { since: number; until: number; country: CountryId } | null;
   /** Customs bribes taken: internal affairs can find them. */
   customsTake?: { at: number; amount: number; exposed?: boolean }[];
   /** Who you were before prison. */
@@ -570,7 +572,16 @@ export interface Crew {
   log: { at: number; text: string }[];
   createdAt: number;
   /** The crew's front business: income, quiet laundering, more members. */
-  front?: { kind: FrontKind; since: number; collectedAt: number; laundered?: { day: number; amount: number } } | null;
+  front?: {
+    kind: FrontKind;
+    since: number;
+    collectedAt: number;
+    laundered?: { day: number; amount: number };
+    /** The city it stands in. */
+    country?: CountryId;
+    /** Burned out by a rival crew until then. */
+    closedUntil?: number;
+  } | null;
   /** The crew's drug lab. */
   lab?: { country: CountryId; district: DistrictId; districtName: string; builtAt: number; heat: number; heatAt: number; batches: number } | null;
   /** A bank job being planned. */

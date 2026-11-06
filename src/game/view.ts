@@ -33,6 +33,7 @@ import { dogView } from "./dogs";
 import { MECH, servicesFor } from "./mechanic";
 import { backgroundView } from "./backgrounds";
 import { insideView } from "./prisonlife";
+import { fugitiveView } from "./fugitive";
 import type { Arrival, CountryId, TravelMode } from "./types";
 import { PROPERTIES } from "./content/properties";
 import { countryOf, dayKey, propertyIncome, FIGHT_ENERGY, inHospital, itemPrice, jobLock } from "./engine";
@@ -235,6 +236,8 @@ export interface PublicView {
   stash: ReturnType<typeof stashView>;
   /** Your guard dog here, and the breeds for sale. */
   dog: ReturnType<typeof dogView>;
+  /** On the run after an escape. */
+  fugitive: ReturnType<typeof fugitiveView>;
   /** Life inside, while behind bars. */
   inside: ReturnType<typeof insideView>;
   /** Who you were before prison, and the career it points to. */
@@ -544,6 +547,7 @@ export function toView(p: Player, now: number): PublicView {
     dog: dogView(p, now),
     background: backgroundView(p),
     inside: insideView(p, now),
+    fugitive: fugitiveView(p, now),
     garage:
       p.path === "mechanic" && p.rank >= 1
         ? {

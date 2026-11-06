@@ -1,5 +1,19 @@
 # Changelog
 
+## 3.8.0: burning fronts, and life on the run
+
+- **Torch a rival's front:** a crew front now stands in the city where it was bought. Members of
+  other crews in that city see it under "Rival fronts" and can send themselves with a gas can.
+  Bigger fronts have better guards and sprinklers. A burned front earns nothing and launders
+  nothing for 12 hours, unless the leader pays a fifth of its price from the vault to rebuild.
+  Get caught with the can and it's a cell.
+- **On the run:** tunneling out of prison makes you a fugitive for six hours.
+  - Detectives see escaped prisoners in their city at the Police Station and can hunt them. Bring
+    one back and city hall pays a reward; miss, and the fugitive is warned.
+  - Customs officers on duty can recognize a fugitive at the checkpoint or the station.
+  - Airports check papers (no flights), and the bank freezes your accounts.
+  - A card on Home counts down until the trail goes cold. Caught, you're back inside for longer.
+
 ## 3.7.0: envelopes, life inside, and crew fronts
 
 - **Customs bribes:** an officer on a customs shift can name a price to look the other way. Word

@@ -8,6 +8,7 @@ import { BreakIns } from "./property";
 import { Directory } from "./directory";
 import { CustomsCard } from "./customs";
 import { InsideCard } from "./inside";
+import { FugitivesCard } from "./fugitives";
 import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { Scene, type SceneKind } from "./art/Scenes";
 import { CityHall } from "./cityhall";
@@ -98,6 +99,7 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
     case "police":
       return (
         <div className="stack">
+          <FugitivesCard game={game} />
           <ThreatReports game={game} />
           <CasesPanel game={game} hub={hub} place="police" />
         </div>
