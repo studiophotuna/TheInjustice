@@ -1,5 +1,15 @@
 # Changelog
 
+## 5.3.0: try it on before you buy
+
+- **Try it on:** tap any frame, name colour or banner in Shop → Style (or its price) and a
+  sheet shows it on you before you pay: your profile header with the banner, your face and
+  your name, a city chat line, and how others see you, together with what you already wear.
+  Animated looks move in the preview too. Buy or wear it from there, or close it.
+- **Uploads preview first:** choosing an image for your own frame or banner no longer sends it
+  straight away. You see it on yourself first, then "Send for approval" pays and sends it. If
+  you don't have enough Favors, the sheet says how many more you need.
+
 ## 5.2.0: animated premium looks
 
 - **Six animated frames:** Gold rush (a turning gold ring with sparkles that come and go),

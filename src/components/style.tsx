@@ -19,12 +19,76 @@ const KINDS: { id: CosmeticKind; label: string }[] = [
 
 const short = (id: string | null) => (id ? id.split(":")[1] : null);
 
+type Look = { frame: string | null; color: string | null; banner: string | null };
+/** A look being tried on: what it is, and what pressing the main button does. */
+type TryOn = { kind: CosmeticKind; value: string; title: string; fx?: boolean; label: string; disabled?: string | null; confirm: () => Promise<unknown> };
+
+const bannerSrc = (b: string | null) => (!b ? "/scenes/street.jpg" : b.startsWith("data:") ? b : b.startsWith("u-") ? `/api/upload/${b.slice(2)}` : `/scenes/${b}.jpg`);
+
+/** "Try it on": the look on your profile header, in chat and on your face, before you pay. */
+function TryOnSheet({ game, t, close }: { game: GameApi; t: TryOn; close: () => void }) {
+  const view = game.view!;
+  const [busy, setBusy] = useState(false);
+  const look: Look = { ...(view.look ?? { frame: null, color: null, banner: null }), [t.kind]: t.value };
+  const nameCls = look.color ? `name-${look.color}` : "";
+  return (
+    <div className="tryon-backdrop" onClick={close} role="dialog" aria-modal="true" aria-label={`Try on ${t.title}`}>
+      <div className="tryon" onClick={(e) => e.stopPropagation()}>
+        <header className="tryon-head">
+          <span className="kicker">Try it on</span>
+          <b>{t.title}{t.fx && <span className="fx-tag">Animated</span>}</b>
+        </header>
+        <div className="tryon-me">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="tryon-banner" src={bannerSrc(look.banner)} alt="" />
+          <div className="tryon-me-row">
+            <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo} look={look} className="tryon-face" />
+            <div className="tryon-who">
+              <b className={`tryon-name ${nameCls}`}>{view.name}</b>
+              <span>{view.path ? `${view.path.rank} · ${view.path.name}` : view.location.city}</span>
+            </div>
+          </div>
+        </div>
+        <div className="tryon-chat">
+          <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo} look={look} className="cchat-avatar" />
+          <div>
+            <p className={`cchat-who ${nameCls}`}>{view.name} <time>now</time></p>
+            <p className="cchat-body">Anyone seen the Commodore tonight?</p>
+          </div>
+        </div>
+        <p className="fine muted tryon-note">This is how others see you on People, the map and in city chat.</p>
+        {t.disabled && <p className="favors-soon">{t.disabled}</p>}
+        <div className="tryon-acts">
+          <button className="btn btn-ghost" onClick={close}>Close</button>
+          <button
+            className="btn btn-red"
+            disabled={busy || game.busy || !!t.disabled}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await t.confirm();
+                close();
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {busy ? "One moment…" : t.label}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function StyleShop({ game }: { game: GameApi }) {
   const view = game.view!;
   const f = view.favors;
   const [kind, setKind] = useState<CosmeticKind>("frame");
   const [notice, setNotice] = useState(false);
+  const [tryOn, setTryOn] = useState<TryOn | null>(null);
   const photo = view.profile.photo;
+  const need = (price: number) => (f.balance < price ? `You need ${(price - f.balance).toLocaleString()} more Favors.` : null);
   const list = COSMETICS.filter((c) => c.kind === kind);
   return (
     <div className="stack style-shop">
@@ -56,14 +120,24 @@ export function StyleShop({ game }: { game: GameApi }) {
 
       <UploadRules kind={kind} />
       <div className={`style-grid kind-${kind}`}>
-        {kind !== "color" && <OwnLook game={game} kind={kind} />}
+        {kind !== "color" && <OwnLook game={game} kind={kind} tryOn={setTryOn} need={need} />}
         {list.map((c) => {
           const owned = f.owned.includes(c.id);
           const on = f.equipped[c.kind] === c.id;
           const name = short(c.id);
+          const open = () =>
+            setTryOn({
+              kind: c.kind,
+              value: name!,
+              title: c.name,
+              fx: c.fx,
+              label: owned ? (on ? "Wearing it" : "Wear it") : `Buy · ${c.price} Favors`,
+              disabled: owned ? (on ? "You're already wearing this." : null) : need(c.price),
+              confirm: () => (owned ? game.act({ type: "equip_cosmetic", kind: c.kind, id: c.id }) : game.act({ type: "buy_cosmetic", id: c.id })),
+            });
           return (
             <article key={c.id} className={`style-item ${on ? "on" : ""}`}>
-              <div className="style-preview">
+              <button className="style-preview" onClick={open} aria-label={`Try on ${c.name}`}>
                 {c.kind === "banner" ? (
                   <img className="style-banner" src={`/scenes/${name}.jpg`} alt="" loading="lazy" />
                 ) : c.kind === "frame" ? (
@@ -71,7 +145,8 @@ export function StyleShop({ game }: { game: GameApi }) {
                 ) : (
                   <b className={`style-name name-${name}`}>{view.name}</b>
                 )}
-              </div>
+                <span className="try-hint">Try it on</span>
+              </button>
               <div className="style-meta">
                 <b>{c.name}{c.fx && <span className="fx-tag">Animated</span>}</b>
                 {on ? (
@@ -79,7 +154,7 @@ export function StyleShop({ game }: { game: GameApi }) {
                 ) : owned ? (
                   <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => game.act({ type: "equip_cosmetic", kind: c.kind, id: c.id })}>Wear</button>
                 ) : (
-                  <button className="btn btn-red btn-xs" disabled={game.busy || f.balance < c.price} onClick={() => game.act({ type: "buy_cosmetic", id: c.id })}>{c.price} Favors</button>
+                  <button className="btn btn-red btn-xs" disabled={game.busy} onClick={open}>{c.price} Favors</button>
                 )}
               </div>
             </article>
@@ -100,6 +175,7 @@ export function StyleShop({ game }: { game: GameApi }) {
           </ul>
         </section>
       )}
+      {tryOn && <TryOnSheet game={game} t={tryOn} close={() => setTryOn(null)} />}
     </div>
   );
 }
@@ -131,7 +207,7 @@ async function shrinkFor(kind: CustomKind, file: File): Promise<string> {
 }
 
 /** Your own frame or banner: upload, wait for approval, then wear it. */
-function OwnLook({ game, kind }: { game: GameApi; kind: CustomKind }) {
+function OwnLook({ game, kind, tryOn, need }: { game: GameApi; kind: CustomKind; tryOn: (t: TryOn) => void; need: (price: number) => string | null }) {
   const view = game.view!;
   const own = view.favors.custom[kind];
   const price = CUSTOM[kind].price;
@@ -149,10 +225,20 @@ function OwnLook({ game, kind }: { game: GameApi; kind: CustomKind }) {
       setError(null);
       try {
         const data = await shrinkFor(kind, f);
-        const res = await fetch("/api/upload", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ kind, data }) });
-        const body = await res.json().catch(() => ({}));
-        if (!res.ok) setError(body.error ?? "That didn't upload.");
-        await game.refresh();
+        // See it on yourself first; nothing is paid or sent until you say so.
+        tryOn({
+          kind,
+          value: data,
+          title: kind === "frame" ? "Your own frame" : "Your own banner",
+          label: `Send for approval · ${price} Favors`,
+          disabled: need(price),
+          confirm: async () => {
+            const res = await fetch("/api/upload", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ kind, data }) });
+            const body = await res.json().catch(() => ({}));
+            if (!res.ok) setError(body.error ?? "That didn't upload.");
+            await game.refresh();
+          },
+        });
       } catch {
         setError("That image couldn't be read.");
       } finally {
@@ -189,8 +275,8 @@ function OwnLook({ game, kind }: { game: GameApi; kind: CustomKind }) {
           )
         )}
         {own?.status !== "pending" && (
-          <button className="btn btn-red btn-xs" disabled={busy || game.busy || view.favors.balance < price} onClick={pick}>
-            {busy ? "Uploading…" : `${own ? "New one" : "Upload"} · ${price}`}
+          <button className="btn btn-red btn-xs" disabled={busy || game.busy} onClick={pick}>
+            {busy ? "Reading…" : `${own ? "New one" : "Choose an image"}`}
           </button>
         )}
         {error && <span className="form-error fine">{error}</span>}
