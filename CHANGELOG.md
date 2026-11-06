@@ -1,5 +1,17 @@
 # Changelog
 
+## 5.5.0: every animated frame drawn live
+
+- **Frostbite:** an icy ring with frost crystals growing out of it (long branching spikes among
+  short ones) that catch the light in turn, fine snow drifting down past your face, and a glint
+  that travels round the ring.
+- **Blood moon:** a deep red eclipse ring that breathes, a slow-turning corona of red light,
+  embers rising off it, and drops of blood that gather at the bottom of the ring and fall.
+- **Aurora:** three ribbons of northern lights weaving round the ring in waves, their colours
+  flowing as they drift, with faint stars coming and going.
+- All six animated frames now use the same live drawing as Wildfire and Live wire, and stay
+  smooth with every effect on screen.
+
 ## 5.4.0: real fire, real current
 
 - **Wildfire is a ring of real fire now:** flame tongues rise and flicker all around your face,

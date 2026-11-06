@@ -690,3 +690,7 @@ button.style-preview:hover .try-hint, button.style-preview:focus-visible .try-hi
 .portrait-photo.frame-goldrush::after { display: none; }
 /* People cards show the photo edge to edge: no ring effects there. */
 .lu-photo .portrait-photo.fx::before, .lu-photo .portrait-photo.fx::after { display: none; }
+
+.portrait-photo.frame-frostbite::before, .portrait-photo.frame-frostbite::after,
+.portrait-photo.frame-bloodmoon::before, .portrait-photo.frame-bloodmoon::after,
+.portrait-photo.frame-aurora::before, .portrait-photo.frame-aurora::after { display: none; }

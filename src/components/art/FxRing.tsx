@@ -7,8 +7,8 @@
 
 import { useEffect, useRef } from "react";
 
-export type FxKind = "wildfire" | "livewire" | "goldrush";
-export const CANVAS_FX = new Set<string>(["wildfire", "livewire", "goldrush"]);
+export type FxKind = "wildfire" | "livewire" | "goldrush" | "frostbite" | "bloodmoon" | "aurora";
+export const CANVAS_FX = new Set<string>(["wildfire", "livewire", "goldrush", "frostbite", "bloodmoon", "aurora"]);
 
 /** The canvas is this many times the face's size, so effects can reach outside the circle. */
 const SCALE = 1.9;
@@ -236,9 +236,252 @@ function drawGold(r: Ring, g: CanvasRenderingContext2D) {
   g.globalCompositeOperation = "source-over";
 }
 
+// ── Frostbite: ice crystals on the ring, snow drifting past, a glint going round ──
+
+/** Fixed crystal shards for a ring (angle, length, width), the same every frame. */
+function shards(r: Ring) {
+  if (!r.bolts.length) {
+    const rnd = rand(0.4242);
+    r.bolts = Array.from({ length: 26 }, (_, i) => ({ a: (i / 26) * Math.PI * 2 + (rnd() - 0.5) * 0.18, v: 0.35 + rnd() * 0.65, len: 0.3 + rnd() * 0.7, seed: rnd() }));
+  }
+  return r.bolts;
+}
+
+function stepFrost(r: Ring, dt: number) {
+  shards(r);
+  const half = (r.face * SCALE) / 2;
+  if (Math.random() < dt * (5 + r.face / 14)) {
+    r.parts.push({ x: (Math.random() - 0.5) * half * 2, y: -half, vx: (Math.random() - 0.5) * 6, vy: 9 + Math.random() * 10, life: 0, max: 3 + Math.random() * 2, size: 0.45 + Math.random() * 0.7 });
+  }
+  for (const p of r.parts) {
+    p.life += dt;
+    p.x += (p.vx + Math.sin((r.t + p.max) * 2) * 6) * dt;
+    p.y += p.vy * dt * (r.face / 72);
+  }
+  r.parts = r.parts.filter((p) => p.life < p.max && p.y < half).slice(-90);
+}
+
+function drawFrost(r: Ring, g: CanvasRenderingContext2D) {
+  const R = r.face / 2 + 1;
+  const u = r.face / 72;
+  // The icy ring.
+  const ring = g.createLinearGradient(-R, -R, R, R);
+  ring.addColorStop(0, "#ffffff");
+  ring.addColorStop(0.5, "#9fdcff");
+  ring.addColorStop(1, "#e6f7ff");
+  g.lineWidth = Math.max(2.5, r.face * 0.055);
+  g.strokeStyle = ring;
+  g.shadowColor = "rgba(150,215,255,0.9)";
+  g.shadowBlur = r.face * 0.16;
+  g.beginPath();
+  g.arc(0, 0, R, 0, Math.PI * 2);
+  g.stroke();
+  g.shadowBlur = 0;
+  // Crystals: thin shards that breathe a little, catching the light in turn.
+  g.lineCap = "round";
+  for (const s of shards(r)) {
+    // Uneven lengths: a few long spikes among short ones, like real frost.
+    const len = (2 + s.len * s.len * 14) * u;
+    const ca = Math.cos(s.a), sa = Math.sin(s.a);
+    const bx = ca * R, by = sa * R;
+    const tx = ca * (R + len), ty = sa * (R + len);
+    const shine = 0.5 + 0.5 * Math.max(0, Math.sin(r.t * 2.2 - s.a * 2));
+    g.strokeStyle = `rgba(225,245,255,${0.55 + 0.45 * shine})`;
+    g.lineWidth = Math.max(0.8, (0.8 + s.v * 1.2) * u);
+    g.beginPath();
+    g.moveTo(bx, by);
+    g.lineTo(tx, ty);
+    // Side branches on the longer crystals.
+    if (len > 7 * u) {
+      for (const f of [0.45, 0.72]) {
+        const mx = ca * (R + len * f), my = sa * (R + len * f);
+        const bl = len * (1 - f) * 0.55;
+        for (const side of [-1, 1]) {
+          const ba = s.a + side * 0.75;
+          g.moveTo(mx, my);
+          g.lineTo(mx + Math.cos(ba) * bl, my + Math.sin(ba) * bl);
+        }
+      }
+    }
+    g.stroke();
+  }
+  g.lineCap = "butt";
+  // A glint that travels round the ring.
+  const ga = r.t * 1.4;
+  g.globalCompositeOperation = "lighter";
+  const gs = r.face * 0.16;
+  g.drawImage(sprite("rgba(230,248,255,1)"), Math.cos(ga) * R - gs, Math.sin(ga) * R - gs, gs * 2, gs * 2);
+  // Snow.
+  for (const p of r.parts) {
+    g.globalAlpha = Math.min(1, (p.max - p.life) * 2) * 0.9;
+    const s = Math.max(0.8, p.size * 2.2 * u);
+    g.drawImage(sprite("rgba(255,255,255,1)"), p.x - s, p.y - s, s * 2, s * 2);
+  }
+  g.globalAlpha = 1;
+  g.globalCompositeOperation = "source-over";
+}
+
+// ── Blood moon: an eclipse corona, embers rising, drops falling ──
+
+function stepBlood(r: Ring, dt: number) {
+  const R = r.face / 2;
+  const u = r.face / 72;
+  // Embers drift up from the ring.
+  if (Math.random() < dt * (14 + r.face / 5)) {
+    const a = Math.random() * Math.PI * 2;
+    r.parts.push({ x: Math.cos(a) * (R + 2), y: Math.sin(a) * (R + 2), vx: Math.cos(a) * 6 + (Math.random() - 0.5) * 8, vy: Math.sin(a) * 6 - (10 + Math.random() * 16) * u, life: 0, max: 0.9 + Math.random() * 1.1, size: (1.5 + Math.random() * 2.5) * u });
+  }
+  // Now and then a drop gathers at the bottom of the ring and falls.
+  if (Math.random() < dt * 0.9) {
+    const a = Math.PI / 2 + (Math.random() - 0.5) * 1.1;
+    r.parts.push({ x: Math.cos(a) * (R + 2), y: Math.sin(a) * (R + 2), vx: 0, vy: 0, life: 0, max: 2.2, size: -(2.4 + Math.random() * 1.6) * u });
+  }
+  for (const p of r.parts) {
+    p.life += dt;
+    if (p.size < 0) {
+      // A drop: hangs, swells, then falls.
+      if (p.life > 0.7) p.vy += 220 * u * dt;
+    }
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+  }
+  const half = (r.face * SCALE) / 2;
+  r.parts = r.parts.filter((p) => p.life < p.max && p.y < half + 10).slice(-120);
+}
+
+function drawBlood(r: Ring, g: CanvasRenderingContext2D) {
+  const R = r.face / 2 + 1;
+  const pulse = 0.5 + 0.5 * Math.sin(r.t * 2.4);
+  // The corona: slow-turning rays of red light behind the ring.
+  g.save();
+  g.rotate(r.t * 0.25);
+  g.globalCompositeOperation = "lighter";
+  const rays = 18;
+  for (let i = 0; i < rays; i++) {
+    const a = (i / rays) * Math.PI * 2;
+    const len = R * (0.32 + 0.22 * Math.sin(i * 1.7 + r.t * 1.3)) * (0.85 + 0.3 * pulse);
+    const grd = g.createLinearGradient(Math.cos(a) * R, Math.sin(a) * R, Math.cos(a) * (R + len), Math.sin(a) * (R + len));
+    grd.addColorStop(0, "rgba(255,40,40,0.55)");
+    grd.addColorStop(1, "rgba(120,0,0,0)");
+    g.strokeStyle = grd;
+    g.lineWidth = Math.max(2, r.face * 0.05);
+    g.beginPath();
+    g.moveTo(Math.cos(a) * R, Math.sin(a) * R);
+    g.lineTo(Math.cos(a) * (R + len), Math.sin(a) * (R + len));
+    g.stroke();
+  }
+  g.restore();
+  // The ring: dark red, breathing.
+  const ring = g.createLinearGradient(0, -R, 0, R);
+  ring.addColorStop(0, "#ff5a5a");
+  ring.addColorStop(0.5, "#b3001b");
+  ring.addColorStop(1, "#5a0010");
+  g.lineWidth = Math.max(3, r.face * 0.07);
+  g.strokeStyle = ring;
+  g.shadowColor = `rgba(255,30,40,${0.6 + 0.4 * pulse})`;
+  g.shadowBlur = r.face * (0.18 + 0.14 * pulse);
+  g.beginPath();
+  g.arc(0, 0, R, 0, Math.PI * 2);
+  g.stroke();
+  g.shadowBlur = 0;
+  // Embers and drops.
+  for (const p of r.parts) {
+    if (p.size < 0) {
+      const s = -p.size * (p.life < 0.7 ? 0.5 + p.life / 1.4 : 1);
+      g.fillStyle = "#c4001a";
+      g.beginPath();
+      // A teardrop: round at the bottom, pointed at the top.
+      g.moveTo(p.x, p.y - s * 2.2);
+      g.bezierCurveTo(p.x + s, p.y - s * 0.6, p.x + s, p.y + s, p.x, p.y + s);
+      g.bezierCurveTo(p.x - s, p.y + s, p.x - s, p.y - s * 0.6, p.x, p.y - s * 2.2);
+      g.fill();
+      g.fillStyle = "rgba(255,160,160,0.7)";
+      g.beginPath();
+      g.arc(p.x - s * 0.3, p.y, s * 0.25, 0, Math.PI * 2);
+      g.fill();
+    } else {
+      g.globalCompositeOperation = "lighter";
+      g.globalAlpha = (1 - p.life / p.max) * 0.9;
+      const s = p.size * 2.4;
+      g.drawImage(sprite("rgba(255,70,40,1)"), p.x - s, p.y - s, s * 2, s * 2);
+      g.globalAlpha = 1;
+      g.globalCompositeOperation = "source-over";
+    }
+  }
+}
+
+// ── Aurora: ribbons of light flowing round the ring, a few stars ──
+
+function stepAurora(r: Ring, dt: number) {
+  const half = (r.face * SCALE) / 2;
+  if (Math.random() < dt * 4) {
+    const a = Math.random() * Math.PI * 2;
+    const d = r.face / 2 + 6 + Math.random() * (half - r.face / 2 - 6);
+    r.parts.push({ x: Math.cos(a) * d, y: Math.sin(a) * d, vx: 0, vy: 0, life: 0, max: 1.2 + Math.random() * 1.2, size: 1 + Math.random() * 1.4 });
+  }
+  for (const p of r.parts) p.life += dt;
+  r.parts = r.parts.filter((p) => p.life < p.max).slice(-24);
+}
+
+function drawAurora(r: Ring, g: CanvasRenderingContext2D) {
+  const R = r.face / 2 + 1;
+  const u = r.face / 72;
+  g.globalCompositeOperation = "lighter";
+  g.lineCap = "round";
+  g.lineJoin = "round";
+  // Three ribbons: each a smooth wavy loop whose colours flow round as it drifts.
+  for (let k = 0; k < 3; k++) {
+    const phase = r.t * (0.7 + k * 0.22) + k * 2.1;
+    const pts: [number, number][] = [];
+    const steps = 120;
+    for (let i = 0; i <= steps; i++) {
+      const a = (i / steps) * Math.PI * 2;
+      const wave = Math.sin(a * 3 + phase) * 0.6 + Math.sin(a * 5 - phase * 1.4) * 0.4;
+      const rr = R + (4 + k * 3 + wave * 5) * u;
+      pts.push([Math.cos(a) * rr, Math.sin(a) * rr]);
+    }
+    const grad = typeof g.createConicGradient === "function" ? g.createConicGradient(r.t * (0.5 + k * 0.2) + k, 0, 0) : null;
+    const stops = ["46,240,176", "46,196,255", "155,123,255", "255,90,200", "46,240,176"];
+    for (const [w, a, blur] of [[9 * u, 0.22, r.face * 0.22], [4 * u, 0.55, r.face * 0.1], [1.4 * u, 0.9, 0]] as const) {
+      if (grad) {
+        const gg = g.createConicGradient(r.t * (0.5 + k * 0.2) + k, 0, 0);
+        stops.forEach((c, i) => gg.addColorStop(i / (stops.length - 1), `rgba(${c},${a * (0.45 + 0.55 * Math.abs(Math.sin(i + phase)))})`));
+        g.strokeStyle = gg;
+      } else {
+        g.strokeStyle = `rgba(${stops[k]},${a})`;
+      }
+      g.lineWidth = Math.max(0.8, w);
+      g.shadowColor = `rgba(${stops[k + 1]},0.8)`;
+      g.shadowBlur = blur;
+      g.beginPath();
+      pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y)));
+      g.stroke();
+    }
+  }
+  g.shadowBlur = 0;
+  // A thin bright ring holds it together.
+  g.lineWidth = Math.max(1.2, r.face * 0.025);
+  g.strokeStyle = "rgba(220,255,245,0.8)";
+  g.beginPath();
+  g.arc(0, 0, R, 0, Math.PI * 2);
+  g.stroke();
+  // Stars that come and go.
+  for (const p of r.parts) {
+    g.globalAlpha = Math.sin((p.life / p.max) * Math.PI);
+    const s = p.size * 2.2 * u;
+    g.drawImage(sprite("rgba(255,255,255,1)"), p.x - s, p.y - s, s * 2, s * 2);
+  }
+  g.globalAlpha = 1;
+  g.lineCap = "butt";
+  g.globalCompositeOperation = "source-over";
+}
+
 function step(r: Ring, dt: number) {
   if (r.kind === "wildfire") stepFire(r, dt);
   else if (r.kind === "livewire") stepWire(r, dt);
+  else if (r.kind === "frostbite") stepFrost(r, dt);
+  else if (r.kind === "bloodmoon") stepBlood(r, dt);
+  else if (r.kind === "aurora") stepAurora(r, dt);
   else stepGold(r, dt);
 }
 
@@ -250,6 +493,9 @@ function draw(r: Ring) {
   g.translate(size / 2, size / 2);
   if (r.kind === "wildfire") drawFire(r, g);
   else if (r.kind === "livewire") drawWire(r, g);
+  else if (r.kind === "frostbite") drawFrost(r, g);
+  else if (r.kind === "bloodmoon") drawBlood(r, g);
+  else if (r.kind === "aurora") drawAurora(r, g);
   else drawGold(r, g);
 }
 
