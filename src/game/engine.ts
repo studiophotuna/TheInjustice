@@ -489,6 +489,13 @@ export function softCap(statValueNow: number): number {
   return statValueNow <= start ? 1 : Math.pow(0.5, (statValueNow - start) / halfEvery);
 }
 
+/** XP from a drill with a soldier regular (same rules as any other training). */
+export function drillXp(p: Player, xp: Partial<Record<StatKey, number>>): GameEvent[] {
+  const events: GameEvent[] = [];
+  grantXp(p, xp, 1, events);
+  return events;
+}
+
 function grantXp(p: Player, xp: Partial<Record<StatKey, number>>, mult: number, events: GameEvent[]) {
   for (const k of STAT_KEYS) {
     const gain = (xp[k] ?? 0) * mult * softCap(statValue(p.stats[k]));

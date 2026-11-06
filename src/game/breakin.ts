@@ -100,6 +100,7 @@ export function breakInOdds(a: Player, t: Player, country: CountryId, now: numbe
   const skill = (sv(a, "agility") + sv(a, "wits") - 20) / 120;
   let odds = BREAKIN.lock[homeIn(t, country)] * 0.9 + skill;
   if (hasAlarm(t, country)) odds -= BREAKIN.alarm.odds;
+  if ((t.homeWatchUntil ?? 0) > now) odds *= 0.6;
   odds *= 1 - dogGuard(t, country, now);
   if (ownerHome(t, country, now)) odds *= 0.5;
   return clamp(odds, 0.08, 0.9);

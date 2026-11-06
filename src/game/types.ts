@@ -155,6 +155,10 @@ export interface Player {
   favorLog?: { at: number; delta: number; what: string; ref?: string }[];
   /** The player's own uploaded frame and banner, and where each stands with the moderators. */
   customLooks?: Partial<Record<"frame" | "banner", { id: string; status: "pending" | "approved" | "rejected"; at: number; reason?: string }>>;
+  /** When you last used each street regular's service (for once-a-day ones). */
+  regularServices?: Record<string, number>;
+  /** A vigilante regular is watching your home until then (break-ins are harder). */
+  homeWatchUntil?: number;
   /** Looks bought with Favors, and the ones being worn. */
   cosmetics?: { owned: string[]; frame?: string | null; color?: string | null; banner?: string | null };
   /** Gear in use: only equipped gear counts in a fight. */

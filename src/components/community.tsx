@@ -15,6 +15,8 @@ import { SkelLineup, SkelRows } from "./skeleton";
 type Profile = {
   id: string;
   name: string;
+  /** A street regular's career work, for a fee. */
+  services?: { id: string; label: string; fee: number; note: string; block: string | null; amount?: boolean }[];
   look?: { frame: string | null; color: string | null; banner: string | null } | null;
   title: string;
   path: string | null;
@@ -337,7 +339,7 @@ export function CommunityTab({ game }: { game: GameApi }) {
   );
 }
 
-type Act = { key: string; label: React.ReactNode; run: () => unknown; danger?: boolean; title?: string };
+type Act = { key: string; label: React.ReactNode; run: () => unknown; danger?: boolean; title?: string; disabled?: boolean; note?: string };
 type Group = { id: string; label: string; acts: Act[] };
 
 /** Everyone's actions, grouped. Only what you can actually do right now is listed. */
@@ -377,6 +379,25 @@ function personActions(game: GameApi, hub: Hub, p: Profile, social: (b: Record<s
     if (!t.block) crew.push({ key: `torch-${t.id}`, label: <>Torch {t.name}</>, danger: true, run: () => confirm(`Torch ${p.name}'s ${t.name}? If you're caught, you go to a cell.`) && social({ op: "torch", targetId: p.id, propertyId: t.id }) });
   }
 
+  // A regular with a career does their job for you, while they're out.
+  const work: Act[] = [];
+  for (const s of p.services ?? []) {
+    const price = s.id === "launder" ? `${s.fee}%` : `$${s.fee.toLocaleString("en")}`;
+    work.push({
+      key: `svc-${s.id}`,
+      label: <>{s.label} · {price}</>,
+      title: s.block ?? s.note,
+      disabled: !!s.block,
+      note: s.block ?? s.note,
+      run: () => {
+        if (s.amount) {
+          const v = window.prompt(`How much dirty money should ${p.name} clean? They keep ${s.fee}%.`, String(Math.floor(game.view!.dirty)));
+          return v ? social({ op: "regular_service", regularId: p.id, service: s.id, amount: Number(v) }) : undefined;
+        }
+        return social({ op: "regular_service", regularId: p.id, service: s.id });
+      },
+    });
+  }
   if (!p.canVouch) business.push({ key: "vouch", label: <><UserCheck size={14} /> Vouch for them</>, run: () => social({ op: "vouch", targetId: p.id }) });
   if (hub.lender && !p.regular) {
     business.push({
@@ -415,8 +436,10 @@ function personActions(game: GameApi, hub: Hub, p: Profile, social: (b: Record<s
   }
 
   // The one button on the card: a fight if you can, otherwise the first thing your career offers.
-  const primary = attack ?? (p.surgery && !p.surgery.block ? business.find((a) => a.key === "surgery")! : null) ?? street.find((a) => a.key !== "bounty") ?? null;
+  const ready = work.find((a) => !a.disabled) ?? null;
+  const primary = ready ?? attack ?? (p.surgery && !p.surgery.block ? business.find((a) => a.key === "surgery")! : null) ?? street.find((a) => a.key !== "bounty") ?? null;
   const groups: Group[] = [
+    { id: "work", label: "Their work", acts: work.filter((a) => a !== primary) },
     { id: "street", label: "Street", acts: [...(attack && primary !== attack ? [attack] : []), ...street.filter((a) => a !== primary)] },
     { id: "crew", label: "Crew", acts: crew },
     { id: "business", label: "Business", acts: business.filter((a) => a !== primary) },
@@ -553,11 +576,12 @@ function PersonFile({ game, hub, p, social, onClose }: { game: GameApi; hub: Hub
             <span className="crime-label">{g.label}</span>
             <div className="row wrap">
               {g.acts.map((a) => (
-                <button key={a.key} className={`btn btn-sm ${a.danger ? "btn-danger" : "btn-ghost"}`} disabled={game.busy} title={a.title} onClick={() => run(a.run)}>
+                <button key={a.key} className={`btn btn-sm ${a.danger ? "btn-danger" : "btn-ghost"}`} disabled={game.busy || a.disabled} title={a.title} onClick={() => run(a.run)}>
                   {a.label}
                 </button>
               ))}
             </div>
+            {g.id === "work" && g.acts.map((a) => a.note && <p key={a.key} className="fine muted work-note">{a.note}</p>)}
           </div>
         ))}
         {p.contract && hub.hitmen.length > 0 && <ContractButton game={game} target={p} hitmen={hub.hitmen} social={social} />}

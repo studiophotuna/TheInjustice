@@ -1,5 +1,22 @@
 # Changelog
 
+## 5.7.0: street regulars do their jobs
+
+- **Regulars with a career now work for you, for a fee.** Tap one in People and
+  their job is the main button, with "Their work" listed first:
+  - **Doctors** patch you up to full health (the fee grows with how hurt you are); Residents
+    and up also operate on old wounds.
+  - **Attorneys** go on retainer for a week, paid from the bank: if you're arrested, they
+    defend you.
+  - **Bankers** clean dirty money for a 22% cut (the laundromat takes 30%).
+  - **Beat cops** look the other way: your record cools a little, once a day per officer, and
+    it costs you a little conscience. Cash or dirty money.
+  - **Mafia muscle** watches your back: bodyguards for 12 hours.
+  - **Soldiers** drill you: strength and toughness, more than the gym gives, for energy.
+  - **Vigilantes** watch your place for the night: break-ins at your home are harder.
+- They only work while they're out on the street (their own hours) and in their own city.
+  Otherwise the button says why. The fee goes to them.
+
 ## 5.6.1: fixes for faces, frames and name colours
 
 - **Street regulars show their real face everywhere.** Many regulars still had an old drawing

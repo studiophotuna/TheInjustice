@@ -1,4 +1,5 @@
 import { lookOf } from "@/game/favors";
+import { servicesOf, useService, type ServiceId } from "@/game/regularwork";
 import { assertActive, assertCanSpeak, checkReport, isBanned } from "@/game/moderation";
 import { acceptAlliance, breakAlliance, declineAlliance, proposeAlliance } from "@/game/batch7";
 import { ceremonyBlock, isMade, makeMember } from "@/game/family";
@@ -32,7 +33,7 @@ import { setSurgeryFee, surgery, surgeryBlock, woundsOf } from "@/game/wounds";
 import { cityEvent } from "@/game/events";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
-import { countryOf, inHospital, inJail, tick } from "@/game/engine";
+import { countryOf, drillXp, inHospital, inJail, tick } from "@/game/engine";
 import { BALANCE } from "@/game/balance";
 import {
   acceptJoin,
@@ -519,6 +520,7 @@ export async function GET(req: Request) {
         ambush: leading && isHeavy(o) && !myCrew?.ambush ? AM.planBlock(leading, p, o, now) : "n/a",
         canCrime: Object.fromEntries(CRIME_KINDS.map((k) => [k, crimeBlock(p, o, k, now)])),
         hire,
+        services: servicesOf(p, o, now),
       };
     };
     // Keep the player's own "leads a crew" record in step (older crews predate it).
@@ -924,6 +926,15 @@ export async function POST(req: Request) {
           await tx.putCase(c);
           return out;
         });
+        break;
+      }
+      case "regular_service": {
+        const regId = str(b.regularId);
+        if (!regId.startsWith(REGULARS.idPrefix)) throw new GameError("They don't do that kind of work.");
+        const service = str(b.service) as ServiceId;
+        events = await store.transaction((tx) =>
+          withPair(tx, playerId, regId, now, (me, reg) => useService(me, reg, service, now, { drill: drillXp, lawyerPower }, Number(b.amount) || 0)),
+        );
         break;
       }
       case "hire_lawyer": {

@@ -207,7 +207,7 @@ export function chatLine(out: Player[], lastAt: number, now: number): { who: Pla
 }
 
 /** Ops that may target a regular. Everything else is refused. */
-export const REGULAR_OPS = new Set(["attack", "crime", "ambush_hire", "ambush_plan"]);
+export const REGULAR_OPS = new Set(["attack", "crime", "ambush_hire", "ambush_plan", "regular_service"]);
 
 const DOING: Record<string, string[]> = {
   police: ["is walking a beat in", "is asking questions around", "stopped a car in"],
