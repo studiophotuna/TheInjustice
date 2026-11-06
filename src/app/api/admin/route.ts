@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { linkedGroups } from "@/game/anticheat";
 import { COUNTRIES } from "@/game/content/world";
+import { reviewUpload } from "@/game/favors";
 import { applyModAction, assertModAction, isBanned, isMuted } from "@/game/moderation";
+import { notify } from "@/game/social";
 import { GameError, type Player } from "@/game/types";
 import { assertJson } from "@/server/auth";
 import { isAdmin, resolveIdentity } from "@/server/identity";
@@ -47,6 +49,8 @@ export async function GET(req: Request) {
       open,
       closed: [...resolved, ...dismissed].sort((a, b) => b.id - a.id).slice(0, 20),
       alts: linkedGroups(players),
+      // Uploaded frames and banners waiting for a decision (previews load from /api/upload/<id>).
+      uploads: (await store.listUploads("pending", 40)).map((u) => ({ id: u.id, kind: u.kind, playerId: u.playerId, playerName: u.playerName, at: u.at, cost: u.cost })),
       // For granting Favors by name (testing and support).
       people: players.filter((p) => !p.regular).map((p) => ({ id: p.id, name: p.name, favors: p.favors ?? 0 })).slice(0, 500),
       restricted,
@@ -63,6 +67,22 @@ export async function POST(req: Request) {
     const admin = await requireAdmin();
     if (!admin) return NextResponse.json({ error: "Moderators only." }, { status: 403 });
     const b = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+    if (b.action === "approve_upload" || b.action === "reject_upload") {
+      const store = getStore();
+      const approved = b.action === "approve_upload";
+      const reason = typeof b.reason === "string" ? b.reason.slice(0, 120) : "";
+      const u = typeof b.uploadId === "string" ? await store.getUpload(b.uploadId) : null;
+      if (!u) throw new GameError("That upload is gone.");
+      if (u.status !== "pending") throw new GameError("Someone already decided on that one.");
+      await store.setUploadStatus(u.id, approved ? "approved" : "rejected", admin.account!.username, reason || undefined);
+      await store.update(u.playerId, (p) => {
+        if (!p) return { player: p, result: null };
+        const now = Date.now();
+        for (const ev of reviewUpload(p, u.kind, u.id, approved, reason, u.cost, now)) notify(p, ev.text, ev.tone, undefined, now);
+        return { player: p, result: null };
+      });
+      return NextResponse.json({ ok: true, line: `${u.kind} from ${u.playerName} ${approved ? "approved" : "rejected"}` });
+    }
     const action = assertModAction(b.action);
     const reportId = typeof b.reportId === "number" ? b.reportId : null;
     const targetId = typeof b.targetId === "string" ? b.targetId : null;

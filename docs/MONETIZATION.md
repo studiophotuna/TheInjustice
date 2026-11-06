@@ -15,6 +15,15 @@ The rules every paid feature follows. Decided with the owner in November 2026.
 - Every credit has a reference (payment or grant id) and is counted once, so a payment
   provider can resend its notice safely (`creditFavors` in src/game/favors.ts).
 
+## Uploaded looks
+
+- Players can upload their own frame (PNG/WebP with a see-through middle) and banner
+  (JPEG/PNG/WebP), paid in Favors (300 and 250 to start).
+- Every upload waits for a moderator. Nobody else sees it until it's approved; a rejection
+  refunds the Favors once and tells the player why.
+- Rules shown at upload: no nudity, hate, real people without their consent, or art from
+  other games. Moderators review from /admin.
+
 ## Later, in this order
 
 1. Season pass on the monthly Season: a free and a paid track of looks, earned by playing.

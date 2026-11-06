@@ -407,7 +407,7 @@ export function ProfileTab({ game }: { game: GameApi }) {
       <div className={`me-top${view.look?.color ? ` name-${view.look.color}-title` : ""}`}>
         <Hero
           game={game}
-          scene={view.look?.banner ?? (view.path ? (ME_SCENE[view.path.id] ?? "street") : "gutter")}
+          scene={view.look?.banner ? (view.look.banner.startsWith("u-") ? `/api/upload/${view.look.banner.slice(2)}` : view.look.banner) : view.path ? (ME_SCENE[view.path.id] ?? "street") : "gutter"}
           kicker={view.deaths ? `Life #${view.deaths + 1}` : view.location.city}
           title={view.name}
           sub={view.path ? `${view.path.rank} · ${view.path.name}` : "No career yet"}

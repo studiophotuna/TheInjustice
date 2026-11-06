@@ -1,5 +1,23 @@
 # Changelog
 
+## 5.1.0: upload your own frame and banner (with approval)
+
+- **Your own frame and banner:** in Shop → Style, the first card under Frames and under
+  Banners is "Upload your own". Frames are a PNG with a see-through middle, shown around your
+  face; banners are a wide photo, shown behind your profile on Me. The image is resized in your
+  browser before it's sent. A custom frame costs 300 Favors and a banner 250.
+- **Nobody else sees it until a moderator approves it.** Until then it's marked "Waiting for
+  approval" and only you can see it. Approved: you're wearing it straight away, and an inbox
+  message tells you. Not approved: your Favors come back (exactly once) with the reason. The
+  rules are shown next to the upload: no nudity, hate, real people without their consent, or
+  art from other games.
+- **Moderation page:** a new "Uploads to review" queue with a preview of each image (on a
+  checkered background so see-through frames are clear), who sent it and what they paid, and
+  Approve or Reject with a reason.
+- Uploads are kept in their own database table and served from a separate address that only
+  ever shows approved images publicly; pending or rejected images are visible only to their
+  owner and to moderators.
+
 ## 5.0.0: Favors and the Style shop
 
 - **Favors, the game's premium currency.** Favors buy looks, never power: no energy, stats,

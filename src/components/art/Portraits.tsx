@@ -186,7 +186,8 @@ function hash(s: string) {
 
 /** The player's avatar. Its color comes from the name; police get a cap, enforcers a scar-red rim. */
 export function PlayerAvatar({ name, path, photo, look: worn, className = "" }: { name: string; path?: string | null; photo?: string | null; look?: { frame: string | null; color: string | null; banner: string | null } | null; className?: string }) {
-  const frame = worn?.frame ? ` frame-${worn.frame}` : "";
+  const upload = worn?.frame?.startsWith("u-") ? worn.frame.slice(2) : null;
+  const frame = worn?.frame && !upload ? ` frame-${worn.frame}` : upload ? " has-uframe" : "";
   const look = path ? PATH_LOOKS[path] : undefined;
   const rim = look?.rim ?? PLAYER_RIMS[hash(name) % PLAYER_RIMS.length];
   // One portrait style across the game: an uploaded photo, or a real photo face (never a cartoon).
@@ -197,6 +198,7 @@ export function PlayerAvatar({ name, path, photo, look: worn, className = "" }: 
       <div className={`portrait portrait-photo ${className}${frame}`} style={{ ["--rim" as string]: rim }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={photo} alt={name} />
+        {upload && <img className="uframe" src={`/api/upload/${upload}`} alt="" />}
       </div>
     );
   }

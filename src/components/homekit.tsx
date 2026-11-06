@@ -69,7 +69,7 @@ export function Hero({ game, scene, title, sub, quote, action, kicker }: { game:
   const cut = cutoutFor(view.path?.id, view.ladder?.current);
   return (
     <section className={`hero2 ${cut ? "has-cut" : ""}`}>
-      <div className="hero2-bg"><img src={`/scenes/${scene}.jpg`} alt="" /></div>
+      <div className="hero2-bg"><img src={scene.startsWith("/") ? scene : `/scenes/${scene}.jpg`} alt="" /></div>
       {cut ? (
         <img className="hero2-cut" src={cut} alt="" />
       ) : (

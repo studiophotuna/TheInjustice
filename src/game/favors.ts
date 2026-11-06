@@ -50,7 +50,8 @@ export const COSMETIC_BY_ID: Record<string, Cosmetic> = Object.fromEntries(COSME
 /** What others see: the frame, name colour and banner you have on (only the short names). */
 export interface Look { frame: string | null; color: string | null; banner: string | null }
 
-const short = (id: string | null | undefined) => (id ? id.split(":")[1] ?? null : null);
+/** "frame:gilded" → "gilded"; an uploaded look "upload:<id>" → "u-<id>". */
+const short = (id: string | null | undefined) => (!id ? null : id.startsWith("upload:") ? `u-${id.slice(7)}` : id.split(":")[1] ?? null);
 
 export function lookOf(p: Player): Look | null {
   const c = p.cosmetics;
@@ -89,6 +90,12 @@ export function buyCosmetic(p: Player, id: string, now: number): GameEvent[] {
 
 export function equipCosmetic(p: Player, kind: CosmeticKind, id: string | null): GameEvent[] {
   if (!["frame", "color", "banner"].includes(kind)) throw new GameError("Bad request.");
+  if (id?.startsWith("upload:")) {
+    const own = kind !== "color" ? p.customLooks?.[kind] : undefined;
+    if (!own || own.id !== id.slice(7) || own.status !== "approved") throw new GameError("That isn't approved yet.");
+    p.cosmetics = { ...(p.cosmetics ?? { owned: [] }), [kind]: id };
+    return [{ tone: "good", text: `Now wearing your own ${kind}.` }];
+  }
   if (id !== null) {
     const item = COSMETIC_BY_ID[id];
     if (!item || item.kind !== kind) throw new GameError("That doesn't go there.");
@@ -98,12 +105,63 @@ export function equipCosmetic(p: Player, kind: CosmeticKind, id: string | null):
   return [{ tone: "good", text: id ? `Now wearing ${COSMETIC_BY_ID[id].name}.` : "Taken off." }];
 }
 
+// ── Your own frame or banner ──────────────────────────────────────────────
+
+export const CUSTOM = {
+  frame: { price: 300, maxChars: 180_000, types: ["png", "webp"] },
+  banner: { price: 250, maxChars: 260_000, types: ["jpeg", "png", "webp"] },
+} as const;
+export type CustomKind = keyof typeof CUSTOM;
+
+/** Checks an uploaded image: the right type for the slot, and small enough. */
+export function validUpload(kind: CustomKind, data: unknown): string {
+  const spec = CUSTOM[kind];
+  if (!spec) throw new GameError("Bad request.");
+  if (typeof data !== "string" || data.length > spec.maxChars) throw new GameError("That image is too big. Try a smaller one.");
+  const m = data.match(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/);
+  if (!m || !(spec.types as readonly string[]).includes(m[1])) {
+    throw new GameError(kind === "frame" ? "Frames must be PNG or WebP, with a see-through middle." : "Banners must be JPEG, PNG or WebP.");
+  }
+  return data;
+}
+
+/** Pays for an upload and marks it as waiting for a moderator. Returns the price paid. */
+export function startUpload(p: Player, kind: CustomKind, id: string, now: number): number {
+  const spec = CUSTOM[kind];
+  if ((p.mutedUntil ?? 0) > now) throw new GameError("You're muted, so uploads are locked for now.");
+  if (p.customLooks?.[kind]?.status === "pending") throw new GameError(`Your ${kind} is still waiting for approval.`);
+  if ((p.favors ?? 0) < spec.price) throw new GameError("You don't have enough Favors.");
+  p.favors = (p.favors ?? 0) - spec.price;
+  log(p, -spec.price, `Your own ${kind} (waiting for approval)`, now, `upload:${id}`);
+  p.customLooks = { ...(p.customLooks ?? {}), [kind]: { id, status: "pending", at: now } };
+  return spec.price;
+}
+
+/**
+ * A moderator's decision. Approved: the player starts wearing it. Rejected: the Favors come
+ * back (once) with the reason. Old decisions about a replaced upload change nothing.
+ */
+export function reviewUpload(p: Player, kind: CustomKind, id: string, approved: boolean, reason: string, cost: number, now: number): GameEvent[] {
+  const cur = p.customLooks?.[kind];
+  if (!cur || cur.id !== id) return [];
+  if (approved) {
+    p.customLooks = { ...(p.customLooks ?? {}), [kind]: { id, status: "approved", at: now } };
+    p.cosmetics = { ...(p.cosmetics ?? { owned: [] }), [kind]: `upload:${id}` };
+    return [{ tone: "good", text: `Your ${kind} was approved. You're wearing it now.` }];
+  }
+  p.customLooks = { ...(p.customLooks ?? {}), [kind]: { id, status: "rejected", at: now, ...(reason ? { reason } : {}) } };
+  if (p.cosmetics?.[kind] === `upload:${id}`) p.cosmetics = { ...p.cosmetics, [kind]: null };
+  if (cost > 0) creditFavors(p, cost, `Refund: your ${kind} wasn't approved`, now, `refund:${id}`);
+  return [{ tone: "bad", text: `Your ${kind} wasn't approved${reason ? `: ${reason}` : "."} Your ${cost} Favors are back.` }];
+}
+
 /** Your own Favors screen. */
 export function favorsView(p: Player) {
   return {
     balance: p.favors ?? 0,
     owned: p.cosmetics?.owned ?? [],
     equipped: { frame: p.cosmetics?.frame ?? null, color: p.cosmetics?.color ?? null, banner: p.cosmetics?.banner ?? null },
+    custom: { frame: p.customLooks?.frame ?? null, banner: p.customLooks?.banner ?? null },
     log: (p.favorLog ?? []).slice(0, 10).map((l) => ({ at: l.at, delta: l.delta, what: l.what })),
   };
 }

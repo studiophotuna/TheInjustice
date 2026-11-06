@@ -13,7 +13,45 @@ type Data = {
   alts: { ids: string[]; names: string[]; device: boolean }[];
   restricted: { id: string; name: string; bannedUntil: number | null; mutedUntil: number | null; reason: string | null }[];
   people?: { id: string; name: string; favors: number }[];
+  uploads?: { id: string; kind: "frame" | "banner"; playerId: string; playerName: string; at: number; cost: number }[];
 };
+
+/** Uploaded frames and banners: nobody else sees one until it's approved here. */
+function UploadQueue({ data, busy, act }: { data: Data; busy: boolean; act: (p: Record<string, unknown>) => Promise<void> }) {
+  const list = data.uploads ?? [];
+  return (
+    <section className="card">
+      <h3 className="card-title">Uploads to review · {list.length}</h3>
+      {list.length === 0 && <p className="muted">Nothing waiting.</p>}
+      <div className="admin-uploads">
+        {list.map((u) => (
+          <article key={u.id} className={`admin-upload kind-${u.kind}`}>
+            <div className="admin-upload-preview">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/api/upload/${u.id}`} alt="" />
+            </div>
+            <div>
+              <b>{u.playerName}</b> <span className="fine muted">· {u.kind} · {when(u.at)} · paid {u.cost} Favors</span>
+              <div className="row wrap">
+                <button className="btn btn-primary btn-xs" disabled={busy} onClick={() => act({ action: "approve_upload", uploadId: u.id })}>Approve</button>
+                <button
+                  className="btn btn-danger btn-xs"
+                  disabled={busy}
+                  onClick={() => {
+                    const reason = prompt("Why? The player sees this, and gets their Favors back.", "Breaks the image rules");
+                    if (reason !== null) act({ action: "reject_upload", uploadId: u.id, reason });
+                  }}
+                >
+                  Reject
+                </button>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 /** Grant Favors to a player by name: for testing the Style shop and for support cases. */
 function GrantFavors({ data, busy, act }: { data: Data; busy: boolean; act: (p: Record<string, unknown>) => Promise<void> }) {
@@ -81,6 +119,7 @@ export default function AdminPage() {
       {!data && !error && <p className="muted">Loading…</p>}
       {data && (
         <>
+          <UploadQueue data={data} busy={busy} act={act} />
           <GrantFavors data={data} busy={busy} act={act} />
           <section className="card">
             <h3 className="card-title">Open reports · {data.open.length}</h3>

@@ -153,6 +153,8 @@ export interface Player {
   /** Payment and grant ids already credited, so none is counted twice. */
   favorRefs?: string[];
   favorLog?: { at: number; delta: number; what: string; ref?: string }[];
+  /** The player's own uploaded frame and banner, and where each stands with the moderators. */
+  customLooks?: Partial<Record<"frame" | "banner", { id: string; status: "pending" | "approved" | "rejected"; at: number; reason?: string }>>;
   /** Looks bought with Favors, and the ones being worn. */
   cosmetics?: { owned: string[]; frame?: string | null; color?: string | null; banner?: string | null };
   /** Gear in use: only equipped gear counts in a fight. */
@@ -951,4 +953,19 @@ export interface City {
   buryPays?: { storyId: string; payerId: string; amount: number; at: number }[];
   /** The editor's own column. */
   editorial?: { text: string; at: number } | null;
+}
+
+/** A player's uploaded frame or banner, waiting for (or past) a moderator's review. */
+export interface Upload {
+  id: string;
+  playerId: string;
+  playerName: string;
+  kind: "frame" | "banner";
+  /** A data URL (PNG/WebP for frames, JPEG/WebP/PNG for banners). */
+  data: string;
+  status: "pending" | "approved" | "rejected";
+  at: number;
+  cost: number;
+  reviewedBy?: string;
+  reason?: string;
 }

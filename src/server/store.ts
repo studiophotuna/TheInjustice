@@ -4,7 +4,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import postgres from "postgres";
 import { rankTitle } from "@/game/content/paths";
-import type { CaseFile, City, Crew, Player, Report } from "@/game/types";
+import type { CaseFile, City, Crew, Player, Report, Upload } from "@/game/types";
 import { LOCKOUT_MS, MAX_FAILED_LOGINS } from "./auth";
 
 export interface LeaderRow {
@@ -89,6 +89,11 @@ export interface PlayerStore {
   addReport(r: Omit<Report, "id" | "at" | "status">): Promise<void>;
   listReports(status: Report["status"], limit: number): Promise<Report[]>;
   updateReport(id: number, patch: Partial<Pick<Report, "status" | "resolvedBy" | "action">>): Promise<Report | null>;
+  /** Uploaded frames and banners. */
+  addUpload(u: Upload): Promise<void>;
+  getUpload(id: string): Promise<Upload | null>;
+  listUploads(status: Upload["status"], limit: number): Promise<Upload[]>;
+  setUploadStatus(id: string, status: Upload["status"], reviewedBy: string, reason?: string): Promise<Upload | null>;
   /** Newest case files in a country. */
   listCases(country: string, limit: number): Promise<CaseFile[]>;
   getCity(country: string): Promise<City | null>;
@@ -113,6 +118,7 @@ interface FileData {
   cases: Record<string, CaseFile>;
   cities: Record<string, City>;
   reports: Report[];
+  uploads?: Upload[];
 }
 
 export class FileStore implements PlayerStore {
@@ -379,6 +385,30 @@ export class FileStore implements PlayerStore {
       if (!r) return null;
       Object.assign(r, patch);
       return structuredClone(r);
+    });
+  }
+
+  addUpload(u: Upload) {
+    return this.serial((d) => {
+      d.uploads = [...(d.uploads ?? []), u].slice(-500);
+    });
+  }
+
+  async getUpload(id: string) {
+    const u = ((await this.load()).uploads ?? []).find((x) => x.id === id);
+    return u ? structuredClone(u) : null;
+  }
+
+  async listUploads(status: Upload["status"], limit: number) {
+    return ((await this.load()).uploads ?? []).filter((u) => u.status === status).slice(0, limit).map((u) => structuredClone(u));
+  }
+
+  setUploadStatus(id: string, status: Upload["status"], reviewedBy: string, reason?: string) {
+    return this.serial((d) => {
+      const u = (d.uploads ?? []).find((x) => x.id === id);
+      if (!u) return null;
+      Object.assign(u, { status, reviewedBy, ...(reason ? { reason } : {}) });
+      return structuredClone(u);
     });
   }
 
@@ -658,6 +688,36 @@ class PostgresStore implements PlayerStore {
       returning id, status, data, created_at`;
     const r = rows[0];
     return r ? ({ ...r.data, id: Number(r.id), status: r.status, at: r.created_at.getTime() } as Report) : null;
+  }
+
+  async addUpload(u: Upload) {
+    const { id, playerId, kind, status, data, ...meta } = u;
+    await this.sql`insert into injustice.uploads (id, player_id, kind, status, data, meta)
+      values (${id}, ${playerId}, ${kind}, ${status}, ${data}, ${this.sql.json(meta as unknown as postgres.JSONValue)})`;
+  }
+
+  private uploadRow(r: { id: string; player_id: string; kind: Upload["kind"]; status: Upload["status"]; data: string; meta: Omit<Upload, "id" | "playerId" | "kind" | "status" | "data"> }): Upload {
+    return { ...r.meta, id: r.id, playerId: r.player_id, kind: r.kind, status: r.status, data: r.data };
+  }
+
+  async getUpload(id: string) {
+    const rows = await this.sql<Parameters<PostgresStore["uploadRow"]>[0][]>`select id, player_id, kind, status, data, meta from injustice.uploads where id = ${id}`;
+    return rows[0] ? this.uploadRow(rows[0]) : null;
+  }
+
+  async listUploads(status: Upload["status"], limit: number) {
+    const rows = await this.sql<Parameters<PostgresStore["uploadRow"]>[0][]>`
+      select id, player_id, kind, status, data, meta from injustice.uploads where status = ${status} order by created_at limit ${limit}`;
+    return rows.map((r) => this.uploadRow(r));
+  }
+
+  async setUploadStatus(id: string, status: Upload["status"], reviewedBy: string, reason?: string) {
+    const rows = await this.sql<Parameters<PostgresStore["uploadRow"]>[0][]>`
+      update injustice.uploads
+      set status = ${status}, meta = meta || ${this.sql.json({ reviewedBy, ...(reason ? { reason } : {}) } as unknown as postgres.JSONValue)}
+      where id = ${id}
+      returning id, player_id, kind, status, data, meta`;
+    return rows[0] ? this.uploadRow(rows[0]) : null;
   }
 
   async getCity(country: string) {

@@ -535,3 +535,16 @@ img.city-shop-icon { width: 46px; height: 46px; border-radius: 12px; object-fit:
 .style-meta b { font-size: 13px; }
 .style-meta { flex-direction: column; align-items: stretch; }
 .style-meta .btn { width: 100%; }
+
+/* Uploaded frames: an image ring over the face. */
+.portrait-photo.has-uframe { overflow: visible; border-color: transparent !important; position: relative; }
+.portrait-photo.has-uframe > img:first-child { border-radius: 50%; }
+.uframe { position: absolute; inset: -14%; width: 128% !important; height: 128% !important; object-fit: contain; pointer-events: none; border-radius: 0 !important; }
+.style-item.own { border-style: dashed; }
+.style-item.own.on { border-style: solid; }
+.own-empty { font-size: 12px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.upload-rules { margin: 0; }
+.admin-uploads { display: grid; gap: 12px; }
+.admin-upload { display: grid; grid-template-columns: 140px 1fr; gap: 12px; align-items: center; }
+.admin-upload-preview { height: 100px; border-radius: 12px; overflow: hidden; display: grid; place-items: center; background: repeating-conic-gradient(#20242f 0% 25%, #171a22 0% 50%) 50% / 16px 16px; }
+.admin-upload-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
