@@ -105,7 +105,7 @@ function payOut(c: City, owner: Player, h: ShopHold, kind: ShopKind): GameEvent[
   c.treasury += tax;
   owner.cash += net;
   h.till = 0;
-  return [{ tone: "good", text: `${SHOP.kinds[kind].icon} Takings from the ${SHOP.kinds[kind].name.toLowerCase()}: +$${net.toLocaleString()}${tax ? ` (city tax $${tax.toLocaleString()})` : ""}.` }];
+  return [{ tone: "good", text: `Takings from the ${SHOP.kinds[kind].name.toLowerCase()}: +$${net.toLocaleString()}${tax ? ` (city tax $${tax.toLocaleString()})` : ""}.` }];
 }
 
 /**
@@ -129,7 +129,7 @@ export function takeLicense(c: City, p: Player, kind: ShopKind, owned: number, n
   c.shops = { ...(c.shops ?? {}), [kind]: { ownerId: p.id, ownerName: p.name, markup: 1, since: now, till: 0, sales: 0, earned: 0, offers: [] } };
   const name = SHOP.kinds[kind].name.toLowerCase();
   announce(c, `${p.name} took over the ${name}.`, now);
-  return [{ tone: "good", text: `${SHOP.kinds[kind].icon} The ${name} is yours. Set your prices and the takings start with the next sale.` }];
+  return [{ tone: "good", text: `The ${name} is yours. Set your prices and the takings start with the next sale.` }];
 }
 
 export function setMarkup(c: City, p: Player, kind: ShopKind, markup: number): GameEvent[] {

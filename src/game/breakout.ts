@@ -155,7 +155,6 @@ export function breakoutView(c: Crew, viewer: Player, team: Player[], now: numbe
     targetName: b.targetName,
     plannerName: b.team[0]?.name ?? "",
     team: b.team.map((m) => m.name),
-    odds: oddsWord(breakoutOdds(team, b.country, crackdown)),
     isPlanner: b.plannerId === viewer.id,
     canJoin: joinBlock(c, viewer, now),
     canCancel: b.plannerId === viewer.id || c.leaderId === viewer.id,

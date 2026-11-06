@@ -149,7 +149,7 @@ export function CityHall({ game }: { game: GameApi }) {
         </div>
       )}
       {c.crackdown && <p className="crackdown"><Siren size={14} /> Crackdown in effect for {until(c.crackdown)}. Extra patrols everywhere.</p>}
-      {c.martial && <p className="crackdown martial">🪖 Martial law for {until(c.martial)}. Soldiers can break up turf wars.</p>}
+      {c.martial && <p className="crackdown martial">Martial law for {until(c.martial)}. Soldiers can break up turf wars.</p>}
 
       {c.recall && (c.recall.signatures > 0 || !c.recall.canSign) && (
         <div className="hall-block recall">
@@ -179,7 +179,7 @@ export function CityHall({ game }: { game: GameApi }) {
                   <div>
                     <b>{x.name}</b> <span className="muted">· {x.title} · ★ {x.reputation}</span>
                     {x.pitch && <p className="pitch">&ldquo;{x.pitch}&rdquo;</p>}
-                    {x.buzz && <p className="fine buzz">📣 {x.buzz}</p>}
+                    {x.buzz && <p className="fine buzz">{x.buzz}</p>}
                   </div>
                   {!c.canVote && (
                     <button className="btn btn-primary btn-xs" disabled={game.busy} onClick={() => act({ op: "vote", candidateId: x.id })}>Vote</button>
@@ -192,7 +192,7 @@ export function CityHall({ game }: { game: GameApi }) {
               <div className="campaign">
                 <form className="row wrap" onSubmit={(e) => { e.preventDefault(); act({ op: "campaign", amount: Number(campaignAmt) }); }}>
                   <input type="number" min={50} step={50} value={campaignAmt} onChange={(e) => setCampaignAmt(e.target.value)} aria-label="Campaign spend" />
-                  <button className="btn btn-primary btn-sm" disabled={game.busy}>📣 Spend on the campaign</button>
+                  <button className="btn btn-primary btn-sm" disabled={game.busy}>Spend on the campaign</button>
                 </form>
                 {data.residents.length > 0 && (
                   <div className="row wrap">
@@ -262,7 +262,7 @@ export function CityHall({ game }: { game: GameApi }) {
           ) : null}
           <div className="row wrap">
             <button className="btn btn-danger btn-sm" disabled={game.busy || !!c.canMartial} title={c.canMartial ?? ""} onClick={() => confirm("Call in the army for two hours? $300 from the treasury.") && act({ op: "martial_law" })}>
-              🪖 Declare martial law ($300)
+               Declare martial law ($300)
             </button>
           </div>
           <p className="fine muted">For two hours, soldiers can march into turf wars. If they outgun both sides, everyone fighting is arrested.</p>
@@ -420,7 +420,7 @@ function Turf({ turf, game, act }: { turf: CityData["turf"]; game: GameApi; act:
               )}
               {d.war && (
                 <p className="fine war-line">
-                  ⚔️ {d.war.attacker} attacking · {d.war.attackers} vs {d.war.defenders}{d.war.peacekeepers ? ` · 🪖 ${d.war.peacekeepers} soldiers` : ""}
+                   {d.war.attacker} attacking · {d.war.attackers} vs {d.war.defenders}{d.war.peacekeepers ? ` · ${d.war.peacekeepers} soldiers` : ""}
                   {d.war.over ? " · fighting's over" : ` · ${Math.max(1, Math.ceil((d.war.endsAt - Date.now()) / 60000))}m left`}
                 </p>
               )}
@@ -429,7 +429,7 @@ function Turf({ turf, game, act }: { turf: CityData["turf"]; game: GameApi; act:
               {!d.canClaim && <button className="btn btn-primary btn-xs" disabled={game.busy} onClick={() => act({ op: "claim_turf", district: d.id })}>Claim ($8,000)</button>}
               {!d.canWar && <button className="btn btn-danger btn-xs" disabled={game.busy} onClick={() => act({ op: "declare_war", district: d.id })}>Declare war</button>}
               {d.war && !d.war.over && !d.war.canJoin && <button className="btn btn-danger btn-xs" disabled={game.busy} onClick={() => act({ op: "join_war", district: d.id })}>Join the fight</button>}
-              {d.war && !d.war.over && !d.war.canPeace && <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => act({ op: "peacekeep", district: d.id })}>🪖 Break it up</button>}
+              {d.war && !d.war.over && !d.war.canPeace && <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => act({ op: "peacekeep", district: d.id })}>Break it up</button>}
               {d.war?.over && <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => act({ op: "settle_war", district: d.id })}>Settle it</button>}
             </span>
           </li>

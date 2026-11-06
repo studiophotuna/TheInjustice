@@ -93,6 +93,6 @@ export function torchTargets(a: Player, owner: Player, now: number) {
   if (a.path !== "enforcer" || !a.crewId) return [];
   return Object.keys(owner.properties ?? {})
     .filter((id) => PROPERTY_BY_ID[id] && PROPERTY_BY_ID[id].country === countryOf(a) && !isClosed(owner, id, now))
-    .map((id) => ({ id, name: PROPERTY_BY_ID[id].name, odds: Math.round(torchChance(a, id) * 100), block: torchBlock(a, owner, id, now) }));
+    .map((id) => ({ id, name: PROPERTY_BY_ID[id].name, block: torchBlock(a, owner, id, now) }));
 }
 

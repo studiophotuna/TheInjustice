@@ -122,14 +122,14 @@ function ThreatCard({ game }: { game: GameApi }) {
   const until = (x: number) => fmt(x - Date.now());
   return (
     <section className="card threat-card">
-      <h3 className="card-title">👁️ {t.watched ? "Someone is watching you" : "Keeping safe"}</h3>
+      <h3 className="card-title">{t.watched ? "Someone is watching you" : "Keeping safe"}</h3>
       {t.watched > 0 && (
         <p className="muted">
           {t.watched >= 3 ? "You're sure of it now. Someone knows your routine." : t.watched === 2 ? "It's happened twice. It isn't a coincidence." : "A strange feeling, like you're being followed."}
         </p>
       )}
-      {t.bodyguardUntil && <p className="fine">🕴️ Bodyguards with you for {until(t.bodyguardUntil)}.</p>}
-      {t.lyingLowUntil && <p className="fine">🏚️ Lying low in a safe house for {until(t.lyingLowUntil)}. No work, no fights, nobody can find you.</p>}
+      {t.bodyguardUntil && <p className="fine">Bodyguards with you for {until(t.bodyguardUntil)}.</p>}
+      {t.lyingLowUntil && <p className="fine">Lying low in a safe house for {until(t.lyingLowUntil)}. No work, no fights, nobody can find you.</p>}
       <div className="row wrap">
         <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.act({ type: "hire_bodyguards" })}>Hire bodyguards ($2,000 / day)</button>
         <button className="btn btn-ghost btn-sm" disabled={game.busy || !t.canLieLow} title={t.canLieLow ? "" : "You can't vanish again so soon."} onClick={() => game.act({ type: "lie_low" })}>Lie low ($300, 6h)</button>

@@ -85,12 +85,12 @@ export function CommandPalette({ game, go, open, setOpen }: { game: GameApi; go:
       { id: "inbox", group: "Go to", label: "Inbox", hint: view.inbox.unread ? `${view.inbox.unread} new` : undefined, run: () => go("people:inbox") },
       ...PLACES.map(([id, label, kw]) => ({ id: `place-${id}`, group: "Places", label, keywords: kw, run: () => go(`place:${id}`) })),
       ...view.jobs.filter((j) => !j.locked).map((j) => ({
-        id: `job-${j.id}`, group: "Work", label: j.name, hint: `$${j.pay[0]}–${j.pay[1]} · ⚡${j.energy}`, keywords: `job work ${j.tag}`,
+        id: `job-${j.id}`, group: "Work", label: j.name, hint: `$${j.pay[0]}–${j.pay[1]} · ${j.energy} energy`, keywords: `job work ${j.tag}`,
         block: away ?? (view.energy < j.energy ? "Not enough energy." : null),
         run: () => game.act({ type: "job", jobId: j.id }),
       })),
       ...(["strength", "toughness", "agility"] as const).map((stat) => ({
-        id: `gym-${stat}`, group: "Gym", label: `Train ${stat}`, hint: `$${view.gym.fee} · ⚡${view.gym.energy}`, keywords: "gym train exercise",
+        id: `gym-${stat}`, group: "Gym", label: `Train ${stat}`, hint: `$${view.gym.fee} · ${view.gym.energy} energy`, keywords: "gym train exercise",
         block: away ?? (view.energy < view.gym.energy ? "Not enough energy." : null),
         run: () => game.act({ type: "train", stat }),
       })),

@@ -142,7 +142,7 @@ export function RightNow({ game, go, needs, onRead }: { game: GameApi; go: (t: s
         icon: Briefcase,
         tone: "normal",
         title: live.fullIn === 0 ? `Your energy is full. ${best.name}?` : best.name,
-        text: `$${best.pay[0]}–${best.pay[1]} · ⚡${best.energy}`,
+        text: `$${best.pay[0]}–${best.pay[1]} · ${best.energy} energy`,
         cta: "Go to work",
         run: () => go(`job:${best.id}`),
       });
@@ -291,7 +291,7 @@ export function GuestChip({ game, onSave }: { game: GameApi; onSave: () => void 
   };
   return (
     <div className="guest-chip">
-      <button onClick={onSave}>💾 {hiddenAt >= 0 ? "Promoted! Save your character so you never lose it." : "Playing as a guest · Save your character"}</button>
+      <button onClick={onSave}>{hiddenAt >= 0 ? "Promoted! Save your character so you never lose it." : "Playing as a guest · Save your character"}</button>
       <button className="guest-x" aria-label="Hide" onClick={hide}><X size={14} /></button>
     </div>
   );

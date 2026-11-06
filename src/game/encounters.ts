@@ -237,7 +237,7 @@ const DEFS: Def[] = [
     text: (c) => `${c.name} grabs your sleeve. "A dealer's selling to kids behind the school in ${c.district}. Help me run him off."`,
     options: [
       {
-        label: "Help (⚡8)", tie: 2, memo: "helped run off a dealer", hint: "It might get rough. You'd feel better.", energy: 8,
+        label: "Help (8 energy)", tie: 2, memo: "helped run off a dealer", hint: "It might get rough. You'd feel better.", energy: 8,
         apply: ({ p, rng }) => {
           p.energy -= 8;
           integrity(p, 4);
@@ -265,7 +265,7 @@ const DEFS: Def[] = [
     text: (c) => `${c.name} nods at a shop on ${c.district}. "Owner's late with his payment. I need someone standing behind me. Fifty for ten minutes."`,
     options: [
       {
-        label: "Stand behind them (⚡10)", tie: 2, memo: "stood behind them on a collection", hint: "+$50 dirty. Heat. Conscience.", energy: 10,
+        label: "Stand behind them (10 energy)", tie: 2, memo: "stood behind them on a collection", hint: "+$50 dirty. Heat. Conscience.", energy: 10,
         apply: ({ p }) => {
           p.energy -= 10;
           earnDirty(p, 50);
@@ -284,7 +284,7 @@ const DEFS: Def[] = [
     text: (c) => `${c.name} is bored on leave and looking for someone to spar with. "Five rounds. No hard feelings."`,
     options: [
       {
-        label: "Spar (⚡6)", tie: 1, memo: "sparred five rounds with them", hint: "You'll get hit. You'll get better.", energy: 6,
+        label: "Spar (6 energy)", tie: 1, memo: "sparred five rounds with them", hint: "You'll get hit. You'll get better.", energy: 6,
         apply: ({ p }) => {
           p.energy -= 6;
           p.hp = Math.max(5, p.hp - 8);
@@ -305,7 +305,7 @@ DEFS.push({
   text: (c) => `${c.name} pulls you into a doorway. "Heads up. A detective was asking about you in ${c.district}. Showed your picture around."`,
   options: [
     {
-      label: "Lay low for a while (⚡5)", hint: "Less heat. Costs you time.", energy: 5, tie: 1, memo: "listened when they warned you about a detective",
+      label: "Lay low for a while (5 energy)", hint: "Less heat. Costs you time.", energy: 5, tie: 1, memo: "listened when they warned you about a detective",
       apply: ({ p }) => {
         p.energy -= 5;
         p.heat = Math.max(0, p.heat - 12);

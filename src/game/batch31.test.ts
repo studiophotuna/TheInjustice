@@ -27,3 +27,10 @@ describe("photo faces", () => {
     expect(() => validPhoto("/faces/../../etc/passwd")).toThrow();
   });
 });
+
+describe("city groups", () => {
+  it("cover every regular exactly once", () => {
+    const keys = Object.values(ROSTER).flat().map((r) => r.key).sort();
+    expect(Object.keys(REGULAR_LOOKS).sort()).toEqual(keys);
+  });
+});

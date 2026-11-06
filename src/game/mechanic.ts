@@ -135,7 +135,7 @@ export function hireMechanic(m: Player, customer: Player, service: MechService, 
   m.jobCounts["mech:service"] = (m.jobCounts["mech:service"] ?? 0) + 1;
   addMerit(m, "mechanic", MECH.merit);
   notify(m, `${customer.name} hired you: ${MECH.services[service].name.toLowerCase()}. +$${price.toLocaleString()}.`, "good", customer, now);
-  return [{ tone: "good", text: `🔧 ${m.name} ${what}. -$${price.toLocaleString()}` }];
+  return [{ tone: "good", text: `${m.name} ${what}. -$${price.toLocaleString()}` }];
 }
 
 /** A mechanic as customers see them. */

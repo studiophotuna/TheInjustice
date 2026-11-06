@@ -111,7 +111,7 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
         <div className="stack">
           {view.retainer && (
             <section className="card">
-              <p className="fine">⚖️ {view.retainer.name} is your lawyer on retainer until {new Date(view.retainer.until).toLocaleDateString()}.</p>
+              <p className="fine">{view.retainer.name} is your lawyer on retainer until {new Date(view.retainer.until).toLocaleDateString()}.</p>
             </section>
           )}
           <CasesPanel game={game} hub={hub} place="court" />
@@ -200,7 +200,7 @@ function ThreatReports({ game }: { game: GameApi }) {
   if (!threats.length) return null;
   return (
     <section className="card">
-      <h3 className="card-title">👁️ Threat reports</h3>
+      <h3 className="card-title">Threat reports</h3>
       <p className="muted fine">People who think someone is casing them. Sit outside their place: if the hitman shows and you spot them, you stop a murder.</p>
       <ul className="officials">
         {threats.map((t) => (
@@ -222,7 +222,7 @@ function GunOffers({ game }: { game: GameApi }) {
   if (!view.gunOffers.length) return null;
   return (
     <section className="card">
-      <h3 className="card-title">🪖 Black market</h3>
+      <h3 className="card-title">Black market</h3>
       <p className="muted fine">Army gear, off the back of a truck. Paid in dirty money first.</p>
       <ul className="officials">
         {view.gunOffers.map((o) => (

@@ -30,7 +30,7 @@ export function FireLog({ game }: { game: GameApi }) {
   return (
     <section className="card fire-log">
       <h3 className="card-title"><Flame size={16} /> Fire log</h3>
-      {data.fireWatch && <p className="fine">🚒 Fire watch until {new Date(data.fireWatch).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}: nothing burns in this city tonight.</p>}
+      {data.fireWatch && <p className="fine">Fire watch until {new Date(data.fireWatch).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}: nothing burns in this city tonight.</p>}
       <p className="muted fine">
         {firefighter
           ? "Walk a scene once. Read it right and you name the arsonist in public: they take the heat, and city hall pays you."

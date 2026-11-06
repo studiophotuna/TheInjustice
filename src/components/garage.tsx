@@ -35,7 +35,7 @@ export function MyGarage({ game }: { game: GameApi }) {
           <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.act({ type: "garage_set", open: false, rate })}>Close for now</button>
         )}
       </div>
-      <p className="fine">{g.open ? "🟢 Open." : "Closed."} {g.jobs} jobs done · {money(g.earned)} earned from customers.</p>
+      <p className="fine">{g.open ? "Open." : "Closed."} {g.jobs} jobs done · {money(g.earned)} earned from customers.</p>
     </section>
   );
 }

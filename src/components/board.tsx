@@ -1,6 +1,7 @@
 "use client";
 
-import { Lock, Search } from "lucide-react";
+import { Lock } from "lucide-react";
+import { NPC_FACES } from "@/game/content/faces";
 import { useLayoutEffect, useRef, useState } from "react";
 import { CHAPTER_BY_ID } from "@/game/content/story";
 import type { GameApi } from "./useGame";
@@ -93,7 +94,7 @@ export function ConspiracyBoard({ game, onRead }: { game: GameApi; onRead: (id: 
   return (
     <section className="card board">
       <div className="row between">
-        <h3 className="card-title"><Search size={16} /> The board · who framed you</h3>
+        <h3 className="card-title">The board · who framed you</h3>
         <span className="board-score">{found}/{clues.length} evidence · {known.size}/{SUSPECTS.length} suspects</span>
       </div>
       <div className="board-wall" ref={wall}>
@@ -106,7 +107,11 @@ export function ConspiracyBoard({ game, onRead }: { game: GameApi; onRead: (id: 
           {SUSPECTS.map((s) => (
             <div key={s.id} data-suspect={s.id} className={`suspect${known.has(s.id) ? " known" : ""}`}>
               <span className="pin" />
-              <span className="suspect-face">{known.has(s.id) ? s.name.split(" ").map((w) => w[0]).slice(0, 2).join("") : "?"}</span>
+              {known.has(s.id) && NPC_FACES[s.id] ? (
+                <img className="suspect-face suspect-photo" src={NPC_FACES[s.id]} alt="" />
+              ) : (
+                <span className="suspect-face">{known.has(s.id) ? s.name.split(" ").map((w) => w[0]).slice(0, 2).join("") : "?"}</span>
+              )}
               <b>{known.has(s.id) ? s.name : "Unknown"}</b>
               <small>{known.has(s.id) ? s.role : "Not identified"}</small>
             </div>

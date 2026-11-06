@@ -70,11 +70,15 @@ function PriceTag({ m }: { m: number }) {
   return <span className={`price-tag ${p > 0 ? "up" : "down"}`}>prices {p > 0 ? "+" : ""}{p}%</span>;
 }
 
+/** A cover photo for each kind of shop, instead of an icon. */
+const SHOP_ART: Record<string, string> = { guns: "ironrow", armor: "checkpoint", diner: "oldmarket", pharmacy: "hospital", realty: "highrise" };
+const shopArt = (kind: string) => `/scenes/${SHOP_ART[kind] ?? "street"}.jpg`;
+
 /** One line above a shop category: who runs the counter and what that does to prices. */
 export function ShopOwnerStrip({ row, onManage }: { row: ShopRow; onManage: () => void }) {
   return (
     <div className={`shop-strip ${row.mine ? "mine" : row.owner ? "run" : ""}`}>
-      <span className="shop-strip-icon" aria-hidden>{row.icon}</span>
+      <img className="shop-strip-icon" src={shopArt(row.kind)} alt="" />
       <span className="shop-strip-text">
         <b>{row.name}</b>
         {row.mine ? (
@@ -111,7 +115,7 @@ export function CityShops({ game, data, reload }: { game: GameApi; data: ShopsDa
       {data.elsewhere.length > 0 && (
         <p className="fine muted">
           Also yours:{" "}
-          {data.elsewhere.map((e) => `${e.icon} ${e.name} in ${e.city} (${money(e.till)} waiting${e.offers ? `, ${e.offers} offer${e.offers > 1 ? "s" : ""}` : ""})`).join(" · ")}. Travel there to manage it.
+          {data.elsewhere.map((e) => `${e.name} in ${e.city} (${money(e.till)} waiting${e.offers ? `, ${e.offers} offer${e.offers > 1 ? "s" : ""}` : ""})`).join(" · ")}. Travel there to manage it.
         </p>
       )}
       <div className="city-shop-list">
@@ -147,7 +151,7 @@ function ShopCard({
   return (
     <article className={`city-shop ${s.mine ? "mine" : ""}`}>
       <header>
-        <span className="city-shop-icon" aria-hidden>{s.icon}</span>
+        <img className="city-shop-icon" src={shopArt(s.kind)} alt="" />
         <div>
           <h4>{s.name}</h4>
           <p className="fine muted">

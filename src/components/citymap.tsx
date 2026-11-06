@@ -216,7 +216,7 @@ export function CityMap({ game, go, feed }: { game: GameApi; go: (t: string) => 
             <div className="map-sheet-body">
               <div className="row">
                 <b className="map-name">{person.name}</b>
-                {person.heavy ? <span className="chip chip-heavy">👑 Heavy</span> : person.regular && <span className="chip chip-regular">Regular</span>}
+                {person.heavy ? <span className="chip chip-heavy">Heavy</span> : person.regular && <span className="chip chip-regular">Regular</span>}
                 {person.tie && <span className={`tie-badge tie-${person.tie.tone}`}>{person.tie.label}</span>}
               </div>
               <span className="muted fine">{person.title} · {districts[placeOf(person.id)]?.name}</span>

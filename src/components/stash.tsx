@@ -57,7 +57,7 @@ export function StashCard({ game }: { game: GameApi }) {
         </button>
       )}
 
-      <input className="stash-amount" inputMode="numeric" placeholder="Amount (empty = all)" value={amount} onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))} />
+      <input className="stash-amount" inputMode="numeric" placeholder="Amount" title="Leave it blank to move all of it" value={amount} onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))} />
       <ul className="officials stash-rows">
         <li>
           <span><b>Cash</b> <span className="muted">· {money(view.cash)} on you · {money(s.cash)} hidden</span></span>
@@ -85,7 +85,7 @@ export function StashCard({ game }: { game: GameApi }) {
       </ul>
       <div className="alarm-row">
         {s.alarm ? (
-          <p className="fine">🚨 Alarm wired, camera over the door. Break-ins here are harder, and if one happens the camera gives the police a good look.</p>
+          <p className="fine">Alarm wired, camera over the door. Break-ins here are harder, and if one happens the camera gives the police a good look.</p>
         ) : (
           <>
             <p className="fine muted">Other people can break in while you&apos;re out. An alarm makes it harder, and its camera helps the police.</p>

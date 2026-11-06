@@ -2110,7 +2110,7 @@ export async function POST(req: Request) {
           const crew = p?.crewId ? await tx.getCrew(p.crewId) : null;
           if (!p || !crew || crew.leaderId !== p.id) throw new GameError("Only the leader can post notes.");
           assertCanSpeak(p, now);
-          crewLog(crew, `📌 ${body}`, now);
+          crewLog(crew, `${body}`, now);
           await tx.putCrew(crew);
         });
         break;

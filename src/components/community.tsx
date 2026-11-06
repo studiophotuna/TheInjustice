@@ -27,7 +27,7 @@ type Profile = {
   canForum?: boolean;
   canCourtMartial?: string | null;
   canSellGun?: boolean;
-  torch?: { id: string; name: string; odds: number; block: string | null }[];
+  torch?: { id: string; name: string; block: string | null }[];
   contract?: { cost: number; block: string | null } | null;
   ambush?: string | null;
   surgery?: { fee: number; block: string | null } | null;
@@ -237,7 +237,6 @@ type Hub = {
       targetName: string;
       plannerName: string;
       team: string[];
-      odds: string;
       isPlanner: boolean;
       canJoin: string | null;
       canCancel: boolean;
@@ -366,13 +365,13 @@ function personActions(game: GameApi, hub: Hub, p: Profile, social: (b: Record<s
   if (p.canInvite) crew.push({ key: "invite", label: <><Shield size={14} /> Invite to crew</>, run: () => social({ op: "crew_invite", playerId: p.id }) });
   if (p.canForum) crew.push({ key: "forum", label: <><MessagesSquare size={14} /> Invite to forum</>, run: () => social({ op: "forum_invite", playerId: p.id }) });
   if (p.ambush !== undefined && p.ambush !== "n/a" && !p.ambush && !hub.ambush) {
-    crew.push({ key: "ambush", label: <>🚐 Plan an ambush</>, danger: true, run: () => confirm(`Plan an ambush on ${p.name}? Your crew gets two hours to take their places.`) && social({ op: "ambush_plan", targetId: p.id }) });
+    crew.push({ key: "ambush", label: <>Plan an ambush</>, danger: true, run: () => confirm(`Plan an ambush on ${p.name}? Your crew gets two hours to take their places.`) && social({ op: "ambush_plan", targetId: p.id }) });
   }
   for (const role of p.hire ?? []) {
-    crew.push({ key: `hire-${role}`, label: <>🤝 Hire as {role === "attacker" ? "an attacker" : `the ${role}`}</>, title: "They take an equal cut.", run: () => social({ op: "ambush_hire", regularId: p.id, role }) });
+    crew.push({ key: `hire-${role}`, label: <>Hire as {role === "attacker" ? "an attacker" : `the ${role}`}</>, title: "They take an equal cut.", run: () => social({ op: "ambush_hire", regularId: p.id, role }) });
   }
   for (const t of p.torch ?? []) {
-    if (!t.block) crew.push({ key: `torch-${t.id}`, label: <>🔥 Torch {t.name}</>, danger: true, title: `About ${t.odds}% chance it catches.`, run: () => confirm(`Torch ${p.name}'s ${t.name}? If you're caught, you go to a cell.`) && social({ op: "torch", targetId: p.id, propertyId: t.id }) });
+    if (!t.block) crew.push({ key: `torch-${t.id}`, label: <>Torch {t.name}</>, danger: true, run: () => confirm(`Torch ${p.name}'s ${t.name}? If you're caught, you go to a cell.`) && social({ op: "torch", targetId: p.id, propertyId: t.id }) });
   }
 
   if (!p.canVouch) business.push({ key: "vouch", label: <><UserCheck size={14} /> Vouch for them</>, run: () => social({ op: "vouch", targetId: p.id }) });
@@ -390,11 +389,11 @@ function personActions(game: GameApi, hub: Hub, p: Profile, social: (b: Record<s
     });
   }
   if (p.lawyerFee !== null && p.lawyerFee !== undefined) business.push({ key: "lawyer", label: <>Hire as lawyer (${p.lawyerFee}/wk)</>, title: "A week on retainer: if you're arrested, they defend you automatically", run: () => social({ op: "hire_lawyer", lawyerId: p.id }) });
-  if (p.surgery && !p.surgery.block) business.push({ key: "surgery", label: <>🩺 Surgery (${p.surgery.fee})</>, title: "Fixes up to two old wounds.", run: () => confirm(`Pay Dr. ${p.name} $${p.surgery!.fee} to operate on your old wounds?`) && social({ op: "surgery", doctorId: p.id }) });
+  if (p.surgery && !p.surgery.block) business.push({ key: "surgery", label: <>Surgery (${p.surgery.fee})</>, title: "Fixes up to two old wounds.", run: () => confirm(`Pay Dr. ${p.name} $${p.surgery!.fee} to operate on your old wounds?`) && social({ op: "surgery", doctorId: p.id }) });
   if (p.canSellGun && view.sellableGear.length > 0) {
     business.push({
       key: "gun",
-      label: <>🪖 Sell army gear</>,
+      label: <>Sell army gear</>,
       run: () => {
         const item = view.sellableGear[view.sellableGear.length - 1];
         const price = prompt(`Sell ${p.name} a ${item.name.toLowerCase()} from the armory. Your price ($100–$5000):`, "800");
@@ -523,12 +522,12 @@ function PersonFile({ game, hub, p, social, onClose }: { game: GameApi; hub: Hub
               {p.title}{p.crewTag ? ` · [${p.crewTag}]` : ""}
             </span>
             <span className="row file-tags">
-              {p.regular?.heavy && <span className="chip chip-heavy">👑 Heavy</span>}
+              {p.regular?.heavy && <span className="chip chip-heavy">Heavy</span>}
               {p.regular && <span className="chip chip-regular">Regular</span>}
               {p.protected && <span className="chip chip-green"><Shield size={11} /> New in town</span>}
-              {p.rat && <span className="chip chip-red">🐀 Rat</span>}
+              {p.rat && <span className="chip chip-red">Rat</span>}
               {p.bounty > 0 && <span className="chip chip-red">Wanted · ${p.bounty}</span>}
-              {p.trophies?.map((t, i) => <span key={i} className="chip chip-gold">🏆 #{t.place} {t.label}</span>)}
+              {p.trophies?.map((t, i) => <span key={i} className="chip chip-gold">#{t.place} {t.label}</span>)}
             </span>
           </div>
         </div>
@@ -647,7 +646,7 @@ function ContractButton({ game, target, hitmen, social }: { game: GameApi; targe
   if (!open) {
     return (
       <button className="btn btn-danger btn-sm" disabled={game.busy || !!c.block} title={c.block ?? ""} onClick={() => setOpen(true)}>
-        ☠️ Put out a contract
+         Put out a contract
       </button>
     );
   }
@@ -672,13 +671,13 @@ function ContractButton({ game, target, hitmen, social }: { game: GameApi; targe
 function AmbushCard({ game, a, social }: { game: GameApi; a: NonNullable<Hub["ambush"]>; social: (b: Record<string, unknown>) => Promise<unknown> }) {
   const mins = Math.max(0, Math.round((a.expiresAt - Date.now()) / 60_000));
   const roles: { id: string; label: string; who: string; why: string; block: string | null }[] = [
-    { id: "attacker", label: "🥊 Attackers (up to 3)", who: a.attackers.join(", ") || "nobody yet", why: "Each extra attacker counts for a little less than the one before.", block: a.canAttack },
-    { id: "driver", label: "🚐 Driver", who: a.driver ?? "nobody yet", why: "Agility. Nobody gets left behind; if it goes wrong, you get out with half the damage.", block: a.canDrive },
-    { id: "lookout", label: "👀 Lookout", who: a.lookout ?? "nobody yet", why: "Perception. No witnesses, their crew isn't warned in time, half the heat.", block: a.canLook },
+    { id: "attacker", label: "Attackers (up to 3)", who: a.attackers.join(", ") || "nobody yet", why: "Each extra attacker counts for a little less than the one before.", block: a.canAttack },
+    { id: "driver", label: "Driver", who: a.driver ?? "nobody yet", why: "Agility. Nobody gets left behind; if it goes wrong, you get out with half the damage.", block: a.canDrive },
+    { id: "lookout", label: "Lookout", who: a.lookout ?? "nobody yet", why: "Perception. No witnesses, their crew isn't warned in time, half the heat.", block: a.canLook },
   ];
   return (
     <section className="card ambush">
-      <h3 className="card-title">🚐 The ambush on {a.targetName}</h3>
+      <h3 className="card-title">The ambush on {a.targetName}</h3>
       <p className="muted">{mins} min left to take your places. Their bodyguards and any crewmates nearby will fight back.</p>
       <ul className="role-list">
         {roles.map((r) => (
@@ -717,7 +716,7 @@ function HitCard({ game, hit, social }: { game: GameApi; hit: NonNullable<Hub["h
   const hrs = (t: number) => Math.max(0, Math.ceil((t - now) / 3_600_000));
   return (
     <section className="card hit-card">
-      <h3 className="card-title">☠️ The contract</h3>
+      <h3 className="card-title">The contract</h3>
       <p>
         <b>{hit.targetName}</b> · {hit.hitmanName} has the job · ${hit.escrow.toLocaleString("en")} in escrow
       </p>
@@ -921,7 +920,7 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
         {(hub.lab || hub.labBuild) && (
           <section className="card lab has-banner">
             <Scene kind="lab" className="banner-scene" />
-            <h3 className="card-title">⚗️ Crew lab</h3>
+            <h3 className="card-title">Crew lab</h3>
             {hub.lab ? (
               <>
                 <p className="muted">In {hub.lab.district}, {hub.lab.city}. {hub.lab.batches} batches so far. Word on the street: <b>{hub.lab.suspicion}</b>.</p>
@@ -945,7 +944,7 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
         )}
         {hub.heist && (hub.heist.plan || !hub.heist.canPlan) && (
           <section className="card heist">
-            <h3 className="card-title">{hub.heist.plan?.target ? "🏠 Home job" : "🏦 Bank job"}</h3>
+            <h3 className="card-title">{hub.heist.plan?.target ? "Home job" : "Bank job"}</h3>
             {hub.heist.plan ? (
               <>
                 <p className="muted">
@@ -991,7 +990,7 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
                 <p>
                   <b>{hub.breakout.plan.plannerName}</b> is planning to break <b>{hub.breakout.plan.targetName}</b> out.
                 </p>
-                <p className="muted">In on it: {hub.breakout.plan.team.join(", ")}. The crew says the odds are <b>{hub.breakout.plan.odds}</b>.</p>
+                <p className="muted">In on it: {hub.breakout.plan.team.join(", ")}.</p>
                 <div className="row wrap">
                   {!hub.breakout.plan.canJoin && (
                     <button className="btn btn-primary btn-sm" disabled={game.busy} onClick={() => social({ op: "breakout_join" })}>Get in on it</button>
@@ -1307,7 +1306,7 @@ export function CasesPanel({ game, hub, place }: { game: GameApi; hub: Hub | nul
 
       {at("police") && data && data.envelopes.length > 0 && (
         <section className="card envelope-card">
-          <h3 className="card-title">✉️ An envelope on your desk</h3>
+          <h3 className="card-title">An envelope on your desk</h3>
           {data.envelopes.map((x) => (
             <div key={x.caseId} className="case">
               <p><b>${x.amount}</b> in cash, and a note: <i>&quot;Case #{x.caseId}. Lose it.&quot;</i></p>
@@ -1350,7 +1349,7 @@ export function CasesPanel({ game, hub, place }: { game: GameApi; hub: Hub | nul
 
       {at("street") && data && data.contracts.length > 0 && (
         <section className="card">
-          <h3 className="card-title">💼 Contracts · get someone's money back</h3>
+          <h3 className="card-title">Contracts · get someone's money back</h3>
           <div className="case-list">
             {data.contracts.map((k) => (
               <article key={k.caseId} className="case">
@@ -1372,13 +1371,13 @@ export function CasesPanel({ game, hub, place }: { game: GameApi; hub: Hub | nul
 
       {at("police") && data && data.robbed.some((r) => !r.closed) && (
         <section className="card">
-          <h3 className="card-title">💸 You were robbed</h3>
+          <h3 className="card-title">You were robbed</h3>
           <ul className="officials">
             {data.robbed.filter((r) => !r.closed).map((r) => (
               <li key={r.caseId}>
                 <span>
                   #{r.caseId} · ${r.amount} in {r.district}
-                  {r.lead && <span className="pi-lead" title="Bloodhound: what you've worked out about who did it"> · 🔎 {r.lead}</span>}
+                  {r.lead && <span className="pi-lead" title="Bloodhound: what you've worked out about who did it"> · {r.lead}</span>}
                 </span>
                 {r.contract ? (
                   <span className="muted fine">{r.contract.done ? "Contract done" : `$${r.contract.reward} contract out`}</span>
@@ -1620,7 +1619,7 @@ export function CasesPanel({ game, hub, place }: { game: GameApi; hub: Hub | nul
                     <button className="btn btn-primary btn-sm" disabled={game.busy} onClick={() => act({ op: "rule", caseId: t.caseId, verdict: "not_guilty" })}>Not guilty</button>
                     {t.envelope > 0 && (
                       <button className="btn btn-ghost btn-sm envelope" disabled={game.busy} onClick={() => act({ op: "rule", caseId: t.caseId, takeBribe: true })}>
-                        ✉️ Take the envelope (${t.envelope})
+                         Take the envelope (${t.envelope})
                       </button>
                     )}
                   </>
@@ -1706,7 +1705,7 @@ function Racket({ game, racket, act }: { game: GameApi; racket: NonNullable<Just
               <>
                 <div className="row wrap">
                   <button className="btn btn-danger btn-sm" disabled={game.busy || !!x.canIntimidate} title={x.canIntimidate ?? ""} onClick={() => act({ op: "intimidate", caseId: x.caseId })}>
-                    🐀 Lean on the witnesses
+                     Lean on the witnesses
                   </button>
                 </div>
                 {x.canIntimidate && <p className="job-lock"><Lock size={11} /> {x.canIntimidate}</p>}
@@ -1723,7 +1722,7 @@ function Racket({ game, racket, act }: { game: GameApi; racket: NonNullable<Just
                       {racket.cops.map((c) => <option key={c.id} value={c.id}>{c.name} · {c.title}</option>)}
                     </select>
                     <input type="number" min={100} step={10} value={amount[x.caseId] ?? "150"} onChange={(e) => setAmount({ ...amount, [x.caseId]: e.target.value })} aria-label="Amount" />
-                    <button className="btn btn-ghost btn-sm" disabled={game.busy || racket.cops.length === 0}>✉️ Pay to lose the file</button>
+                    <button className="btn btn-ghost btn-sm" disabled={game.busy || racket.cops.length === 0}>Pay to lose the file</button>
                   </form>
                 ) : (
                   <p className="job-lock"><Lock size={11} /> {x.canPayoff}</p>
@@ -1773,7 +1772,7 @@ export function JailCard({ game }: { game: GameApi }) {
         const da = game.view!.specialties.find((s) => s.id === "devils_advocate");
         return da && da.tier > 0 && !jail.custodyCase ? (
           <button className="btn btn-primary btn-sm" disabled={game.busy || !da.ready} title={da.ready ? "" : "You've already argued this sentence."} onClick={() => game.act({ type: "argue_sentence" })}>
-            ⚖️ Argue your own sentence
+             Argue your own sentence
           </button>
         ) : null;
       })()}
@@ -1791,7 +1790,7 @@ export function JailCard({ game }: { game: GameApi }) {
           }}
         >
           <input type="number" min={50} step={10} value={amount} onChange={(e) => setAmount(e.target.value)} aria-label="Envelope amount" />
-          <button className="btn btn-ghost btn-sm" disabled={game.busy}>✉️ Send an envelope to the judge</button>
+          <button className="btn btn-ghost btn-sm" disabled={game.busy}>Send an envelope to the judge</button>
           <span className="fine muted">From your bank. Only a judge can take it; otherwise it comes back.</span>
         </form>
       )}
@@ -1890,7 +1889,7 @@ export function BackAlleyCard({ game }: { game: GameApi }) {
   if (!inClinic || doctors.length === 0) return null;
   return (
     <section className="card back-alley">
-      <h3 className="card-title">🩹 A quiet word in the clinic</h3>
+      <h3 className="card-title">A quiet word in the clinic</h3>
       <p className="muted">Some doctors will get you out of here today. Cash, no questions, no paperwork.</p>
       <ul className="officials">
         {doctors.map((d) => (
@@ -1940,7 +1939,7 @@ function FrontCard({ game, f, social }: { game: GameApi; f: NonNullable<Hub["fro
       {f.front?.closedUntil ? (
         <>
           <p className="fine text-red">
-            🔥 Burned out by a rival crew. No income and nothing through the books until {new Date(f.front.closedUntil).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}, unless it&apos;s rebuilt.
+             Burned out by a rival crew. No income and nothing through the books until {new Date(f.front.closedUntil).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}, unless it&apos;s rebuilt.
           </p>
           {f.leader && (
             <button className="btn btn-primary btn-sm" disabled={game.busy || f.vault < f.front.rebuildCost} onClick={() => social({ op: "front_rebuild" })}>

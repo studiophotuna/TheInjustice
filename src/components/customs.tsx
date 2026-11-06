@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Zap } from "lucide-react";
 import type { GameApi } from "./useGame";
 
 type CustomsData = {
@@ -58,7 +58,7 @@ export function CustomsLine({ game }: { game: GameApi }) {
             <li key={o.id}>
               <span className="fine">
                 {o.paid ? (
-                  <>✅ <b>{o.name}</b> will wave you through until {time(o.until)}.</>
+                  <><b>{o.name}</b> will wave you through until {time(o.until)}.</>
                 ) : (
                   <>Word is <b>{o.name}</b> doesn&apos;t look in trunks for <b>${o.price.toLocaleString()}</b>.</>
                 )}
@@ -132,7 +132,7 @@ export function CustomsCard({ game }: { game: GameApi }) {
         </>
       ) : (
         <button className="btn btn-primary btn-sm" disabled={game.busy || !!d.block} title={d.block ?? ""} onClick={() => game.social({ op: "customs_duty" }, "/api/city")}>
-          Take a shift · ⚡{d.energy}
+          Take a shift · <Zap size={13} className="zap-inline" />{d.energy}
         </button>
       )}
     </section>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Pickaxe } from "lucide-react";
+import { Pickaxe, Zap } from "lucide-react";
 import type { GameApi } from "./useGame";
 
 /** The prison: your standing in the yard, the tunnel, the shank, and the parole board. */
@@ -22,7 +22,7 @@ export function InsideCard({ game }: { game: GameApi }) {
           <div className="wear-bar"><span style={{ width: `${v.tunnel}%` }} /></div>
           <span className="fine muted">{v.tunnel ? `${v.tunnel}% of the way under the wall.` : "Behind the poster, a loose brick. It's a start."} If the guards find it, it's filled in and you get more time.</span>
           <button className="btn btn-ghost btn-sm" disabled={game.busy || !!v.canDig} title={v.canDig ?? ""} onClick={() => game.act({ type: "tunnel_dig" })}>
-            Dig · ⚡{v.energy.dig}
+            Dig · <Zap size={13} className="zap-inline" />{v.energy.dig}
           </button>
         </div>
       )}
@@ -31,7 +31,7 @@ export function InsideCard({ game }: { game: GameApi }) {
         <span className="crime-label">A shank</span>
         <span className="fine muted">{v.shank ? "Taped under your bunk. An edge in your next yard fight, if a shakedown doesn't find it." : "An edge in yard fights. Getting caught making one, or carrying one, adds time."}</span>
         {!v.shank && (
-          <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.act({ type: "make_shank" })}>Make one · ⚡{v.energy.shank}</button>
+          <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.act({ type: "make_shank" })}>Make one · <Zap size={13} className="zap-inline" />{v.energy.shank}</button>
         )}
       </div>
 

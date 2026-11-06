@@ -42,6 +42,32 @@ export const REGULAR_LOOKS: Record<string, { g: Gender; old?: boolean; face?: st
   vale: { g: "m", old: true, face: "mk4764" }, thorne: { g: "m", face: "mk14090" },
 };
 
+/**
+ * Fixed faces for the story's own people (career contacts, the suspects on the board) and the
+ * street toughs you fight. Contacts are written as: women Reyes, Marsh, Mercy, Quell, Dobrev,
+ * Okafor; men Kozak, Silas, Brann, Brennan, Crane, Benny.
+ */
+export const NPC_FACES: Record<string, string> = {
+  reyes: "/portraits/police-4.jpg", kozak: "/portraits/enforcer-6.jpg", marsh: "/faces/mk4804.jpg",
+  silas: "/portraits/vigilante-3.jpg", mercy: "/portraits/medicine-8.jpg", quell: "/faces/mk4573.jpg",
+  brann: "/portraits/military-4.jpg", dobrev: "/faces/mk5179.jpg", okafor: "/faces/mk4954.jpg",
+  brennan: "/faces/mk4727.jpg", crane: "/faces/mk33210.jpg", benny: "/faces/mk16107.jpg",
+  alley_rat: "/portraits/vigilante-5.jpg", drunk_sailor: "/faces/mk6341.jpg", dock_brawler: "/faces/mk51755.jpg",
+  southside_bruiser: "/faces/mk49249.jpg", iron_foreman: "/faces/mk41334.jpg", mugger: "/portraits/enforcer-1.jpg",
+  beach_hustler: "/faces/mk35808.jpg", casino_bouncer: "/faces/mk4813.jpg", rail_rat: "/faces/mk13737.jpg",
+  state_enforcer: "/portraits/police-3.jpg", undercity_scav: "/portraits/vigilante-8.jpg", corp_security: "/portraits/police-6.jpg",
+  road_gang: "/faces/mk36445.jpg",
+};
+const NPC_SRCS = new Set(Object.values(NPC_FACES));
+
+/** Which regulars share a city (the same order as the roster). */
+const CITIES: string[][] = [
+  ["gus", "rosa", "dutch", "ivy", "teo", "mags", "lenny", "bea", "sully", "nico", "crowe", "webb"],
+  ["lucia", "dario", "marisol", "beppe", "ana", "tomas", "pia", "rico", "elena", "matteo", "bruni", "vargas"],
+  ["anya", "pavel", "irina", "bogdan", "vera", "oleg", "katya", "stefan", "dusan", "yuri", "hraba", "sorokina"],
+  ["sloane", "jules", "kai", "dex", "noor", "finn", "zara", "milo2", "reed", "tess", "vale", "thorne"],
+];
+
 function hash(s: string) {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
@@ -57,11 +83,14 @@ export function regularFace(key: string): Face | null {
   if (!look) return null;
   if (look.face && FACES[look.face]) return FACES[look.face];
   const taken = new Set(Object.values(REGULAR_LOOKS).map((l) => l.face).filter(Boolean));
-  const pool = Object.entries(FACES).filter(([id, f]) => f.g === look.g && !!f.old === !!look.old && !taken.has(id));
+  const pool = Object.entries(FACES).filter(([id, f]) => f.g === look.g && !!f.old === !!look.old && !taken.has(id) && !NPC_SRCS.has(f.src));
   const list = pool.length ? pool : Object.entries(FACES).filter(([, f]) => f.g === look.g);
   // Same-gender regulars in alphabetical order take faces in turn, so they rarely repeat.
-  const peers = Object.keys(REGULAR_LOOKS).filter((k) => !REGULAR_LOOKS[k].face && REGULAR_LOOKS[k].g === look.g && !!REGULAR_LOOKS[k].old === !!look.old).sort();
-  const start = hash("faces") % list.length;
+  // Within a city, same-looking regulars take faces in turn, so nobody there repeats; each city
+  // starts further along the list, so the cities look different from each other too.
+  const city = CITIES.findIndex((c) => c.includes(key));
+  const peers = (CITIES[city] ?? [key]).filter((k) => !REGULAR_LOOKS[k].face && REGULAR_LOOKS[k].g === look.g && !!REGULAR_LOOKS[k].old === !!look.old);
+  const start = (hash("faces") + Math.max(0, city) * 5) % list.length;
   return list[(start + peers.indexOf(key)) % list.length][1];
 }
 

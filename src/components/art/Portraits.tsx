@@ -1,4 +1,5 @@
 import { facePhoto } from "./Cutout";
+import { NPC_FACES } from "@/game/content/faces";
 
 // Vector character portraits: a lit silhouette bust plus a signature prop per character.
 
@@ -144,6 +145,16 @@ function Bust({ rim, bg, prop, eyes = true }: { rim: string; bg: string; prop: P
 
 export function NpcPortrait({ id, className = "" }: { id: string; className?: string }) {
   const look = NPC_LOOKS[id] ?? NPC_LOOKS.mugger;
+  // One portrait style: the story's people and the street's toughs are photos too.
+  const face = NPC_FACES[id];
+  if (face) {
+    return (
+      <div className={`portrait portrait-photo ${className}`} style={{ ["--rim" as string]: look.rim }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={face} alt="" />
+      </div>
+    );
+  }
   return (
     <div className={`portrait ${className}`} style={{ ["--rim" as string]: look.rim }}>
       <Bust {...look} />

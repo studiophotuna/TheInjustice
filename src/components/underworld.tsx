@@ -157,7 +157,7 @@ export function TutorialCard({ game, go }: { game: GameApi; go: (t: string) => v
     return (
       <section className="card tutorial compact">
         <div className="row between">
-          <span>🎁 {ready} first-day reward{ready === 1 ? "" : "s"} waiting</span>
+          <span>{ready} first-day reward{ready === 1 ? "" : "s"} waiting</span>
           <button className="btn btn-primary btn-xs" disabled={game.busy} onClick={() => game.act({ type: "tutorial", step: "all" })}>Claim all ${ready * 15}</button>
         </div>
       </section>

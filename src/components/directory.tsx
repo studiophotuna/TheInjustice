@@ -140,7 +140,7 @@ export function Directory({ game }: { game: GameApi }) {
             <li key={s.kind}>
               <span className="dir-row">
                 <span className="dir-who">
-                  <span className={`dot ${s.online ? "on" : ""}`} /> {s.icon} <b>{s.shop}</b>
+                  <span className={`dot ${s.online ? "on" : ""}`} /> <b>{s.shop}</b>
                 </span>
                 <span className="fine muted">Run by {s.name} · {p === 0 ? "usual prices" : `prices ${p > 0 ? "+" : ""}${p}%`}</span>
               </span>
@@ -171,7 +171,7 @@ function MyScrub({ game }: { game: GameApi }) {
           <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.act({ type: "scrub_set", open: false, fee: Number(fee) })}>Stop</button>
         )}
       </div>
-      <p className="fine">{s.open ? `🟢 Taking clients at $${s.fee.toLocaleString()}.` : "Not taking clients."} {s.jobs} clients so far.</p>
+      <p className="fine">{s.open ? `Taking clients at $${s.fee.toLocaleString()}.` : "Not taking clients."} {s.jobs} clients so far.</p>
     </section>
   );
 }

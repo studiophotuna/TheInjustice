@@ -1,5 +1,18 @@
 # Changelog
 
+## 4.5.0: the rest of the cleanup (faces everywhere, no emoji, no odds)
+
+- **Every named character is a photo now:** career contacts (Reyes, Kozak, Marsh, Silas, Mercy,
+  Quell, Brann, Dobrev, Okafor, Brennan), the suspects on "Who framed you" and the street toughs
+  you fight. Each has a fixed face that matches how they're written. No more cartoon busts mixed
+  in with photos. Street regulars never share a face with anyone else in their city.
+- **No emoji in the interface:** card titles, buttons, tags and messages are plain words. Energy
+  costs show the lightning icon or "N energy". Shops show a small photo instead of an emoji.
+- **No odds anywhere:** torching a business no longer shows a "% chance it catches", and a
+  prison-break plan no longer says how good the odds are. Neither is sent to the browser either.
+- **Bank statement:** one line per movement, with cash, bank and dirty amounts as colored figures,
+  empty rows left out, and the latest eight with "Show all".
+
 ## 4.4.2: the map, as in the mockup
 
 - **The map on Home is a street map now:** dark city blocks with lighter streets between them,

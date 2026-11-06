@@ -443,3 +443,22 @@ h2, .sec-head h2 { font-family: var(--headline); font-weight: 400; letter-spacin
 .map-me { background: var(--red); }
 .citymap .map-water { fill: #0b3140; }
 .citymap .map-more { fill: rgba(255, 255, 255, 0.6); font-size: 11px; font-weight: 800; font-family: var(--font-body), sans-serif; }
+
+/* Shops: a cover photo, not an icon. */
+img.shop-strip-icon { width: 28px; height: 28px; border-radius: 8px; object-fit: cover; flex: none; }
+img.city-shop-icon { width: 46px; height: 46px; border-radius: 12px; object-fit: cover; flex: none; padding: 0; }
+.zap-inline { display: inline-block; vertical-align: -2px; margin-right: 1px; }
+.suspect-photo { object-fit: cover; padding: 0; }
+
+/* Bank statement: one line per movement, amounts as colored figures. */
+.stmt { list-style: none; margin: 0 0 10px; padding: 0; display: grid; }
+.stmt li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.stmt li:last-child { border-bottom: 0; }
+.stmt-what { display: grid; gap: 2px; min-width: 0; }
+.stmt-what b { font-size: 14px; font-weight: 700; }
+.stmt-what time { font-size: 11.5px; color: var(--muted); }
+.stmt-amts { display: grid; justify-items: end; gap: 2px; font-weight: 800; font-size: 14px; white-space: nowrap; }
+.stmt-amts small { font-size: 10.5px; font-weight: 700; color: var(--muted); }
+.stmt-amts .up { color: var(--money); }
+.stmt-amts .down { color: #ff7f86; }
+.stmt-amts .dirty-up { color: var(--gold); }

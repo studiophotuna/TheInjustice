@@ -283,7 +283,7 @@ export function fitAlarm(p: Player, price?: number): GameEvent[] {
   p.cash -= fromCash;
   p.bank -= cost - fromCash;
   p.alarms = [...(p.alarms ?? []), country];
-  return [{ tone: "good", text: `🚨 Alarm wired, with a camera over the door. A sticker on the window tells everyone. -$${cost.toLocaleString()}` }];
+  return [{ tone: "good", text: `Alarm wired, with a camera over the door. A sticker on the window tells everyone. -$${cost.toLocaleString()}` }];
 }
 
 /** A chop shop takes a hot car apart: dirty money, no questions. */

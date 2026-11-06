@@ -215,7 +215,7 @@ export function FightTab({ game }: { game: GameApi }) {
                   disabled={blocked || game.live!.energy < view.fightEnergy || view.hp < 20}
                   onClick={() => game.act({ type: "fight", npcId: n.id })}
                 >
-                  <Swords size={14} /> {view.hp < 20 ? "Too hurt" : `Fight · ⚡${view.fightEnergy}`}
+                  <Swords size={14} /> {view.hp < 20 ? "Too hurt" : `Fight · ${view.fightEnergy} energy`}
                 </motion.button>
               )}
             </div>
@@ -281,7 +281,7 @@ export function ShopTab({ game }: { game: GameApi }) {
                 <p className="property-income">≈ ${pr.incomePerHour}/hour</p>
               </div>
               {pr.owned && pr.closedUntil ? (
-                <p className="fine text-red">🔥 Burned out. Reopens in {Math.ceil((pr.closedUntil - Date.now()) / 3_600_000)}h.</p>
+                <p className="fine text-red">Burned out. Reopens in {Math.ceil((pr.closedUntil - Date.now()) / 3_600_000)}h.</p>
               ) : pr.owned ? (
                 <button className="btn btn-primary btn-sm" disabled={game.busy || pr.waiting < 1} onClick={() => game.act({ type: "collect_property", id: pr.id })}>
                   Collect ${pr.waiting}
@@ -577,7 +577,7 @@ export function BankAccountCard({ game }: { game: GameApi }) {
             <p className="big-number">${view.bank.toLocaleString()}</p>
             <p className="muted">Safe from muggers, and it survives death.</p>
             <div className="row">
-              <input inputMode="numeric" placeholder="Amount (empty = all cash)" value={amount} onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))} />
+              <input inputMode="numeric" placeholder="Amount" title="Leave it blank to move all of it" value={amount} onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))} />
               <button className="btn btn-primary btn-sm" disabled={game.busy} onClick={() => game.act({ type: "bank", op: "deposit", amount: Number(amount || view.cash) }).then(() => setAmount(""))}>Deposit</button>
               <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.act({ type: "bank", op: "withdraw", amount: Number(amount || 0) }).then(() => setAmount(""))}>Withdraw</button>
             </div>
@@ -896,7 +896,7 @@ function GymCard({ game }: { game: GameApi }) {
   return (
     <section className="card gym">
       <h3 className="card-title"><DumbbellIcon size={16} /> {view.location.city} boxing gym</h3>
-      <p className="muted">Pick what to train. You won&apos;t see numbers, but you&apos;ll feel it. ${view.gym.fee} and ⚡{view.gym.energy} a session.</p>
+      <p className="muted">Pick what to train. You won&apos;t see numbers, but you&apos;ll feel it. ${view.gym.fee} and <Zap size={13} className="zap-inline" />{view.gym.energy} a session.</p>
       <div className="exercises">
         {EXERCISES.map(({ stat, name, note, Icon }) => (
           <motion.button
@@ -1009,7 +1009,7 @@ export function LoansCard({ game }: { game: GameApi }) {
   const due = (t: number) => (t <= Date.now() ? "overdue" : `due in ${Math.ceil((t - Date.now()) / 3_600_000)}h`);
   return (
     <section className="card">
-      <h3 className="card-title">💵 Loans</h3>
+      <h3 className="card-title">Loans</h3>
       <ul className="officials">
         {offers.map((o) => (
           <li key={o.id}>
@@ -1264,30 +1264,30 @@ function ServiceCard({ game }: { game: GameApi }) {
 
 /** Where your money went: newest first. */
 export function Statement({ game }: { game: GameApi }) {
-  const ledger = game.view!.ledger;
+  const [all, setAll] = useState(false);
+  const ledger = game.view!.ledger.filter((l) => l.cash || l.bank || l.dirty);
   if (!ledger.length) return null;
   const fmtD = (n: number) => (n > 0 ? `+$${n.toLocaleString("en")}` : `-$${Math.abs(n).toLocaleString("en")}`);
+  const shown = all ? ledger : ledger.slice(0, 8);
   return (
     <section className="card statement">
-      <h3 className="card-title"><Landmark size={16} /> Statement</h3>
-      <div className="statement-table">
-        <table>
-          <thead>
-            <tr><th>When</th><th>What</th><th>Cash</th><th>Bank</th><th>Dirty</th></tr>
-          </thead>
-          <tbody>
-            {ledger.map((l, i) => (
-              <tr key={i}>
-                <td className="muted">{new Date(l.at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</td>
-                <td>{l.label}</td>
-                <td className={l.cash > 0 ? "up" : l.cash < 0 ? "down" : "muted"}>{l.cash ? fmtD(l.cash) : "·"}</td>
-                <td className={l.bank > 0 ? "up" : l.bank < 0 ? "down" : "muted"}>{l.bank ? fmtD(l.bank) : "·"}</td>
-                <td className={l.dirty > 0 ? "dirty-up" : l.dirty < 0 ? "down" : "muted"}>{l.dirty ? fmtD(l.dirty) : "·"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <h3 className="card-title">Statement</h3>
+      <ul className="stmt">
+        {shown.map((l, i) => (
+          <li key={i}>
+            <div className="stmt-what">
+              <b>{l.label.replace(/ \(.*\)$/, "")}</b>
+              <time>{new Date(l.at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time>
+            </div>
+            <div className="stmt-amts">
+              {!!l.cash && <span className={l.cash > 0 ? "up" : "down"}>{fmtD(l.cash)} <small>cash</small></span>}
+              {!!l.bank && <span className={l.bank > 0 ? "up" : "down"}>{fmtD(l.bank)} <small>bank</small></span>}
+              {!!l.dirty && <span className={l.dirty > 0 ? "dirty-up" : "down"}>{fmtD(l.dirty)} <small>dirty</small></span>}
+            </div>
+          </li>
+        ))}
+      </ul>
+      {ledger.length > 8 && <button className="btn btn-ghost btn-sm" onClick={() => setAll(!all)}>{all ? "Show less" : `Show all ${ledger.length}`}</button>}
     </section>
   );
 }

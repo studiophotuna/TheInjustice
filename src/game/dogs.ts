@@ -59,7 +59,7 @@ export function buyDog(p: Player, breed: DogBreed, rawName: string, now: number)
   if (p.cash < price) throw new GameError(`That's $${price.toLocaleString()}, cash.`);
   p.cash -= price;
   p.dogs = { ...(p.dogs ?? {}), [country]: { breed, name, fedAt: now, since: now } };
-  return [{ tone: "good", text: `🐕 ${name} the ${DOGS.breeds[breed].name.toLowerCase()} sniffs every corner of your place, then lies down across the doorway. Fed for three days.` }];
+  return [{ tone: "good", text: `${name} the ${DOGS.breeds[breed].name.toLowerCase()} sniffs every corner of your place, then lies down across the doorway. Fed for three days.` }];
 }
 
 export function feedDog(p: Player, now: number): GameEvent[] {

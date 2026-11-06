@@ -129,7 +129,7 @@ export function buyCar(p: Player, model: CarModel, country: CountryId, now: numb
   payClean(p, price, `The ${def.name.toLowerCase()}`);
   const car: Car = { id: `car-${now.toString(36)}`, model, country, condition: 100, cargo: {}, boughtFor: price };
   p.garage = [...(p.garage ?? []), car];
-  return [{ tone: "good", text: `🔑 The ${def.name.toLowerCase()} is yours. It's parked in ${COUNTRY_BY_ID[country].capital}.` }];
+  return [{ tone: "good", text: `The ${def.name.toLowerCase()} is yours. It's parked in ${COUNTRY_BY_ID[country].capital}.` }];
 }
 
 export function sellCar(p: Player, carId: string, country: CountryId): GameEvent[] {
@@ -149,7 +149,7 @@ export function repairCar(p: Player, carId: string, country: CountryId, price?: 
   const cost = price ?? Math.ceil(repairCost(car) * (p.path === "mechanic" && p.rank >= 1 ? 0.5 : 1));
   payClean(p, cost, "The repair");
   car.condition = 100;
-  return [{ tone: "good", text: `🔧 The mechanic works it over. Good as new. -$${cost.toLocaleString()}` }];
+  return [{ tone: "good", text: `The mechanic works it over. Good as new. -$${cost.toLocaleString()}` }];
 }
 
 export function fitCompartment(p: Player, carId: string, country: CountryId, price?: number): GameEvent[] {
