@@ -84,6 +84,7 @@ import { NpcPortrait, PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 const CAREER_HINTS = [
   { id: "vigilante", name: "Vigilante", side: "Law", contact: "silas", hint: "Look out for the people of Southside, and keep your conscience clean." },
   { id: "enforcer", name: "Mafia", side: "Street", contact: "kozak", hint: "Do muscle work for shady people. Win some fights." },
+  { id: "mechanic", name: "Mechanic", side: "Law", contact: "dobrev", hint: "Lend a hand at Dobrev's garage in Iron Row, Grayhaven. Good hands get noticed." },
 ];
 import { AuthForm } from "./screens";
 import { fmt, type GameApi } from "./useGame";
@@ -695,8 +696,14 @@ function CareersCard({ game }: { game: GameApi }) {
     <section className="card">
       <h3 className="card-title"><GraduationCap size={16} /> Schools</h3>
       <p className="muted">Law careers need a degree. Each school trains one career, and you enroll in person in its city.</p>
+      {[true, false].map((local) => {
+        const list = view.schools.filter((sc) => sc.here === local);
+        if (!list.length) return null;
+        return (
+          <div key={String(local)}>
+            <h4 className="subhead">{local ? `In ${view.location.city}` : "In other cities"}</h4>
       <div className="schools">
-        {view.schools.map((sc) => (
+        {list.map((sc) => (
           <article key={sc.id} className="school" style={{ ["--path" as string]: PATH_LOOKS[sc.path].rim }}>
             <div className="school-head">
               <span className="school-crest"><GraduationCap size={20} /></span>
@@ -721,6 +728,9 @@ function CareersCard({ game }: { game: GameApi }) {
           </article>
         ))}
       </div>
+          </div>
+        );
+      })}
       <h4 className="subhead">No school: by invitation only</h4>
       <p className="fine">Street careers have no degree. Someone has to notice you.</p>
       <div className="careers">

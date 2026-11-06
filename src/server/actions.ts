@@ -48,6 +48,9 @@ export function parseAction(body: unknown): Action {
     case "dog_buy":
       if (!["mutt", "shepherd", "mastiff"].includes(b.breed as string)) throw new GameError("Bad request.");
       return { type: "dog_buy", breed: b.breed as "mutt", name: str(b.name, 40) };
+    case "scrub_set":
+      if (typeof b.open !== "boolean") throw new GameError("Bad request.");
+      return { type: "scrub_set", open: b.open, fee: Number(b.fee) };
     case "tunnel_dig":
     case "make_shank":
     case "parole_hearing":

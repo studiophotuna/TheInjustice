@@ -119,6 +119,8 @@ export interface PublicView {
     tuition: number;
     dean: string;
     description: string;
+    /** In the city the player is in. */
+    here: boolean;
     /** Why the player can't apply right now, or null. */
     locked: string | null;
     /** Contact currently offering to vouch (free application). */
@@ -242,6 +244,8 @@ export interface PublicView {
   inside: ReturnType<typeof insideView>;
   /** Who you were before prison, and the career it points to. */
   background: ReturnType<typeof backgroundView>;
+  /** Hackers: your record-scrub service. */
+  scrub: { open: boolean; fee: number; jobs: number } | null;
   /** Mechanics: your garage for customers. */
   garage: { open: boolean; rate: number; earned: number; jobs: number; services: string[]; next: { name: string; rank: string } | null } | null;
   /** Rank progress for the career ladder. */
@@ -457,9 +461,8 @@ export function toView(p: Player, now: number): PublicView {
       read: p.flags.includes(`read:${c.id}`),
     })),
     schools: SCHOOLS.map((sc) => {
-      const homeSchool = PATHS[sc.path].school === sc.id;
-      const playerVouch = homeSchool ? p.vouches?.find((v) => v.path === sc.path) : undefined;
-      const vouch = (p.offers.includes(sc.path) && homeSchool) || !!playerVouch;
+      const playerVouch = p.vouches?.find((v) => v.path === sc.path);
+      const vouch = p.offers.includes(sc.path) || !!playerVouch;
       let locked = p.path
         ? "You already have a career."
         : p.application?.status === "pending"
@@ -483,6 +486,7 @@ export function toView(p: Player, now: number): PublicView {
         tuition: sc.tuition,
         dean: sc.dean,
         description: sc.description,
+        here: sc.country === here,
         locked,
         vouchedBy: playerVouch ? playerVouch.by : vouch ? PATHS[sc.path].contact : null,
       };
@@ -548,6 +552,7 @@ export function toView(p: Player, now: number): PublicView {
     background: backgroundView(p),
     inside: insideView(p, now),
     fugitive: fugitiveView(p, now),
+    scrub: p.path === "hacker" && p.rank >= 3 ? { open: !!p.scrubService?.open, fee: p.scrubService?.fee ?? 500, jobs: p.scrubService?.jobs ?? 0 } : null,
     garage:
       p.path === "mechanic" && p.rank >= 1
         ? {

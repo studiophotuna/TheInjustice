@@ -9,6 +9,7 @@ import { Directory } from "./directory";
 import { CustomsCard } from "./customs";
 import { InsideCard } from "./inside";
 import { FugitivesCard } from "./fugitives";
+import { FireLog } from "./firelog";
 import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { Scene, type SceneKind } from "./art/Scenes";
 import { CityHall } from "./cityhall";
@@ -100,6 +101,7 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
       return (
         <div className="stack">
           <FugitivesCard game={game} />
+          <FireLog game={game} />
           <ThreatReports game={game} />
           <CasesPanel game={game} hub={hub} place="police" />
         </div>
@@ -172,7 +174,7 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
         </div>
       );
     case "directory":
-      return <Directory />;
+      return <Directory game={game} />;
     case "home":
       return (
         <div className="stack">

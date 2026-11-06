@@ -56,10 +56,22 @@ export function OnTheRun({ game }: { game: GameApi }) {
   return (
     <section className="card on-the-run">
       <p className="eyebrow">On the run</p>
-      <p className="fine">
-        The trail goes cold in <b>{fmt(f.until - Date.now())}</b>. Until then detectives are hunting you, customs officers know your face, airports check papers,
-        and your bank accounts are frozen. Keep moving, or keep very still.
-      </p>
+      {f.hidden ? (
+        <p className="fine">
+          You&apos;ve gone to ground. Nobody can hunt you, and the trail goes cold in <b>{fmt(f.until - Date.now())}</b>. Stay put: no work until you come out.
+        </p>
+      ) : (
+        <>
+          <p className="fine">
+            The trail goes cold in <b>{fmt(f.until - Date.now())}</b>. Until then detectives are hunting you, customs officers know your face, airports check
+            papers, and your bank accounts are frozen. Keep moving, or keep very still.
+          </p>
+          <button className="btn btn-primary btn-sm" disabled={game.busy || game.view!.cash < 300} title={game.view!.cash < 300 ? "A hideout costs $300, cash." : ""} onClick={() => game.act({ type: "lie_low" })}>
+            Go to ground · $300
+          </button>
+          <p className="fine muted">A hideout takes you off the wanted board and halves the time left, but you can&apos;t work while you&apos;re in it.</p>
+        </>
+      )}
     </section>
   );
 }

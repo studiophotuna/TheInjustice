@@ -35,6 +35,7 @@ import { toView } from "@/game/view";
 import { assertJson } from "@/server/auth";
 import { readCity } from "@/server/city";
 import { customsView, endShift, payOfficer, setPrice, startShift } from "@/game/customs";
+import { fireLogView, investigateFire } from "@/game/firehack";
 import { resolveIdentity } from "@/server/identity";
 import { getStore, StoreConfigError } from "@/server/store";
 
@@ -91,7 +92,7 @@ export async function GET() {
     // Detectives see reported threats (never who's behind them); the person who reported sees it's on file.
     const threats = !stakeoutBlock({ ...p, energy: 999 }, now) ? (c.threats ?? []).filter((t) => !t.solved).map((t) => ({ id: t.id, targetName: t.targetName, at: t.at })) : [];
     const myThreatReported = (c.threats ?? []).some((t) => t.targetId === p.id && !t.solved);
-    return NextResponse.json({ customs: customsView(c, p, now), city: view, prisoners, officers, editorPicks, turf: turfView(c, p, crew, now), paper, residents, threats, myThreatReported });
+    return NextResponse.json({ fires: fireLogView(c, p, now), fireWatch: (c.fireWatchUntil ?? 0) > now ? c.fireWatchUntil : null, customs: customsView(c, p, now), city: view, prisoners, officers, editorPicks, turf: turfView(c, p, crew, now), paper, residents, threats, myThreatReported });
   } catch (e) {
     return failure(e);
   }
@@ -279,6 +280,14 @@ export async function POST(req: Request) {
           out = stakeOut(c, p, str(b.threatId), hitCrew, hitman, target, now, Math.random);
           for (const x of [hitman, target]) if (x && x.id !== p.id) await tx.putPlayer(x);
           if (hitCrew) await tx.putCrew(hitCrew);
+          break;
+        }
+        case "fire_investigate": {
+          const fire = (c.fires ?? []).find((f) => f.id === str(b.fireId));
+          const [arsonist] = fire ? await tx.getPlayers([fire.arsonistId]) : [null];
+          if (arsonist) tick(arsonist, now);
+          out = investigateFire(p, c, str(b.fireId), arsonist ?? null, now, Math.random);
+          if (arsonist && arsonist.id !== p.id) await tx.putPlayer(arsonist);
           break;
         }
         case "customs_duty":

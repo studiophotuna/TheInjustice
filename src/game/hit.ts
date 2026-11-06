@@ -26,6 +26,7 @@ import { equippedId, gearPower, wearGear } from "./gear";
 import { earnDirty } from "./money";
 import { notify, protectedUntil } from "./social";
 import { sv } from "./stats";
+import { isFugitive } from "./fugitive";
 import { GameError, type CaseFile, type City, type CrimeKind, type Crew, type GameEvent, type HitContract, type Player, type Rng } from "./types";
 
 export const HIT = {
@@ -313,11 +314,20 @@ export function hireBodyguards(p: Player, now: number): GameEvent[] {
 
 export function lieLow(p: Player, now: number): GameEvent[] {
   if (lyingLow(p, now)) throw new GameError("You're already lying low.");
-  if (now - (p.lastLieLowAt ?? 0) < HIT.lieLowCooldownMs) throw new GameError("You can't vanish again so soon. People notice.");
+  const runner = isFugitive(p, now);
+  // Someone on the run can always find a hole to hide in; everyone else can't vanish every day.
+  if (!runner && now - (p.lastLieLowAt ?? 0) < HIT.lieLowCooldownMs) throw new GameError("You can't vanish again so soon. People notice.");
   if (p.cash < HIT.lieLowCost) throw new GameError(`A safe house costs $${HIT.lieLowCost}, cash.`);
   p.cash -= HIT.lieLowCost;
   p.lastLieLowAt = now;
   p.lieLowUntil = now + HIT.lieLowMs;
+  if (runner) {
+    // Gone to ground: the trail cools twice as fast, and nobody can hunt what they can't find.
+    const left = p.fugitive!.until - now;
+    p.fugitive = { ...p.fugitive!, until: now + Math.ceil(left / 2) };
+    p.lieLowUntil = Math.min(p.lieLowUntil, p.fugitive.until);
+    return [{ tone: "good", text: "A basement flat, cash rent, no questions. You go to ground: off the wanted board, out of reach, and the trail cools twice as fast. No work until you come out." }];
+  }
   return [{ tone: "good", text: "You disappear into a safe house for six hours. No work, no fights. Nobody can find you." }];
 }
 

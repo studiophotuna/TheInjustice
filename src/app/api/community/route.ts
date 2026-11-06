@@ -15,6 +15,7 @@ import { breakIn, breakInBlock, carTheftBlock, hasAlarm, homeIn, homeJobBlock, o
 import { CARS } from "@/game/vehicles";
 import { dogAt } from "@/game/dogs";
 import { huntBlock, huntFugitive, isFugitive } from "@/game/fugitive";
+import { hireScrub, scrubBlock, SCRUB } from "@/game/firehack";
 import { hireMechanic, isMechService, mechanicCard } from "@/game/mechanic";
 import { SHOP, SHOP_KINDS } from "@/game/shops";
 import { buyFront, collectFront, crewCap, frontView, isFrontKind, launderAtFront, rebuildFront, rivalFronts, torchFront } from "@/game/fronts";
@@ -316,7 +317,7 @@ export async function GET(req: Request) {
       const country = countryOf(p);
       const locals = await store.listPlayers(country, 200);
       const wanted = locals
-        .filter((o) => o.id !== p.id && isFugitive(o, now) && !o.travel)
+        .filter((o) => o.id !== p.id && isFugitive(o, now) && !o.travel && (o.lieLowUntil ?? 0) <= now)
         .map((o) => ({ id: o.id, name: o.name, photo: o.profile?.photo ?? null, until: o.fugitive!.until, block: huntBlock(p, o, now) }));
       return NextResponse.json({ wanted, detective: p.path === "police" && p.rank >= BALANCE.crime.detectiveRank });
     }
@@ -336,6 +337,9 @@ export async function GET(req: Request) {
           .map((o) => ({ ...base(o), title: rankTitle(o) ?? "Attorney", fee: retainerFee(o) })),
         doctors: here.filter((o) => o.backAlley).map((o) => ({ ...base(o), fee: backAlleyFee(o) })),
         mechanics: here.filter((o) => o.path === "mechanic" && o.garageService?.open).map((o) => ({ ...base(o), ...mechanicCard(o, p, now) })),
+        hackers: here
+          .filter((o) => o.path === "hacker" && o.rank >= SCRUB.minRank && o.scrubService?.open)
+          .map((o) => ({ ...base(o), title: rankTitle(o) ?? "Hacker", fee: o.scrubService!.fee, heat: SCRUB.heat, jobs: o.scrubService!.jobs, block: scrubBlock(o, p, now) })),
         shops: SHOP_KINDS.flatMap((k) => {
           const h = city?.shops?.[k];
           if (!h) return [];
@@ -1017,6 +1021,21 @@ export async function POST(req: Request) {
       case "frisk": {
         const target = str(b.targetId);
         events = await store.transaction((tx) => withPair(tx, playerId, target, now, (o, t) => frisk(o, t, now, Math.random)));
+        break;
+      }
+      case "hire_scrub": {
+        const target = str(b.hackerId);
+        events = await store.transaction(async (tx) => {
+          const [me, h] = await tx.getPlayers([playerId, target]);
+          if (!me) throw new GameError("Create a character first.");
+          if (!h) throw new GameError("That player doesn't exist.");
+          tick(me, now);
+          tick(h, now);
+          const out = hireScrub(h, me, now);
+          await tx.putPlayer(me);
+          await tx.putPlayer(h);
+          return out;
+        });
         break;
       }
       case "hunt_fugitive": {

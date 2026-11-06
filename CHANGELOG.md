@@ -1,5 +1,32 @@
 # Changelog
 
+## 3.9.0: every career, schools in the right place, fire investigators and hideouts
+
+- **Course locations fixed:**
+  - Kestrova no longer lists Ironmoor Military Academy as "coming soon"; it's open, and the city
+    summary says so.
+  - Accepting a career offer now enrolls you at that career's school in the city you're in, if
+    there is one, instead of always the original one. A contact's or player's vouch now works at
+    any school for the career.
+  - The Academy lists schools in your city first, and the rest under "In other cities".
+  - Mechanic is listed with the other invitation-only careers.
+- **Every planned career is in:**
+  - **Meridian Corporate Law School** in Halcyon: a second school for the Courts career.
+  - **Hacker**, through the Halcyon Tech Institute (contact: Juno Okafor). Seven ranks from Script
+    Kiddie to Ghost. From Pen Tester up, a hacker can sell record scrubs in the Directory: a client
+    pays them (dirty money) and 20 heat disappears from their file. Their city seat can wipe one
+    player's record once a day.
+  - **Fire Department**, through the Grayhaven Fire Academy (contact: Chief Hal Brennan). Seven
+    ranks from Probie to Fire Chief.
+  - Two new starting backgrounds point to them: phone repair kid and volunteer firefighter.
+- **Fire investigators:** every arson (businesses and crew fronts) goes on the city's fire log at
+  the Police Station. Firefighters from Engineer up walk each scene once; read it right and they
+  name the arsonist in public, who takes 25 heat, and city hall pays a reward. The Fire Chief's seat
+  can order a fire watch: nothing burns in the city for six hours.
+- **Hideouts:** a fugitive can go to ground for $300 (no waiting for the usual lie-low cooldown).
+  They drop off the wanted board, detectives can't hunt them, and the trail goes cold twice as
+  fast, but they can't work until they come out.
+
 ## 3.8.0: burning fronts, and life on the run
 
 - **Torch a rival's front:** a crew front now stands in the city where it was bought. Members of

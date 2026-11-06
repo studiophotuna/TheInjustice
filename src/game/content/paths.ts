@@ -254,6 +254,62 @@ export const PATHS: Record<PathId, PathDef> = {
     accepted: 'Dobrev tosses you a pair of overalls with someone else\'s name stitched on. "Iron Row, seven sharp. Late is a broken engine."',
     promotion: (t) => `Dobrev hangs a new hook on the wall with your name over it. "${t}. The good tools are yours now. Don't lend them."`,
   },
+  hacker: {
+    id: "hacker",
+    name: "Hacker",
+    side: "street",
+    ranks: ["Script Kiddie", "Junior Analyst", "Pen Tester", "Security Engineer", "Red Team Lead", "Zero-Day Broker", "Ghost"],
+    keyStats: ["wits", "perception", "agility"],
+    promotionThresholds: [22, 29, 36, 44, 53, 62],
+    jobsPerRank: 8,
+    school: "halcyon_tech",
+    graduationRank: 2,
+    contact: "Juno Okafor",
+    contactId: "okafor",
+    blurb: "Everything in this city runs on a computer somebody forgot to patch. Including the police records.",
+    examStats: ["wits", "perception"],
+    examName: "Code review",
+    qualifies: (p) =>
+      p.heat < BALANCE.cleanRecordHeat * 2 &&
+      (p.jobCounts.fix_phones ?? 0) >= 5 &&
+      sv(p, "wits") + sv(p, "perception") >= 44,
+    offer: [
+      "Someone in a hoodie watches you bring a dead phone back to life with a paperclip and a lot of patience.",
+      "\"Juno Okafor. I teach at the Tech Institute, when I'm not doing other things.\"",
+      "\"You see how things are wired. Most people don't. The Institute could use you. So could I.\"",
+      "She slides a card across the counter. On the back: your old case number, and a hash that doesn't match the court's.",
+    ],
+    accepted: 'Okafor sends your application from a phone that isn\'t hers. "The dean likes me. The dean\'s inbox likes me more."',
+    promotion: (t) => `A message appears on your screen from no one: "${t}. Nice work. Don't get comfortable. — J"`,
+  },
+  fire: {
+    id: "fire",
+    name: "Fire Department",
+    side: "law",
+    ranks: ["Probie", "Firefighter", "Engineer", "Lieutenant", "Fire Investigator", "Captain", "Fire Chief"],
+    keyStats: ["toughness", "strength", "perception"],
+    promotionThresholds: [21, 28, 35, 43, 52, 61],
+    jobsPerRank: 8,
+    school: "grayhaven_fire",
+    graduationRank: 2,
+    contact: "Chief Hal Brennan",
+    contactId: "brennan",
+    blurb: "Run into the buildings everyone else runs out of. Then find out who lit the match.",
+    examStats: ["toughness", "perception"],
+    examName: "Drill report",
+    qualifies: (p) =>
+      p.heat < BALANCE.cleanRecordHeat &&
+      (p.jobCounts.fire_brigade ?? 0) >= 5 &&
+      sv(p, "toughness") + sv(p, "perception") >= 44,
+    offer: [
+      "A man with soot in the lines of his face watches you carry a stranger's kid out of a smoking stairwell.",
+      "\"Hal Brennan. Chief, for my sins. You went in when the others stood on the sidewalk.\"",
+      "\"The Fire Academy takes people like that. We train the rest.\"",
+      "He lowers his voice. \"Half the fires in this city aren't accidents. I'd like someone who can tell me who.\"",
+    ],
+    accepted: 'Brennan writes your name on an application with a pencil stub. "Academy starts Monday. Don\'t be brave on the first day."',
+    promotion: (t) => `Brennan hands you a new helmet with the old one's dents hammered out. "${t}. Wear it like you mean it."`,
+  },
 };
 
 export function rankTitle(p: Player): string | null {

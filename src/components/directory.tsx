@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { BookUser, Landmark, Scale, Stethoscope, Store, Wrench } from "lucide-react";
+import { BookUser, Landmark, Scale, Stethoscope, Store, Terminal, Wrench } from "lucide-react";
 import type { GameApi } from "./useGame";
 
 type Base = { id: string; name: string; photo: string | null; online: boolean; away: string | null };
@@ -12,6 +12,7 @@ type DirectoryData = {
   lawyers: (Base & { title: string; fee: number })[];
   doctors: (Base & { fee: number })[];
   mechanics: MechanicRow[];
+  hackers: (Base & { title: string; fee: number; heat: number; jobs: number; block: string | null })[];
   shops: { kind: string; shop: string; icon: string; id: string; name: string; markup: number; online: boolean }[];
 };
 
@@ -61,7 +62,7 @@ function Section({ icon, title, empty, children, count }: { icon: React.ReactNod
 }
 
 /** The Directory: who in town will launder, defend, patch up, repair or sell to you. */
-export function Directory() {
+export function Directory({ game }: { game: GameApi }) {
   const d = useDirectory();
   if (!d) return <p className="muted center">Opening the directory…</p>;
   return (
@@ -77,6 +78,25 @@ export function Directory() {
               <span className="fine muted">{m.title} · {pct(m.rate)} · {m.services.map((s) => SERVICE_NAMES[s]).join(", ")}{m.jobs ? ` · ${m.jobs} jobs done` : ""}</span>
             </span>
             <button className="btn btn-ghost btn-xs" onClick={() => go("place:docks")}>At the Docks</button>
+          </li>
+        ))}
+      </Section>
+      <MyScrub game={game} />
+      <Section icon={<Terminal size={16} />} title="Hackers" count={d.hackers.length} empty="No hacker here is taking clients. Pen Testers and up can offer it from the Directory.">
+        {d.hackers.map((h) => (
+          <li key={h.id}>
+            <span className="dir-row">
+              <Who r={h} />
+              <span className="fine muted">{h.title} · takes {h.heat} heat off your record for ${h.fee.toLocaleString()}{h.jobs ? ` · ${h.jobs} clients` : ""}</span>
+            </span>
+            <button
+              className="btn btn-ghost btn-xs"
+              disabled={game.busy || !!h.block}
+              title={h.block ?? "Dirty money first, then cash."}
+              onClick={() => game.social({ op: "hire_scrub", hackerId: h.id })}
+            >
+              Scrub my record
+            </button>
           </li>
         ))}
       </Section>
@@ -130,5 +150,28 @@ export function Directory() {
         })}
       </Section>
     </div>
+  );
+}
+
+/** Hackers (Pen Tester and up): offer record scrubs to clients. */
+function MyScrub({ game }: { game: GameApi }) {
+  const s = game.view!.scrub;
+  const [fee, setFee] = useState(String(s?.fee ?? 500));
+  if (!s) return null;
+  return (
+    <section className="card my-scrub">
+      <h3 className="card-title"><Terminal size={16} /> Your services</h3>
+      <p className="muted fine">Clients pay you to make heat disappear from their police file. You keep the fee (dirty money), and every client counts toward your next promotion.</p>
+      <div className="row wrap">
+        <input inputMode="numeric" value={fee} onChange={(e) => setFee(e.target.value.replace(/\D/g, ""))} aria-label="Your fee" />
+        <button className="btn btn-primary btn-sm" disabled={game.busy || !Number(fee)} onClick={() => game.act({ type: "scrub_set", open: true, fee: Number(fee) })}>
+          {s.open ? "Update fee" : "Take clients"}
+        </button>
+        {s.open && (
+          <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.act({ type: "scrub_set", open: false, fee: Number(fee) })}>Stop</button>
+        )}
+      </div>
+      <p className="fine">{s.open ? `🟢 Taking clients at $${s.fee.toLocaleString()}.` : "Not taking clients."} {s.jobs} clients so far.</p>
+    </section>
   );
 }

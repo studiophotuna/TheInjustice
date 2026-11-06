@@ -154,4 +154,4 @@ export function simulate(path: PathId, schedule: Schedule, days = 120, seed = 1)
   }
 }
 
-export const CAREERS: PathId[] = ["police", "enforcer", "courts", "vigilante", "medicine", "banking", "military", "mechanic"];
+export const CAREERS: PathId[] = ["police", "enforcer", "courts", "vigilante", "medicine", "banking", "military", "mechanic", "hacker", "fire"];

@@ -18,6 +18,8 @@ const NPC_LOOKS: Record<string, { rim: string; bg: string; prop: Prop }> = {
   quell: { rim: "#7ee0a8", bg: "#0a2418", prop: "tie" },
   brann: { rim: "#b5c96a", bg: "#161c08", prop: "helmet" },
   dobrev: { rim: "#ff9f43", bg: "#24160a", prop: "bandana" },
+  okafor: { rim: "#4dffb8", bg: "#06201a", prop: "hood" },
+  brennan: { rim: "#ff5a36", bg: "#2a0d06", prop: "hardhat" },
   // Other countries
   beach_hustler: { rim: "#ffd27a", bg: "#2a1a0a", prop: "glasses" },
   casino_bouncer: { rim: "#ff3df2", bg: "#22062a", prop: "none" },
@@ -157,6 +159,8 @@ export const PATH_LOOKS: Record<string, { rim: string; prop: Prop }> = {
   banking: { rim: "#7ee0a8", prop: "tie" },
   military: { rim: "#b5c96a", prop: "helmet" },
   mechanic: { rim: "#ff9f43", prop: "cap" },
+  hacker: { rim: "#4dffb8", prop: "hood" },
+  fire: { rim: "#ff5a36", prop: "hardhat" },
 };
 
 const PLAYER_RIMS = ["#ffc24b", "#38e1ff", "#ff3d5a", "#3ee08f", "#9b7bff", "#ff8a3d"];

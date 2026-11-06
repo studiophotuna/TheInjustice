@@ -49,6 +49,7 @@ export function huntBlock(d: Player, f: Player | null, now: number): string | nu
   if (f.id === d.id) return "That's you.";
   if (countryOf(f) !== countryOf(d)) return "The trail leads to another city.";
   if (f.travel || d.travel) return "One of you is on the road.";
+  if ((f.lieLowUntil ?? 0) > now) return "They've gone to ground. Nobody knows where.";
   if (inJail(d, now)) return "Not from a cell.";
   if (now - (d.attackLog?.[`hunt:${f.id}`] ?? 0) < FUGITIVE.hunt.cooldownMs) return "You just lost them. Give the trail time to warm up.";
   if (d.energy < FUGITIVE.hunt.energy) return "You're too tired.";
@@ -87,5 +88,5 @@ export function huntFugitive(d: Player, f: Player, city: City | null, now: numbe
 /** Home: the clock on the run. */
 export function fugitiveView(p: Player, now: number) {
   if (!isFugitive(p, now)) return null;
-  return { until: p.fugitive!.until, city: COUNTRY_BY_ID[p.fugitive!.country].capital };
+  return { until: p.fugitive!.until, city: COUNTRY_BY_ID[p.fugitive!.country].capital, hidden: (p.lieLowUntil ?? 0) > now };
 }

@@ -11,7 +11,7 @@ type Cmd = { id: string; group: string; label: string; hint?: string; keywords?:
 type Online = { id: string; name: string; canAttack: string | null; canCrime: Record<string, string | null>; regular?: boolean };
 
 const PLACES: [string, string, string][] = [
-  ["police", "Police station", "cops report case files arrest"],
+  ["police", "Police station", "cops report case files arrest fire log arson wanted fugitives"],
   ["court", "Courthouse", "trial bail lawyer judge"],
   ["hospital", "Hospital", "doctor heal surgery clinic"],
   ["bank", "Bank", "deposit withdraw loan launder money"],

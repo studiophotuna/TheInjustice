@@ -9,6 +9,7 @@ import { countryOf, inJail } from "./engine";
 import { crewJob } from "./family";
 import { notify } from "./social";
 import { sv } from "./stats";
+import { fireWatchOn, logFire } from "./firehack";
 import { GameError, type City, type GameEvent, type Player, type Rng } from "./types";
 
 export const TORCH = {
@@ -53,6 +54,7 @@ export function torchBlock(a: Player, owner: Player, propertyId: string, now: nu
 export function torchBusiness(a: Player, owner: Player, propertyId: string, city: City | null, now: number, rng: Rng): GameEvent[] {
   const block = torchBlock(a, owner, propertyId, now);
   if (block) throw new GameError(block);
+  if (fireWatchOn(city, now)) throw new GameError("The Fire Chief ordered a fire watch. Crews are on every block tonight.");
   const prop = PROPERTY_BY_ID[propertyId];
   const heatMult = COUNTRY_BY_ID[prop.country].heatMult;
   a.energy -= TORCH.energy;
@@ -68,6 +70,7 @@ export function torchBusiness(a: Player, owner: Player, propertyId: string, city
     a.reputation += TORCH.rep;
     notify(owner, `${prop.name} burned down overnight. The fire chief says arson. It'll take ${Math.round(TORCH.closedMs / 3_600_000)} hours to reopen.`, "bad", undefined, now);
     if (city) city.log = [{ at: now, text: `Fire at ${owner.name}'s ${prop.name.toLowerCase()}. Investigators suspect arson.` }, ...city.log].slice(0, 20);
+    logFire(city, { at: now, what: prop.name.toLowerCase(), victimName: owner.name, arsonistId: a.id, arsonistName: a.name }, now);
     return [{ tone: "good", text: `${prop.name} goes up in flames. Nobody saw you. +${TORCH.rep} reputation on the street.` }];
   }
 

@@ -43,7 +43,7 @@ export const COUNTRIES: CountryDef[] = [
     priceMult: 1,
     plannedSchools: [],
     startStory: "You stay where they framed you. Grayhaven owes you answers.",
-    expect: { good: "Every career starts here. Best all-round first city.", schools: "Police Academy, School of Law, St. Brigid's (Medicine)", risk: "Muggers in the Gutter, the Mafia runs Iron Row", money: "Normal pay, normal prices" },
+    expect: { good: "Every career starts here. Best all-round first city.", schools: "Police Academy, School of Law, St. Brigid's (Medicine), Fire Academy", risk: "Muggers in the Gutter, the Mafia runs Iron Row", money: "Normal pay, normal prices" },
   },
   {
     id: "solmarra",
@@ -73,9 +73,9 @@ export const COUNTRIES: CountryDef[] = [
     payMult: 0.95,
     heatMult: 1.6,
     priceMult: 0.85,
-    plannedSchools: [{ name: "Ironmoor Military Academy", career: "Military" }],
+    plannedSchools: [],
     startStory: "You ride a freight car north to Ironmoor. Nobody there knows your face, and they watch every face.",
-    expect: { good: "Honest work and the Police. Hard mode for criminals.", schools: "State Police College", risk: "Crime draws 60% more heat, cold nights in the Rail Yards", money: "Pay −5%, cheapest prices" },
+    expect: { good: "Honest work and the Police. Hard mode for criminals.", schools: "State Police College, Ironmoor Military Academy", risk: "Crime draws 60% more heat, cold nights in the Rail Yards", money: "Pay −5%, cheapest prices" },
   },
   {
     id: "meridian",
@@ -89,12 +89,9 @@ export const COUNTRIES: CountryDef[] = [
     payMult: 1.3,
     heatMult: 1.3,
     priceMult: 1.5,
-    plannedSchools: [
-      { name: "Meridian Corporate Law School", career: "Courts (corporate)" },
-      { name: "Halcyon Tech Institute", career: "Hacking & security" },
-    ],
+    plannedSchools: [],
     startStory: "You stow away on a cargo plane to Halcyon. Down in the Undercity, the towers block out the sky.",
-    expect: { good: "Big money for Medicine and anyone who can afford it.", schools: "Halcyon University of Medicine", risk: "Street crime is punished hard, rent is brutal", money: "Pay +30%, prices +50%" },
+    expect: { good: "Big money for Medicine and anyone who can afford it.", schools: "Halcyon University of Medicine, Corporate Law School, Tech Institute (Hacker)", risk: "Street crime is punished hard, rent is brutal", money: "Pay +30%, prices +50%" },
   },
 ];
 

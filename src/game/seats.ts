@@ -28,6 +28,8 @@ export const SEAT_TITLES: Record<PathId, string> = {
   banking: "Governor of the Exchange",
   military: "General of the Garrison",
   mechanic: "Master of the Yards",
+  hacker: "The Ghost",
+  fire: "Fire Chief of the City",
   vigilante: "The Symbol",
 };
 
@@ -40,6 +42,8 @@ export const SEAT_POWERS: Record<PathId, { name: string; text: string; target: b
   banking: { name: "Freeze the money", text: "Freeze one player's dirty money for a day: no laundering anywhere.", target: true },
   military: { name: "Deploy troops", text: "Three squads guard the banks for two hours. Bank jobs get much harder.", target: false },
   mechanic: { name: "Service day", text: "Every car one player has parked in this city gets a full service, free.", target: true },
+  hacker: { name: "Wipe a record", text: "One player's heat drops to nothing. The police files simply... aren't there anymore.", target: true },
+  fire: { name: "Fire watch", text: "Crews patrol every block for six hours: no business or front in this city can be torched.", target: false },
   vigilante: { name: "Call them out", text: "Publicly name a player with a dirty record: +15 heat and a headline.", target: true },
 };
 
@@ -199,6 +203,17 @@ export function usePower(c: City, p: Player, target: Player | null, now: number)
       events = [{ tone: "good", text: `${target!.name}'s cars run like new.` }];
       break;
     }
+    case "hacker":
+      if (target!.heat < 1) throw new GameError("Their record is already clean.");
+      target!.heat = 0;
+      notify(target!, `Your police record in ${city} glitched out of existence. Someone up there likes you.`, "good", p, now);
+      events = [{ tone: "good", text: `${target!.name}'s record is gone.` }];
+      break;
+    case "fire":
+      c.fireWatchUntil = now + 6 * 60 * 60_000;
+      c.log = [{ at: now, text: `Fire Chief ${p.name} orders a fire watch. Crews patrol every block tonight.` }, ...c.log].slice(0, 20);
+      events = [{ tone: "good", text: "Fire watch for six hours. Nobody burns anything in this city tonight." }];
+      break;
     case "vigilante":
       if (target!.heat < BALANCE.cleanRecordHeat) throw new GameError("Their record is clean. Calling them out would only hurt you.");
       target!.heat += 15;

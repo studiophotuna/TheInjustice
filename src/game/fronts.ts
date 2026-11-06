@@ -7,6 +7,7 @@ import { COUNTRY_BY_ID } from "./content/world";
 import { countryOf, inJail } from "./engine";
 import { crewJob } from "./family";
 import { sv } from "./stats";
+import { fireWatchOn, logFire } from "./firehack";
 import { GameError, type City, type Crew, type FrontKind, type GameEvent, type Player, type Rng } from "./types";
 
 export const FRONTS = {
@@ -157,6 +158,7 @@ export function frontTorchBlock(a: Player, target: Crew, now: number): string | 
 export function torchFront(a: Player, target: Crew, city: City | null, now: number, rng: Rng): GameEvent[] {
   const block = frontTorchBlock(a, target, now);
   if (block) throw new GameError(block);
+  if (fireWatchOn(city, now)) throw new GameError("The Fire Chief ordered a fire watch. Crews are on every block tonight.");
   const T = FRONTS.torch;
   const def = FRONTS.kinds[target.front!.kind];
   const heatMult = COUNTRY_BY_ID[countryOf(a)].heatMult;
@@ -171,6 +173,7 @@ export function torchFront(a: Player, target: Crew, city: City | null, now: numb
     a.reputation += T.rep;
     target.log = [{ at: now, text: `Our ${def.name.toLowerCase()} burned down overnight. Arson. No income and no laundering until it's rebuilt.` }, ...target.log].slice(0, 30);
     if (city) city.log = [{ at: now, text: `A ${def.name.toLowerCase()} burned down overnight. Investigators suspect arson.` }, ...city.log].slice(0, 20);
+    logFire(city, { at: now, what: `[${target.tag}]'s ${def.name.toLowerCase()}`, victimName: target.name, arsonistId: a.id, arsonistName: a.name }, now);
     return [{ tone: "good", text: `${name} goes up in flames. Their books are ash. +${T.rep} reputation.` }];
   }
   if (rng() < T.caught) {

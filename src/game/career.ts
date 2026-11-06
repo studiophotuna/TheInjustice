@@ -155,6 +155,8 @@ export function leaveCareer(p: Player, now: number): GameEvent[] {
     banking: "You resign. Your access cards stop working before you reach the lobby.",
     military: "Honorable discharge. You hand in your rifle and walk out of the gate a civilian.",
     mechanic: "You hang your overalls on Dobrev's hook one last time. The grease will take weeks to come off.",
+    hacker: "You wipe your laptop, then wipe it again. Okafor sends one word: \"Respect.\"",
+    fire: "You hang up your helmet at the station. The crew rings the bell once, for you.",
   };
   const events: GameEvent[] = [{ tone: "story", text: `${lines[path]} You were a ${title}. Everything you learned stays with you.` }];
   if (finished) events.push({ tone: "good", text: `Legacy: a retired ${title}. People remember. You earn ${Math.round(CAREER.legacyPay * 100)}% more on every job, for good.` });
@@ -220,6 +222,14 @@ export const PROMO_PICKS: Record<PathId, [Pick, Pick]> = {
   mechanic: [
     { label: "The engine", text: "Hours inside engines taught you how things really work.", stats: ["wits", "perception"] },
     { label: "The heavy lifting", text: "Engine blocks and jacks made your hands strong and quick.", stats: ["strength", "agility"] },
+  ],
+  hacker: [
+    { label: "The exploit", text: "Breaking systems taught you to see the one flaw in anything.", stats: ["wits", "perception"] },
+    { label: "Social engineering", text: "The easiest way in is a person who wants to help.", stats: ["charisma", "nerve"] },
+  ],
+  fire: [
+    { label: "The smoke", text: "Burning buildings made you hard to hurt and hard to scare.", stats: ["toughness", "nerve"] },
+    { label: "The scene", text: "Reading ash taught you to see what really happened.", stats: ["perception", "wits"] },
   ],
 };
 interface Pick {

@@ -19,12 +19,12 @@ export type HiddenStats = Record<StatKey, number> & {
   integrity: number;
 };
 
-export type PathId = "police" | "enforcer" | "courts" | "vigilante" | "medicine" | "banking" | "military" | "mechanic";
+export type PathId = "police" | "enforcer" | "courts" | "vigilante" | "medicine" | "banking" | "military" | "mechanic" | "hacker" | "fire";
 export type CountryId = "varrow" | "solmarra" | "kestrova" | "meridian";
 export type TravelMode = "bus" | "train" | "plane" | "car";
 
 /** Who you were before prison (picked at character creation). */
-export type BackgroundId = "street" | "boxer" | "cadet" | "nurse" | "paralegal" | "clerk" | "garage" | "watch";
+export type BackgroundId = "street" | "boxer" | "cadet" | "nurse" | "paralegal" | "clerk" | "garage" | "watch" | "phones" | "firevol";
 
 export type DogBreed = "mutt" | "shepherd" | "mastiff";
 
@@ -294,6 +294,8 @@ export interface Player {
   customsTake?: { at: number; amount: number; exposed?: boolean }[];
   /** Who you were before prison. */
   background?: BackgroundId;
+  /** Hackers: record scrubs for clients. */
+  scrubService?: { open: boolean; fee: number; jobs: number };
   /** Mechanics: your garage, open to customers at a rate against the dealer's price. */
   garageService?: { open: boolean; rate: number; earned: number; jobs: number };
   /** A guard dog at your place, per city. */
@@ -789,6 +791,7 @@ export type Action =
   | { type: "dog_feed" | "dog_give_away" }
   | { type: "garage_set"; open: boolean; rate: number }
   | { type: "tunnel_dig" | "make_shank" | "parole_hearing" }
+  | { type: "scrub_set"; open: boolean; fee: number }
   | { type: "cargo_buy" | "cargo_sell"; carId: string; good: GoodId; qty: number }
   | { type: "ack_arrival" }
   | { type: "claim_daily" }
@@ -853,7 +856,25 @@ export interface CustomsPost {
   passes?: string[];
 }
 
+/** An arson on the city's fire log. */
+export interface FireRecord {
+  id: string;
+  at: number;
+  /** "Gutter laundromat", "[OWL]'s trattoria" */
+  what: string;
+  victimName: string;
+  /** Server-only. */
+  arsonistId: string;
+  arsonistName: string;
+  investigated: string[];
+  solved?: { arsonistName: string; by: string; at: number };
+}
+
 export interface City {
+  /** Recent arsons, for fire investigators. */
+  fires?: FireRecord[];
+  /** The Fire Chief's fire watch: nothing can be torched until then. */
+  fireWatchUntil?: number;
   /** Officers on customs duty. */
   customs?: CustomsPost[];
   /** Player-run storefronts. */

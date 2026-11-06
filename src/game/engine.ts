@@ -19,7 +19,7 @@ import { ITEM_BY_ID } from "./content/items";
 import { JOB_BY_ID, type JobDef } from "./content/jobs";
 import { mugger, NPC_BY_ID, roadGang, type NpcDef } from "./content/npcs";
 import { isGraduation, keyStatAvg, meritNeeded, PATHS } from "./content/paths";
-import { SCHOOL_BY_ID } from "./content/schools";
+import { SCHOOL_BY_ID, schoolsFor } from "./content/schools";
 import { PROPERTY_BY_ID, PROPERTY_MAX_HOURS } from "./content/properties";
 import { COUNTRY_BY_ID, MODE_BY_ID, tripCost, tripMs } from "./content/world";
 import { cityEvent } from "./events";
@@ -35,6 +35,7 @@ import { buyDog, feedDog, giveAwayDog } from "./dogs";
 import { setGarage } from "./mechanic";
 import { digTunnel, makeShank, paroleHearing } from "./prisonlife";
 import { customsSpotsFugitive, isFugitive, recapture } from "./fugitive";
+import { setScrub } from "./firehack";
 import { arriveByCar, buyCar, buyCargo, fitCompartment, repairCar, rollDrive, sellCar, sellCargo, startDrive } from "./vehicles";
 import { emptyStats, statValue, sv, tierOf, TIER_UP_LINES } from "./stats";
 import {
@@ -971,7 +972,9 @@ function answerOffer(p: Player, path: PathId, accept: boolean, now: number, even
     return;
   }
   if (p.path) throw new GameError("You've already chosen your path.");
-  const school = PATHS[path].school ? SCHOOL_BY_ID[PATHS[path].school!] : null;
+  const home = PATHS[path].school ? SCHOOL_BY_ID[PATHS[path].school!] : null;
+  // The contact's word carries to any school for the career: enroll at the one in this city if there is one.
+  const school = home ? (schoolsFor(path).find((s) => s.country === countryOf(p)) ?? home) : null;
   if (school) {
     // School careers: the contact vouches, the dean still decides.
     if (p.application?.status === "pending") throw new GameError("You already have an application under review.");
@@ -979,7 +982,7 @@ function answerOffer(p: Player, path: PathId, accept: boolean, now: number, even
     events.push({ tone: "story", text: PATHS[path].accepted });
     events.push({
       tone: "info",
-      text: `${school.dean} is reviewing your application to ${school.name}. Tuition waived.`,
+      text: `${school.dean} is reviewing your application to ${school.name} in ${school.city}. Tuition waived.${school.country !== countryOf(p) ? " Classes are there: you'll want to travel." : ""}`,
       action: { label: "View application", target: "place:academy" },
     });
     return;
@@ -1064,13 +1067,13 @@ function apply(p: Player, schoolId: string, now: number, events: GameEvent[]) {
   if (school.country !== countryOf(p)) {
     throw new GameError(`${school.name} is in ${COUNTRY_BY_ID[school.country].capital}. Travel there to apply in person.`);
   }
-  // A pending vouch from the career's contact makes the application free (at their home school).
-  if (p.offers.includes(school.path) && PATHS[school.path].school === school.id) {
+  // A pending vouch from the career's contact makes the application free, at any school for the career.
+  if (p.offers.includes(school.path)) {
     answerOffer(p, school.path, true, now, events);
     return;
   }
   // A vouch from a high-ranking player works like a contact's vouch.
-  const playerVouch = p.vouches?.find((v) => v.path === school.path && PATHS[school.path].school === school.id);
+  const playerVouch = p.vouches?.find((v) => v.path === school.path);
   if (playerVouch) {
     // No tuition, so no bank account needed; everything else still applies.
     const lock = school.requirements(p);
@@ -1251,6 +1254,9 @@ function applyActionInner(p: Player, action: Action, now: number, rng: Rng, ctx:
       break;
     case "fit_alarm":
       events.push(...fitAlarm(p));
+      break;
+    case "scrub_set":
+      events.push(...setScrub(p, action.open, action.fee));
       break;
     case "tunnel_dig":
       events.push(...digTunnel(p, now, rng));

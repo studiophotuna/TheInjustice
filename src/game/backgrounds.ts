@@ -28,6 +28,8 @@ export const BACKGROUNDS: BackgroundDef[] = [
   { id: "paralegal", name: "Paralegal", story: "filed other people's cases at a law firm. You know how a frame is built.", xp: { wits: 4, perception: 2 }, career: "courts", firstJob: "court_janitor" },
   { id: "clerk", name: "Bank clerk", story: "counted money at a teller window and noticed which accounts never added up.", xp: { wits: 3, charisma: 3 }, career: "banking", firstJob: "count_cash" },
   { id: "garage", name: "Grew up in a garage", story: "could strip an engine before you could drive, in your uncle's shop off Iron Row.", xp: { agility: 3, wits: 3 }, career: "mechanic", firstJob: "garage_hand" },
+  { id: "phones", name: "Phone repair kid", story: "fixed phones in a market stall and read everything on them. You never told anyone what you saw.", xp: { wits: 3, perception: 3 }, career: "hacker", firstJob: "fix_phones" },
+  { id: "firevol", name: "Volunteer firefighter", story: "ran into burning buildings on weekends, for no money and a lot of coughing.", xp: { toughness: 3, perception: 3 }, career: "fire", firstJob: "fire_brigade" },
   { id: "watch", name: "Neighborhood watch", story: "walked your block every night with a flashlight. Nobody else would.", xp: { agility: 3, nerve: 3 }, career: "vigilante", firstJob: "watch_walk" },
 ];
 
