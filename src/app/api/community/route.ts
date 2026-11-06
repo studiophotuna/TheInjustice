@@ -430,7 +430,14 @@ export async function GET(req: Request) {
       if (myCrew && h && !Object.values(h.roles).some((x) => x?.id === p.id)) needs.push({ kind: "heist", text: h.target ? `Your crew is planning a job on ${h.target.name}'s ${h.target.home.toLowerCase()} in ${COUNTRY_BY_ID[h.country].capital}.` : `Your crew is planning a bank job in ${COUNTRY_BY_ID[h.country].capital}.`, cta: "Join the job", go: "people:crew", until: null });
       const br = myCrew?.breakout;
       if (myCrew && br && !br.team.some((x) => x.id === p.id)) needs.push({ kind: "breakout", text: `Your crew is breaking ${br.targetName} out of prison.`, cta: "Join in", go: "people:crew", until: null });
-      return NextResponse.json({ feed, needs, heavies });
+      const online = real.filter((o) => !o.dead && !o.travel && now - (o.seenAt ?? 0) < BALANCE.onlineMs);
+      const stats = {
+        out: online.length + out.length,
+        crews: new Set(real.map((o) => o.crewId).filter(Boolean)).size,
+        wanted: real.filter((o) => isFugitive(o, now)).length + (city?.mostWanted && city.mostWanted.until > now ? 1 : 0),
+        fires: (city?.fires ?? []).filter((f) => now - f.at < 24 * 60 * 60_000).length,
+      };
+      return NextResponse.json({ feed, needs, heavies, stats });
     }
     if (url.searchParams.get("online")) {
       // Players in this city with the game open right now, with quick actions.

@@ -1,0 +1,213 @@
+/*
+ * Conspira · kit (live-game style). Loaded last: it sets the tokens and the shared shapes every
+ * screen uses. Rules: one corner radius, pill buttons, one red for the main action, gold for
+ * money, tinted tiles per category, a condensed display face for headlines and names only.
+ * See docs/DESIGN_LESSONS.md before changing anything here.
+ */
+
+:root {
+  --bg: #0e1015;
+  --bg-2: #14171e;
+  --panel: #1a1e27;
+  --panel-2: #222733;
+  --panel-3: #2a303d;
+  --surface: #1a1e27;
+  --surface-solid: #1a1e27;
+  --surface-2: #222733;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.13);
+  --text: #eef0f4;
+  --muted: #8b93a5;
+  --dim: #5d6577;
+
+  --red: #e5383b;
+  --gold: #f2b632;
+  --teal: #2ec4b6;
+  --violet: #8b6cf6;
+  --orange: #ff7a2f;
+  --money: #4ade80;
+
+  --cash: var(--gold);
+  --energy: var(--gold);
+  --health: #ff5a5f;
+  --heat: var(--orange);
+  --rep: var(--violet);
+  --info: var(--teal);
+  --green: var(--money);
+  --cyan: var(--teal);
+  --amber: var(--orange);
+
+  --radius: 18px;
+  --radius-sm: 12px;
+  --shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+  /* The UI face everywhere; the condensed headline face only on big titles and names. */
+  --display: var(--font-body), "Manrope", system-ui, sans-serif;
+  --headline: var(--font-display), "Anton", Impact, sans-serif;
+}
+
+/* Big titles and names get the headline face. Weight 400: Anton has one weight. */
+h2, .home-title, .place-title, .city-title, .away-recap h2, .cold-panel figcaption, .file-name, .crew-badge, .country h4,
+.hero2-title, .boss-who h3, .tile b, .sec-head h2, .card-title {
+  font-family: var(--headline); font-weight: 400;
+}
+/* Small labels that used the display face: the UI face, bold. */
+.sidenav button, .bottomnav button, .qtext, .qtext b, .hud-name, .eyebrow, .chip, .tag { font-family: var(--font-body), sans-serif; }
+.sidenav button { font-weight: 800; text-transform: none; letter-spacing: 0; font-size: 15px; }
+.hud-name { font-weight: 800; text-transform: none; font-size: 16px; }
+
+/* Desktop: the top bar is one row of pills; Home is one column of full-width sections. */
+@media (min-width: 960px) {
+  .hud { grid-template-columns: 1fr; grid-template-areas: "top" "tags"; }
+}
+@media (min-width: 1100px) {
+  .home { display: flex; flex-direction: column; gap: 16px; }
+}
+
+body {
+  background: var(--bg);
+  font-family: var(--font-body), "Manrope", system-ui, sans-serif;
+}
+
+/* ── Shared shapes ──────────────────────────────────────────────────────── */
+.card { background: var(--panel); border: 0; border-radius: var(--radius); box-shadow: inset 0 0 0 1px var(--border); }
+/* Titles: one condensed headline, no icon in front (see the design lessons). */
+.card-title {
+  font-family: var(--headline); font-weight: 400; font-size: 21px; line-height: 1.05;
+  letter-spacing: 0.02em; text-transform: uppercase; color: var(--text); gap: 8px;
+}
+.card-title > svg:first-child { display: none; }
+h2, .sec-head h2 { font-family: var(--headline); font-weight: 400; letter-spacing: 0.02em; text-transform: uppercase; }
+.eyebrow, .kicker { font-family: var(--font-body), sans-serif; font-weight: 800; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); }
+
+.btn { border-radius: 999px; font-family: var(--font-body), sans-serif; font-weight: 800; letter-spacing: 0; text-transform: none; border: 0; }
+.btn-primary, .btn-red { background: var(--red); color: #fff; box-shadow: 0 8px 20px -10px rgba(229, 56, 59, 0.9); }
+.btn-primary:hover:not(:disabled), .btn-red:hover:not(:disabled) { background: #f04447; box-shadow: 0 8px 22px -8px rgba(229, 56, 59, 0.9); }
+.btn-danger { background: var(--red); color: #fff; box-shadow: none; }
+.btn-ghost { background: rgba(255, 255, 255, 0.06); color: var(--text); box-shadow: inset 0 0 0 1px var(--border-strong); }
+.btn-ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
+.btn-gold { background: var(--gold); color: #1d1606; }
+.btn small { font-weight: 700; opacity: 0.8; margin-left: 6px; }
+.btn-xs { border-radius: 999px; }
+.btn-red { display: inline-flex; align-items: center; height: 44px; padding: 0 20px; font-size: 15px; }
+
+.chip, .tag { border-radius: 999px; }
+
+/* ── Top bar: pills ─────────────────────────────────────────────────────── */
+.hud { border-radius: 0 0 22px 22px; background: rgba(14, 16, 21, 0.94) !important; box-shadow: 0 1px 0 var(--border); }
+.hud-top { gap: 8px; }
+.hud-who { display: none; }
+.hud-pills { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.hud-pills::-webkit-scrollbar { display: none; }
+.hud-pill {
+  position: relative; display: inline-flex; align-items: center; gap: 6px; flex: none; height: 34px; padding: 0 12px;
+  border-radius: 999px; background: var(--panel); font-weight: 800; font-size: 14px; white-space: nowrap;
+}
+.hud-pill.cash { color: var(--gold); padding-right: 5px; }
+.hud-pill.cash .cash { font-family: var(--font-body), sans-serif; font-size: 15px; color: var(--gold); }
+.pill-plus { width: 24px; height: 24px; border-radius: 50%; border: 0; background: var(--gold); color: #1a1406; font-weight: 800; font-size: 16px; line-height: 1; cursor: pointer; display: grid; place-items: center; }
+.hud-pill.dirty { color: #ff9b9b; }
+.coin { width: 16px; height: 16px; border-radius: 50%; flex: none; background: radial-gradient(circle at 35% 35%, #ffe39a, var(--gold) 60%, #b07a10); }
+.bill { width: 16px; height: 11px; border-radius: 2px; flex: none; background: #b8484c; box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.2); }
+.hud-pill.meter i { width: 30px; height: 5px; border-radius: 4px; background: var(--panel-3); position: relative; overflow: hidden; }
+.hud-pill.meter i::after { content: ""; position: absolute; inset: 0; width: var(--v); border-radius: 4px; background: currentColor; }
+.hud-pill.energy { color: var(--gold); }
+.hud-pill.health { color: var(--health); }
+.hud-pill.health.hurt { background: rgba(229, 56, 59, 0.15); }
+.hud-pill .delta { position: absolute; top: -14px; right: 10px; }
+.hud-tags { margin-top: 2px; }
+.hud-tags:empty { display: none; }
+.hud-search, .hud-sound { flex: none; }
+@media (max-width: 480px) {
+  .hud-pill.meter i { display: none; }
+  .hud-pill { padding: 0 10px; height: 32px; font-size: 13px; }
+}
+@media (min-width: 1000px) {
+  .hud-who { display: grid; }
+}
+
+/* ── Stories ────────────────────────────────────────────────────────────── */
+.stories { display: flex; gap: 14px; overflow-x: auto; scrollbar-width: none; padding: 4px 2px 2px; margin: 0 -2px; }
+.stories::-webkit-scrollbar { display: none; }
+.story { width: 68px; flex: none; display: grid; justify-items: center; gap: 5px; background: none; border: 0; padding: 0; cursor: pointer; color: var(--muted); }
+.story-ring { width: 66px; height: 66px; border-radius: 50%; padding: 3px; background: var(--panel-3); display: block; }
+.story.fresh .story-ring { background: conic-gradient(from 200deg, var(--gold), var(--red), var(--gold)); }
+.story-ring img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid var(--bg); display: block; }
+.story-label { font-size: 11px; font-weight: 700; max-width: 72px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.story.fresh .story-label { color: var(--text); }
+.story-sub { font-size: 10.5px; font-weight: 800; color: var(--gold); margin-top: -3px; }
+.story:disabled { opacity: 0.6; cursor: default; }
+
+/* ── Hero: the character breaks out of the card ────────────────────────── */
+.hero2 { position: relative; margin-top: 40px; min-height: 230px; border-radius: var(--radius); background: var(--panel); }
+.hero2-bg { position: absolute; inset: 0; border-radius: var(--radius); overflow: hidden; }
+.hero2-bg img { width: 100%; height: 100%; object-fit: cover; filter: saturate(0.7) brightness(0.55); }
+.hero2-bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(14, 16, 21, 0.96) 0%, rgba(14, 16, 21, 0.75) 50%, rgba(158, 28, 34, 0.35) 100%); }
+.hero2-cut { position: absolute; right: -4px; bottom: 0; height: 128%; max-width: 58%; object-fit: contain; object-position: bottom right; z-index: 2; filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.6)); pointer-events: none; }
+.hero2-frame { position: absolute !important; right: 14px; top: 14px; width: 112px !important; height: 140px !important; z-index: 2; border-radius: 16px; overflow: hidden; }
+.hero2-copy { position: relative; z-index: 3; padding: 20px 18px 18px; max-width: 64%; display: grid; justify-items: start; gap: 2px; }
+.hero2-title { font-family: var(--headline); font-weight: 400; font-size: clamp(34px, 9vw, 52px); line-height: 0.95; text-transform: uppercase; margin: 6px 0 4px; }
+.hero2-sub { font-size: 13.5px; font-weight: 600; color: #c9cedb; margin: 0; }
+.hero2-quote { font-size: 13px; color: var(--gold); margin: 2px 0 0; font-style: italic; }
+.hero2 .btn { margin-top: 14px; }
+@media (min-width: 1000px) {
+  .hero2 { min-height: 260px; }
+  .hero2-cut { right: 28px; height: 130%; }
+}
+
+/* ── Section heads and tiles ────────────────────────────────────────────── */
+.sec-head { display: flex; justify-content: space-between; align-items: baseline; margin: 8px 0 10px; }
+.sec-head h2 { font-size: 24px; margin: 0; }
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.tile { --c: var(--teal); border: 0; text-align: left; cursor: pointer; border-radius: 14px; padding: 12px 10px 10px; color: var(--text);
+  background: color-mix(in srgb, var(--c) 16%, var(--panel)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 32%, transparent); }
+.tile b { display: block; font-family: var(--headline); font-weight: 400; font-size: 30px; line-height: 1; }
+.tile span { display: block; font-size: 11px; font-weight: 700; margin-top: 6px; color: color-mix(in srgb, var(--c) 70%, white); }
+.tone-teal { --c: var(--teal); } .tone-violet { --c: var(--violet); } .tone-red { --c: var(--red); } .tone-orange { --c: var(--orange); }
+
+/* ── Big fish: leaning out of the card ──────────────────────────────────── */
+.boss-list { display: grid; gap: 34px; padding-top: 26px; }
+.boss { position: relative; border-radius: var(--radius); background: linear-gradient(120deg, #3a1015, var(--panel) 70%); padding: 16px; min-height: 150px; box-shadow: inset 0 0 0 1px #4a1c22; }
+.boss:not(.out) { background: linear-gradient(120deg, #22202a, var(--panel) 70%); box-shadow: inset 0 0 0 1px var(--border); }
+.boss-cut { position: absolute; right: 2px; bottom: 0; height: 132%; max-width: 50%; object-fit: contain; object-position: bottom right; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.6)); pointer-events: none; }
+.boss:not(.out) .boss-cut { filter: grayscale(0.6) brightness(0.7) drop-shadow(0 10px 18px rgba(0, 0, 0, 0.6)); }
+.boss-who { position: relative; z-index: 2; max-width: 60%; display: grid; justify-items: start; gap: 4px; }
+.boss-who h3 { font-family: var(--headline); font-weight: 400; font-size: 26px; line-height: 1; text-transform: uppercase; margin: 2px 0; }
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--muted); }
+.status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--dim); }
+.status.on { color: var(--money); }
+.status.on::before { background: var(--money); box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.15); }
+.status.away { color: var(--health); }
+.boss-acts { position: relative; z-index: 2; display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.boss-acts .btn { height: 38px; padding: 0 14px; font-size: 13px; }
+
+.home-pair { display: grid; gap: 22px; }
+@media (min-width: 1100px) { .home-pair { grid-template-columns: 1fr 1fr; align-items: start; } }
+
+/* ── Fixes after the first browser check ────────────────────────────────── */
+/* The top bar never grows past the screen: pills scroll, buttons stay put. */
+.hud { grid-template-columns: minmax(0, 1fr); }
+.hud-top { min-width: 0; }
+@media (max-width: 480px) { .hud .hud-sound { display: none; } }
+/* Desktop Home: every section full width. */
+@media (min-width: 1100px) { .home { align-items: stretch; } .home > * { width: 100%; } }
+/* The wordmark keeps the headline face so it fits the sidebar. */
+.logo-word { font-family: var(--headline); font-weight: 400; letter-spacing: 0.06em; }
+
+/* City map: dark blocks with streets between them, not colored rectangles. */
+.map-wrap { background: #0b0d12; border: 0; border-radius: 14px; box-shadow: inset 0 0 0 1px var(--border); }
+.map-block rect:first-child { fill: #171b24 !important; stroke: rgba(255, 255, 255, 0.05); }
+.map-block:hover rect:first-child { filter: none; fill: #1e2330 !important; }
+.map-block.on rect:first-child { stroke: var(--gold); stroke-width: 1.5; }
+.map-label { font-family: var(--font-body), sans-serif; font-weight: 800; font-size: 10px; letter-spacing: 0.12em; fill: #6b7385; }
+.map-count { font-family: var(--font-body), sans-serif; font-weight: 800; color: var(--money); }
+.map-me { box-shadow: 0 0 0 3px var(--red), 0 0 0 7px rgba(229, 56, 59, 0.25); }
+.map-me::after { color: var(--red); font-family: var(--font-body), sans-serif; }
+
+/* Old rules that paired the display face with a light weight: titles get the headline face,
+   numbers and labels get the UI face in extra-bold. */
+.career-head h2, .letter h3, .country-pick button b, .building-name, .place-title, .home-title, .away-recap h2, .cold-panel figcaption, .country h4, .crew-badge {
+  font-family: var(--headline); font-weight: 400; letter-spacing: 0.02em;
+}
+.cash, .feel b, .big-number, .travel-top b:last-child, .crew-tag, .ready-chip b, .hud-cash .cash { font-family: var(--font-body), sans-serif; font-weight: 800; }
+.big-number { color: var(--money); letter-spacing: -0.01em; }
+.segmented button, .tabs button, .auth-tabs button { font-family: var(--font-body), sans-serif; font-weight: 800; }

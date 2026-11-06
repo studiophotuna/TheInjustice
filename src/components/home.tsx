@@ -8,7 +8,8 @@ import type { CountryId, PathId } from "@/game/types";
 import { PATH_LOOKS } from "./art/Portraits";
 import { Scene, type CharacterKind, type SceneKind } from "./art/Scenes";
 import { BackAlleyCard, JailCard, Sightings } from "./community";
-import { BigFish, DisposalCard, ReadyStrip, RightNow, StreetFeed, usePulse } from "./pulse";
+import { DisposalCard, RightNow, usePulse } from "./pulse";
+import { BigFish2, CityTiles, Hero, Stories } from "./homekit";
 import { CityMap } from "./citymap";
 import { TutorialCard } from "./underworld";
 import { DailyCard } from "./tabs";
@@ -28,6 +29,9 @@ const CHARACTER_FOR: Record<PathId, CharacterKind> = {
   hacker: "banker",
   fire: "vigilante",
 };
+
+/** The photo behind the hero for each scene. */
+const sceneFile = (s: SceneKind) => (s === "city" ? "street" : s);
 
 /** Each city gets its own backdrop. */
 const SCENE_FOR: Record<CountryId, SceneKind> = {
@@ -54,15 +58,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
   const nextRank = view.ladder && view.ladder.current < view.ladder.ranks.length ? view.ladder.ranks[view.ladder.current] : null;
   const pulse = usePulse(view.location.country);
 
-  return (
-    <div className="stack home">
-      <Scene kind={scene} className="home-hero" characters={[{ kind: character, x: 78, scale: 0.95 }]}>
-        <CareerPortrait path={view.path?.id} rank={view.ladder?.current} name={view.name} className="hero-portrait" />
-        <p className="eyebrow"><MapPin size={13} /> {view.location.city}, {view.location.countryName}</p>
-        <h1 className="home-title">{greeting()}, {view.name}.</h1>
-        {view.streetTitle && <p className="street-title">&ldquo;{view.streetTitle}&rdquo;</p>}
-        <p className="home-sub">
-          {view.jail
+  const sub = view.jail
             ? view.jail.custodyCase ? "Behind bars, waiting for a verdict." : "Behind bars, doing your time."
             : view.travel
             ? `${view.travel.mode === "car" ? "Driving" : `On the ${view.travel.mode}`} to ${view.travel.city}.`
@@ -72,33 +68,44 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
               ? `Recovering in the clinic for ${fmt(live.hospital)}.`
               : view.path
                 ? `${view.path.rank} · ${view.path.name}`
-                : "Nobody yet. The street is watching."}
-        </p>
-      </Scene>
+                : "Nobody yet. The street is watching.";
+  const busyElsewhere = !!view.jail || !!view.travel || live.hospital > 0;
 
-      <StreetFeed feed={pulse?.feed} />
+  return (
+    <div className="stack home">
+      <Stories game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} />
+      <Hero
+        game={game}
+        scene={sceneFile(scene)}
+        title={`${greeting()}, ${view.name.split(" ")[0]}`}
+        sub={sub}
+        quote={view.streetTitle}
+        action={
+          !busyElsewhere && best ? (
+            <button className="btn btn-red" disabled={game.busy || !!best.locked} onClick={() => game.act({ type: "job", jobId: best.id })}>
+              {best.name} <small>${best.pay[0]}–{best.pay[1]}</small>
+            </button>
+          ) : null
+        }
+      />
+
       <DisposalCard game={game} />
-      <RightNow game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} />
       <OnTheRun game={game} />
-      <ReadyStrip game={game} go={go} />
+      <JailCard game={game} />
+      <RightNow game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} />
       <TutorialCard game={game} go={go} />
       <OldLife game={game} go={go} />
-      {view.event && (
-        <section className="card city-event">
-          <b>{view.event.name} in {view.location.city}</b>
-          <span className="muted"> · {view.event.text} Until {new Date(view.event.endsAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}.</span>
-        </section>
-      )}
       <ThreatCard game={game} />
-      <JailCard game={game} />
       <BackAlleyCard game={game} />
       <Sightings game={game} compact />
 
-      <CityMap game={game} go={go} feed={pulse?.feed} />
-      <BigFish game={game} heavies={pulse?.heavies} go={go} />
+      <CityTiles stats={pulse?.stats} city={view.location.city} go={go} />
+      <div className="home-pair">
+        <BigFish2 game={game} heavies={pulse?.heavies} go={go} />
+        <CityMap game={game} go={go} feed={pulse?.feed} />
+      </div>
 
       <DailyCard game={game} />
-
     </div>
   );
 }

@@ -435,28 +435,32 @@ function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonN
           <b className="hud-name">{view.name}</b>
           <span className="hud-title">{view.path ? `${view.path.rank} · ${view.path.name}` : `Nobody · ${view.location.city}`}</span>
         </div>
+        <div className="hud-pills">
+          <span className="hud-pill cash" title={`In the bank: $${view.bank.toLocaleString()}`}>
+            <span className="coin" aria-hidden />
+            <Delta value={view.cash} prefix="$" />
+            <Counter value={view.cash} className="cash" prefix="" />
+            <button className="pill-plus" aria-label="Open the bank" title={`Bank: $${view.bank.toLocaleString()}`} onClick={() => window.dispatchEvent(new CustomEvent("injustice:go", { detail: "place:bank" }))}>+</button>
+          </span>
+          {view.dirty > 0 && (
+            <span className="hud-pill dirty" title="Dirty money: clean it before the bank or shops will take it">
+              <span className="bill" aria-hidden />{view.dirty.toLocaleString()}
+            </span>
+          )}
+          <span className={`hud-pill meter energy ${live.energy >= view.maxEnergy ? "full" : ""}`} title={live.energy >= view.maxEnergy ? "Energy full" : `+1 in ${fmt(live.nextIn)} · full in ${fmt(live.fullIn)}`}>
+            <Zap size={14} /> {live.energy}<i style={{ ["--v" as string]: `${Math.round((live.energy / view.maxEnergy) * 100)}%` }} />
+          </span>
+          <span className={`hud-pill meter health ${hurt ? "hurt" : ""}`} title={hurt ? `In the clinic for ${fmt(live.hospital)}` : view.hp >= view.maxHp ? "Healthy" : "Recovering"}>
+            <Heart size={14} /> {hurt ? fmt(live.hospital) : view.hp}<i style={{ ["--v" as string]: `${hurt ? 0 : Math.round((view.hp / view.maxHp) * 100)}%` }} />
+          </span>
+        </div>
         <button className="hud-search" onClick={onSearch} aria-label="Search and do anything (Ctrl+K)" title="Do anything (Ctrl+K)">
           <Search size={18} />
         </button>
         <SoundToggle />
-        <div className="hud-cash">
-          <Delta value={view.cash} prefix="$" />
-          <Counter value={view.cash} className="cash" prefix="$" />
-          <span className="hud-sub">
-            <span title="In the bank">🏦 ${view.bank.toLocaleString()}</span>
-            {view.dirty > 0 && <span className="dirty" title="Dirty money: launder it before the bank or shops will take it">💵 ${view.dirty.toLocaleString()}</span>}
-          </span>
-        </div>
-      </div>
-      <div className="hud-meters">
-        <Meter tone="energy" icon={<Zap size={14} />} value={live.energy} max={view.maxEnergy}
-          note={live.energy >= view.maxEnergy ? "Full" : `+1 in ${fmt(live.nextIn)} · full ${fmt(live.fullIn)}`} />
-        <Meter tone="health" icon={<Heart size={14} />} value={hurt ? 0 : view.hp} max={view.maxHp}
-          note={hurt ? `Clinic ${fmt(live.hospital)}` : view.hp >= view.maxHp ? "Healthy" : "Recovering"} />
       </div>
       <div className="hud-tags">
-        <span className={`tag tag-heat heat-${heatTone}`}><Flame size={12} /> {view.heatLabel}</span>
-        <span className="tag tag-rep"><Star size={12} /> {view.reputation} rep</span>
+        {view.heatLabel !== "Clean" && <span className={`tag tag-heat heat-${heatTone}`}><Flame size={12} /> {view.heatLabel}</span>}
         {view.immuneUntil > Date.now() && (
           <span className="tag tag-good" title="You survived a fight. Nobody can attack or mug you for a while. Attacking someone ends it.">
             <ShieldCheck size={12} /> Safe {fmt(view.immuneUntil - Date.now())}

@@ -1,5 +1,26 @@
 # Changelog
 
+## 4.0.0: a new look, round 1 (the kit and Home)
+
+The first round of the visual redesign, based on reference designs from real game and app
+designers. The lessons behind it are written down in docs/DESIGN_LESSONS.md.
+
+- **One kit across the game:** a deeper charcoal background, one corner radius, pill buttons, red
+  for the main action and gold for money. Manrope for the interface and Anton, a condensed face,
+  only for big titles and names. Card titles lose the small icon in front.
+- **Top bar as pills:** cash (the gold "+" opens the bank), dirty money, energy and health. No
+  emoji. Heat only shows when you have some.
+- **Home, rebuilt:**
+  - A row of stories at the top: a new chapter, your crew's plans, the daily reward, messages,
+    hiding your dirty money, feeding your dog, timers. Gold rings are ready or new.
+  - Your character, cut out from the photo, stands in front of the city and breaks out of the
+    banner, with the best job for you as one red button.
+  - "Tonight in" tiles: who's out on the street, crews, wanted and fires, each its own color.
+  - Big fish: each boss leans out of his own card.
+  - The city map is dark blocks with streets between them instead of colored rectangles.
+- Character cut-outs are made from the existing career portraits; careers or ranks without a clean
+  cut-out keep the framed portrait.
+
 ## 3.9.0: every career, schools in the right place, fire investigators and hideouts
 
 - **Course locations fixed:**

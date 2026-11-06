@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Bangers, Barlow, Barlow_Condensed, JetBrains_Mono } from "next/font/google";
+import { Anton, Bangers, JetBrains_Mono, Manrope } from "next/font/google";
 import "./globals.css";
 import "./game.css";
+import "./kit.css";
 
-// Game type: Barlow for reading, Barlow Condensed for the HUD and headings, a mono for timers.
-const body = Barlow({ weight: ["400", "500", "600", "700"], subsets: ["latin"], display: "swap", variable: "--font-body" });
-const display = Barlow_Condensed({ weight: ["500", "600", "700", "800"], subsets: ["latin"], display: "swap", variable: "--font-display" });
+// Game type: Manrope for the interface, Anton (condensed) for headlines and names only, a mono for timers.
+const body = Manrope({ weight: ["400", "500", "600", "700", "800"], subsets: ["latin"], display: "swap", variable: "--font-body" });
+const display = Anton({ weight: "400", subsets: ["latin"], display: "swap", variable: "--font-display" });
 const mono = JetBrains_Mono({ weight: ["500", "700"], subsets: ["latin"], display: "swap", variable: "--font-mono" });
 const bangers = Bangers({ weight: "400", subsets: ["latin"], display: "swap", variable: "--font-sfx" });
 
@@ -21,7 +22,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#0a0c11",
+  themeColor: "#0e1015",
   colorScheme: "dark",
 };
 

@@ -14,7 +14,7 @@ export type Heavy = {
   canAttack: string | null; hours: [number, number] | null; reputation: number;
   tie: { label: string; tone: string; memo: string } | null;
 };
-type Pulse = { feed: FeedItem[]; needs: CrewNeed[]; heavies?: Heavy[] };
+type Pulse = { feed: FeedItem[]; needs: CrewNeed[]; heavies?: Heavy[]; stats?: { out: number; crews: number; wanted: number; fires: number } };
 
 /** The street feed and your crew's needs, refreshed every minute while the page is visible. */
 export function usePulse(country: string) {
@@ -339,7 +339,7 @@ export function LiveRail({ game, go, onRead }: { game: GameApi; go: (t: string) 
 
 
 /** When a heavy is next out, in the player's own clock. */
-function nextOut(hours: [number, number] | null): string {
+export function nextOut(hours: [number, number] | null): string {
   if (!hours) return "";
   const d = new Date();
   d.setUTCHours(hours[0], 0, 0, 0);
