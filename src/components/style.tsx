@@ -5,6 +5,7 @@
 
 import { useState } from "react";
 import { COSMETICS, CUSTOM, FAVORS, type CosmeticKind, type CustomKind } from "@/game/favors";
+import { FxName, NAME_FX, type NameFxKind } from "./art/FxRing";
 import { PlayerAvatar } from "./art/Portraits";
 import type { GameApi } from "./useGame";
 
@@ -44,7 +45,7 @@ function TryOnSheet({ game, t, close }: { game: GameApi; t: TryOn; close: () => 
           <div className="tryon-me-row">
             <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo} look={look} className="tryon-face" />
             <div className="tryon-who">
-              <b className={`tryon-name ${nameCls}`}>{view.name}</b>
+              <b className={`tryon-name ${nameCls}`}>{view.name}{look.color && NAME_FX.has(look.color) && <FxName key={look.color} kind={look.color as NameFxKind} />}</b>
               <span>{view.path ? `${view.path.rank} · ${view.path.name}` : view.location.city}</span>
             </div>
           </div>
@@ -143,7 +144,7 @@ export function StyleShop({ game }: { game: GameApi }) {
                 ) : c.kind === "frame" ? (
                   <PlayerAvatar name={view.name} path={view.path?.id} photo={photo} look={{ frame: name, color: null, banner: null }} className="style-face" />
                 ) : (
-                  <b className={`style-name name-${name}`}>{view.name}</b>
+                  <b className={`style-name name-${name}`}>{view.name}{c.fx && <FxName kind={name as NameFxKind} />}</b>
                 )}
                 <span className="try-hint">Try it on</span>
               </button>

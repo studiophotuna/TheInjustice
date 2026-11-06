@@ -1,5 +1,6 @@
 "use client";
 
+import { FxName, NAME_FX, type NameFxKind } from "./art/FxRing";
 import { ReportButton } from "./ReportButton";
 import { AnimatePresence, motion } from "motion/react";
 import { Ban, Building, Crown, Eye, EyeOff, ShieldAlert, ShieldCheck, FileSearch, Footprints, Gavel, Flame, Hand, Handshake, Landmark, MessagesSquare, Moon, Stethoscope, Inbox, Lock, MessageSquare, Search, Send, Shield, Siren, Swords, UserCheck, Users, Vault } from "lucide-react";
@@ -477,7 +478,7 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
           <button key={p.id} className={`suspect-card${outNow(p) ? " out" : ""}${p.status !== "ok" ? " away" : ""}`} onClick={() => setOpenId(p.id)}>
             <span className="lu-photo">
               <PlayerAvatar name={p.name} path={p.path} photo={p.photo} look={p.look} className="lineup-face" />
-              <b className={`lu-name${p.look?.color ? ` name-${p.look.color}` : ""}`}>{p.name}</b>
+              <b className={`lu-name${p.look?.color ? ` name-${p.look.color}` : ""}`}>{p.name}{p.look?.color && NAME_FX.has(p.look.color) && <FxName kind={p.look.color as NameFxKind} />}</b>
             </span>
             <span className="lineup-tags">
               {p.regular?.heavy && <span className="tag-mini heavy">Runs the street</span>}

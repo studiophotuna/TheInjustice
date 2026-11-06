@@ -409,6 +409,7 @@ export function ProfileTab({ game }: { game: GameApi }) {
           game={game}
           scene={view.look?.banner ? (view.look.banner.startsWith("u-") ? `/api/upload/${view.look.banner.slice(2)}` : view.look.banner) : view.path ? (ME_SCENE[view.path.id] ?? "street") : "gutter"}
           kicker={view.deaths ? `Life #${view.deaths + 1}` : view.location.city}
+          titleFx={view.look?.color}
           title={view.name}
           sub={view.path ? `${view.path.rank} · ${view.path.name}` : "No career yet"}
           quote={view.profile.bio || view.feel.conscience}

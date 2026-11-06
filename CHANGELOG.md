@@ -1,5 +1,15 @@
 # Changelog
 
+## 5.6.0: live touches on animated names
+
+- **Animated name colours get a few live touches** on top of their shimmer, kept light on
+  purpose: Gold rush has gold stars twinkling on the letters, Wildfire has small flames and
+  embers lifting off the top, Neon flickers with the odd spark, Chrome has a glint that slides
+  across now and then, Frost has snow specks and glints, and Aurora a couple of faint stars.
+  They show on People cards, in city chat, on your Me header, in the shop and in Try it on.
+- **Fixed:** a player wearing an animated frame had a round photo on their People card instead
+  of one filling the card.
+
 ## 5.5.0: every animated frame drawn live
 
 - **Frostbite:** an icy ring with frost crystals growing out of it (long branching spikes among

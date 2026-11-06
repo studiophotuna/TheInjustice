@@ -499,25 +499,156 @@ function draw(r: Ring) {
   else drawGold(r, g);
 }
 
+// ── Names: a few light touches over the letters (kept modest on purpose) ──
+
+export type NameFxKind = "goldrush" | "wildfire" | "neon" | "chrome" | "frost" | "aurora";
+export const NAME_FX = new Set<string>(["goldrush", "wildfire", "neon", "chrome", "frost", "aurora"]);
+
+type Txt = { kind: NameFxKind; ctx: CanvasRenderingContext2D; w: number; h: number; pad: number; dpr: number; visible: boolean; parts: P[]; t: number; next: number };
+const texts = new Set<Txt>();
+
+function stepText(x: Txt, dt: number) {
+  const { w, h } = x;
+  const add = (p: Omit<P, "life">) => x.parts.push({ ...p, life: 0 });
+  const chance = (perSec: number) => Math.random() < dt * perSec * Math.max(0.6, Math.min(1.6, w / 140));
+  if (x.kind === "goldrush" && chance(3.2)) add({ x: Math.random() * w, y: h * (0.15 + Math.random() * 0.7), vx: 0, vy: 0, max: 0.7 + Math.random() * 0.5, size: 2.5 + Math.random() * 2.5 });
+  if (x.kind === "wildfire" && chance(16)) add({ x: Math.random() * w, y: h * 0.25, vx: (Math.random() - 0.5) * 8, vy: -(14 + Math.random() * 18), max: 0.35 + Math.random() * 0.35, size: 2 + Math.random() * 3 });
+  if (x.kind === "neon" && chance(1.2)) {
+    const px = Math.random() * w, py = Math.random() * h;
+    for (let i = 0; i < 4; i++) { const a = Math.random() * Math.PI * 2, v = 20 + Math.random() * 40; add({ x: px, y: py, vx: Math.cos(a) * v, vy: Math.sin(a) * v, max: 0.15 + Math.random() * 0.15, size: 1 }); }
+  }
+  if (x.kind === "chrome" && x.t > x.next) { x.next = x.t + 2.2 + Math.random() * 1.8; add({ x: -10, y: h * 0.35, vx: w * 0.9, vy: 0, max: (w + 20) / (w * 0.9), size: 4 }); }
+  if (x.kind === "frost" && chance(2.5)) add({ x: Math.random() * w, y: -x.pad * 0.6, vx: (Math.random() - 0.5) * 4, vy: 10 + Math.random() * 8, max: 1.6 + Math.random(), size: 0.7 + Math.random() * 0.8 });
+  if (x.kind === "frost" && chance(1.5)) add({ x: Math.random() * w, y: h * (0.2 + Math.random() * 0.6), vx: 0, vy: 0, max: 0.6, size: 3 });
+  if (x.kind === "aurora" && chance(1.4)) add({ x: Math.random() * w, y: h * (0.1 + Math.random() * 0.8), vx: 0, vy: 0, max: 1 + Math.random(), size: 1.5 + Math.random() * 1.5 });
+  for (const p of x.parts) {
+    p.life += dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+  }
+  x.parts = x.parts.filter((p) => p.life < p.max).slice(-40);
+}
+
+function star(g: CanvasRenderingContext2D, x: number, y: number, s: number) {
+  g.beginPath();
+  g.moveTo(x, y - s);
+  g.lineTo(x + s * 0.15, y - s * 0.15);
+  g.lineTo(x + s, y);
+  g.lineTo(x + s * 0.15, y + s * 0.15);
+  g.lineTo(x, y + s);
+  g.lineTo(x - s * 0.15, y + s * 0.15);
+  g.lineTo(x - s, y);
+  g.lineTo(x - s * 0.15, y - s * 0.15);
+  g.closePath();
+  g.fill();
+}
+
+function drawText(x: Txt) {
+  const g = x.ctx;
+  g.setTransform(x.dpr, 0, 0, x.dpr, 0, 0);
+  g.clearRect(0, 0, x.w + x.pad * 2, x.h + x.pad * 2);
+  g.translate(x.pad, x.pad);
+  g.globalCompositeOperation = "lighter";
+  for (const p of x.parts) {
+    const k = p.life / p.max;
+    const tw = Math.sin(k * Math.PI);
+    if (x.kind === "goldrush" || (x.kind === "frost" && p.vy === 0) || x.kind === "aurora") {
+      g.globalAlpha = tw;
+      const col = x.kind === "goldrush" ? "rgba(255,226,140,1)" : x.kind === "frost" ? "rgba(220,245,255,1)" : "rgba(255,255,255,1)";
+      g.drawImage(sprite(col), p.x - p.size * 1.4, p.y - p.size * 1.4, p.size * 2.8, p.size * 2.8);
+      g.fillStyle = x.kind === "aurora" ? "rgba(230,255,250,0.9)" : "rgba(255,252,235,1)";
+      if (x.kind !== "aurora") star(g, p.x, p.y, p.size * (0.6 + tw));
+    } else if (x.kind === "wildfire") {
+      g.globalAlpha = (1 - k) * 0.8;
+      const col = k < 0.3 ? "rgba(255,210,90,1)" : k < 0.6 ? "rgba(255,130,30,1)" : "rgba(220,50,10,1)";
+      const s = p.size * (1 - k * 0.5);
+      g.drawImage(sprite(col), p.x - s, p.y - s * 1.6, s * 2, s * 3);
+    } else if (x.kind === "neon") {
+      g.globalAlpha = 1 - k;
+      g.strokeStyle = "rgba(255,170,230,1)";
+      g.lineWidth = 1;
+      g.beginPath();
+      g.moveTo(p.x, p.y);
+      g.lineTo(p.x - p.vx * 0.05, p.y - p.vy * 0.05);
+      g.stroke();
+    } else if (x.kind === "chrome") {
+      g.globalAlpha = Math.min(1, tw * 1.4);
+      g.drawImage(sprite("rgba(255,255,255,1)"), p.x - 9, p.y - 9, 18, 18);
+      g.fillStyle = "rgba(255,255,255,1)";
+      star(g, p.x, p.y, 6);
+    } else if (x.kind === "frost") {
+      g.globalAlpha = Math.min(1, (p.max - p.life) * 2) * 0.9;
+      g.drawImage(sprite("rgba(255,255,255,1)"), p.x - p.size * 1.6, p.y - p.size * 1.6, p.size * 3.2, p.size * 3.2);
+    }
+  }
+  g.globalAlpha = 1;
+  g.globalCompositeOperation = "source-over";
+}
+
 function loop(now: number) {
   const dt = Math.min(0.05, (now - (last || now)) / 1000);
   last = now;
-  let any = false;
   if (document.visibilityState === "visible") {
     for (const r of rings) {
       if (!r.visible) continue;
-      any = true;
       r.t += dt;
       step(r, dt);
       draw(r);
     }
+    for (const x of texts) {
+      if (!x.visible) continue;
+      x.t += dt;
+      stepText(x, dt);
+      drawText(x);
+    }
   }
-  raf = rings.size ? requestAnimationFrame(loop) : 0;
-  if (!any && !rings.size) last = 0;
+  raf = rings.size || texts.size ? requestAnimationFrame(loop) : 0;
+  if (!raf) last = 0;
 }
 
 function start() {
-  if (!raf && rings.size) raf = requestAnimationFrame(loop);
+  if (!raf && (rings.size || texts.size)) raf = requestAnimationFrame(loop);
+}
+
+/** Light effects over a name. Put it inside the element that shows the name. */
+export function FxName({ kind }: { kind: NameFxKind }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = ref.current;
+    const host = canvas?.parentElement;
+    if (!canvas || !host) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const x: Txt = { kind, ctx, w: 0, h: 0, pad: 0, dpr, visible: true, parts: [], t: 0, next: 1 };
+    const size = () => {
+      const b = host.getBoundingClientRect();
+      x.w = Math.max(20, b.width);
+      x.h = Math.max(10, b.height);
+      x.pad = Math.max(6, x.h * 0.5);
+      canvas.width = Math.round((x.w + x.pad * 2) * dpr);
+      canvas.height = Math.round((x.h + x.pad * 2) * dpr);
+      canvas.style.width = `${x.w + x.pad * 2}px`;
+      canvas.style.height = `${x.h + x.pad * 2}px`;
+      canvas.style.left = canvas.style.top = `${-x.pad}px`;
+    };
+    size();
+    if (reduced()) return;
+    const ro = new ResizeObserver(size);
+    ro.observe(host);
+    const io = new IntersectionObserver(([e]) => {
+      x.visible = e.isIntersecting;
+    });
+    io.observe(host);
+    texts.add(x);
+    start();
+    return () => {
+      ro.disconnect();
+      io.disconnect();
+      texts.delete(x);
+    };
+  }, [kind]);
+  return <canvas ref={ref} className="fx-name" aria-hidden />;
 }
 
 /** The effect layer for one face. `face` is the face's diameter in CSS pixels. */

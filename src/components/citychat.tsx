@@ -5,6 +5,7 @@
 
 import { Send } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { FxName, NAME_FX, type NameFxKind } from "./art/FxRing";
 import { PlayerAvatar } from "./art/Portraits";
 import { usePulse } from "./pulse";
 import type { GameApi } from "./useGame";
@@ -90,7 +91,7 @@ function CityChat({ game }: { game: GameApi }) {
           <div key={it.m.id} className={`cchat-msg ${it.m.authorId === view.id ? "mine" : ""}`}>
             <PlayerAvatar name={it.m.authorName} path={authors[it.m.authorId]?.path} photo={authors[it.m.authorId]?.photo} look={authors[it.m.authorId]?.look} className="cchat-avatar" />
             <div>
-              <p className={`cchat-who${authors[it.m.authorId]?.look?.color ? ` name-${authors[it.m.authorId]!.look!.color}` : ""}`}>{it.m.authorId === view.id ? "You" : it.m.authorName} <time>{ago(it.at)}</time></p>
+              <p className={`cchat-who${authors[it.m.authorId]?.look?.color ? ` name-${authors[it.m.authorId]!.look!.color}` : ""}`}><span className="fx-host">{it.m.authorId === view.id ? "You" : it.m.authorName}{NAME_FX.has(authors[it.m.authorId]?.look?.color ?? "") && <FxName kind={authors[it.m.authorId]!.look!.color as NameFxKind} />}</span> <time>{ago(it.at)}</time></p>
               <p className="cchat-body">{it.m.body}</p>
             </div>
           </div>

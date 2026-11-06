@@ -5,6 +5,7 @@
 
 import type { ReactNode } from "react";
 import { CareerPortrait } from "./art/CareerPortrait";
+import { FxName, NAME_FX, type NameFxKind } from "./art/FxRing";
 import { cutoutFor, faceCutout } from "./art/Cutout";
 import { REGULAR_LOOKS } from "@/game/content/faces";
 import { nextOut, type CrewNeed, type Heavy } from "./pulse";
@@ -64,7 +65,7 @@ export function Stories({ game, go, needs, onRead, war, heavies, fires, election
 // ── Hero ───────────────────────────────────────────────────────────────────
 
 /** Your character, cut out and standing in front of the city. Falls back to the framed portrait. */
-export function Hero({ game, scene, title, sub, quote, action, kicker }: { game: GameApi; scene: string; title: string; sub: string; quote?: string | null; action?: ReactNode; kicker?: string }) {
+export function Hero({ game, scene, title, sub, quote, action, kicker, titleFx }: { game: GameApi; scene: string; title: string; sub: string; quote?: string | null; action?: ReactNode; kicker?: string; titleFx?: string | null }) {
   const view = game.view!;
   const cut = cutoutFor(view.path?.id, view.ladder?.current);
   return (
@@ -77,7 +78,7 @@ export function Hero({ game, scene, title, sub, quote, action, kicker }: { game:
       )}
       <div className="hero2-copy">
         <p className="kicker">{kicker ?? `${view.location.city} · ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`}</p>
-        <h1 className="hero2-title">{title}</h1>
+        <h1 className="hero2-title">{title}{titleFx && NAME_FX.has(titleFx) && <FxName key={titleFx} kind={titleFx as NameFxKind} />}</h1>
         <p className="hero2-sub">{sub}</p>
         {quote && <p className="hero2-quote">&ldquo;{quote}&rdquo;</p>}
         {action}

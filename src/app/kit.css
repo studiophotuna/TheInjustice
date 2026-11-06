@@ -694,3 +694,9 @@ button.style-preview:hover .try-hint, button.style-preview:focus-visible .try-hi
 .portrait-photo.frame-frostbite::before, .portrait-photo.frame-frostbite::after,
 .portrait-photo.frame-bloodmoon::before, .portrait-photo.frame-bloodmoon::after,
 .portrait-photo.frame-aurora::before, .portrait-photo.frame-aurora::after { display: none; }
+
+/* ── Name effects: a light canvas over the letters ──────────────────────── */
+.fx-name { position: absolute; pointer-events: none; z-index: 2; }
+.hero2-title, .style-name, .tryon-name, .fx-host { position: relative; }
+.style-name, .tryon-name, .fx-host { display: inline-block; }
+.lu-photo .portrait-photo.fx > img { border-radius: 0 !important; } .lu-photo .portrait-photo.fx { overflow: hidden !important; }
