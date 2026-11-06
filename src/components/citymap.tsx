@@ -22,8 +22,7 @@ type Person = {
   tie?: { label: string; tone: string; memo: string } | null;
 };
 
-/** Each district gets its own tint on the board. */
-const TINTS = ["#2b3a55", "#4a2f3a", "#2e4a3c", "#4a4130", "#3a2f52", "#283f4a", "#4a3427"];
+
 
 function hash(s: string) {
   let h = 2166136261;
@@ -94,10 +93,12 @@ export function CityMap({ game, go, feed }: { game: GameApi; go: (t: string) => 
     m.addEventListener("change", on);
     return () => m.removeEventListener("change", on);
   }, []);
-  const W = wide ? 720 : 360;
-  const H = wide ? 250 : 230;
-  const cols = wide ? Math.min(districts.length, 4) : 0;
-  const blocks = useMemo(() => (wide ? layoutCols(districts.length, cols, W, H) : layout(districts.length, W, H)), [districts.length, wide, cols, W, H]);
+  // A street map: blocks with streets between them and the water along the bottom.
+  const W = wide ? 440 : 360;
+  const H = wide ? 300 : 280;
+  const WATER = 46;
+  const cols = 0;
+  const blocks = useMemo(() => (cols ? layoutCols(districts.length, cols, W, H - WATER) : layout(districts.length, W, H - WATER)), [districts.length, cols, W, H]);
   const hour = Math.floor(Date.now() / 3_600_000);
   const placeOf = (id: string) => Math.floor(hash(id + hour) * districts.length);
   const mine = view.jobs.find((j) => j.id === view.recommendedJobId)?.district;
@@ -109,11 +110,29 @@ export function CityMap({ game, go, feed }: { game: GameApi; go: (t: string) => 
     if (i >= 0 && !hot.has(i)) hot.set(i, f.text);
   }
 
-  const pins = (people ?? []).filter((p) => p.status === "ok").map((p) => {
-    const i = placeOf(p.id);
+  // Spots inside a block, clear of its name and of each other. You take the first one in yours.
+  // Two faces fit in a block; anyone else there shows as "+N".
+  const SPOTS: [number, number][] = [[0.72, 0.6], [0.27, 0.6]];
+  const used = new Map<number, number>([[myIndex, 1]]);
+  const spot = (i: number) => {
+    const n = used.get(i) ?? 0;
+    used.set(i, n + 1);
+    const [fx, fy] = SPOTS[n % SPOTS.length];
     const b = blocks[i];
-    return { p, i, x: b.x + 14 + hash(p.id + "x" + hour) * (b.w - 28), y: b.y + 26 + hash(p.id + "y" + hour) * (b.h - 40) };
-  });
+    return { x: b.x + fx * b.w, y: b.y + 34 + fy * (b.h - 64) };
+  };
+  const extra = new Map<number, number>();
+  const pins = (people ?? [])
+    .filter((p) => p.status === "ok")
+    .sort((a, b) => Number(!!b.heavy) - Number(!!a.heavy))
+    .flatMap((p) => {
+      const i = placeOf(p.id);
+      if ((used.get(i) ?? 0) >= SPOTS.length) {
+        extra.set(i, (extra.get(i) ?? 0) + 1);
+        return [];
+      }
+      return [{ p, i, ...spot(i) }];
+    });
   const me = blocks[myIndex];
   const person = sel?.kind === "person" ? people?.find((p) => p.id === sel.id) ?? null : null;
   const district = sel?.kind === "district" ? districts[sel.i] : null;
@@ -129,30 +148,44 @@ export function CityMap({ game, go, feed }: { game: GameApi; go: (t: string) => 
       <div className="card citymap">
       <div className="map-wrap">
         <svg viewBox={`0 0 ${W} ${H}`} className="map-svg" role="img" aria-label={`Map of ${view.location.city}`}>
-          <defs>
-            <pattern id="map-grid" width="12" height="12" patternUnits="userSpaceOnUse">
-              <path d="M12 0H0V12" fill="none" stroke="rgba(255,255,255,0.035)" strokeWidth="1" />
-            </pattern>
-          </defs>
-          <rect width={W} height={H} fill="#0d1016" />
-          <rect width={W} height={H} fill="url(#map-grid)" />
+          <rect width={W} height={H} className="map-street" />
           {blocks.map((b, i) => {
             const d = districts[i];
             const on = sel?.kind === "district" && sel.i === i;
             return (
               <g key={d.id} className={`map-block${d.locked ? " locked" : ""}${on ? " on" : ""}`} onClick={() => setSel({ kind: "district", i })}>
-                <rect x={b.x} y={b.y} width={b.w} height={b.h} rx="8" fill={TINTS[i % TINTS.length]} />
-                {hot.has(i) && <rect x={b.x} y={b.y} width={b.w} height={b.h} rx="8" className="map-hot" />}
-                <text x={b.x + 8} y={b.y + 16} className="map-label">{d.name}</text>
-                {d.locked && <text x={b.x + 8} y={b.y + 28} className="map-sub">locked</text>}
+                <rect x={b.x} y={b.y} width={b.w} height={b.h} className="map-lot" />
               </g>
             );
+          })}
+          {/* Two avenues cutting across the grid. */}
+          <path d={`M ${W * 0.12} 0 L ${W * 0.38} ${H - WATER}`} className="map-avenue" />
+          <path d={`M ${W * 0.7} ${H - WATER} L ${W * 0.78} 0`} className="map-avenue" />
+          <rect x="0" y={H - WATER} width={W} height={WATER} className="map-water" />
+          <path d={`M 0 ${H - WATER + 16} q ${W / 8} -6 ${W / 4} 0 t ${W / 4} 0 t ${W / 4} 0 t ${W / 4} 0`} className="map-wave" />
+          <path d={`M 0 ${H - WATER + 32} q ${W / 8} -6 ${W / 4} 0 t ${W / 4} 0 t ${W / 4} 0 t ${W / 4} 0`} className="map-wave" />
+          {blocks.map((b, i) => (
+            <g key={`l${i}`} className="map-names">
+              <rect x={b.x + 6} y={b.y + 8} width={Math.min(b.w - 12, districts[i].name.replace(/^The /, "").length * 8.6 + 14)} height="20" rx="4" className="map-label-bg" />
+              <text x={b.x + 13} y={b.y + 22} className="map-label">{districts[i].name.replace(/^The /, "")}</text>
+              {districts[i].locked && <text x={b.x + 13} y={b.y + 40} className="map-sub">locked</text>}
+              {extra.get(i) ? <text x={b.x + 6 + Math.min(b.w - 12, districts[i].name.replace(/^The /, "").length * 8.6 + 14) + 6} y={b.y + 22} className="map-more">+{extra.get(i)} more</text> : null}
+            </g>
+          ))}
+          {[...hot.keys()].map((i) => {
+            const b = blocks[i];
+            return b ? (
+              <g key={`hot${i}`} className="map-hot-dot">
+                <circle cx={b.x + b.w - 18} cy={b.y + 18} r="11" className="ring" />
+                <circle cx={b.x + b.w - 18} cy={b.y + 18} r="6" />
+              </g>
+            ) : null;
           })}
         </svg>
         {/* People sit on top of the SVG as HTML so their portraits load like any image. */}
         <div className="map-pins">
           {me && (
-            <span className="map-me" style={{ left: `${((me.x + me.w - 18) / W) * 100}%`, top: `${((me.y + me.h - 16) / H) * 100}%` }} title="You">
+            <span className="map-me" style={{ left: `${((me.x + SPOTS[0][0] * me.w) / W) * 100}%`, top: `${((me.y + 34 + SPOTS[0][1] * (me.h - 64)) / H) * 100}%` }} title="You">
               <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo} className="pin-avatar" />
               <span className="pin-name me">You</span>
             </span>

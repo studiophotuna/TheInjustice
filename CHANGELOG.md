@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.4.2: the map, as in the mockup
+
+- **The map on Home is a street map now:** dark city blocks with lighter streets between them,
+  two avenues cutting across, and the water along the bottom. District names sit in the corner
+  of each block, and an orange marker pulses where something happened in the last hour.
+- **Pins are faces with a pointer and a name tag:** white for people, gold with a crown for the
+  boss, red for you. Each block shows up to two faces so they never pile up; anyone else there
+  shows as "+1 more".
+
 ## 4.4.1: the side panel keeps "Right now"
 
 - **On wide screens the right-hand panel has all three again:** "Right now" on top, "Live in"
