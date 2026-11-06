@@ -57,7 +57,7 @@ export function Stories({ game, go, needs, onRead, war }: { game: GameApi; go: (
 // ── Hero ───────────────────────────────────────────────────────────────────
 
 /** Your character, cut out and standing in front of the city. Falls back to the framed portrait. */
-export function Hero({ game, scene, title, sub, quote, action }: { game: GameApi; scene: string; title: string; sub: string; quote?: string | null; action?: ReactNode }) {
+export function Hero({ game, scene, title, sub, quote, action, kicker }: { game: GameApi; scene: string; title: string; sub: string; quote?: string | null; action?: ReactNode; kicker?: string }) {
   const view = game.view!;
   const cut = cutoutFor(view.path?.id, view.ladder?.current);
   return (
@@ -69,7 +69,7 @@ export function Hero({ game, scene, title, sub, quote, action }: { game: GameApi
         <CareerPortrait path={view.path?.id} rank={view.ladder?.current} name={view.name} className="hero2-frame" />
       )}
       <div className="hero2-copy">
-        <p className="kicker">{view.location.city} · {new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</p>
+        <p className="kicker">{kicker ?? `${view.location.city} · ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`}</p>
         <h1 className="hero2-title">{title}</h1>
         <p className="hero2-sub">{sub}</p>
         {quote && <p className="hero2-quote">&ldquo;{quote}&rdquo;</p>}

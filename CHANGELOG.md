@@ -1,5 +1,20 @@
 # Changelog
 
+## 4.3.0: a new look, round 4 (Me, People, City)
+
+- **Me is half as long.** It opens on a big portrait of your character over a photo of where your
+  career works, with your name, rank and introduction, and "Edit profile" right there. How you
+  feel is four colored tiles under it. Specialties are compact tiles: tap one for its perks and
+  how to earn it. "What happened" and "The story so far" show the latest few lines with
+  "Show all". Pockets only show up when there's something in them.
+- **Fixed:** some lines in "What happened" were squeezed into a narrow column, and some had a
+  card border around them. They're now one quiet list, and emoji are gone from it. Long weapon
+  names in Gear no longer get cut off.
+- **People are player cards:** a full photo with the name over it, instead of a mugshot against
+  a height chart.
+- **City:** place titles lose the small icons, and each gets a short subtitle that fits.
+- Card titles on Me lose their icons, and a few explainer lines are shorter or gone.
+
 ## 4.2.0: a new look, round 3 (faces and jobs)
 
 - **One portrait style everywhere:** every player and contact without an uploaded photo now gets a

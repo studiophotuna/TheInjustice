@@ -31,7 +31,7 @@ export function StoryLine({ game }: { game: GameApi }) {
   const entries = [...view.journal].reverse();
   if (!entries.length) return null;
   const day = (at: number) => Math.max(1, Math.floor((at - view.startedAt) / DAY) + 1);
-  const shown = all ? entries : entries.slice(0, 8);
+  const shown = all ? entries : entries.slice(0, 4);
   const groups: { day: number; items: typeof entries }[] = [];
   for (const e of shown) {
     const d = day(e.at);
@@ -58,10 +58,9 @@ export function StoryLine({ game }: { game: GameApi }) {
   return (
     <section className="card storyline">
       <div className="row between">
-        <h3 className="card-title"><BookOpen size={16} /> The story so far</h3>
+        <h3 className="card-title">The story so far</h3>
         <button className="btn btn-ghost btn-xs" onClick={share}><Share2 size={13} /> {copied ? "Copied" : "Share"}</button>
       </div>
-      <p className="fine muted">Day {day(Date.now())} since they let you out.</p>
       <ol className="timeline">
         {groups.map((g) => (
           <li key={g.day}>
@@ -80,7 +79,7 @@ export function StoryLine({ game }: { game: GameApi }) {
           </li>
         ))}
       </ol>
-      {entries.length > 8 && (
+      {entries.length > 4 && (
         <button className="btn btn-ghost btn-sm" onClick={() => setAll(!all)}>{all ? "Show less" : `Show all ${entries.length}`}</button>
       )}
     </section>

@@ -3,7 +3,7 @@
 // Minimal profile editing: a photo and a short introduction. The photo is shrunk to a 160×160
 // JPEG in the browser before it's sent, so it stays small.
 
-import { Camera, Pencil, Trash2 } from "lucide-react";
+import { Camera, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { PlayerAvatar } from "./art/Portraits";
 import type { GameApi } from "./useGame";
@@ -32,33 +32,17 @@ async function shrink(file: File): Promise<string> {
   }
 }
 
-export function ProfileEditor({ game }: { game: GameApi }) {
+export function ProfileEditor({ game, onClose }: { game: GameApi; onClose: () => void }) {
   const view = game.view!;
-  const [editing, setEditing] = useState(false);
+  const setEditing = (v: boolean) => { if (!v) onClose(); };
   const [bio, setBio] = useState(view.profile.bio ?? "");
   const [photo, setPhoto] = useState<string | null>(view.profile.photo);
   const [error, setError] = useState<string | null>(null);
   const file = useRef<HTMLInputElement>(null);
 
-  if (!editing) {
-    return (
-      <section className="card profile-card">
-        <div className="row between">
-          <h3 className="card-title"><Pencil size={16} /> Your profile</h3>
-          <button className="btn btn-ghost btn-xs" onClick={() => { setBio(view.profile.bio ?? ""); setPhoto(view.profile.photo); setEditing(true); }}>Edit</button>
-        </div>
-        <div className="row profile-preview">
-          <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo} className="avatar-md" />
-          <p className={view.profile.bio ? "" : "muted"}>{view.profile.bio ? `“${view.profile.bio}”` : "No introduction yet. Tell people who you are, or who you want them to think you are."}</p>
-        </div>
-        <p className="fine muted">Other players see this in People. Your street name can&apos;t be changed: the police already know it.</p>
-      </section>
-    );
-  }
-
   return (
     <section className="card profile-card">
-      <h3 className="card-title"><Pencil size={16} /> Your profile</h3>
+      <h3 className="card-title">Your profile</h3>
       <div className="row profile-preview">
         <PlayerAvatar name={view.name} path={view.path?.id} photo={photo} className="avatar-md" />
         <div className="row wrap">

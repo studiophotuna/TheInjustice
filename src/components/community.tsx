@@ -425,7 +425,7 @@ function personActions(game: GameApi, hub: Hub, p: Profile, social: (b: Record<s
 }
 
 /**
- * The lineup: everyone in the city stands against the height chart, faces first. No stats, no
+ * Everyone in the city as a player card, faces first. No stats, no
  * odds; you size people up from who they are. Tap someone to pull their file and act.
  */
 function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social: (b: Record<string, unknown>) => Promise<unknown> }) {
@@ -468,20 +468,18 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
     <div className="lineup-wrap">
       <YourPeople hub={hub} onOpen={(id) => setOpenId(id)} />
       <div className="lineup-head">
-        <h3 className="card-title list-title"><Users size={16} /> The lineup · {view.location.city}</h3>
+        <h3 className="card-title list-title">On the street · {view.location.city}</h3>
         <span className="fine muted">{people.filter(outNow).length} out on the street</span>
       </div>
       <div className="lineup">
-        {people.map((p, i) => (
+        {people.map((p) => (
           <button key={p.id} className={`suspect-card${outNow(p) ? " out" : ""}${p.status !== "ok" ? " away" : ""}`} onClick={() => setOpenId(p.id)}>
-            <span className="lineup-wall" aria-hidden />
-            <PlayerAvatar name={p.name} path={p.path} photo={p.photo} className="lineup-face" />
-            <span className="placard">
-              <i>No. {String(i + 1).padStart(2, "0")}</i>
-              <b>{p.name}</b>
+            <span className="lu-photo">
+              <PlayerAvatar name={p.name} path={p.path} photo={p.photo} className="lineup-face" />
+              <b className="lu-name">{p.name}</b>
             </span>
             <span className="lineup-tags">
-              {p.regular?.heavy && <span className="tag-mini heavy">👑</span>}
+              {p.regular?.heavy && <span className="tag-mini heavy">Runs the street</span>}
               {p.crewTag && <span className="tag-mini">[{p.crewTag}]</span>}
               {p.tie && <span className={`tag-mini tie-${p.tie.tone}`}>{p.tie.label}</span>}
               {p.bounty > 0 && <span className="tag-mini wanted">${p.bounty}</span>}

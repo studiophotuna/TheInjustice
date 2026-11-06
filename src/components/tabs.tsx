@@ -1,15 +1,13 @@
 "use client";
 
 import { StoryLine } from "./storyline";
+import { Hero } from "./homekit";
 import { ItemArt } from "./art/ItemArt";
 import { ProfileEditor } from "./ProfileEditor";
-import { CareerPortrait } from "./art/CareerPortrait";
 import { CityHall } from "./cityhall";
 import { CityShops, ShopOwnerStrip, shelfPrice, shopFor, useShops } from "./shops";
 import { motion } from "motion/react";
 import {
-  Backpack,
-  Bell,
   Clock,
   GraduationCap,
   Globe2,
@@ -25,21 +23,16 @@ import {
   Shield,
   Wind,
   BookOpen,
-  Brain,
-  Crosshair,
   Dumbbell,
   Eye,
   Landmark,
   Lock,
   LogOut,
-  Newspaper,
-  ShieldAlert,
   Skull,
   Sparkles,
   Stethoscope,
   Swords,
   Trophy,
-  UserRound,
   Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -336,7 +329,7 @@ export function GearCard({ game }: { game: GameApi }) {
   const slot = (s: "weapon" | "armor") => gear.find((g) => g.slot === s && g.equipped) ?? null;
   return (
     <section className="card gear">
-      <h3 className="card-title"><Swords size={16} /> Gear</h3>
+      <h3 className="card-title">Gear</h3>
       <div className="gear-slots">
         {(["weapon", "armor"] as const).map((s) => {
           const g = slot(s);
@@ -393,43 +386,48 @@ export function GearCard({ game }: { game: GameApi }) {
 
 // ─── Me ────────────────────────────────────────────────────────────────────
 
+/** The photo behind the Me hero: where each career works. */
+const ME_SCENE: Record<string, string> = {
+  police: "police", enforcer: "ironrow", courts: "court", vigilante: "undercity", medicine: "hospital",
+  banking: "bank", military: "checkpoint", mechanic: "foundry", hacker: "techpark", fire: "crimescene",
+};
+
 export function ProfileTab({ game }: { game: GameApi }) {
   const view = game.view!;
   const [perm, setPerm] = useState<string>(typeof Notification === "undefined" ? "unsupported" : Notification.permission);
+  const [editing, setEditing] = useState(false);
+  const [allLog, setAllLog] = useState(false);
 
   return (
     <div className="profile">
-      <section className="card profile-hero">
-        <CareerPortrait path={view.path?.id} rank={view.ladder?.current} name={view.name} className="profile-portrait" />
-        <div>
-          <h2>{view.name}</h2>
-          <p className="muted">{view.path ? `${view.path.rank} · ${view.path.name}` : `Bum · ${view.location.city}`}{view.deaths ? ` · Life #${view.deaths + 1}` : ""}</p>
-          <p className="quote">“{view.feel.conscience}”</p>
-        </div>
-      </section>
-
-      <PromoChoice game={game} />
-      <Specialties game={game} />
-      <StoryLine game={game} />
-
-      <ProfileEditor game={game} />
-
-      <section className="card">
-        <h3 className="card-title"><Brain size={16} /> How you feel</h3>
-        <div className="feel-grid">
-          {([["Body", view.feel.body], ["Reflexes", view.feel.reflexes], ["Street smarts", view.feel.smarts], ["Presence", view.feel.presence]] as const).map(([k, v]) => (
-            <div key={k} className="feel">
-              <span>{k}</span>
+      <div className="me-top">
+        <Hero
+          game={game}
+          scene={view.path ? (ME_SCENE[view.path.id] ?? "street") : "gutter"}
+          kicker={view.deaths ? `Life #${view.deaths + 1}` : view.location.city}
+          title={view.name}
+          sub={view.path ? `${view.path.rank} · ${view.path.name}` : "No career yet"}
+          quote={view.profile.bio || view.feel.conscience}
+          action={<button className="btn btn-ghost btn-sm" onClick={() => setEditing(true)}>{view.profile.bio ? "Edit profile" : "Add an introduction"}</button>}
+        />
+        <div className="me-stats">
+          {([["Body", view.feel.body, "gold"], ["Reflexes", view.feel.reflexes, "teal"], ["Street smarts", view.feel.smarts, "violet"], ["Presence", view.feel.presence, "orange"]] as const).map(([k, v, tone]) => (
+            <div key={k} className={`me-stat tone-${tone}`}>
               <b>{v}</b>
+              <span>{k}</span>
             </div>
           ))}
         </div>
-        {view.woundHint && <p className="fine wound-hint">🩹 {view.woundHint}</p>}
-      </section>
+        {view.woundHint && <p className="fine wound-hint">{view.woundHint}</p>}
+      </div>
+      {editing && <ProfileEditor game={game} onClose={() => setEditing(false)} />}
+
+      <PromoChoice game={game} />
+      <Specialties game={game} />
 
       {view.path && view.ladder && (
         <section className="card">
-          <h3 className="card-title"><ShieldAlert size={16} /> Career</h3>
+          <h3 className="card-title">Career</h3>
           <div className="row">
             <NpcPortrait id={view.path.contactId} className="avatar-sm" />
             <p>{view.path.name} · answers to {view.path.contact}</p>
@@ -473,23 +471,23 @@ export function ProfileTab({ game }: { game: GameApi }) {
         </section>
       )}
 
+      <GearCard game={game} />
       <SeasonBoard game={game} />
+      <StoryLine game={game} />
+
       <section className="card">
-        <h3 className="card-title"><Newspaper size={16} /> What happened</h3>
+        <h3 className="card-title">What happened</h3>
         <ul className="log">
-          {view.log.map((e, i) => (
-            <li key={i} className={e.tone}>
-              <Crosshair size={12} /> {e.text}
-            </li>
+          {(allLog ? view.log : view.log.slice(0, 6)).map((e, i) => (
+            <li key={i} className={`log-${e.tone}`}>{e.text.replace(/\p{Extended_Pictographic}\uFE0F?\s*/gu, "")}</li>
           ))}
         </ul>
+        {view.log.length > 6 && <button className="btn btn-ghost btn-sm" onClick={() => setAllLog(!allLog)}>{allLog ? "Show less" : `Show all ${view.log.length}`}</button>}
       </section>
 
-      <GearCard game={game} />
-
+      {(view.inventory.length > 0 || game.live!.full > 0) && (
       <section className="card">
-        <h3 className="card-title"><Backpack size={16} /> Pockets</h3>
-        {view.inventory.length === 0 && <p className="muted">Empty. Like your stomach.</p>}
+        <h3 className="card-title">Pockets</h3>
         {view.inventory.map((i) => (
           <div key={i.id} className="row between inv-row">
             <span className="inv-name"><ItemArt id={i.id} icon={i.icon} name={i.name} className="art-xs" /> {i.name} <span className="muted">×{i.count}</span></span>
@@ -498,10 +496,11 @@ export function ProfileTab({ game }: { game: GameApi }) {
         ))}
         {game.live!.full > 0 && <p className="muted">Still full for {fmt(game.live!.full)}.</p>}
       </section>
+      )}
 
       <section className="card">
-        <h3 className="card-title"><Bell size={16} /> Alerts</h3>
-        <p className="muted">A notification when your energy is full or you&apos;re out of the clinic.</p>
+        <h3 className="card-title">Alerts</h3>
+        <p className="muted">When your energy is full or you&apos;re out of the clinic.</p>
         {perm === "granted" ? (
           <p className="text-green">Alerts are on.</p>
         ) : perm === "unsupported" ? (
@@ -512,7 +511,7 @@ export function ProfileTab({ game }: { game: GameApi }) {
       </section>
 
       <section className="card">
-        <h3 className="card-title"><UserRound size={16} /> Account</h3>
+        <h3 className="card-title">Account</h3>
         {game.account ? (
           <>
           <div className="row between">
@@ -949,8 +948,7 @@ function SeasonBoard({ game }: { game: GameApi }) {
   return (
     <section className="card season">
       <h3 className="card-title"><Trophy size={16} /> Season · {data.season}</h3>
-      <p className="muted fine">No names on this list. Nobody needs a target on their back.</p>
-      <div className="chips-row">
+            <div className="chips-row">
         {data.boards.map((x, i) => (
           <button key={x.id} className={`chip-btn ${i === tab ? "on" : ""}`} onClick={() => setTab(i)}>{x.label}</button>
         ))}
@@ -1076,7 +1074,7 @@ function CareerRecord({ game }: { game: GameApi }) {
           ))}
         </ul>
       ) : (
-        <p className="muted fine">Your first career. Finish it (reach the top rank) and leave, and you keep a legacy: a title and better pay on every job, for good.</p>
+        <p className="muted fine">Reach the top rank and leave to keep a legacy for good.</p>
       )}
       {r.gap && <p className="fine muted">{r.gap}</p>}
       {view.path && r.exit && <GettingOut game={game} />}
@@ -1171,24 +1169,29 @@ const ROMAN = ["", "I", "II", "III"];
 /** Lasting skills from everything you've done, in every career. */
 function Specialties({ game }: { game: GameApi }) {
   const view = game.view!;
+  const [open, setOpen] = useState<string | null>(null);
   const list = [...view.specialties].sort((a, b) => b.tier - a.tier || b.progress / (b.next ?? 1) - a.progress / (a.next ?? 1));
   return (
     <section className="card specialties">
-      <h3 className="card-title"><Sparkles size={16} /> Specialties</h3>
-      <p className="fine muted">Skills you keep for good, earned by what you've done in any career. Living more than one life makes you better at all of them.</p>
-      <ul className="spec-list">
+      <h3 className="card-title">Specialties</h3>
+      <ul className="spec-grid">
         {list.map((s) => {
           const pct = s.next ? Math.min(100, ((s.progress - s.from) / (s.next - s.from)) * 100) : 100;
+          const isOpen = open === s.id;
           return (
-            <li key={s.id} className={s.tier ? "has" : ""}>
-              <div className="row between">
-                <b className="spec-name">{s.name} <span className="spec-tier">{s.tier ? ROMAN[s.tier] : ""}</span></b>
-                <span className="fine muted">{s.next ? `${s.progress} / ${s.next}` : "Mastered"}</span>
-              </div>
-              <div className="spec-bar"><span style={{ width: `${pct}%` }} /></div>
-              {s.perk && <p className="fine spec-perk">{s.perk}</p>}
-              {s.nextPerk && <p className="fine muted">{s.tier ? "Next: " : ""}{s.nextPerk}</p>}
-              <p className="fine muted spec-how">{s.how}</p>
+            <li key={s.id} className={`${s.tier ? "has" : ""} ${isOpen ? "open" : ""}`}>
+              <button className="spec-tile" onClick={() => setOpen(isOpen ? null : s.id)} aria-expanded={isOpen}>
+                <b className="spec-name">{s.name}{s.tier ? <span className="spec-tier"> {ROMAN[s.tier]}</span> : null}</b>
+                <div className="spec-bar"><span style={{ width: `${pct}%` }} /></div>
+                <span className="spec-count">{s.next ? `${s.progress} / ${s.next}` : "Mastered"}</span>
+              </button>
+              {isOpen && (
+                <div className="spec-more">
+                  {s.perk && <p className="fine spec-perk">{s.perk}</p>}
+                  {s.nextPerk && <p className="fine muted">{s.tier ? "Next: " : ""}{s.nextPerk}</p>}
+                  <p className="fine muted spec-how">{s.how}</p>
+                </div>
+              )}
               {s.id === "combat_medic" && s.tier > 0 && (
                 <button className="btn btn-primary btn-xs" disabled={game.busy || !s.ready || view.hp >= view.maxHp} onClick={() => game.act({ type: "field_dressing" })}>
                   {s.ready ? "Field dressing" : "Restocking your kit"}

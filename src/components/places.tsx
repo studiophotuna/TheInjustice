@@ -22,19 +22,19 @@ import type { GameApi } from "./useGame";
 
 export type Building = "police" | "court" | "hospital" | "bank" | "academy" | "cityhall" | "prison" | "street" | "station" | "docks" | "home" | "directory";
 
-const BUILDINGS: { id: Building; name: string; scene: SceneKind; poster: string; Icon: ComponentType<{ size?: number }>; tagline: string }[] = [
-  { id: "directory", name: "The Directory", scene: "city", poster: "city", Icon: BookUser, tagline: "Who in town launders, defends, patches up, repairs or sells, and for how much." },
-  { id: "home", name: "Your Place", scene: "southside", poster: "southside", Icon: BedDouble, tagline: "Where you sleep, and where you hide what can't go in a bank." },
-  { id: "police", name: "Police Station", scene: "police", poster: "police", Icon: Siren, tagline: "Report what you saw. Case files, arrests, internal affairs." },
-  { id: "court", name: "Courthouse", scene: "court", poster: "court", Icon: Scale, tagline: "Trials, bail, lawyers, the court record." },
-  { id: "hospital", name: "Hospital", scene: "hospital", poster: "hospital", Icon: HeartPulse, tagline: "Patients, check-ups, and a quiet back door." },
-  { id: "bank", name: "Bank", scene: "bank", poster: "bank", Icon: Landmark, tagline: "Your account, loans, and cleaning dirty money." },
-  { id: "academy", name: "Academy", scene: "academy", poster: "academy", Icon: GraduationCap, tagline: "Enroll to earn the degree a career needs." },
-  { id: "cityhall", name: "City Hall", scene: "cityhall", poster: "cityhall", Icon: Building2, tagline: "The mayor, the vote, the paper, the turf." },
-  { id: "prison", name: "Prison", scene: "prison", poster: "prison", Icon: Lock, tagline: "The yard, and anyone doing time." },
-  { id: "street", name: "The Street", scene: "street", poster: "street", Icon: Shield, tagline: "Dealers, rackets, contracts, break-ins, cold cases." },
-  { id: "station", name: "Station", scene: "station", poster: "station", Icon: Train, tagline: "Bus, train or plane to another country. Or drive." },
-  { id: "docks", name: "The Docks", scene: "marina", poster: "marina", Icon: Anchor, tagline: "Your cars, the lot, and fences who move cargo between cities." },
+const BUILDINGS: { id: Building; name: string; scene: SceneKind; poster: string; Icon: ComponentType<{ size?: number }>; short: string; tagline: string }[] = [
+  { id: "directory", name: "The Directory", scene: "city", poster: "city", Icon: BookUser, short: "Who does what", tagline: "Who in town launders, defends, patches up, repairs or sells, and for how much." },
+  { id: "home", name: "Your Place", scene: "southside", poster: "southside", Icon: BedDouble, short: "Sleep, stash, guard dog", tagline: "Where you sleep, and where you hide what can't go in a bank." },
+  { id: "police", name: "Police Station", scene: "police", poster: "police", Icon: Siren, short: "Reports and arrests", tagline: "Report what you saw. Case files, arrests, internal affairs." },
+  { id: "court", name: "Courthouse", scene: "court", poster: "court", Icon: Scale, short: "Trials, bail, lawyers", tagline: "Trials, bail, lawyers, the court record." },
+  { id: "hospital", name: "Hospital", scene: "hospital", poster: "hospital", Icon: HeartPulse, short: "Patients and a back door", tagline: "Patients, check-ups, and a quiet back door." },
+  { id: "bank", name: "Bank", scene: "bank", poster: "bank", Icon: Landmark, short: "Loans and laundering", tagline: "Your account, loans, and cleaning dirty money." },
+  { id: "academy", name: "Academy", scene: "academy", poster: "academy", Icon: GraduationCap, short: "Degrees for careers", tagline: "Enroll to earn the degree a career needs." },
+  { id: "cityhall", name: "City Hall", scene: "cityhall", poster: "cityhall", Icon: Building2, short: "Mayor, votes, turf", tagline: "The mayor, the vote, the paper, the turf." },
+  { id: "prison", name: "Prison", scene: "prison", poster: "prison", Icon: Lock, short: "The yard", tagline: "The yard, and anyone doing time." },
+  { id: "street", name: "The Street", scene: "street", poster: "street", Icon: Shield, short: "Rackets and contracts", tagline: "Dealers, rackets, contracts, break-ins, cold cases." },
+  { id: "station", name: "Station", scene: "station", poster: "station", Icon: Train, short: "Travel to other cities", tagline: "Bus, train or plane to another country. Or drive." },
+  { id: "docks", name: "The Docks", scene: "marina", poster: "marina", Icon: Anchor, short: "Cars and cargo", tagline: "Your cars, the lot, and fences who move cargo between cities." },
 ];
 
 /** The City tab: buildings you walk into. Each one holds everything that happens there. */
@@ -82,8 +82,8 @@ export function CityPlaces({ game, place, setPlace, onRead }: { game: GameApi; p
             transition={{ delay: i * 0.03 }}
           >
             <span className="building-shade" />
-            <span className="building-name"><b.Icon size={16} /> {b.name}</span>
-            <span className="building-tag">{b.tagline}</span>
+            <span className="building-name">{b.name}</span>
+            <span className="building-tag">{b.short}</span>
             {badge(b.id) ? <span className="badge-dot building-badge">{badge(b.id)}</span> : null}
           </motion.button>
         ))}

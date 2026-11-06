@@ -128,14 +128,14 @@ h2, .sec-head h2 { font-family: var(--headline); font-weight: 400; letter-spacin
 /* ── Stories ────────────────────────────────────────────────────────────── */
 .stories { display: flex; gap: 14px; overflow-x: auto; scrollbar-width: none; padding: 4px 2px 2px; margin: 0 -2px; }
 .stories::-webkit-scrollbar { display: none; }
-.story { width: 68px; flex: none; display: grid; justify-items: center; gap: 5px; background: none; border: 0; padding: 0; cursor: pointer; color: var(--muted); }
+.stories .story { width: 68px; flex: none; display: grid; justify-items: center; gap: 5px; background: none; border: 0; padding: 0; cursor: pointer; color: var(--muted); }
 .story-ring { width: 66px; height: 66px; border-radius: 50%; padding: 3px; background: var(--panel-3); display: block; }
-.story.fresh .story-ring { background: conic-gradient(from 200deg, var(--gold), var(--red), var(--gold)); }
+.stories .story.fresh .story-ring { background: conic-gradient(from 200deg, var(--gold), var(--red), var(--gold)); }
 .story-ring img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid var(--bg); display: block; }
 .story-label { font-size: 11px; font-weight: 700; max-width: 72px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.story.fresh .story-label { color: var(--text); }
+.stories .story.fresh .story-label { color: var(--text); }
 .story-sub { font-size: 10.5px; font-weight: 800; color: var(--gold); margin-top: -3px; }
-.story:disabled { opacity: 0.6; cursor: default; }
+.stories .story:disabled { opacity: 0.6; cursor: default; }
 
 /* ── Hero: the character breaks out of the card ────────────────────────── */
 .hero2 { position: relative; margin-top: 40px; min-height: 230px; border-radius: var(--radius); background: var(--panel); }
@@ -268,3 +268,44 @@ h2, .sec-head h2 { font-family: var(--headline); font-weight: 400; letter-spacin
 
 /* Faces: one photo style, round. */
 .portrait-photo img { object-fit: cover; }
+
+/* ── Me: hero, stat tiles, compact specialties, a quiet log ─────────────── */
+.me-top { display: grid; gap: 12px; }
+@media (min-width: 960px) { .me-top { grid-column: span 2; } }
+.me-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 600px) { .me-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.me-stat { display: grid; gap: 2px; padding: 12px 14px; border-radius: 14px; background: var(--panel); border-left: 3px solid var(--tone, var(--gold)); }
+.me-stat b { font-size: 17px; font-weight: 800; color: var(--tone, var(--gold)); line-height: 1.15; }
+.me-stat span { font-size: 11px; font-weight: 700; color: var(--muted); }
+.me-stat.tone-gold { --tone: var(--gold); } .me-stat.tone-teal { --tone: var(--teal); }
+.me-stat.tone-violet { --tone: var(--violet); } .me-stat.tone-orange { --tone: var(--orange); }
+.spec-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.spec-grid li { display: grid; gap: 6px; align-content: start; }
+.spec-grid li.open { grid-column: 1 / -1; }
+.spec-tile { display: grid; gap: 6px; text-align: left; padding: 12px; border-radius: 14px; background: var(--panel-2, rgba(255,255,255,0.03)); border: 1px solid var(--border); color: var(--text); cursor: pointer; font: inherit; }
+.spec-grid li:not(.has) .spec-tile { opacity: 0.7; }
+.spec-tile .spec-name { font-size: 13px; font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase; }
+.spec-tier { color: var(--gold); }
+.spec-count { font-size: 11px; font-weight: 700; color: var(--muted); }
+.spec-more { padding: 0 4px; display: grid; gap: 4px; }
+.spec-more p { margin: 0; }
+.log li { display: block; padding: 0 0 0 12px; border: 0; border-left: 2px solid var(--border); border-radius: 0; background: none; color: #c9cfdb; font-size: 13.5px; }
+.log li.log-good { border-left-color: var(--money); }
+.log li.log-bad { border-left-color: var(--red); }
+.log li.log-story { border-left-color: var(--violet); color: var(--text); }
+.gear-slot b { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+/* ── People: player cards, not mugshots ─────────────────────────────────── */
+.suspect-card { border-radius: var(--radius); padding: 0 0 12px; gap: 8px; }
+.lu-photo { position: relative; display: block; width: 100%; aspect-ratio: 1 / 1; overflow: hidden; }
+.lu-photo .lineup-face { width: 100% !important; height: 100% !important; margin: 0; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+.lu-photo .lineup-face img { width: 100%; height: 100%; object-fit: cover; border-radius: 0; border: 0; }
+.lu-photo::after { content: ""; position: absolute; inset: 40% 0 0 0; background: linear-gradient(180deg, transparent, rgba(14, 16, 21, 0.75) 45%, rgba(14, 16, 21, 0.98)); }
+.lu-name { position: absolute; left: 10px; right: 10px; bottom: 8px; z-index: 1; text-align: left; font-family: var(--headline); font-weight: 400; font-size: 20px; line-height: 1; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.suspect-card .lineup-tags, .suspect-card .presence { justify-self: start; padding: 0 10px; }
+.suspect-card .lineup-tags:empty { display: none; }
+.tag-mini.heavy { color: var(--gold); }
+.lu-name { text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8); }
+
+/* ── City: titles without icons, one line under each ────────────────────── */
+.building-tag { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
