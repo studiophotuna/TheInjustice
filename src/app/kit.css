@@ -404,3 +404,12 @@ h2, .sec-head h2 { font-family: var(--headline); font-weight: 400; letter-spacin
 .face-grid { grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); grid-auto-rows: 64px; }
 .face-opt { aspect-ratio: auto; height: 100%; }
 .wb-ev-face, .roster-photo { box-shadow: none !important; }
+
+/* Rail: Right now and the live feed on top, the city chat filling the rest. */
+@media (min-width: 1280px) {
+  .rail { display: flex !important; flex-direction: column; gap: 12px; padding: 14px !important; overflow-y: auto !important; }
+  .rail .rail-inner { flex: none; }
+  .rail .cchat { flex: 1 0 380px; height: auto; padding: 16px 14px 12px; border-radius: var(--radius); background: var(--panel); }
+  .rail .cchat-body { background: var(--panel-2, #232836); }
+  .home-later > .right-now { display: none; }
+}

@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.4.1: the side panel keeps "Right now"
+
+- **On wide screens the right-hand panel has all three again:** "Right now" on top, "Live in"
+  your city under it, and the city chat below, filling the rest. The chat is just the chat now,
+  since the city's news is right above it.
+
 ## 4.4.0: a new look, round 5 (closer to the mockup, faces, city chat)
 
 - **More faces, matched to who people are:** 43 new photo faces, plus the career portraits that

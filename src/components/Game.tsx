@@ -39,7 +39,7 @@ import { CityPlaces, type Building } from "./places";
 import { careerStill } from "./art/Cutout";
 import { CommunityTab } from "./community";
 import { HomeTab } from "./home";
-import { AwayRecap, GuestChip, setPeopleSection } from "./pulse";
+import { AwayRecap, GuestChip, LiveRail, setPeopleSection } from "./pulse";
 import { CityChatRail } from "./citychat";
 import { QuickBar } from "./quickbar";
 import { useScrollLock } from "./scrollLock";
@@ -307,6 +307,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
       </div>
 
       <aside className="rail" aria-label="What's happening">
+        <LiveRail game={game} go={go} onRead={setReading} />
         <CityChatRail game={game} />
       </aside>
 

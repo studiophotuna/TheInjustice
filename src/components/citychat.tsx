@@ -1,7 +1,7 @@
 "use client";
 
-// The city channel as a live side panel on wide screens: who's around, what they're saying, and
-// the city's news in between, delivered by the Courier.
+// The city channel in the wide-screen side panel, under "Right now" and the live feed: who is
+// talking, their faces, and a box to say something.
 
 import { Send } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -44,8 +44,7 @@ export function CityChatRail({ game }: { game: GameApi }) {
   }, [load]);
 
   // Chat and city news in one timeline, oldest at the top.
-  const news = (pulse?.feed ?? []).filter((f) => f.kind === "city").slice(0, 4).map((f) => ({ kind: "news" as const, at: f.at, text: f.text }));
-  const items = [...msgs.slice(-24).map((m) => ({ kind: "msg" as const, at: m.at, m })), ...news].sort((a, b) => a.at - b.at);
+  const items = msgs.slice(-24).map((m) => ({ kind: "msg" as const, at: m.at, m }));
   useEffect(() => {
     list.current?.scrollTo({ top: list.current.scrollHeight });
   }, [items.length]);
@@ -67,25 +66,15 @@ export function CityChatRail({ game }: { game: GameApi }) {
       )}
       <div className="cchat-list" ref={list}>
         {items.length === 0 && <p className="muted">Quiet tonight. Say something.</p>}
-        {items.map((it, i) =>
-          it.kind === "news" ? (
-            <div key={`n${i}`} className="cchat-msg news">
-              <img className="cchat-avatar" src="/scenes/crimescene.jpg" alt="" />
-              <div>
-                <p className="cchat-who">The Courier <time>{ago(it.at)}</time></p>
-                <p className="cchat-body">{it.text}</p>
-              </div>
+        {items.map((it) => (
+          <div key={it.m.id} className={`cchat-msg ${it.m.authorId === view.id ? "mine" : ""}`}>
+            <PlayerAvatar name={it.m.authorName} path={authors[it.m.authorId]?.path} photo={authors[it.m.authorId]?.photo} className="cchat-avatar" />
+            <div>
+              <p className="cchat-who">{it.m.authorId === view.id ? "You" : it.m.authorName} <time>{ago(it.at)}</time></p>
+              <p className="cchat-body">{it.m.body}</p>
             </div>
-          ) : (
-            <div key={it.m.id} className={`cchat-msg ${it.m.authorId === view.id ? "mine" : ""}`}>
-              <PlayerAvatar name={it.m.authorName} path={authors[it.m.authorId]?.path} photo={authors[it.m.authorId]?.photo} className="cchat-avatar" />
-              <div>
-                <p className="cchat-who">{it.m.authorId === view.id ? "You" : it.m.authorName} <time>{ago(it.m.at)}</time></p>
-                <p className="cchat-body">{it.m.body}</p>
-              </div>
-            </div>
-          ),
-        )}
+          </div>
+        ))}
       </div>
       <form
         className="cchat-input"
