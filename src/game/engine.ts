@@ -1,6 +1,7 @@
 // Server-side game rules. Pure functions over a Player: no I/O, so they can run in an
 // API route today and a database function (or worker) later without changes.
 
+import { buyCosmetic, equipCosmetic } from "./favors";
 import { regularUpkeep } from "./regulars";
 import { journalTick } from "./journal";
 import { chooseEncounter, maybeEncounter } from "./encounters";
@@ -1192,6 +1193,12 @@ function applyActionInner(p: Player, action: Action, now: number, rng: Rng, ctx:
       break;
     case "profile":
       events.push(...updateProfile(p, { bio: action.bio, photo: action.photo }, now));
+      break;
+    case "buy_cosmetic":
+      events.push(...buyCosmetic(p, action.id, now));
+      break;
+    case "equip_cosmetic":
+      events.push(...equipCosmetic(p, action.kind, action.id));
       break;
     case "leave_career":
       events.push(...leaveCareer(p, now));

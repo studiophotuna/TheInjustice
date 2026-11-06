@@ -1,3 +1,4 @@
+import { lookOf } from "@/game/favors";
 import { assertActive, assertCanSpeak, checkReport, isBanned } from "@/game/moderation";
 import { acceptAlliance, breakAlliance, declineAlliance, proposeAlliance } from "@/game/batch7";
 import { ceremonyBlock, isMade, makeMember } from "@/game/family";
@@ -466,6 +467,7 @@ export async function GET(req: Request) {
             regular: !!o.regular,
             heavy: !!o.regular && isHeavy(o),
             tie: o.regular ? tieView(p, o.regular.country, o.regular.key) : null,
+            look: lookOf(o),
           };
         });
       return NextResponse.json({ online });
@@ -481,7 +483,7 @@ export async function GET(req: Request) {
       // Faces for the people talking (the desktop chat rail shows them).
       const ids = [...new Set(messages.slice(-30).map((m) => m.authorId))].slice(0, 20);
       const people = await Promise.all(ids.map((id) => store.get(id)));
-      const authors = Object.fromEntries(people.filter((o): o is Player => !!o).map((o) => [o.id, { photo: o.profile?.photo ?? null, path: o.path }]));
+      const authors = Object.fromEntries(people.filter((o): o is Player => !!o).map((o) => [o.id, { photo: o.profile?.photo ?? null, path: o.path, look: lookOf(o) }]));
       return NextResponse.json({ messages, authors });
     }
     const [players0, crews, myCrew, hubCity] = await Promise.all([

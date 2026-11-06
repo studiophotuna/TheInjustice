@@ -1,3 +1,4 @@
+import { favorsView, lookOf } from "./favors";
 import { disposalView, promoProgress } from "./daily_life";
 import { veteranFactor } from "./career";
 import { specialtiesView } from "./specialties";
@@ -169,6 +170,9 @@ export interface PublicView {
   surgeryFee: number | null;
   /** Your intro and photo. */
   profile: { bio: string | null; photo: string | null };
+  /** Favors and the looks bought with them. */
+  favors: ReturnType<typeof favorsView>;
+  look: ReturnType<typeof lookOf>;
   /** Someone casing you, your bodyguards, safe house and morgue time (never who). */
   threat: ReturnType<typeof import("./hit").threatView>;
   /** Army gear offered to you on the black market. */
@@ -342,6 +346,8 @@ export function toView(p: Player, now: number): PublicView {
     inbox: { items: p.inbox ?? [], unread: (p.inbox ?? []).filter((n) => !n.read).length },
     threat: threatView(p, null, now),
     profile: publicProfile(p),
+    favors: favorsView(p),
+    look: lookOf(p),
     careerRecord: careerRecordView(p, now),
     gunOffers: (p.gunOffers ?? []).map((o) => ({ ...o, itemName: ITEM_BY_ID[o.itemId]?.name ?? o.itemId, icon: ITEM_BY_ID[o.itemId]?.icon ?? "" })),
     sellableGear: sellableGear(p).map((i) => ({ id: i.id, name: i.name, icon: i.icon })),

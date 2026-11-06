@@ -14,6 +14,7 @@ import { SkelLineup, SkelRows } from "./skeleton";
 type Profile = {
   id: string;
   name: string;
+  look?: { frame: string | null; color: string | null; banner: string | null } | null;
   title: string;
   path: string | null;
   reputation: number;
@@ -475,8 +476,8 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
         {people.map((p) => (
           <button key={p.id} className={`suspect-card${outNow(p) ? " out" : ""}${p.status !== "ok" ? " away" : ""}`} onClick={() => setOpenId(p.id)}>
             <span className="lu-photo">
-              <PlayerAvatar name={p.name} path={p.path} photo={p.photo} className="lineup-face" />
-              <b className="lu-name">{p.name}</b>
+              <PlayerAvatar name={p.name} path={p.path} photo={p.photo} look={p.look} className="lineup-face" />
+              <b className={`lu-name${p.look?.color ? ` name-${p.look.color}` : ""}`}>{p.name}</b>
             </span>
             <span className="lineup-tags">
               {p.regular?.heavy && <span className="tag-mini heavy">Runs the street</span>}

@@ -494,3 +494,44 @@ img.city-shop-icon { width: 46px; height: 46px; border-radius: 12px; object-fit:
 @media (min-width: 1280px) {
   .skel-rail { display: grid; align-content: start; gap: 12px; position: fixed; right: 0; top: 0; bottom: 0; width: var(--rail-w); padding: 14px; background: #0d1016; border-left: 1px solid var(--border); }
 }
+
+/* ── Favors and looks ───────────────────────────────────────────────────── */
+/* Frames: a ring around the face, drawn over whatever rim it had. */
+.portrait-photo[class*="frame-"] { border-width: 3px !important; }
+.frame-gilded { border-color: #f2b632 !important; box-shadow: 0 0 0 2px #7a5a12, 0 0 14px rgba(242, 182, 50, 0.45) !important; }
+.frame-blood { border-color: #e5383b !important; box-shadow: 0 0 0 2px #5a1013, 0 0 14px rgba(229, 56, 59, 0.5) !important; }
+.frame-harbor { border-color: #2ec4b6 !important; box-shadow: 0 0 0 2px #0e4a44, 0 0 14px rgba(46, 196, 182, 0.45) !important; }
+.frame-velvet { border-color: #9b7bff !important; box-shadow: 0 0 0 2px #35246e, 0 0 14px rgba(155, 123, 255, 0.45) !important; }
+.frame-steel { border-color: #c9d1dc !important; box-shadow: 0 0 0 2px #4a5260 !important; }
+.frame-neon { border-color: #ff3d7f !important; box-shadow: 0 0 0 2px #2ec4b6, 0 0 18px rgba(255, 61, 127, 0.55), 0 0 26px rgba(46, 196, 182, 0.35) !important; }
+/* Name colours. */
+.name-gold { color: #f2b632 !important; } .name-crimson { color: #ff5a5f !important; } .name-teal { color: #4fe0d2 !important; }
+.name-violet { color: #b7a1ff !important; } .name-ice { color: #bfe8ff !important; } .name-rose { color: #ff9cc2 !important; }
+.name-gold-title .hero2-title { color: #f2b632; } .name-crimson-title .hero2-title { color: #ff5a5f; } .name-teal-title .hero2-title { color: #4fe0d2; }
+.name-violet-title .hero2-title { color: #b7a1ff; } .name-ice-title .hero2-title { color: #bfe8ff; } .name-rose-title .hero2-title { color: #ff9cc2; }
+
+/* The Style shop. */
+.favors-head { display: flex; justify-content: space-between; align-items: end; gap: 12px; padding: 16px 18px; border-radius: var(--radius); background: linear-gradient(120deg, #3a2a10, var(--panel) 70%); }
+.favors-head .kicker { display: block; color: var(--gold); }
+.favors-balance { font-family: var(--headline); font-weight: 400; font-size: 40px; line-height: 1; color: var(--gold); }
+.favors-head p { margin: 0; text-align: right; max-width: 50%; }
+.favor-packs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 520px) { .favor-packs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.favor-pack { display: grid; justify-items: center; gap: 2px; padding: 14px 8px 12px; border-radius: 16px; border: 1px solid #4a3a16; background: var(--panel); color: var(--text); cursor: pointer; font: inherit; position: relative; }
+.favor-pack b { font-family: var(--headline); font-weight: 400; font-size: 26px; color: var(--gold); line-height: 1; }
+.favor-pack span { font-size: 11px; font-weight: 700; color: var(--muted); }
+.favor-pack i { font-style: normal; font-size: 10.5px; font-weight: 800; color: var(--money); }
+.favor-pack em { font-style: normal; margin-top: 6px; font-size: 13px; font-weight: 800; background: var(--red); color: #fff; border-radius: 999px; padding: 4px 12px; }
+.favor-pack:disabled { opacity: 0.6; cursor: default; }
+.favors-soon { margin: 0; padding: 10px 14px; border-radius: 12px; background: #2b2412; color: #f6d98a; font-size: 13px; font-weight: 700; }
+.style-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.style-item { display: grid; gap: 10px; padding: 12px; border-radius: 16px; background: var(--panel); border: 1px solid var(--border); }
+.style-item.on { border-color: var(--gold); }
+.style-preview { display: grid; place-items: center; height: 96px; border-radius: 12px; background: #12151c; overflow: hidden; }
+.style-face { width: 72px !important; height: 72px !important; }
+.style-name { font-family: var(--headline); font-weight: 400; font-size: 20px; text-transform: uppercase; text-align: center; padding: 0 6px; }
+.style-banner { width: 100%; height: 100%; object-fit: cover; }
+.style-meta { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.style-meta b { font-size: 13px; }
+.style-meta { flex-direction: column; align-items: stretch; }
+.style-meta .btn { width: 100%; }

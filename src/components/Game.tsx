@@ -452,7 +452,7 @@ function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonN
     <header ref={ref} className={`hud${compact ? " compact" : ""}`}>
       <div className="hud-top">
         <button className="hud-avatar" onClick={onProfile} aria-label="Open your profile" style={{ ["--p" as string]: `${progress}%`, ["--rim" as string]: view.path ? PATH_LOOKS[view.path.id]?.rim : "#8d96a8" }}>
-          <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo ?? careerStill(view.path?.id, view.ladder?.current)} className="avatar-sm" />
+          <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo ?? careerStill(view.path?.id, view.ladder?.current)} look={view.look} className="avatar-sm" />
           {ladder && <span className="hud-rank">{ladder.current}</span>}
         </button>
         <div className="hud-who">

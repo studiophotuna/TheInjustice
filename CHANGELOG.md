@@ -1,5 +1,25 @@
 # Changelog
 
+## 5.0.0: Favors and the Style shop
+
+- **Favors, the game's premium currency.** Favors buy looks, never power: no energy, stats,
+  gear, money, property, rank or time off a sentence, and they never turn back into real money.
+  The rules are written down in docs/MONETIZATION.md.
+- **Style, a new section of the Shop:** six frames for your face, six name colours and eight
+  banners (city photos behind your profile). Each one previews on your own face before you buy
+  it; then wear it, swap it or take it off. A history shows what came in and what you spent.
+- **Your look shows everywhere others see you:** your frame on People, the map, city chat and
+  the top bar; your name colour on People cards, in chat and on Me; your banner behind your
+  profile on Me.
+- **Buying Favors opens soon.** The packs (100 to 3,200 Favors) are shown with placeholder
+  prices and say "coming soon" until a payment provider is connected. Every purchase will be
+  counted exactly once even if the provider sends its notice twice.
+- **Moderators can grant Favors** from the moderation page (by player name, with a reason that
+  shows in the player's history), for testing and support.
+- **Players get their own faces.** 25 new photo faces only players wear (never a street
+  regular or a story character), used as the default for anyone who hasn't picked one and as
+  the choices in Edit profile. Fixes players sometimes having the same face as a regular.
+
 ## 4.8.0: skeleton loading
 
 - **Loading looks like the game arriving:** instead of a spinner or a line of text, grey shapes

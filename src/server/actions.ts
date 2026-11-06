@@ -111,6 +111,11 @@ export function parseAction(body: unknown): Action {
         ...(typeof b.bio === "string" ? { bio: b.bio } : {}),
         ...(b.photo === null || typeof b.photo === "string" ? { photo: b.photo as string | null } : {}),
       };
+    case "buy_cosmetic":
+      return { type: "buy_cosmetic", id: str(b.id) };
+    case "equip_cosmetic":
+      if (b.kind !== "frame" && b.kind !== "color" && b.kind !== "banner") throw new GameError("Bad request.");
+      return { type: "equip_cosmetic", kind: b.kind, id: b.id === null ? null : str(b.id) };
     case "hire_bodyguards":
       return { type: "hire_bodyguards" };
     case "lie_low":

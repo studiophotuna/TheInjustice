@@ -20,6 +20,7 @@ type Person = {
   regular?: boolean;
   heavy?: boolean;
   tie?: { label: string; tone: string; memo: string } | null;
+  look?: { frame: string | null; color: string | null; banner: string | null } | null;
 };
 
 
@@ -186,7 +187,7 @@ export function CityMap({ game, go, feed }: { game: GameApi; go: (t: string) => 
         <div className="map-pins">
           {me && (
             <span className="map-me" style={{ left: `${((me.x + SPOTS[0][0] * me.w) / W) * 100}%`, top: `${((me.y + 34 + SPOTS[0][1] * (me.h - 64)) / H) * 100}%` }} title="You">
-              <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo} className="pin-avatar" />
+              <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo} look={view.look} className="pin-avatar" />
               <span className="pin-name me">You</span>
             </span>
           )}
@@ -201,7 +202,7 @@ export function CityMap({ game, go, feed }: { game: GameApi; go: (t: string) => 
               onClick={() => setSel({ kind: "person", id: p.id })}
               aria-label={p.name}
             >
-              <PlayerAvatar name={p.name} path={p.path} photo={p.photo} className="pin-avatar" />
+              <PlayerAvatar name={p.name} path={p.path} photo={p.photo} look={p.look} className="pin-avatar" />
             </motion.button>
             <span className="pin-name">{p.heavy ? `${p.name.split(" ").at(-1)} \u265B` : p.name.split(" ")[0]}</span>
             </span>

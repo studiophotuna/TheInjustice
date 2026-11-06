@@ -1,6 +1,7 @@
 // Moderation: player reports, mutes and suspensions. Moderators are accounts listed in the
 // ADMIN_USERNAMES environment variable; they work from the /admin page.
 
+import { creditFavors, FAVORS } from "./favors";
 import { GameError, type Player, type Report } from "./types";
 
 export const MOD = { reasonMax: 200, reportCooldownMs: 60_000 };
@@ -32,11 +33,17 @@ export function checkReport(reporter: Player, targetId: string, reason: unknown,
   return r;
 }
 
-export type ModAction = "dismiss" | "remove_photo" | "clear_bio" | "delete_message" | "mute" | "ban" | "unban";
+export type ModAction = "dismiss" | "remove_photo" | "clear_bio" | "delete_message" | "mute" | "ban" | "unban" | "grant_favors";
 
 /** Applies a moderator's action to the reported player. Returns a line for the log. */
-export function applyModAction(target: Player, action: ModAction, hours: number, reason: string, now: number): string {
+export function applyModAction(target: Player, action: ModAction, hours: number, reason: string, now: number, amount = 0): string {
   switch (action) {
+    case "grant_favors": {
+      const n = Math.floor(amount);
+      if (n < 1 || n > FAVORS.grantMax) throw new GameError(`Grant between 1 and ${FAVORS.grantMax} Favors.`);
+      creditFavors(target, n, `Granted by the team${reason ? `: ${reason.slice(0, 60)}` : ""}`, now, `grant:${now}`);
+      return `granted ${n} Favors`;
+    }
     case "remove_photo":
       target.profile = { ...(target.profile ?? {}), photo: null };
       return "photo removed";
@@ -65,6 +72,6 @@ export function reportView(r: Report) {
 }
 
 export function assertModAction(v: unknown): ModAction {
-  if (["dismiss", "remove_photo", "clear_bio", "delete_message", "mute", "ban", "unban"].includes(v as string)) return v as ModAction;
+  if (["dismiss", "remove_photo", "clear_bio", "delete_message", "mute", "ban", "unban", "grant_favors"].includes(v as string)) return v as ModAction;
   throw new GameError("Unknown action.");
 }

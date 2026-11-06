@@ -1,5 +1,6 @@
 "use client";
 
+import { StyleShop } from "./style";
 import { StoryLine } from "./storyline";
 import { Hero } from "./homekit";
 import { ItemArt } from "./art/ItemArt";
@@ -237,6 +238,7 @@ const SHOP_CATS = [
   { id: "armor", label: "Armor", kinds: ["armor"] },
   { id: "housing", label: "Housing", kinds: ["housing"] },
   { id: "business", label: "Businesses", kinds: [] },
+  { id: "style", label: "Style", kinds: [] },
 ] as const;
 
 export function ShopTab({ game }: { game: GameApi }) {
@@ -261,8 +263,9 @@ export function ShopTab({ game }: { game: GameApi }) {
           </button>
         ))}
       </div>
+      {cat === "style" && <StyleShop game={game} />}
       {cat === "business" && <CityShops game={game} data={shops.data} reload={shops.load} />}
-      {cat !== "business" && counters.length > 0 && (
+      {cat !== "business" && cat !== "style" && counters.length > 0 && (
         <div className="shop-strips">
           {counters.map((s) => <ShopOwnerStrip key={s.kind} row={s} onManage={manage} />)}
         </div>
@@ -401,10 +404,10 @@ export function ProfileTab({ game }: { game: GameApi }) {
 
   return (
     <div className="profile">
-      <div className="me-top">
+      <div className={`me-top${view.look?.color ? ` name-${view.look.color}-title` : ""}`}>
         <Hero
           game={game}
-          scene={view.path ? (ME_SCENE[view.path.id] ?? "street") : "gutter"}
+          scene={view.look?.banner ?? (view.path ? (ME_SCENE[view.path.id] ?? "street") : "gutter")}
           kicker={view.deaths ? `Life #${view.deaths + 1}` : view.location.city}
           title={view.name}
           sub={view.path ? `${view.path.rank} · ${view.path.name}` : "No career yet"}

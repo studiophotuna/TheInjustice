@@ -4,9 +4,10 @@
 // Each is tagged by gender so a character's face matches who they are written as.
 
 export type Gender = "f" | "m";
-export interface Face { src: string; g: Gender; old?: boolean }
+export interface Face { src: string; g: Gender; old?: boolean; /** Only players wear it (never a regular or a story character). */ player?: boolean }
 
 const mk = (id: string, g: Gender, old = false): [string, Face] => [`mk${id}`, { src: `/faces/mk${id}.jpg`, g, ...(old ? { old } : {}) }];
+const pl = (id: string, g: Gender, old = false): [string, Face] => [`mk${id}`, { src: `/faces/mk${id}.jpg`, g, player: true, ...(old ? { old } : {}) }];
 const pt = (id: string, g: Gender, old = false): [string, Face] => [id, { src: `/portraits/${id}.jpg`, g, ...(old ? { old } : {}) }];
 
 export const FACES: Record<string, Face> = Object.fromEntries([
@@ -18,6 +19,10 @@ export const FACES: Record<string, Face> = Object.fromEntries([
   ...["enforcer-3", "enforcer-8", "medicine-4"].map((i) => pt(i, "m", true)),
   ...["medicine-6", "medicine-8", "police-4"].map((i) => pt(i, "f")),
   ...["medicine-7"].map((i) => pt(i, "f", true)),
+  // Players' own faces: defaults for anyone who hasn't picked one, and the choices in Edit profile.
+  ...["11683", "24633", "31413", "40371", "43806", "4535", "45460", "4818", "4837", "4875", "8761"].map((i) => pl(i, "m")),
+  ...["5478"].map((i) => pl(i, "m", true)),
+  ...["1229", "13203", "43830", "44295", "44560", "4543", "4826", "4859", "4870", "49614", "49647", "52039", "52196"].map((i) => pl(i, "f")),
 ]);
 
 export const FACE_SRCS = new Set(Object.values(FACES).map((f) => f.src));
@@ -83,8 +88,8 @@ export function regularFace(key: string): Face | null {
   if (!look) return null;
   if (look.face && FACES[look.face]) return FACES[look.face];
   const taken = new Set(Object.values(REGULAR_LOOKS).map((l) => l.face).filter(Boolean));
-  const pool = Object.entries(FACES).filter(([id, f]) => f.g === look.g && !!f.old === !!look.old && !taken.has(id) && !NPC_SRCS.has(f.src));
-  const list = pool.length ? pool : Object.entries(FACES).filter(([, f]) => f.g === look.g);
+  const pool = Object.entries(FACES).filter(([id, f]) => !f.player && f.g === look.g && !!f.old === !!look.old && !taken.has(id) && !NPC_SRCS.has(f.src));
+  const list = pool.length ? pool : Object.entries(FACES).filter(([, f]) => !f.player && f.g === look.g);
   // Same-gender regulars in alphabetical order take faces in turn, so they rarely repeat.
   // Within a city, same-looking regulars take faces in turn, so nobody there repeats; each city
   // starts further along the list, so the cities look different from each other too.
@@ -95,7 +100,9 @@ export function regularFace(key: string): Face | null {
 }
 
 /** A face for a player who hasn't picked one: the same one every time for the same name. */
+export const PLAYER_FACES = Object.values(FACES).filter((f) => f.player);
+
 export function defaultFace(name: string): Face {
-  const all = Object.values(FACES).filter((f) => !f.old);
+  const all = PLAYER_FACES.filter((f) => !f.old);
   return all[hash(name) % all.length];
 }

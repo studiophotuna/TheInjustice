@@ -1,6 +1,7 @@
 // Rules for players interacting with each other. Pure functions over Player/Crew objects:
 // the server loads and saves both sides inside one transaction.
 
+import { lookOf, type Look } from "./favors";
 import { clinicFactor } from "./specialties";
 import { addWound, playerMaxHp } from "./wounds";
 import { ALT_BLOCK, assertNotAlt, sameOwner } from "./anticheat";
@@ -175,6 +176,8 @@ export interface PublicProfile {
   /** The player's own intro and photo. */
   bio: string | null;
   photo: string | null;
+  /** Frame, name colour and banner bought with Favors. */
+  look: Look | null;
   /** Walked out on the family: fair game for their old crew. */
   rat: boolean;
   /** Season trophies, only if the owner chose to show them. */
@@ -207,6 +210,7 @@ export function profileFor(viewer: Player, p: Player, now: number): PublicProfil
     canVouch,
     rat: !!ratOf(p, now),
     ...publicProfile(p),
+    look: lookOf(p),
     trophies: p.trophiesPublic ? (p.trophies ?? []).slice(0, 6).map((t) => ({ label: t.label, place: t.place, seasonName: t.seasonName })) : [],
   };
 }

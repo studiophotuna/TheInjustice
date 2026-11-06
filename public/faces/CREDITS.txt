@@ -1,3 +1,4 @@
 Face stills cropped from free stock video on Mixkit (https://mixkit.co), used under the Mixkit
 Stock Video Free License (see /public/scenes/CREDITS.md). File names carry the Mixkit clip id
 (mk<id>.jpg). Each face is tagged by gender in src/game/content/faces.ts.
+Faces marked `player` in faces.ts are worn only by players (defaults and the Edit profile picker).

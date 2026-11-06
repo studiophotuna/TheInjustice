@@ -47,6 +47,8 @@ export async function GET(req: Request) {
       open,
       closed: [...resolved, ...dismissed].sort((a, b) => b.id - a.id).slice(0, 20),
       alts: linkedGroups(players),
+      // For granting Favors by name (testing and support).
+      people: players.filter((p) => !p.regular).map((p) => ({ id: p.id, name: p.name, favors: p.favors ?? 0 })).slice(0, 500),
       restricted,
     });
   } catch (e) {
@@ -77,7 +79,7 @@ export async function POST(req: Request) {
       if (!targetId) throw new GameError("Which player?");
       line = await store.update(targetId, (p) => {
         if (!p) throw new GameError("That player doesn't exist.");
-        return { player: p, result: applyModAction(p, action, hours, reason, now) };
+        return { player: p, result: applyModAction(p, action, hours, reason, now, Number(b.amount) || 0) };
       });
     }
     if (reportId !== null) {

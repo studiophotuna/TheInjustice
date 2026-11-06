@@ -148,6 +148,13 @@ export interface Player {
   lastReportAt?: number;
   /** A short introduction and a photo (data URL), shown to other players. */
   profile?: { bio?: string; photo?: string | null; updatedAt?: number };
+  /** Favors, the premium currency (looks only). */
+  favors?: number;
+  /** Payment and grant ids already credited, so none is counted twice. */
+  favorRefs?: string[];
+  favorLog?: { at: number; delta: number; what: string; ref?: string }[];
+  /** Looks bought with Favors, and the ones being worn. */
+  cosmetics?: { owned: string[]; frame?: string | null; color?: string | null; banner?: string | null };
   /** Gear in use: only equipped gear counts in a fight. */
   equipped?: { weapon?: string | null; armor?: string | null };
   /** Uses left on each piece of gear (missing = brand new). */
@@ -766,6 +773,8 @@ export type Action =
   | { type: "repair"; itemId: string }
   | { type: "hire_bodyguards" }
   | { type: "profile"; bio?: string; photo?: string | null }
+  | { type: "buy_cosmetic"; id: string }
+  | { type: "equip_cosmetic"; kind: "frame" | "color" | "banner"; id: string | null }
   | { type: "leave_career" }
   | { type: "start_exit" }
   | { type: "field_dressing" }

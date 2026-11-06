@@ -12,7 +12,29 @@ type Data = {
   closed: Report[];
   alts: { ids: string[]; names: string[]; device: boolean }[];
   restricted: { id: string; name: string; bannedUntil: number | null; mutedUntil: number | null; reason: string | null }[];
+  people?: { id: string; name: string; favors: number }[];
 };
+
+/** Grant Favors to a player by name: for testing the Style shop and for support cases. */
+function GrantFavors({ data, busy, act }: { data: Data; busy: boolean; act: (p: Record<string, unknown>) => Promise<void> }) {
+  const [name, setName] = useState("");
+  const [amount, setAmount] = useState("500");
+  const [reason, setReason] = useState("");
+  const who = data.people?.find((p) => p.name.toLowerCase() === name.trim().toLowerCase());
+  return (
+    <section className="card">
+      <h3 className="card-title">Grant Favors</h3>
+      <div className="row wrap">
+        <input list="admin-people" placeholder="Player name" value={name} onChange={(e) => setName(e.target.value)} />
+        <datalist id="admin-people">{data.people?.map((p) => <option key={p.id} value={p.name} />)}</datalist>
+        <input inputMode="numeric" style={{ width: 90 }} value={amount} onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))} />
+        <input placeholder="Reason (shown in their history)" value={reason} onChange={(e) => setReason(e.target.value)} />
+        <button className="btn btn-primary btn-sm" disabled={busy || !who || !Number(amount)} onClick={() => act({ action: "grant_favors", targetId: who!.id, amount: Number(amount), reason })}>Grant</button>
+      </div>
+      {who && <p className="fine muted">{who.name} has {who.favors.toLocaleString()} Favors.</p>}
+    </section>
+  );
+}
 
 const when = (t: number) => new Date(t).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
@@ -59,6 +81,7 @@ export default function AdminPage() {
       {!data && !error && <p className="muted">Loading…</p>}
       {data && (
         <>
+          <GrantFavors data={data} busy={busy} act={act} />
           <section className="card">
             <h3 className="card-title">Open reports · {data.open.length}</h3>
             {data.open.length === 0 && <p className="muted">Nothing to review.</p>}

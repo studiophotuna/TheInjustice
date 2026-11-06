@@ -11,7 +11,7 @@ import type { GameApi } from "./useGame";
 import { SkelRows } from "./skeleton";
 
 type Msg = { id: number; authorId: string; authorName: string; body: string; at: number };
-type Author = { photo: string | null; path: string | null };
+type Author = { photo: string | null; path: string | null; look?: { frame: string | null; color: string | null; banner: string | null } | null };
 
 const ago = (t: number) => {
   const m = Math.max(0, Math.round((Date.now() - t) / 60000));
@@ -88,9 +88,9 @@ function CityChat({ game }: { game: GameApi }) {
         {msgs !== null && items.length === 0 && <p className="muted">Quiet tonight. Say something.</p>}
         {items.map((it) => (
           <div key={it.m.id} className={`cchat-msg ${it.m.authorId === view.id ? "mine" : ""}`}>
-            <PlayerAvatar name={it.m.authorName} path={authors[it.m.authorId]?.path} photo={authors[it.m.authorId]?.photo} className="cchat-avatar" />
+            <PlayerAvatar name={it.m.authorName} path={authors[it.m.authorId]?.path} photo={authors[it.m.authorId]?.photo} look={authors[it.m.authorId]?.look} className="cchat-avatar" />
             <div>
-              <p className="cchat-who">{it.m.authorId === view.id ? "You" : it.m.authorName} <time>{ago(it.at)}</time></p>
+              <p className={`cchat-who${authors[it.m.authorId]?.look?.color ? ` name-${authors[it.m.authorId]!.look!.color}` : ""}`}>{it.m.authorId === view.id ? "You" : it.m.authorName} <time>{ago(it.at)}</time></p>
               <p className="cchat-body">{it.m.body}</p>
             </div>
           </div>

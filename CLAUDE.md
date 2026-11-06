@@ -13,6 +13,7 @@ Read `docs/DESIGN_LESSONS.md` first. The short version:
 - No explainer paragraph on every card, no icon in front of every title, no emoji in UI text,
   no chip clutter, no mixed art styles, no casino styling, no generic AI character art.
 - Never show win odds or success percentages to players.
+- Paid features follow `docs/MONETIZATION.md`: Favors buy looks, never power.
 - Mock up two screens with real data before rolling a visual change into the game, and check your
   own screenshots before sending them.
 

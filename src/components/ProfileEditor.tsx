@@ -6,7 +6,7 @@
 import { Camera, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { PlayerAvatar } from "./art/Portraits";
-import { FACES, type Gender } from "@/game/content/faces";
+import { PLAYER_FACES, type Gender } from "@/game/content/faces";
 import type { GameApi } from "./useGame";
 
 const SIZE = 160;
@@ -78,7 +78,7 @@ export function ProfileEditor({ game, onClose }: { game: GameApi; onClose: () =>
           </span>
         </div>
         <div className="face-grid">
-          {Object.values(FACES).filter((f) => f.g === faceSet).map((f) => (
+          {PLAYER_FACES.filter((f) => f.g === faceSet).map((f) => (
             <button key={f.src} className={`face-opt ${photo === f.src ? "on" : ""}`} onClick={() => setPhoto(f.src)} aria-label="Use this face">
               <img src={f.src} alt="" loading="lazy" />
             </button>
