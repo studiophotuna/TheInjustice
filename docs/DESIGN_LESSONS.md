@@ -54,6 +54,13 @@ the fix is mostly **composition and system**, not a theme.
   shown side by side. Only roll out a direction the owner approves.
 - **Check the mockup screenshots yourself** before sending: broken CSS, wrapped buttons and
   floating fixed bars all happened and were caught this way.
+- **Ship what was approved.** After a mockup is approved, compare each built screen with it side
+  by side before shipping, and list anything that differs. Rounds 1 to 4 drifted from the approved
+  Home and war board (personal stories instead of city ones, a stack of bosses instead of one,
+  initials instead of faces, no city chat) and the owner had to point it out.
+- **Faces must fit the character.** Pick faces by the character's written gender and age, never
+  from the name alone, and never give two people in the same city the same face. Players choose
+  their own face.
 - **Use references.** When the owner shares reference images, list what to take, where it goes in
   Conspira, and what not to take, then mock it.
 - **Art is the bottleneck.** Background removal (`rembg`, model `isnet-general-use`) works on our
