@@ -9,6 +9,7 @@
 // invited, or bountied, and they carry only pocket money (refilled every few hours), so nobody
 // can farm them.
 
+import { regularFace } from "./content/faces";
 import { STAT_KEYS, type CountryId, type PathId, type Player, type StatKey } from "./types";
 
 export const REGULARS = {
@@ -152,7 +153,7 @@ export const isHeavy = (p: Player) => !!defFor(p)?.heavy;
 
 /** Keeps a regular in shape: pocket money refills every few hours, and they don't hold heat. */
 /** Each regular's portrait (drawn from the Notionists set, CC0; see public/regulars/CREDITS.txt). */
-export const regularPhoto = (country: string, key: string) => `/regulars/${country}-${key}.svg`;
+export const regularPhoto = (country: string, key: string) => regularFace(key)?.src ?? `/regulars/${country}-${key}.svg`;
 
 export function regularUpkeep(p: Player, now: number) {
   if (!p.regular) return;

@@ -1,6 +1,7 @@
 // A player's own profile: a short introduction and a photo. Minimal on purpose. The street name
 // can't be changed: detectives' clues are built from it, and case files, crews and trials keep it.
 
+import { FACE_SRCS } from "./content/faces";
 import { GameError, type GameEvent, type Player } from "./types";
 
 export const PROFILE = {
@@ -19,6 +20,8 @@ export function cleanBio(raw: unknown): string {
 
 export function validPhoto(raw: unknown): string | null {
   if (raw === null || raw === "") return null;
+  // One of the game's own photo faces.
+  if (typeof raw === "string" && FACE_SRCS.has(raw)) return raw;
   if (typeof raw !== "string" || raw.length > PROFILE.photoMaxChars || !PHOTO_RE.test(raw)) {
     throw new GameError("That photo won't work. Use a JPEG, PNG or WebP image.");
   }

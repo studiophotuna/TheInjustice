@@ -88,7 +88,7 @@ import {
   withdrawPayoff,
 } from "@/game/racket";
 import { rankTitle } from "@/game/content/paths";
-import { advanceCity, newCity, crackdownOn, isChief, isMayor as isCityMayor, protectWitnesses } from "@/game/city";
+import { advanceCity, electionOpen, newCity, crackdownOn, isChief, isMayor as isCityMayor, protectWitnesses } from "@/game/city";
 import { inmateView, prisonWork, yardChannel, yardFight } from "@/game/prison";
 import { breakoutView, cancelBreakout, executeBreakout, joinBreakout, planBlock, planBreakout, serving } from "@/game/breakout";
 import {
@@ -437,6 +437,7 @@ export async function GET(req: Request) {
         wanted: real.filter((o) => isFugitive(o, now)).length + (city?.mostWanted && city.mostWanted.until > now ? 1 : 0),
         fires: (city?.fires ?? []).filter((f) => now - f.at < 24 * 60 * 60_000).length,
         war: Object.entries(city?.turf ?? {}).find(([, h]) => h?.war && h.war.endsAt > now)?.[0] ?? null,
+        election: city ? electionOpen(city, now) : false,
       };
       return NextResponse.json({ feed, needs, heavies, stats });
     }
@@ -477,7 +478,11 @@ export async function GET(req: Request) {
       const blocked = new Set(p.blocked ?? []);
       if (channel === `country:${countryOf(p)}`) await regularChat(store, countryOf(p), now);
       const messages = (await store.listMessages(channel, 60)).filter((m) => !blocked.has(m.authorId));
-      return NextResponse.json({ messages });
+      // Faces for the people talking (the desktop chat rail shows them).
+      const ids = [...new Set(messages.slice(-30).map((m) => m.authorId))].slice(0, 20);
+      const people = await Promise.all(ids.map((id) => store.get(id)));
+      const authors = Object.fromEntries(people.filter((o): o is Player => !!o).map((o) => [o.id, { photo: o.profile?.photo ?? null, path: o.path }]));
+      return NextResponse.json({ messages, authors });
     }
     const [players0, crews, myCrew, hubCity] = await Promise.all([
       store.listPlayers(countryOf(p), 40),

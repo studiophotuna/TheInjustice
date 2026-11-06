@@ -56,7 +56,7 @@ export function declareWar(c: City, crew: Crew, p: Player, d: DistrictId, now: n
   const block = warBlock(c, crew, p, d, now);
   if (block) throw new GameError(block);
   const h = holdOf(c, d)!;
-  h.war = { crewId: crew.id, name: crew.name, tag: crew.tag, startedAt: now, endsAt: now + T.warMs, attackers: [{ id: p.id, name: p.name, at: now }], defenders: [] };
+  h.war = { crewId: crew.id, name: crew.name, tag: crew.tag, startedAt: now, endsAt: now + T.warMs, attackers: [{ id: p.id, name: p.name, at: now, ...fighterPhoto(p) }], defenders: [] };
   c.log = [{ at: now, text: `War! ${crew.name} [${crew.tag}] is coming for ${h.name}'s ${DISTRICT_BY_ID[d].name}.` }, ...c.log].slice(0, 20);
   return [{ tone: "good", text: `You declare war on ${h.name} [${h.tag}] for ${DISTRICT_BY_ID[d].name}. Get your crew in the fight.` }];
 }
@@ -85,6 +85,9 @@ export function joinWarBlock(c: City, p: Player, d: DistrictId, now: number, all
   return null;
 }
 
+/** A fighter's face for the war board: only the game's own photos (uploads are too big to copy). */
+const fighterPhoto = (p: Player) => (p.profile?.photo?.startsWith("/") ? { photo: p.profile.photo } : {});
+
 export function joinWar(c: City, p: Player, d: DistrictId, now: number, allies: string[] = []): GameEvent[] {
   const block = joinWarBlock(c, p, d, now, allies);
   if (block) throw new GameError(block);
@@ -92,7 +95,7 @@ export function joinWar(c: City, p: Player, d: DistrictId, now: number, allies: 
   p.energy -= T.joinEnergy;
   crewJob(p, "war");
   const attacking = sideOf(h, p, allies) === "attack";
-  (attacking ? h.war!.attackers : h.war!.defenders).push({ id: p.id, name: p.name, at: now });
+  (attacking ? h.war!.attackers : h.war!.defenders).push({ id: p.id, name: p.name, at: now, ...fighterPhoto(p) });
   return [{ tone: "good", text: attacking ? `You're on the attack for ${DISTRICT_BY_ID[d].name}.` : `You're defending ${DISTRICT_BY_ID[d].name}.` }];
 }
 
@@ -158,8 +161,8 @@ export function turfView(c: City, viewer: Player, crew: Crew | null, now: number
             attackerTag: h.war.tag,
             startedAt: h.war.startedAt,
             endsAt: h.war.endsAt,
-            attackerList: h.war.attackers.map((x) => ({ name: x.name, at: x.at ?? null, me: x.id === viewer.id })),
-            defenderList: h.war.defenders.map((x) => ({ name: x.name, at: x.at ?? null, me: x.id === viewer.id })),
+            attackerList: h.war.attackers.map((x) => ({ name: x.name, at: x.at ?? null, me: x.id === viewer.id, photo: x.photo ?? null })),
+            defenderList: h.war.defenders.map((x) => ({ name: x.name, at: x.at ?? null, me: x.id === viewer.id, photo: x.photo ?? null })),
             mySide: h.war.attackers.some((x) => x.id === viewer.id) ? "attack" : h.war.defenders.some((x) => x.id === viewer.id) ? "defend" : null,
             attackers: h.war.attackers.length,
             defenders: h.war.defenders.length,

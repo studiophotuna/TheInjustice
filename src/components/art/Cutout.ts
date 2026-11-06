@@ -1,3 +1,4 @@
+import { defaultFace } from "@/game/content/faces";
 // Cut-out characters (background removed) for art that breaks out of its frame. Only clean
 // single-person cut-outs exist; anything else falls back to the framed portrait.
 
@@ -29,10 +30,16 @@ const HEAVY: Record<string, string> = {
   medicine: "medicine-4",
   vigilante: "vigilante-2",
 };
-export function heavyCutout(path: string | null | undefined, name?: string): string {
-  // With a name, the same person as their face everywhere else (see facePhoto).
-  if (name) return facePhoto(name, path).replace("/portraits/", "/cutouts/").replace(".jpg", ".webp");
+export function heavyCutout(path: string | null | undefined): string {
   return `/cutouts/${(path && HEAVY[path]) || "enforcer-3"}.webp`;
+}
+
+/** Faces that have a clean cut-out (public/cutouts/face-*.webp). */
+const FACE_CUTS = new Set(["enforcer-3", "enforcer-8", "mk14090", "mk32642", "mk9248"]);
+/** The cut-out of the same person as a face photo, when there's a clean one. */
+export function faceCutout(photo: string | null | undefined): string | null {
+  const base = photo?.match(/\/(?:faces|portraits)\/([\w-]+)\.jpg$/)?.[1];
+  return base && FACE_CUTS.has(base) ? `/cutouts/face-${base}.webp` : null;
 }
 
 /** The still behind the player's career portrait, for small avatars of themselves. */
@@ -41,19 +48,12 @@ export function careerStill(path: string | null | undefined, rank: number | null
   return `/portraits/${path}-${Math.max(1, Math.min(8, rank ?? 1))}.jpg`;
 }
 
-const ALL = Object.entries(GOOD).flatMap(([p, ranks]) => ranks.map((r) => `${p}-${r}`));
-
-function hash(s: string) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
 
 /**
  * A photo face for someone without an uploaded photo: always the same one for the same name,
  * from their own career's portraits when it has clean ones.
  */
-export function facePhoto(name: string, path: string | null | undefined): string {
-  const pool = path && GOOD[path] ? GOOD[path].map((r) => `${path}-${r}`) : ALL;
-  return `/portraits/${pool[hash(name) % pool.length]}.jpg`;
+export function facePhoto(name: string, path?: string | null): string {
+  void path;
+  return defaultFace(name).src;
 }

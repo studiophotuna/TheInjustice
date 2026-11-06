@@ -1,6 +1,6 @@
 "use client";
 
-import { Footprints, Hand, MapPin, Swords, Zap } from "lucide-react";
+import { Footprints, Hand, Swords, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
@@ -124,11 +124,9 @@ export function CityMap({ game, go, feed }: { game: GameApi; go: (t: string) => 
   };
 
   return (
-    <section className="card citymap">
-      <div className="row between">
-        <h3 className="card-title"><MapPin size={16} /> {view.location.city} · live</h3>
-        <span className="map-count">{pins.length} out</span>
-      </div>
+    <section className="citymap-wrap">
+      <div className="sec-head"><h2>The map</h2><button className="link" onClick={() => go("tab:city")}>Open</button></div>
+      <div className="card citymap">
       <div className="map-wrap">
         <svg viewBox={`0 0 ${W} ${H}`} className="map-svg" role="img" aria-label={`Map of ${view.location.city}`}>
           <defs>
@@ -156,6 +154,7 @@ export function CityMap({ game, go, feed }: { game: GameApi; go: (t: string) => 
           {me && (
             <span className="map-me" style={{ left: `${((me.x + me.w - 18) / W) * 100}%`, top: `${((me.y + me.h - 16) / H) * 100}%` }} title="You">
               <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo} className="pin-avatar" />
+              <span className="pin-name me">You</span>
             </span>
           )}
           {pins.map(({ p, x, y }, k) => (
@@ -171,6 +170,7 @@ export function CityMap({ game, go, feed }: { game: GameApi; go: (t: string) => 
             >
               <PlayerAvatar name={p.name} path={p.path} photo={p.photo} className="pin-avatar" />
             </motion.button>
+            <span className="pin-name">{p.heavy ? `${p.name.split(" ").at(-1)} \u265B` : p.name.split(" ")[0]}</span>
             </span>
           ))}
         </div>
@@ -223,6 +223,7 @@ export function CityMap({ game, go, feed }: { game: GameApi; go: (t: string) => 
           </motion.p>
         )}
       </AnimatePresence>
+      </div>
     </section>
   );
 }

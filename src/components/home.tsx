@@ -73,7 +73,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
 
   return (
     <div className="stack home">
-      <Stories game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} war={pulse?.stats?.war} />
+      <Stories game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} war={pulse?.stats?.war} heavies={pulse?.heavies} fires={pulse?.stats?.fires} election={pulse?.stats?.election} />
       <Hero
         game={game}
         scene={sceneFile(scene)}
@@ -83,7 +83,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
         action={
           !busyElsewhere && best ? (
             <button className="btn btn-red" disabled={game.busy || !!best.locked} onClick={() => game.act({ type: "job", jobId: best.id })}>
-              {best.name} <small>${best.pay[0]}–{best.pay[1]}</small>
+              {best.name.split(/ for | at | in /)[0]} <small>${best.pay[0]}–{best.pay[1]}</small>
             </button>
           ) : null
         }
@@ -92,8 +92,6 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
       <DisposalCard game={game} />
       <OnTheRun game={game} />
       <JailCard game={game} />
-      <RightNow game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} />
-      <TutorialCard game={game} go={go} />
       <OldLife game={game} go={go} />
       <ThreatCard game={game} />
       <BackAlleyCard game={game} />
@@ -103,6 +101,11 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
       <div className="home-pair">
         <BigFish2 game={game} heavies={pulse?.heavies} go={go} />
         <CityMap game={game} go={go} feed={pulse?.feed} />
+      </div>
+
+      <div className="home-later">
+        <RightNow game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} />
+        <TutorialCard game={game} go={go} />
       </div>
 
       <DailyCard game={game} />

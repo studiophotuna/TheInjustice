@@ -1,5 +1,28 @@
 # Changelog
 
+## 4.4.0: a new look, round 5 (closer to the mockup, faces, city chat)
+
+- **More faces, matched to who people are:** 43 new photo faces, plus the career portraits that
+  show a face, all tagged as women or men. Every street regular now has a fixed face that fits
+  how they're written, and no two in the same city share one. The city's bosses get their own.
+- **Pick your own face:** Me → Edit profile now has a grid of faces (Women / Men) besides
+  uploading a photo.
+- **City chat on wide screens:** the right-hand panel is now the city's chat, with faces,
+  times, the city's news from the Courier in between, and a box to say something.
+- **Home follows the mockup more closely:**
+  - The story bubbles lead with the city: your chapter, the big fish who's out, fires,
+    the election and turf wars, then your own to-dos.
+  - The main button is short ("Run errands $16–24").
+  - Big fish is one poster-sized card for the boss who's out, with "Take him on" or
+    "Take her on".
+  - "The map" has its own heading with an "Open" link, faces as pins with name tags, and a
+    crown on the boss.
+  - "Right now" and your rewards moved below the map.
+- **Turf war board:** a photo of the district behind the score, bigger crew badges, how many
+  are in on each side, a center timeline with faces on each side, and photo rosters.
+  "Join the fight" shows its energy cost, and "Break it up" is now "Call peacekeepers". The
+  board says the war is settled when the clock runs out: it never shows who's likely to win.
+
 ## 4.3.0: a new look, round 4 (Me, People, City)
 
 - **Me is half as long.** It opens on a big portrait of your character over a photo of where your

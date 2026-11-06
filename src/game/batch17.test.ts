@@ -35,7 +35,7 @@ describe("street encounters", () => {
     const p = mk();
     maybeEncounter(p, "varrow", LATER, () => 0, 10);
     const v = encounterView(p, LATER + 1000)!;
-    expect(v.photo).toMatch(/^\/regulars\/varrow-/);
+    expect(v.photo).toMatch(/^\/(faces|portraits)\//);
     expect(v.text.length).toBeGreaterThan(20);
     expect(v.options.length).toBeGreaterThanOrEqual(2);
     expect(v.options.every((o) => o.hint)).toBe(true);
@@ -74,7 +74,7 @@ describe("street encounters", () => {
   it("regulars get their portrait", () => {
     const r = makeRegular("kestrova", "anya", LATER);
     regularUpkeep(r, LATER);
-    expect(r.profile?.photo).toBe("/regulars/kestrova-anya.svg");
+    expect(r.profile?.photo).toMatch(/^\/(faces|portraits)\//);
   });
 });
 

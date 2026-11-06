@@ -5,7 +5,8 @@
 
 import type { ReactNode } from "react";
 import { CareerPortrait } from "./art/CareerPortrait";
-import { cutoutFor, heavyCutout } from "./art/Cutout";
+import { cutoutFor, faceCutout } from "./art/Cutout";
+import { REGULAR_LOOKS } from "@/game/content/faces";
 import { nextOut, type CrewNeed, type Heavy } from "./pulse";
 import { fmt, type GameApi } from "./useGame";
 
@@ -16,13 +17,18 @@ type Story = { key: string; label: string; img: string; fresh: boolean; sub?: st
 const NEED_ART: Record<string, string> = { ambush: "street", heist: "bank", breakout: "prison", war: "marina" };
 
 /** Everything worth a tap right now, as a row of circles. Gold rings are new or ready. */
-export function Stories({ game, go, needs, onRead, war }: { game: GameApi; go: (t: string) => void; needs: CrewNeed[]; onRead: (id: string) => void; war?: string | null }) {
+export function Stories({ game, go, needs, onRead, war, heavies, fires, election }: { game: GameApi; go: (t: string) => void; needs: CrewNeed[]; onRead: (id: string) => void; war?: string | null; heavies?: Heavy[]; fires?: number; election?: boolean }) {
   const view = game.view!;
   const live = game.live!;
   const s: Story[] = [];
   const scene = (n: string) => `/scenes/${n}.jpg`;
   const chapter = view.chapters.find((c) => c.unlocked && !c.read);
-  if (chapter) s.push({ key: "chapter", label: "New chapter", img: scene("interrogation"), fresh: true, run: () => onRead(chapter.id) });
+  // The city first: what's going on out there tonight.
+  if (chapter) s.push({ key: "chapter", label: chapter.title.split(" · ")[0], img: scene("interrogation"), fresh: true, run: () => onRead(chapter.id) });
+  const boss = heavies?.find((h) => h.out && h.status !== "hospital");
+  if (boss?.photo) s.push({ key: "boss", label: "Big fish", img: boss.photo, fresh: true, run: () => go(`person:${boss.id}`) });
+  if (fires) s.push({ key: "fire", label: "Fire!", img: scene("crimescene"), fresh: true, run: () => go("place:police") });
+  if (election) s.push({ key: "election", label: "Election", img: scene("cityhall"), fresh: false, run: () => go("place:cityhall") });
   if (war) s.push({ key: "war", label: "Turf war", img: scene("marina"), fresh: true, run: () => go("place:cityhall") });
   for (const n of needs) s.push({ key: `need-${n.kind}`, label: n.cta, img: scene(NEED_ART[n.kind] ?? "street"), fresh: true, run: () => go(n.go) });
   if (view.daily.canClaim) s.push({ key: "daily", label: "Daily reward", img: scene("exchange"), fresh: true, run: () => game.act({ type: "claim_daily" }) });
@@ -111,32 +117,30 @@ export function CityTiles({ stats, city, go }: { stats: CityStats | undefined; c
 /** The people who run the streets, each leaning out of his own card. */
 export function BigFish2({ game, heavies, go }: { game: GameApi; heavies: Heavy[] | undefined; go: (t: string) => void }) {
   if (!heavies?.length) return null;
+  // One boss at a time, the one who's out if anyone is: a single big card, like a fight poster.
+  const h = heavies.find((x) => x.out && x.status !== "hospital") ?? heavies.find((x) => x.out) ?? heavies[0];
+  const cut = faceCutout(h.photo);
+  const g = REGULAR_LOOKS[h.id.split("-").slice(2).join("-")]?.g;
+  const them = g === "f" ? "her" : g === "m" ? "him" : "them";
   return (
-    <section>
-      <div className="sec-head"><h2>Big fish</h2></div>
-      <div className="boss-list">
-        {heavies.map((h) => (
-          <article key={h.id} className={`boss ${h.out ? "out" : ""}`}>
-            <img className="boss-cut" src={heavyCutout(h.path, h.name)} alt="" />
-            <div className="boss-who">
-              <span className="kicker">♛ {h.title}</span>
-              <h3>{h.name}</h3>
-              <span className={`status ${h.status === "hospital" ? "away" : h.out ? "on" : ""}`}>
-                {h.status === "hospital" ? "In the clinic" : h.out ? "Out now" : `Out at ${nextOut(h.hours)}`}
-              </span>
-              {h.tie && <span className={`tie-badge tie-${h.tie.tone}`}>{h.tie.label}</span>}
-            </div>
-            <div className="boss-acts">
-              {h.out && !h.canAttack && (
-                <button className="btn btn-red" disabled={game.busy} onClick={() => confirm(`Take on ${h.name} alone? Heavies don't go down easy.`) && game.social({ op: "attack", targetId: h.id })}>
-                  Take them on
-                </button>
-              )}
-              <button className="btn btn-ghost" onClick={() => go("people:crew")}>Bring a crew</button>
-            </div>
-          </article>
-        ))}
+    <article className={`boss boss-one ${h.out ? "out" : ""} ${cut ? "" : "framed"}`}>
+      {cut ? <img className="boss-cut" src={cut} alt="" /> : <img className="boss-frame" src={h.photo ?? ""} alt="" />}
+      <div className="boss-who">
+        <span className="kicker">&#9819; Big fish{heavies.length > 1 ? ` · 1 of ${heavies.length}` : ""}</span>
+        <h3>{h.name}</h3>
+        <span className={`status ${h.status === "hospital" ? "away" : h.out ? "on" : ""}`}>
+          {h.status === "hospital" ? "In the clinic" : h.out ? `Out now · ${h.title}` : `Out at ${nextOut(h.hours)}`}
+        </span>
+        {h.tie && <span className={`tie-badge tie-${h.tie.tone}`}>{h.tie.label}</span>}
       </div>
-    </section>
+      <div className="boss-acts">
+        {h.out && !h.canAttack && (
+          <button className="btn btn-red" disabled={game.busy} onClick={() => confirm(`Take on ${h.name} alone? Heavies don't go down easy.`) && game.social({ op: "attack", targetId: h.id })}>
+            Take {them} on
+          </button>
+        )}
+        <button className="btn btn-ghost" onClick={() => go("people:crew")}>Bring a crew</button>
+      </div>
+    </article>
   );
 }

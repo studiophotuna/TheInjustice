@@ -14,7 +14,7 @@ export type Heavy = {
   canAttack: string | null; hours: [number, number] | null; reputation: number;
   tie: { label: string; tone: string; memo: string } | null;
 };
-type Pulse = { feed: FeedItem[]; needs: CrewNeed[]; heavies?: Heavy[]; stats?: { out: number; crews: number; wanted: number; fires: number; war?: string | null } };
+type Pulse = { feed: FeedItem[]; needs: CrewNeed[]; heavies?: Heavy[]; stats?: { out: number; crews: number; wanted: number; fires: number; war?: string | null; election?: boolean } };
 
 /** The street feed and your crew's needs, refreshed every minute while the page is visible. */
 export function usePulse(country: string) {

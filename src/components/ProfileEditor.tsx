@@ -6,6 +6,7 @@
 import { Camera, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { PlayerAvatar } from "./art/Portraits";
+import { FACES, type Gender } from "@/game/content/faces";
 import type { GameApi } from "./useGame";
 
 const SIZE = 160;
@@ -38,6 +39,7 @@ export function ProfileEditor({ game, onClose }: { game: GameApi; onClose: () =>
   const [bio, setBio] = useState(view.profile.bio ?? "");
   const [photo, setPhoto] = useState<string | null>(view.profile.photo);
   const [error, setError] = useState<string | null>(null);
+  const [faceSet, setFaceSet] = useState<Gender>("f");
   const file = useRef<HTMLInputElement>(null);
 
   return (
@@ -66,6 +68,22 @@ export function ProfileEditor({ game, onClose }: { game: GameApi; onClose: () =>
             }
           }}
         />
+      </div>
+      <div className="face-pick">
+        <div className="row between">
+          <span className="crime-label">Or pick a face</span>
+          <span className="segmented face-tabs">
+            <button className={faceSet === "f" ? "on" : ""} onClick={() => setFaceSet("f")}>Women</button>
+            <button className={faceSet === "m" ? "on" : ""} onClick={() => setFaceSet("m")}>Men</button>
+          </span>
+        </div>
+        <div className="face-grid">
+          {Object.values(FACES).filter((f) => f.g === faceSet).map((f) => (
+            <button key={f.src} className={`face-opt ${photo === f.src ? "on" : ""}`} onClick={() => setPhoto(f.src)} aria-label="Use this face">
+              <img src={f.src} alt="" loading="lazy" />
+            </button>
+          ))}
+        </div>
       </div>
       <label className="field">
         <span className="crime-label">Introduction</span>
