@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.2.0: a new look, round 3 (faces and jobs)
+
+- **One portrait style everywhere:** every player and contact without an uploaded photo now gets a
+  real photo face, always the same one for the same name and from their own career where
+  possible. No more cartoon faces or silhouettes mixed in with photos. Your own avatar in the top
+  bar shows your career portrait.
+- **The Big Fish on Home** are the same people as their faces elsewhere.
+- **Jobs get cover art:** each job shows its district's photo, and the three chips under each job
+  are now one quiet line (the kind of work, plus "risky" or "shady" marks).
+
 ## 4.1.0: a new look, round 2 (turf wars go live)
 
 - **Turf wars as a live match** at City Hall: a LIVE tag and countdown, both crews' badges, the

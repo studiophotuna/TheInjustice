@@ -1,3 +1,5 @@
+import { facePhoto } from "./Cutout";
+
 // Vector character portraits: a lit silhouette bust plus a signature prop per character.
 
 type Prop = "hood" | "cap" | "gloves" | "bandana" | "hardhat" | "mask" | "fedora" | "glasses" | "scarf" | "bun" | "headmirror" | "helmet" | "visor" | "tie" | "none";
@@ -175,6 +177,9 @@ function hash(s: string) {
 export function PlayerAvatar({ name, path, photo, className = "" }: { name: string; path?: string | null; photo?: string | null; className?: string }) {
   const look = path ? PATH_LOOKS[path] : undefined;
   const rim = look?.rim ?? PLAYER_RIMS[hash(name) % PLAYER_RIMS.length];
+  // One portrait style across the game: an uploaded photo, or a real photo face (never a cartoon).
+  const real = photo && !photo.startsWith("/regulars/") ? photo : facePhoto(name, path);
+  photo = real;
   if (photo) {
     return (
       <div className={`portrait portrait-photo ${className}`} style={{ ["--rim" as string]: rim }}>

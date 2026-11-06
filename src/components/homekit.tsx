@@ -117,7 +117,7 @@ export function BigFish2({ game, heavies, go }: { game: GameApi; heavies: Heavy[
       <div className="boss-list">
         {heavies.map((h) => (
           <article key={h.id} className={`boss ${h.out ? "out" : ""}`}>
-            <img className="boss-cut" src={heavyCutout(h.path)} alt="" />
+            <img className="boss-cut" src={heavyCutout(h.path, h.name)} alt="" />
             <div className="boss-who">
               <span className="kicker">♛ {h.title}</span>
               <h3>{h.name}</h3>

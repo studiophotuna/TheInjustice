@@ -1,7 +1,7 @@
 // Cut-out characters (background removed) for art that breaks out of its frame. Only clean
 // single-person cut-outs exist; anything else falls back to the framed portrait.
 
-const GOOD: Record<string, number[]> = {
+export const GOOD: Record<string, number[]> = {
   banking: [3, 5, 6],
   courts: [1, 3, 5, 6],
   enforcer: [2, 3, 4, 5, 6, 7],
@@ -29,6 +29,31 @@ const HEAVY: Record<string, string> = {
   medicine: "medicine-4",
   vigilante: "vigilante-2",
 };
-export function heavyCutout(path: string | null | undefined): string {
+export function heavyCutout(path: string | null | undefined, name?: string): string {
+  // With a name, the same person as their face everywhere else (see facePhoto).
+  if (name) return facePhoto(name, path).replace("/portraits/", "/cutouts/").replace(".jpg", ".webp");
   return `/cutouts/${(path && HEAVY[path]) || "enforcer-3"}.webp`;
+}
+
+/** The still behind the player's career portrait, for small avatars of themselves. */
+export function careerStill(path: string | null | undefined, rank: number | null | undefined): string | null {
+  if (!path || !GOOD[path]) return null;
+  return `/portraits/${path}-${Math.max(1, Math.min(8, rank ?? 1))}.jpg`;
+}
+
+const ALL = Object.entries(GOOD).flatMap(([p, ranks]) => ranks.map((r) => `${p}-${r}`));
+
+function hash(s: string) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+/**
+ * A photo face for someone without an uploaded photo: always the same one for the same name,
+ * from their own career's portraits when it has clean ones.
+ */
+export function facePhoto(name: string, path: string | null | undefined): string {
+  const pool = path && GOOD[path] ? GOOD[path].map((r) => `${path}-${r}`) : ALL;
+  return `/portraits/${pool[hash(name) % pool.length]}.jpg`;
 }

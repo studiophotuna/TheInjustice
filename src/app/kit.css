@@ -254,3 +254,17 @@ h2, .sec-head h2 { font-family: var(--headline); font-weight: 400; letter-spacin
 .wb-acts .btn { height: 46px; padding: 0 20px; }
 .warboard .tone-red, .roster.tone-red { --c: var(--red); }
 .warboard .tone-teal, .roster.tone-teal { --c: var(--teal); }
+
+/* ── Jobs: cover art and one quiet line ─────────────────────────────────── */
+.job-cover { width: 56px; height: 56px; border-radius: 14px; overflow: hidden; flex: none; background: var(--panel-3); box-shadow: inset 0 0 0 1px var(--border); }
+.job-cover img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(0.85); }
+.job-line { margin: 4px 0 0; font-size: 12px; font-weight: 700; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+.mk { font-style: normal; display: inline-flex; align-items: center; gap: 5px; }
+.mk::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.mk.risky { color: var(--orange); }
+.mk.shady { color: #ff7f86; }
+.best-now { font-size: 11px; font-weight: 800; color: var(--money); white-space: nowrap; }
+.job-locked .job-cover img { filter: grayscale(1) brightness(0.6); }
+
+/* Faces: one photo style, round. */
+.portrait-photo img { object-fit: cover; }

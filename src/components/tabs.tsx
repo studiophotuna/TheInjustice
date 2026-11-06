@@ -11,7 +11,6 @@ import {
   Backpack,
   Bell,
   Clock,
-  Crown,
   GraduationCap,
   Globe2,
   MailOpen,
@@ -25,24 +24,16 @@ import {
   Dumbbell as DumbbellIcon,
   Shield,
   Wind,
-  HeartPulse,
   BookOpen,
   Brain,
   Crosshair,
   Dumbbell,
   Eye,
-  Footprints,
-  Hammer,
-  Hand,
   Landmark,
   Lock,
   LogOut,
-  Megaphone,
-  MessageCircle,
   Newspaper,
-  Search,
   ShieldAlert,
-  Siren,
   Skull,
   Sparkles,
   Stethoscope,
@@ -51,7 +42,7 @@ import {
   UserRound,
   Zap,
 } from "lucide-react";
-import { useCallback, useEffect, useState, type ComponentType } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { JobView, PublicView } from "@/game/view";
 import { Skyline } from "./art/Skyline";
 import { Scene, type CharacterKind, type SceneKind } from "./art/Scenes";
@@ -88,29 +79,6 @@ const CAREER_HINTS = [
 ];
 import { AuthForm } from "./screens";
 import { fmt, type GameApi } from "./useGame";
-
-type IconT = ComponentType<{ size?: number; className?: string }>;
-
-const TAG_ICONS: Record<string, IconT> = {
-  Legwork: Footprints,
-  Talk: MessageCircle,
-  Scavenging: Search,
-  Hustle: Sparkles,
-  Crime: Hand,
-  Muscle: Dumbbell,
-  Watch: Eye,
-  "Muscle · Shady": Dumbbell,
-  Training: Dumbbell,
-  Study: BookOpen,
-  Patrol: Footprints,
-  Action: Siren,
-  Corrupt: Hand,
-  Pressure: Megaphone,
-  Investigation: Search,
-  Command: Crown,
-  Labor: Hammer,
-  Care: HeartPulse,
-};
 
 const list = { hidden: {}, show: { transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } };
@@ -191,24 +159,26 @@ export function JobsTab({ game, highlight }: { game: GameApi; highlight: string 
   );
 }
 
+/** District photo behind each job, where the file name differs from the district id. */
+const DISTRICT_SCENE: Record<string, string> = { precinct_square: "precinct", casino_strip: "casino", checkpoint_row: "checkpoint", glass_quarter: "halcyon" };
+
 function JobCard({ job, energy, blocked, best, flash, onWork }: {
   job: JobView; energy: number; blocked: boolean; best: boolean; flash: boolean; onWork: () => void;
 }) {
-  const Icon = TAG_ICONS[job.tag] ?? Hammer;
   const tired = energy < job.energy;
   return (
     <motion.article id={`job-${job.id}`} variants={item} className={`job ${job.pathJob ? "job-path" : ""} ${flash ? "flash" : ""} ${job.locked ? "job-locked" : ""}`}>
-      <div className="job-icon"><Icon size={20} /></div>
+      <div className="job-cover"><img src={`/scenes/${DISTRICT_SCENE[job.district] ?? job.district.replace(/_/g, "")}.jpg`} alt="" loading="lazy" /></div>
       <div className="job-body">
         <div className="job-head">
           <h3>{job.name}</h3>
-          {best && <span className="chip chip-green">Best now</span>}
+          {best && <span className="best-now">Best now</span>}
         </div>
-        <div className="job-meta">
-          <span className="chip">{job.tag}</span>
-          {job.risky && <span className="chip chip-amber">Risky</span>}
-          {job.crime && <span className="chip chip-red">Shady</span>}
-        </div>
+        <p className="job-line">
+          {job.tag}
+          {job.risky && <i className="mk risky">risky</i>}
+          {job.crime && <i className="mk shady">shady</i>}
+        </p>
         {job.locked && <p className="job-lock"><Lock size={12} /> {job.locked}</p>}
       </div>
       <div className="job-side">

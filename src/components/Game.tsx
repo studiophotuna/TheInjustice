@@ -36,6 +36,7 @@ import { Vehicle } from "./art/Vehicles";
 import { AuthForm, ChapterViewer, DeathScreen, Landing, Logo, Prologue } from "./screens";
 import { DeanLetter, FightTab, JobsTab, ProfileTab, ShopTab } from "./tabs";
 import { CityPlaces, type Building } from "./places";
+import { careerStill } from "./art/Cutout";
 import { CommunityTab } from "./community";
 import { HomeTab } from "./home";
 import { AwayRecap, GuestChip, LiveRail, setPeopleSection } from "./pulse";
@@ -428,7 +429,7 @@ function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonN
     <header ref={ref} className={`hud${compact ? " compact" : ""}`}>
       <div className="hud-top">
         <button className="hud-avatar" onClick={onProfile} aria-label="Open your profile" style={{ ["--p" as string]: `${progress}%`, ["--rim" as string]: view.path ? PATH_LOOKS[view.path.id]?.rim : "#8d96a8" }}>
-          <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo} className="avatar-sm" />
+          <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo ?? careerStill(view.path?.id, view.ladder?.current)} className="avatar-sm" />
           {ladder && <span className="hud-rank">{ladder.current}</span>}
         </button>
         <div className="hud-who">
