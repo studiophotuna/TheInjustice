@@ -9,6 +9,7 @@ import { cutoutFor, faceCutout } from "./art/Cutout";
 import { REGULAR_LOOKS } from "@/game/content/faces";
 import { nextOut, type CrewNeed, type Heavy } from "./pulse";
 import { fmt, type GameApi } from "./useGame";
+import { SkelCard, SkelTiles } from "./skeleton";
 
 // ── Stories ────────────────────────────────────────────────────────────────
 
@@ -90,7 +91,7 @@ export function Hero({ game, scene, title, sub, quote, action, kicker }: { game:
 export type CityStats = { out: number; crews: number; wanted: number; fires: number };
 
 export function CityTiles({ stats, city, go }: { stats: CityStats | undefined; city: string; go: (t: string) => void }) {
-  if (!stats) return null;
+  if (!stats) return <SkelTiles />;
   const tiles = [
     { n: stats.out, label: "Out on the street", tone: "teal", to: "tab:people" },
     { n: stats.crews, label: stats.crews === 1 ? "Crew" : "Crews", tone: "violet", to: "people:crew" },
@@ -116,7 +117,8 @@ export function CityTiles({ stats, city, go }: { stats: CityStats | undefined; c
 
 /** The people who run the streets, each leaning out of his own card. */
 export function BigFish2({ game, heavies, go }: { game: GameApi; heavies: Heavy[] | undefined; go: (t: string) => void }) {
-  if (!heavies?.length) return null;
+  if (!heavies) return <SkelCard lines={2} className="boss-one" />;
+  if (!heavies.length) return null;
   // One boss at a time, the one who's out if anyone is: a single big card, like a fight poster.
   const h = heavies.find((x) => x.out && x.status !== "hospital") ?? heavies.find((x) => x.out) ?? heavies[0];
   const cut = faceCutout(h.photo);

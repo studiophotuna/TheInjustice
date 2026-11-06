@@ -6,6 +6,7 @@ import { Building2, Coins, Crown, Flag, Gavel, Landmark, Megaphone, Newspaper, S
 import { useCallback, useEffect, useState } from "react";
 import { Scene } from "./art/Scenes";
 import type { GameApi } from "./useGame";
+import { SkelCard } from "./skeleton";
 
 type CityData = {
   city: {
@@ -117,7 +118,7 @@ export function CityHall({ game }: { game: GameApi }) {
     if (await game.social(body, "/api/city")) load();
   };
 
-  if (!data) return <section className="card"><p className="muted">Walking up the city hall steps…</p></section>;
+  if (!data) return <><SkelCard lines={3} /><SkelCard lines={4} /></>;
   const c = data.city;
   const ctl = c.controls;
 

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Store } from "lucide-react";
 import type { GameApi } from "./useGame";
+import { SkelRows } from "./skeleton";
 
 export interface ShopRow {
   kind: "guns" | "armor" | "diner" | "pharmacy" | "realty";
@@ -99,7 +100,7 @@ export function ShopOwnerStrip({ row, onManage }: { row: ShopRow; onManage: () =
 /** Businesses tab: run a city shop, or bid for one. */
 export function CityShops({ game, data, reload }: { game: GameApi; data: ShopsData | null; reload: () => void }) {
   const view = game.view!;
-  if (!data) return null;
+  if (!data) return <SkelRows rows={3} square />;
   const call = async (body: Record<string, unknown>) => {
     const out = await game.social(body, "/api/shops");
     reload();

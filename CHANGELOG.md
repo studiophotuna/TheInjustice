@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.8.0: skeleton loading
+
+- **Loading looks like the game arriving:** instead of a spinner or a line of text, grey shapes
+  with a slow shimmer stand where the content will land, matching each screen's layout. When
+  you come back to the game you see the top bar, the story bubbles, the main card and the tiles
+  (with the side menu and side panel on wide screens) while it loads. Home's city tiles and Big
+  fish card, the People cards, crews, the prison yard, the Directory, City Hall, the season
+  board, businesses and the city chat all load the same way. First-time visitors still get the
+  logo while the game starts. The shimmer stops for players who turn off motion on their device.
+
 ## 4.7.0: lighter on the network, fairer pay between careers
 
 - **Fewer requests:** the city's news, crew needs and numbers are now fetched once for the whole

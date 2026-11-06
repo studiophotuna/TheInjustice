@@ -72,6 +72,7 @@ const CAREER_HINTS = [
 ];
 import { AuthForm } from "./screens";
 import { fmt, type GameApi } from "./useGame";
+import { SkelCard } from "./skeleton";
 
 const list = { hidden: {}, show: { transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } };
@@ -942,7 +943,7 @@ function SeasonBoard({ game }: { game: GameApi }) {
     await game.social(body, "/api/season");
     load();
   };
-  if (!data) return null;
+  if (!data) return <SkelCard lines={4} />;
   const b = data.boards[tab];
   const fmtValue = (v: number) => (b.id === "earned" ? `$${v.toLocaleString()}` : v.toLocaleString());
   return (

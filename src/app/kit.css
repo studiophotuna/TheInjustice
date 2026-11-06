@@ -465,3 +465,32 @@ img.city-shop-icon { width: 46px; height: 46px; border-radius: 12px; object-fit:
 
 /* Item and business photos: square, rounded, a thin tier ring. */
 .item-art.photo { object-fit: cover; border-radius: 14px; background: var(--panel-3); }
+
+/* ── Skeletons: shapes where content will land, with a slow shimmer ─────── */
+.skel { display: block; flex: none; background: linear-gradient(90deg, var(--panel) 0%, #262b37 50%, var(--panel) 100%); background-size: 200% 100%; animation: skel 1.4s ease-in-out infinite; }
+.card .skel { background: linear-gradient(90deg, #232835 0%, #2e3442 50%, #232835 100%); background-size: 200% 100%; }
+@keyframes skel { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
+.skel-card { display: grid; gap: 12px; }
+.skel-rows { display: grid; gap: 14px; padding: 4px 0; }
+.skel-row { display: flex; gap: 12px; align-items: center; }
+.skel-lines { display: grid; gap: 8px; flex: 1; min-width: 0; }
+.skel-lines.pad { padding: 10px; }
+.skel-person { cursor: default; }
+.skel-photo { aspect-ratio: 1 / 1; height: auto !important; }
+.skel-tiles .skel { height: 74px; }
+.skel-shell { max-width: 760px; margin: 0 auto; padding: 14px 16px 40px; display: grid; gap: 18px; }
+.skel-hud { display: flex; gap: 8px; align-items: center; }
+.skel-stories { display: flex; gap: 14px; overflow: hidden; }
+.skel-story { display: grid; gap: 6px; justify-items: center; }
+.skel-hero { display: grid; gap: 12px; padding: 22px 18px; border-radius: var(--radius); background: var(--panel); min-height: 230px; align-content: center; margin-top: 18px; }
+.skel-hero .skel { background: linear-gradient(90deg, #232835 0%, #2e3442 50%, #232835 100%); background-size: 200% 100%; }
+@media (min-width: 960px) { .skel-shell { margin-left: 220px; max-width: none; padding: 14px 24px 40px; } }
+@media (min-width: 1280px) { .skel-shell { margin-right: var(--rail-w); } }
+.skel-side, .skel-rail { display: none; }
+@media (min-width: 960px) {
+  .skel-side { display: grid; align-content: start; gap: 22px; position: fixed; left: 0; top: 0; bottom: 0; width: 220px; padding: 22px 20px; background: #0d1016; border-right: 1px solid var(--border); }
+}
+@media (min-width: 1280px) {
+  .skel-rail { display: grid; align-content: start; gap: 12px; position: fixed; right: 0; top: 0; bottom: 0; width: var(--rail-w); padding: 14px; background: #0d1016; border-left: 1px solid var(--border); }
+}

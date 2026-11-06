@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { PlayerAvatar } from "./art/Portraits";
 import { usePulse } from "./pulse";
 import type { GameApi } from "./useGame";
+import { SkelRows } from "./skeleton";
 
 type Msg = { id: number; authorId: string; authorName: string; body: string; at: number };
 type Author = { photo: string | null; path: string | null };
@@ -39,7 +40,7 @@ function CityChat({ game }: { game: GameApi }) {
   const view = game.view!;
   const channel = `country:${view.location.country}`;
   const pulse = usePulse(view.location.country);
-  const [msgs, setMsgs] = useState<Msg[]>([]);
+  const [msgs, setMsgs] = useState<Msg[] | null>(null);
   const [authors, setAuthors] = useState<Record<string, Author>>({});
   const [text, setText] = useState("");
   const list = useRef<HTMLDivElement>(null);
@@ -61,13 +62,13 @@ function CityChat({ game }: { game: GameApi }) {
     return () => clearInterval(t);
   }, [load]);
 
-  // Chat and city news in one timeline, oldest at the top.
-  const items = msgs.slice(-24).map((m) => ({ kind: "msg" as const, at: m.at, m }));
+  // The latest messages, oldest at the top.
+  const items = (msgs ?? []).slice(-24).map((m) => ({ kind: "msg" as const, at: m.at, m }));
   useEffect(() => {
     list.current?.scrollTo({ top: list.current.scrollHeight });
   }, [items.length]);
 
-  const faces = [...new Map(msgs.slice().reverse().map((m) => [m.authorId, m])).values()].slice(0, 7);
+  const faces = [...new Map((msgs ?? []).slice().reverse().map((m) => [m.authorId, m])).values()].slice(0, 7);
 
   return (
     <section className="cchat">
@@ -83,7 +84,8 @@ function CityChat({ game }: { game: GameApi }) {
         </div>
       )}
       <div className="cchat-list" ref={list}>
-        {items.length === 0 && <p className="muted">Quiet tonight. Say something.</p>}
+        {msgs === null && <SkelRows rows={4} />}
+        {msgs !== null && items.length === 0 && <p className="muted">Quiet tonight. Say something.</p>}
         {items.map((it) => (
           <div key={it.m.id} className={`cchat-msg ${it.m.authorId === view.id ? "mine" : ""}`}>
             <PlayerAvatar name={it.m.authorName} path={authors[it.m.authorId]?.path} photo={authors[it.m.authorId]?.photo} className="cchat-avatar" />

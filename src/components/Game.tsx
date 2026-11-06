@@ -47,6 +47,7 @@ import { CommandPalette } from "./palette";
 import { EncounterDock, openEncounter } from "./encounter";
 import { play, preloadSounds, setSound, soundOn } from "./sfx";
 import { fmt, useGame, type GameApi } from "./useGame";
+import { SkelShell } from "./skeleton";
 
 type Tab = "home" | "jobs" | "fight" | "shop" | "people" | "city" | "profile";
 
@@ -64,8 +65,12 @@ const SIDE_TABS = [...TABS, { id: "profile" as Tab, label: "Me", Icon: UserRound
 export default function Game() {
   const game = useGame();
   const { view, loaded, fatal } = game;
+  // The server can't see browser storage, so it always sends the skeleton; first-time visitors
+  // switch to the logo splash once the page is running.
+  const [returning, setReturning] = useState(true);
+  useEffect(() => setReturning(played()), []);
 
-  if (!loaded) return <Splash />;
+  if (!loaded) return returning ? <SkelShell /> : <Splash />;
   if (fatal && !view) {
     return (
       <div className="landing">
@@ -126,7 +131,23 @@ function Splash() {
   );
 }
 
+/** Whether this browser has been in the game before (then loading shows the game's shape). */
+function played() {
+  try {
+    return localStorage.getItem("cns_played") === "1";
+  } catch {
+    return false;
+  }
+}
+
 function Shell({ game, view }: { game: GameApi; view: PublicView }) {
+  useEffect(() => {
+    try {
+      localStorage.setItem("cns_played", "1");
+    } catch {
+      /* storage blocked */
+    }
+  }, []);
   const [tab, setTab] = useState<Tab>("home");
   const [highlight, setHighlight] = useState<string | null>(null);
   const [saveOpen, setSaveOpen] = useState(false);

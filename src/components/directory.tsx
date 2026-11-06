@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { BookUser, Landmark, Scale, Stethoscope, Store, Terminal, Wrench } from "lucide-react";
 import type { GameApi } from "./useGame";
+import { SkelCard, SkelRows } from "./skeleton";
 
 type Base = { id: string; name: string; photo: string | null; online: boolean; away: string | null };
 export type MechanicRow = Base & { title: string; rate: number; services: ("repair" | "floor" | "alarm" | "rebuild")[]; jobs: number; block: string | null };
@@ -64,7 +65,7 @@ function Section({ icon, title, empty, children, count }: { icon: React.ReactNod
 /** The Directory: who in town will launder, defend, patch up, repair or sell to you. */
 export function Directory({ game }: { game: GameApi }) {
   const d = useDirectory();
-  if (!d) return <p className="muted center">Opening the directory…</p>;
+  if (!d) return <><SkelCard lines={3} /><SkelRows rows={4} /></>;
   return (
     <div className="stack directory">
       <p className="muted fine dir-intro">

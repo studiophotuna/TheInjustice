@@ -9,6 +9,7 @@ import { takePeopleSection } from "./pulse";
 import { useScrollLock } from "./scrollLock";
 import { Scene } from "./art/Scenes";
 import type { GameApi } from "./useGame";
+import { SkelLineup, SkelRows } from "./skeleton";
 
 type Profile = {
   id: string;
@@ -451,7 +452,7 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
     window.addEventListener("conspira:openfile", onOpen);
     return () => window.removeEventListener("conspira:openfile", onOpen);
   }, []);
-  if (!hub) return <p className="muted">Looking around {view.location.city}…</p>;
+  if (!hub) return <SkelLineup />;
   const people = hub.players;
   if (!people.length) {
     return (
@@ -897,7 +898,7 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [policy, setPolicy] = useState<"open" | "request" | "invite">("request");
-  if (!hub) return <p className="muted">Loading crews…</p>;
+  if (!hub) return <SkelRows rows={4} square />;
   const c = hub.myCrew;
   const forums = hub.forums.map((f) => <ForumBoard key={f.crewId} game={game} forum={f} social={social} />);
 
@@ -1847,7 +1848,7 @@ export function Yard({ game, hub, social }: { game: GameApi; hub: Hub | null; so
 
       <section className="card">
         <h3 className="card-title"><Users size={16} /> Inmates</h3>
-        {!inmates && <p className="muted">Looking around the yard…</p>}
+        {!inmates && <SkelRows rows={3} />}
         {inmates && inmates.length === 0 && <p className="muted">You have the yard to yourself. For now.</p>}
         <ul className="officials">
           {inmates?.map((m) => (
