@@ -1,5 +1,7 @@
 "use client";
 
+import { WarBoard, type WarDistrict } from "./warboard";
+
 import { Building2, Coins, Crown, Flag, Gavel, Landmark, Megaphone, Newspaper, Siren, Soup, Vote } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Scene } from "./art/Scenes";
@@ -65,7 +67,7 @@ type CityData = {
     id: string;
     name: string;
     holder: { name: string; tag: string; mine: boolean; ally?: boolean } | null;
-    war: { attacker: string; endsAt: number; attackers: number; defenders: number; over: boolean; canJoin: string | null; canPeace: string | null; peacekeepers: number } | null;
+    war: WarDistrict["war"];
     canClaim: string | null;
     canWar: string | null;
   }[];
@@ -306,6 +308,7 @@ export function CityHall({ game }: { game: GameApi }) {
       )}
     </section>
     <Leadership seats={c.seats} residents={data.residents} mostWanted={c.mostWanted} truceUntil={c.truceUntil} game={game} act={act} />
+    {data.turf.filter((d) => d.war).map((d) => <WarBoard key={d.id} d={d} game={game} act={act} />)}
     <Turf turf={data.turf} game={game} act={act} />
     </>
   );

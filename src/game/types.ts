@@ -635,10 +635,11 @@ export interface TurfHold {
     tag: string;
     startedAt: number;
     endsAt: number;
-    attackers: { id: string; name: string }[];
-    defenders: { id: string; name: string }[];
+    /** `at`: when they joined (older wars don't have it). */
+    attackers: { id: string; name: string; at?: number }[];
+    defenders: { id: string; name: string; at?: number }[];
     /** Soldiers sent in under martial law to break the war up. */
-    peacekeepers?: { id: string; name: string }[];
+    peacekeepers?: { id: string; name: string; at?: number }[];
   } | null;
 }
 

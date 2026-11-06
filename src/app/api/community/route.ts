@@ -436,6 +436,7 @@ export async function GET(req: Request) {
         crews: new Set(real.map((o) => o.crewId).filter(Boolean)).size,
         wanted: real.filter((o) => isFugitive(o, now)).length + (city?.mostWanted && city.mostWanted.until > now ? 1 : 0),
         fires: (city?.fires ?? []).filter((f) => now - f.at < 24 * 60 * 60_000).length,
+        war: Object.entries(city?.turf ?? {}).find(([, h]) => h?.war && h.war.endsAt > now)?.[0] ?? null,
       };
       return NextResponse.json({ feed, needs, heavies, stats });
     }

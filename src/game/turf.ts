@@ -56,7 +56,7 @@ export function declareWar(c: City, crew: Crew, p: Player, d: DistrictId, now: n
   const block = warBlock(c, crew, p, d, now);
   if (block) throw new GameError(block);
   const h = holdOf(c, d)!;
-  h.war = { crewId: crew.id, name: crew.name, tag: crew.tag, startedAt: now, endsAt: now + T.warMs, attackers: [{ id: p.id, name: p.name }], defenders: [] };
+  h.war = { crewId: crew.id, name: crew.name, tag: crew.tag, startedAt: now, endsAt: now + T.warMs, attackers: [{ id: p.id, name: p.name, at: now }], defenders: [] };
   c.log = [{ at: now, text: `War! ${crew.name} [${crew.tag}] is coming for ${h.name}'s ${DISTRICT_BY_ID[d].name}.` }, ...c.log].slice(0, 20);
   return [{ tone: "good", text: `You declare war on ${h.name} [${h.tag}] for ${DISTRICT_BY_ID[d].name}. Get your crew in the fight.` }];
 }
@@ -92,7 +92,7 @@ export function joinWar(c: City, p: Player, d: DistrictId, now: number, allies: 
   p.energy -= T.joinEnergy;
   crewJob(p, "war");
   const attacking = sideOf(h, p, allies) === "attack";
-  (attacking ? h.war!.attackers : h.war!.defenders).push({ id: p.id, name: p.name });
+  (attacking ? h.war!.attackers : h.war!.defenders).push({ id: p.id, name: p.name, at: now });
   return [{ tone: "good", text: attacking ? `You're on the attack for ${DISTRICT_BY_ID[d].name}.` : `You're defending ${DISTRICT_BY_ID[d].name}.` }];
 }
 
@@ -154,7 +154,13 @@ export function turfView(c: City, viewer: Player, crew: Crew | null, now: number
       war: h?.war
         ? {
             attacker: `${h.war.name} [${h.war.tag}]`,
+            attackerName: h.war.name,
+            attackerTag: h.war.tag,
+            startedAt: h.war.startedAt,
             endsAt: h.war.endsAt,
+            attackerList: h.war.attackers.map((x) => ({ name: x.name, at: x.at ?? null, me: x.id === viewer.id })),
+            defenderList: h.war.defenders.map((x) => ({ name: x.name, at: x.at ?? null, me: x.id === viewer.id })),
+            mySide: h.war.attackers.some((x) => x.id === viewer.id) ? "attack" : h.war.defenders.some((x) => x.id === viewer.id) ? "defend" : null,
             attackers: h.war.attackers.length,
             defenders: h.war.defenders.length,
             over: now >= h.war.endsAt,

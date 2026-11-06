@@ -73,7 +73,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
 
   return (
     <div className="stack home">
-      <Stories game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} />
+      <Stories game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} war={pulse?.stats?.war} />
       <Hero
         game={game}
         scene={sceneFile(scene)}

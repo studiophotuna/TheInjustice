@@ -211,3 +211,46 @@ h2, .sec-head h2 { font-family: var(--headline); font-weight: 400; letter-spacin
 .cash, .feel b, .big-number, .travel-top b:last-child, .crew-tag, .ready-chip b, .hud-cash .cash { font-family: var(--font-body), sans-serif; font-weight: 800; }
 .big-number { color: var(--money); letter-spacing: -0.01em; }
 .segmented button, .tabs button, .auth-tabs button { font-family: var(--font-body), sans-serif; font-weight: 800; }
+
+/* ── Turf war: a live match ─────────────────────────────────────────────── */
+.warboard { position: relative; border-radius: var(--radius); padding: 16px 14px; background: linear-gradient(180deg, #1d1f29, var(--panel)); box-shadow: inset 0 0 0 1px var(--border); }
+.wb-top { display: flex; justify-content: space-between; align-items: center; }
+.wb-live { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: #fff; background: var(--red); border-radius: 6px; padding: 3px 8px; }
+.wb-live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: wb-blink 1.4s ease-in-out infinite; }
+.wb-live.over { background: var(--panel-3); }
+.wb-live.over::before { animation: none; opacity: 0.5; }
+@keyframes wb-blink { 50% { opacity: 0.2; } }
+.wb-clock { font-size: 12px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.wb-district { font-family: var(--headline); font-weight: 400; font-size: 24px; text-transform: uppercase; text-align: center; margin: 8px 0 0; }
+.wb-sub { text-align: center; font-size: 12px; color: var(--muted); margin: 2px 0 0; }
+.wb-score { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; margin-top: 14px; }
+.wb-crew { display: grid; justify-items: center; gap: 5px; text-align: center; }
+.wb-crew b { font-size: 13px; }
+.wb-crew small { font-size: 11px; color: var(--muted); font-weight: 700; }
+.wb-badge { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; font-family: var(--headline); font-size: 19px; color: #fff; background: linear-gradient(145deg, var(--c), color-mix(in srgb, var(--c) 40%, black)); box-shadow: 0 10px 20px -8px var(--c); }
+.wb-nums { font-family: var(--headline); font-size: 50px; line-height: 1; letter-spacing: 0.04em; }
+.wb-nums em { font-style: normal; color: var(--muted); margin: 0 6px; }
+.wb-tug { margin-top: 14px; height: 8px; border-radius: 6px; overflow: hidden; display: flex; background: var(--panel-3); }
+.wb-tug i { background: var(--red); }
+.wb-tug u { background: var(--teal); flex: 1; }
+.wb-tug-label { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--muted); margin-top: 6px; }
+.wb-note { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+.wb-timeline { position: relative; margin-top: 14px; padding: 6px 0; }
+.wb-timeline::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; margin-left: -2px; border-radius: 2px; background: linear-gradient(180deg, var(--gold), var(--panel-3)); }
+.wb-ev { display: grid; grid-template-columns: 1fr 56px 1fr; align-items: center; margin: 8px 0; font-size: 12.5px; font-weight: 700; }
+.wb-ev time { grid-column: 2; grid-row: 1; justify-self: center; font-size: 11px; font-weight: 800; background: var(--panel-2); border-radius: 8px; padding: 3px 7px; position: relative; z-index: 1; font-variant-numeric: tabular-nums; }
+.wb-ev.atk .wb-who { grid-column: 1; grid-row: 1; text-align: right; color: #ffb3b4; }
+.wb-ev.def .wb-who { grid-column: 3; grid-row: 1; color: #9ff0e7; }
+.wb-rosters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin-top: 14px; }
+.roster { border-radius: 14px; background: var(--panel-2); padding: 10px; }
+.roster h4 { margin: 0 0 8px; font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: color-mix(in srgb, var(--c) 70%, white); }
+.roster-faces { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 64px)); gap: 6px; }
+.roster-face { aspect-ratio: 1; border-radius: 12px; display: grid; place-items: center; align-content: center; gap: 1px; background: color-mix(in srgb, var(--c) 22%, var(--panel)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 40%, transparent); }
+.roster-face b { font-family: var(--headline); font-weight: 400; font-size: 17px; }
+.roster-face small { font-size: 9.5px; font-weight: 700; color: var(--muted); max-width: 90%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roster-face.me { box-shadow: inset 0 0 0 2px var(--gold); }
+.roster-face.empty { background: transparent; box-shadow: none; border: 1.5px dashed var(--panel-3); color: var(--dim); font-weight: 800; }
+.wb-acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; align-items: center; }
+.wb-acts .btn { height: 46px; padding: 0 20px; }
+.warboard .tone-red, .roster.tone-red { --c: var(--red); }
+.warboard .tone-teal, .roster.tone-teal { --c: var(--teal); }

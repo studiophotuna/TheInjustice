@@ -16,13 +16,14 @@ type Story = { key: string; label: string; img: string; fresh: boolean; sub?: st
 const NEED_ART: Record<string, string> = { ambush: "street", heist: "bank", breakout: "prison", war: "marina" };
 
 /** Everything worth a tap right now, as a row of circles. Gold rings are new or ready. */
-export function Stories({ game, go, needs, onRead }: { game: GameApi; go: (t: string) => void; needs: CrewNeed[]; onRead: (id: string) => void }) {
+export function Stories({ game, go, needs, onRead, war }: { game: GameApi; go: (t: string) => void; needs: CrewNeed[]; onRead: (id: string) => void; war?: string | null }) {
   const view = game.view!;
   const live = game.live!;
   const s: Story[] = [];
   const scene = (n: string) => `/scenes/${n}.jpg`;
   const chapter = view.chapters.find((c) => c.unlocked && !c.read);
   if (chapter) s.push({ key: "chapter", label: "New chapter", img: scene("interrogation"), fresh: true, run: () => onRead(chapter.id) });
+  if (war) s.push({ key: "war", label: "Turf war", img: scene("marina"), fresh: true, run: () => go("place:cityhall") });
   for (const n of needs) s.push({ key: `need-${n.kind}`, label: n.cta, img: scene(NEED_ART[n.kind] ?? "street"), fresh: true, run: () => go(n.go) });
   if (view.daily.canClaim) s.push({ key: "daily", label: "Daily reward", img: scene("exchange"), fresh: true, run: () => game.act({ type: "claim_daily" }) });
   const unread = view.inbox.items.filter((i) => !i.read).length;

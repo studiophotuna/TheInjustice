@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.1.0: a new look, round 2 (turf wars go live)
+
+- **Turf wars as a live match** at City Hall: a LIVE tag and countdown, both crews' badges, the
+  headcount on each side as a big score, a tug bar, a timeline of who declared war and who joined
+  which side (and when), and both rosters with open slots. Join, break it up or settle it from the
+  board. No odds: it shows who's in, never who's likely to win.
+- **Home shows a "Turf war" story** whenever a war is on in your city.
+- Wars now remember when each fighter joined.
+
 ## 4.0.0: a new look, round 1 (the kit and Home)
 
 The first round of the visual redesign, based on reference designs from real game and app
