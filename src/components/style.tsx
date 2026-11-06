@@ -73,7 +73,7 @@ export function StyleShop({ game }: { game: GameApi }) {
                 )}
               </div>
               <div className="style-meta">
-                <b>{c.name}</b>
+                <b>{c.name}{c.fx && <span className="fx-tag">Animated</span>}</b>
                 {on ? (
                   <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => game.act({ type: "equip_cosmetic", kind: c.kind, id: null })}>Take off</button>
                 ) : owned ? (
@@ -171,7 +171,11 @@ function OwnLook({ game, kind }: { game: GameApi; kind: CustomKind }) {
             <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo} look={{ frame: `u-${own.id}`, color: null, banner: null }} className="style-face" />
           )
         ) : (
-          <span className="own-empty">{kind === "frame" ? "Your own frame" : "Your own banner"}</span>
+          kind === "frame" ? (
+            <span className="own-slot frame"><PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo} className="style-face" /><i /></span>
+          ) : (
+            <span className="own-slot banner"><span>Wide photo, 3 : 1</span></span>
+          )
         )}
       </div>
       <div className="style-meta">
@@ -186,7 +190,7 @@ function OwnLook({ game, kind }: { game: GameApi; kind: CustomKind }) {
         )}
         {own?.status !== "pending" && (
           <button className="btn btn-red btn-xs" disabled={busy || game.busy || view.favors.balance < price} onClick={pick}>
-            {busy ? "Uploading…" : `${own ? "New one" : "Upload"} · ${price} Favors`}
+            {busy ? "Uploading…" : `${own ? "New one" : "Upload"} · ${price}`}
           </button>
         )}
         {error && <span className="form-error fine">{error}</span>}

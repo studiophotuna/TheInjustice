@@ -6,7 +6,7 @@
 import { GameError, type GameEvent, type Player } from "./types";
 
 export type CosmeticKind = "frame" | "color" | "banner";
-export interface Cosmetic { id: string; kind: CosmeticKind; name: string; price: number }
+export interface Cosmetic { id: string; kind: CosmeticKind; name: string; price: number; /** Animated, premium. */ fx?: boolean }
 
 export const FAVORS = {
   /** Packs for sale. Prices are placeholders until the store opens. */
@@ -22,8 +22,21 @@ export const FAVORS = {
 };
 
 const C = (kind: CosmeticKind, id: string, name: string, price: number): Cosmetic => ({ id: `${kind}:${id}`, kind, name, price });
+const FX = (kind: CosmeticKind, id: string, name: string, price: number): Cosmetic => ({ ...C(kind, id, name, price), fx: true });
 
 export const COSMETICS: Cosmetic[] = [
+  FX("frame", "goldrush", "Gold rush", 500),
+  FX("frame", "wildfire", "Wildfire", 500),
+  FX("frame", "livewire", "Live wire", 450),
+  FX("frame", "frostbite", "Frostbite", 450),
+  FX("frame", "bloodmoon", "Blood moon", 400),
+  FX("frame", "aurora", "Aurora", 600),
+  FX("color", "goldrush", "Gold rush", 300),
+  FX("color", "wildfire", "Wildfire", 300),
+  FX("color", "neon", "Neon", 250),
+  FX("color", "chrome", "Chrome", 250),
+  FX("color", "frost", "Frost", 250),
+  FX("color", "aurora", "Aurora", 350),
   C("frame", "gilded", "Gilded", 120),
   C("frame", "blood", "Blood oath", 120),
   C("frame", "harbor", "Harbor light", 120),

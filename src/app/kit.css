@@ -548,3 +548,110 @@ img.city-shop-icon { width: 46px; height: 46px; border-radius: 12px; object-fit:
 .admin-upload { display: grid; grid-template-columns: 140px 1fr; gap: 12px; align-items: center; }
 .admin-upload-preview { height: 100px; border-radius: 12px; overflow: hidden; display: grid; place-items: center; background: repeating-conic-gradient(#20242f 0% 25%, #171a22 0% 50%) 50% / 16px 16px; }
 .admin-upload-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+/* ── Shop cards fit their box on phones ─────────────────────────────────── */
+.style-item { min-width: 0; }
+.style-meta .btn { min-width: 0; white-space: normal; height: auto; min-height: 36px; padding: 6px 10px; line-height: 1.15; }
+.own-slot { display: grid; place-items: center; position: relative; }
+.own-slot.frame i { position: absolute; inset: -9px; border-radius: 50%; border: 2px dashed rgba(242, 182, 50, 0.7); }
+.own-slot.banner { width: calc(100% - 16px); aspect-ratio: 3 / 1; border-radius: 10px; border: 2px dashed rgba(242, 182, 50, 0.7); font-size: 11px; font-weight: 800; color: var(--muted); }
+.fx-tag { display: block; font-size: 10px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-top: 2px; }
+
+/* ── Premium animated frames ────────────────────────────────────────────── */
+/* The ring and its effect sit just outside the face, on two layers around it. */
+.portrait-photo.fx { overflow: visible !important; position: relative; border-color: transparent !important; box-shadow: none !important; }
+.portrait-photo.fx > img { border-radius: 50%; position: relative; z-index: 1; }
+.portrait-photo.fx::before, .portrait-photo.fx::after { content: ""; position: absolute; border-radius: 50%; pointer-events: none; }
+.portrait-photo.fx::before {
+  inset: -12%; z-index: 2;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 13%), #000 calc(100% - 12%));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 13%), #000 calc(100% - 12%));
+  animation: fx-spin 3s linear infinite;
+}
+.portrait-photo.fx::after { inset: -22%; z-index: 0; }
+@keyframes fx-spin { to { transform: rotate(1turn); } }
+@keyframes fx-twinkle { 0%, 100% { opacity: 0.25; transform: scale(0.92) rotate(0deg); } 50% { opacity: 1; transform: scale(1.04) rotate(25deg); } }
+@keyframes fx-flicker { 0%, 100% { opacity: 0.75; transform: scale(1); } 30% { opacity: 1; transform: scale(1.06) rotate(-4deg); } 60% { opacity: 0.85; transform: scale(0.98) rotate(5deg); } }
+@keyframes fx-pulse { 0%, 100% { opacity: 0.45; transform: scale(0.96); } 50% { opacity: 1; transform: scale(1.05); } }
+
+/* Gold rush: a turning gold ring, with sparkles that come and go. */
+.frame-goldrush::before { background: conic-gradient(#7a5410, #ffe08a, #f2b632, #fff7d6, #b8860b, #ffe08a, #7a5410); }
+.frame-goldrush::after {
+  background:
+    radial-gradient(circle at 15% 22%, #fff 0 1.5px, transparent 3px),
+    radial-gradient(circle at 84% 18%, #fff6cc 0 2px, transparent 3.5px),
+    radial-gradient(circle at 92% 70%, #fff 0 1.5px, transparent 3px),
+    radial-gradient(circle at 28% 88%, #ffe08a 0 2px, transparent 3.5px),
+    radial-gradient(circle at 60% 4%, #fff 0 1px, transparent 2.5px),
+    radial-gradient(circle, rgba(242, 182, 50, 0.35), transparent 70%);
+  animation: fx-twinkle 1.8s ease-in-out infinite;
+}
+/* Wildfire: a ring of flame tongues that flicker, over an ember glow. */
+.frame-wildfire::before { background: conic-gradient(#ff2a00, #ff8a00, #ffd000, #ff4d00, #ffb300, #ff2a00, #ff8a00, #ff2a00); animation-duration: 2.2s; }
+.frame-wildfire::after {
+  inset: -30%;
+  background: repeating-conic-gradient(from 8deg, rgba(255, 120, 0, 0.95) 0 9deg, rgba(255, 210, 0, 0.6) 9deg 13deg, transparent 13deg 24deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent 62%, #000 70%, transparent 100%);
+  mask: radial-gradient(farthest-side, transparent 62%, #000 70%, transparent 100%);
+  filter: blur(1.5px) drop-shadow(0 0 6px #ff6a00);
+  animation: fx-flicker 0.9s ease-in-out infinite;
+}
+/* Live wire: an electric ring that crackles round. */
+.frame-livewire::before { background: repeating-conic-gradient(#2ef0ff 0 14deg, #7b5cff 14deg 22deg, #ffffff 22deg 26deg, #2ef0ff 26deg 40deg); animation-duration: 1.4s; }
+.frame-livewire::after { background: radial-gradient(circle, transparent 55%, rgba(46, 240, 255, 0.45) 68%, transparent 75%); animation: fx-pulse 0.7s ease-in-out infinite; }
+/* Frostbite: ice that glints. */
+.frame-frostbite::before { background: conic-gradient(#e8f8ff, #8fd3ff, #ffffff, #5ab8ff, #dff4ff, #8fd3ff, #e8f8ff); animation-duration: 6s; }
+.frame-frostbite::after {
+  background:
+    radial-gradient(circle at 20% 15%, #fff 0 1.5px, transparent 3px),
+    radial-gradient(circle at 80% 85%, #e8f8ff 0 1.5px, transparent 3px),
+    radial-gradient(circle, rgba(143, 211, 255, 0.35), transparent 70%);
+  animation: fx-twinkle 2.6s ease-in-out infinite;
+}
+/* Blood moon: a deep red ring that breathes. */
+.frame-bloodmoon::before { background: conic-gradient(#3a0006, #e5383b, #ff6b6b, #8a0010, #e5383b, #3a0006); animation-duration: 8s; }
+.frame-bloodmoon::after { background: radial-gradient(circle, rgba(229, 56, 59, 0.55), transparent 70%); animation: fx-pulse 2.4s ease-in-out infinite; }
+/* Aurora: colours that drift around the ring. */
+.frame-aurora::before { background: conic-gradient(#2ef0b0, #2ec4ff, #9b7bff, #ff5ac8, #ffd166, #2ef0b0); animation-duration: 4s; }
+.frame-aurora::after { background: conic-gradient(from 90deg, rgba(46, 240, 176, 0.35), rgba(155, 123, 255, 0.35), rgba(255, 90, 200, 0.35), rgba(46, 240, 176, 0.35)); -webkit-mask: radial-gradient(farthest-side, transparent 55%, #000 75%, transparent 100%); mask: radial-gradient(farthest-side, transparent 55%, #000 75%, transparent 100%); filter: blur(4px); animation: fx-spin 7s linear infinite reverse; }
+
+/* ── Premium animated name colours ──────────────────────────────────────── */
+.name-goldrush, .name-wildfire, .name-neon, .name-chrome, .name-frost, .name-aurora,
+.name-goldrush-title .hero2-title, .name-wildfire-title .hero2-title, .name-neon-title .hero2-title,
+.name-chrome-title .hero2-title, .name-frost-title .hero2-title, .name-aurora-title .hero2-title {
+  -webkit-background-clip: text; background-clip: text; color: transparent !important; -webkit-text-fill-color: transparent;
+  background-size: 250% 100%; text-shadow: none !important;
+}
+.name-goldrush, .name-goldrush-title .hero2-title {
+  background-image: linear-gradient(100deg, #9a6a12 0%, #f2b632 20%, #fff7d6 30%, #f2b632 40%, #c58a14 60%, #ffe08a 75%, #9a6a12 100%);
+  animation: fx-shine 2.6s linear infinite; filter: drop-shadow(0 0 6px rgba(242, 182, 50, 0.45));
+}
+.name-wildfire, .name-wildfire-title .hero2-title {
+  background-image: linear-gradient(0deg, #ff2a00 0%, #ff7a00 35%, #ffd000 65%, #fff1a8 100%); background-size: 100% 250%;
+  animation: fx-rise 1.1s ease-in-out infinite alternate; filter: drop-shadow(0 0 6px rgba(255, 106, 0, 0.6));
+}
+.name-neon, .name-neon-title .hero2-title {
+  background-image: linear-gradient(90deg, #ff3d9a, #ff7ad1, #2ef0ff, #ff3d9a); animation: fx-shine 3s linear infinite, fx-neon 2.4s steps(1) infinite;
+  filter: drop-shadow(0 0 5px rgba(255, 61, 154, 0.7));
+}
+.name-chrome, .name-chrome-title .hero2-title {
+  background-image: linear-gradient(100deg, #8a94a6 0%, #e8edf5 25%, #ffffff 32%, #9aa4b6 45%, #dfe5ee 70%, #8a94a6 100%); animation: fx-shine 3.2s linear infinite;
+}
+.name-frost, .name-frost-title .hero2-title {
+  background-image: linear-gradient(100deg, #8fd3ff 0%, #e8f8ff 30%, #ffffff 38%, #8fd3ff 55%, #dff4ff 80%, #8fd3ff 100%); animation: fx-shine 3.6s linear infinite;
+  filter: drop-shadow(0 0 5px rgba(143, 211, 255, 0.5));
+}
+.name-aurora, .name-aurora-title .hero2-title {
+  background-image: linear-gradient(90deg, #2ef0b0, #2ec4ff, #9b7bff, #ff5ac8, #ffd166, #2ef0b0); animation: fx-shine 4s linear infinite;
+}
+@keyframes fx-shine { from { background-position: 100% 0; } to { background-position: -150% 0; } }
+@keyframes fx-rise { from { background-position: 0 100%; } to { background-position: 0 0; } }
+@keyframes fx-neon { 0%, 100% { opacity: 1; } 92% { opacity: 1; } 94% { opacity: 0.55; } 96% { opacity: 1; } }
+
+/* Players who turn off motion get the looks, standing still. */
+@media (prefers-reduced-motion: reduce) {
+  .portrait-photo.fx::before, .portrait-photo.fx::after,
+  [class*="name-goldrush"], [class*="name-wildfire"], [class*="name-neon"], [class*="name-chrome"], [class*="name-frost"], [class*="name-aurora"],
+  [class*="-title"] .hero2-title { animation: none !important; }
+}
+.style-preview { height: 120px; }

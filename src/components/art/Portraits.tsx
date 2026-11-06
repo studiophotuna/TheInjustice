@@ -1,4 +1,7 @@
 import { facePhoto } from "./Cutout";
+
+/** Frames with an animated effect around the face. */
+const FX_FRAMES = new Set(["goldrush", "wildfire", "livewire", "frostbite", "bloodmoon", "aurora"]);
 import { NPC_FACES } from "@/game/content/faces";
 
 // Vector character portraits: a lit silhouette bust plus a signature prop per character.
@@ -187,7 +190,7 @@ function hash(s: string) {
 /** The player's avatar. Its color comes from the name; police get a cap, enforcers a scar-red rim. */
 export function PlayerAvatar({ name, path, photo, look: worn, className = "" }: { name: string; path?: string | null; photo?: string | null; look?: { frame: string | null; color: string | null; banner: string | null } | null; className?: string }) {
   const upload = worn?.frame?.startsWith("u-") ? worn.frame.slice(2) : null;
-  const frame = worn?.frame && !upload ? ` frame-${worn.frame}` : upload ? " has-uframe" : "";
+  const frame = worn?.frame && !upload ? ` frame-${worn.frame}${FX_FRAMES.has(worn.frame) ? " fx" : ""}` : upload ? " has-uframe" : "";
   const look = path ? PATH_LOOKS[path] : undefined;
   const rim = look?.rim ?? PLAYER_RIMS[hash(name) % PLAYER_RIMS.length];
   // One portrait style across the game: an uploaded photo, or a real photo face (never a cartoon).

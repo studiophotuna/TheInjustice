@@ -35,7 +35,7 @@ describe("Favors", () => {
 
   it("buy only looks: money, energy, stats and gear don't change", () => {
     const p = mk();
-    creditFavors(p, 1000, "Grant", NOW, "g2");
+    creditFavors(p, 5000, "Grant", NOW, "g2");
     const before = JSON.stringify({ cash: p.cash, bank: p.bank, energy: p.energy, stats: p.stats, inventory: p.inventory });
     for (const c of COSMETICS.slice(0, 4)) buyCosmetic(p, c.id, NOW);
     expect(JSON.stringify({ cash: p.cash, bank: p.bank, energy: p.energy, stats: p.stats, inventory: p.inventory })).toBe(before);

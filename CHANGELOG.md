@@ -1,5 +1,20 @@
 # Changelog
 
+## 5.2.0: animated premium looks
+
+- **Six animated frames:** Gold rush (a turning gold ring with sparkles that come and go),
+  Wildfire (flickering flame tongues over an ember glow), Live wire (an electric ring that
+  crackles round), Frostbite (glinting ice), Blood moon (a deep red ring that breathes) and
+  Aurora (colours drifting around the ring). 400 to 600 Favors.
+- **Six animated name colours:** Gold rush (a gold shine that sweeps across), Wildfire (flame
+  rising through the letters), Neon (a sign that flickers now and then), Chrome, Frost and
+  Aurora. 250 to 350 Favors. They show on People, in chat and as your name on Me.
+- Animated looks come first in the shop, marked "Animated". Players who turn off motion on
+  their device see them standing still.
+- **Fixed:** the upload button stuck out of its card on phones, and the empty upload slot
+  showed only a label. It now shows a dashed ring around your face (frames) or a dashed 3 : 1
+  box (banners), and the button fits.
+
 ## 5.1.0: upload your own frame and banner (with approval)
 
 - **Your own frame and banner:** in Shop → Style, the first card under Frames and under
