@@ -1,6 +1,6 @@
 import { BALANCE } from "@/game/balance";
 import { createPlayer, inHospital, inJail, tick } from "@/game/engine";
-import { regularId, regularStats, regularsOut, regularUpkeep, REGULARS, ROSTER } from "@/game/regulars";
+import { regularId, regularPhoto, regularStats, regularsOut, regularUpkeep, REGULAR_VERSION, REGULARS, ROSTER } from "@/game/regulars";
 import type { CountryId, Player } from "@/game/types";
 import type { getStore } from "./store";
 
@@ -36,6 +36,21 @@ export async function cityRegulars(store: Store, country: CountryId, now: number
       }
     }
     list = await store.listRegulars(country);
+  }
+  // Older regulars may still have an out-of-date face or stats saved. Everything else (chat,
+  // the map, big fish) reads the saved record, so save the fix once.
+  const stale = list.filter((p) => p.regular && (p.profile?.photo !== regularPhoto(p.regular.country, p.regular.key) || (p.regular.v ?? 1) < REGULAR_VERSION));
+  if (stale.length) {
+    await Promise.all(
+      stale.map((s) =>
+        store
+          .update(s.id, (p) => {
+            if (p) regularUpkeep(p, now);
+            return { player: p, result: null };
+          })
+          .catch((e) => console.error(`Could not refresh regular ${s.id}`, e)),
+      ),
+    );
   }
   list.forEach((p) => tick(p, now));
   return list;

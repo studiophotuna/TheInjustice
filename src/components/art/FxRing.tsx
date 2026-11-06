@@ -659,20 +659,29 @@ export function FxRing({ kind }: { kind: FxKind }) {
     const host = canvas?.parentElement;
     if (!canvas || !host) return;
     const img = host.querySelector("img");
-    const face = Math.max(16, (img ?? host).getBoundingClientRect().width || 40);
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const size = face * SCALE;
-    canvas.width = Math.round(size * dpr);
-    canvas.height = Math.round(size * dpr);
-    canvas.style.width = canvas.style.height = `${size}px`;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const r: Ring = { kind, canvas, ctx, face, dpr, visible: true, parts: [], t: 0, bolts: [] };
+    const r: Ring = { kind, canvas, ctx, face: 40, dpr, visible: true, parts: [], t: 0, bolts: [] };
+    // Fit the face: measured now and whenever it changes size (the top bar shrinks on scroll).
+    const fit = () => {
+      const face = Math.max(16, (img ?? host).getBoundingClientRect().width || 40);
+      if (Math.abs(face - r.face) < 0.5 && canvas.width) return;
+      r.face = face;
+      r.parts = [];
+      const size = face * SCALE;
+      canvas.width = Math.round(size * dpr);
+      canvas.height = Math.round(size * dpr);
+      canvas.style.width = canvas.style.height = `${size}px`;
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(img ?? host);
     if (reduced()) {
       // A still frame: run the effect for a moment, then draw it once.
       for (let i = 0; i < 40; i++) step(r, 1 / 30);
       draw(r);
-      return;
+      return () => ro.disconnect();
     }
     rings.add(r);
     const io = new IntersectionObserver(([e]) => {
@@ -682,8 +691,17 @@ export function FxRing({ kind }: { kind: FxKind }) {
     start();
     return () => {
       io.disconnect();
+      ro.disconnect();
       rings.delete(r);
     };
   }, [kind]);
   return <canvas ref={ref} className="fx-canvas" aria-hidden />;
+}
+
+/** The class for a name colour (empty when none). */
+export const nameClass = (color?: string | null) => (color ? `name-${color}` : "");
+
+/** A player's name in the colour they wear, with its live touches for animated colours. */
+export function NameFx({ color }: { color?: string | null }) {
+  return color && NAME_FX.has(color) ? <FxName key={color} kind={color as NameFxKind} /> : null;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { FxName, NAME_FX, type NameFxKind } from "./art/FxRing";
+import { FxName, NAME_FX, NameFx, nameClass, type NameFxKind } from "./art/FxRing";
 import { ReportButton } from "./ReportButton";
 import { AnimatePresence, motion } from "motion/react";
 import { Ban, Building, Crown, Eye, EyeOff, ShieldAlert, ShieldCheck, FileSearch, Footprints, Gavel, Flame, Hand, Handshake, Landmark, MessagesSquare, Moon, Stethoscope, Inbox, Lock, MessageSquare, Search, Send, Shield, Siren, Swords, UserCheck, Users, Vault } from "lucide-react";
@@ -518,9 +518,9 @@ function PersonFile({ game, hub, p, social, onClose }: { game: GameApi; hub: Hub
       >
         <button className="file-x" aria-label="Close" onClick={onClose}>×</button>
         <div className="file-top">
-          <PlayerAvatar name={p.name} path={p.path} photo={p.photo} className="file-face" />
+          <PlayerAvatar name={p.name} path={p.path} photo={p.photo} look={p.look} className="file-face" />
           <div className="file-who">
-            <b className="file-name">{p.name}</b>
+            <b className={`file-name ${nameClass(p.look?.color)}`}>{p.name}<NameFx color={p.look?.color} /></b>
             <span className="file-title" style={{ color: p.path ? PATH_LOOKS[p.path]?.rim : undefined }}>
               {p.title}{p.crewTag ? ` · [${p.crewTag}]` : ""}
             </span>
@@ -581,12 +581,17 @@ function Chat({ game, hub, initial }: { game: GameApi; hub: Hub; initial?: strin
   const view = game.view!;
   const [channel, setChannel] = useState(initial ?? hub.channels[1] ?? "global");
   const [messages, setMessages] = useState<Message[]>([]);
+  const [authors, setAuthors] = useState<Record<string, { look?: { frame: string | null; color: string | null; banner: string | null } | null }>>({});
   const [text, setText] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/community?channel=${encodeURIComponent(channel)}`, { cache: "no-store" });
-    if (res.ok) setMessages((await res.json()).messages);
+    if (res.ok) {
+      const j = await res.json();
+      setMessages(j.messages);
+      setAuthors(j.authors ?? {});
+    }
   }, [channel]);
 
   useEffect(() => {
@@ -613,7 +618,7 @@ function Chat({ game, hub, initial }: { game: GameApi; hub: Hub; initial?: strin
         <AnimatePresence initial={false}>
           {messages.map((m) => (
             <motion.div key={m.id} className={`msg ${m.authorId === view.id ? "mine" : ""}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
-              <span className="msg-author">{m.authorName}</span>
+              <span className={`msg-author ${nameClass(authors[m.authorId]?.look?.color)}`}>{m.authorName}<NameFx color={authors[m.authorId]?.look?.color} /></span>
               <span className="msg-body">{m.body}</span>
               <span className="msg-time">{ago(m.at)}</span>
               {m.authorId !== view.id && <ReportButton game={game} targetId={m.authorId} targetName={m.authorName} messageId={m.id} small />}

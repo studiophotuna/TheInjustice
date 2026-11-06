@@ -1,5 +1,6 @@
 "use client";
 
+import { NameFx, nameClass } from "./art/FxRing";
 import { AnimatePresence, animate, motion, useMotionValue, useTransform } from "motion/react";
 import {
   House,
@@ -456,7 +457,7 @@ function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonN
           {ladder && <span className="hud-rank">{ladder.current}</span>}
         </button>
         <div className="hud-who">
-          <b className="hud-name">{view.name}</b>
+          <b className={`hud-name ${nameClass(view.look?.color)}`}>{view.name}<NameFx color={view.look?.color} /></b>
           <span className="hud-title">{view.path ? `${view.path.rank} · ${view.path.name}` : `Nobody · ${view.location.city}`}</span>
         </div>
         <div className="hud-pills">

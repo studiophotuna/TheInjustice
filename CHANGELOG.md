@@ -1,5 +1,18 @@
 # Changelog
 
+## 5.6.1: fixes for faces, frames and name colours
+
+- **Street regulars show their real face everywhere.** Many regulars still had an old drawing
+  or no face saved, so city chat, Big fish and the map showed a stand-in face (sometimes the
+  wrong person). Their faces are fixed, and the game now saves any out-of-date regular the
+  first time it loads their city.
+- **The top bar face sits right inside its frame,** in the normal top bar and in the smaller
+  one after you scroll. The photo was pushed off-centre, and live effects (fire, current,
+  sparkles) didn't shrink with the top bar.
+- **Name colours show in more places:** the top bar (wide screens), someone's file, the chat
+  on People, and the map (pin name tags and the person you tap), with the live touches for
+  animated colours. Frames now show in someone's file and on the map's person sheet too.
+
 ## 5.6.0: live touches on animated names
 
 - **Animated name colours get a few live touches** on top of their shimmer, kept light on

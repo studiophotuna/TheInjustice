@@ -1,5 +1,6 @@
 "use client";
 
+import { NameFx, nameClass } from "./art/FxRing";
 import { Footprints, Hand, Swords, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -204,7 +205,7 @@ export function CityMap({ game, go, feed }: { game: GameApi; go: (t: string) => 
             >
               <PlayerAvatar name={p.name} path={p.path} photo={p.photo} look={p.look} className="pin-avatar" />
             </motion.button>
-            <span className="pin-name">{p.heavy ? `${p.name.split(" ").at(-1)} \u265B` : p.name.split(" ")[0]}</span>
+            <span className={`pin-name ${nameClass(p.look?.color)}`}>{p.heavy ? `${p.name.split(" ").at(-1)} \u265B` : p.name.split(" ")[0]}</span>
             </span>
           ))}
         </div>
@@ -213,10 +214,10 @@ export function CityMap({ game, go, feed }: { game: GameApi; go: (t: string) => 
       <AnimatePresence mode="wait" initial={false}>
         {person ? (
           <motion.div key={person.id} className="map-sheet" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-            <PlayerAvatar name={person.name} path={person.path} photo={person.photo} className="avatar-md" />
+            <PlayerAvatar name={person.name} path={person.path} photo={person.photo} look={person.look} className="avatar-md" />
             <div className="map-sheet-body">
               <div className="row">
-                <b className="map-name">{person.name}</b>
+                <b className={`map-name ${nameClass(person.look?.color)}`}>{person.name}<NameFx color={person.look?.color} /></b>
                 {person.heavy ? <span className="chip chip-heavy">Heavy</span> : person.regular && <span className="chip chip-regular">Regular</span>}
                 {person.tie && <span className={`tie-badge tie-${person.tie.tone}`}>{person.tie.label}</span>}
               </div>

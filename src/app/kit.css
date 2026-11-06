@@ -700,3 +700,12 @@ button.style-preview:hover .try-hint, button.style-preview:focus-visible .try-hi
 .hero2-title, .style-name, .tryon-name, .fx-host { position: relative; }
 .style-name, .tryon-name, .fx-host { display: inline-block; }
 .lu-photo .portrait-photo.fx > img { border-radius: 0 !important; } .lu-photo .portrait-photo.fx { overflow: hidden !important; }
+/* Top bar: the face is sized there, but uploaded frames and effects keep their own size. */
+.hud-avatar .uframe { width: 128% !important; height: 128% !important; border-radius: 0 !important; box-shadow: none !important; }
+.hud-avatar .portrait-photo[class*="frame-"] { overflow: visible; }
+/* The face always fills its circle exactly, whatever ring is drawn around it. */
+.portrait-photo { box-sizing: border-box; }
+.hud-avatar .portrait-photo > img:first-child, .hud.compact .hud-avatar .portrait-photo > img:first-child { width: 100% !important; height: 100% !important; }
+
+.hud-name, .file-name, .msg-author, .map-name { position: relative; display: inline-block; }
+.portrait-photo.fx, .portrait-photo[class*="frame-"] { border-radius: 50% !important; }
