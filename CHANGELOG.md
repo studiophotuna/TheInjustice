@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.6.0: new art (photos for every item, more boss cut-outs)
+
+- **Every item and business is a photo now,** in the same style as the scenes and faces: food,
+  medkit, housing, weapons, armor, and the businesses you can buy (laundromat, bar, hotel,
+  nightclub, steel mill and the rest). The drawn icons are gone. Stills from free stock video,
+  credited in public/items/PHOTOS.md.
+- **Two more bosses break out of their card on Home:** Captain Harlan Webb and Augustin Vale
+  have new faces with clean cut-outs. Seven of the eight bosses now have one; Colonel Hraba
+  still shows a framed photo.
+
 ## 4.5.0: the rest of the cleanup (faces everywhere, no emoji, no odds)
 
 - **Every named character is a photo now:** career contacts (Reyes, Kozak, Marsh, Silas, Mercy,

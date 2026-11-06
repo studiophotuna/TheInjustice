@@ -10,8 +10,8 @@ const mk = (id: string, g: Gender, old = false): [string, Face] => [`mk${id}`, {
 const pt = (id: string, g: Gender, old = false): [string, Face] => [id, { src: `/portraits/${id}.jpg`, g, ...(old ? { old } : {}) }];
 
 export const FACES: Record<string, Face> = Object.fromEntries([
-  ...["12934", "13737", "14090", "16107", "16108", "23740", "32845", "35808", "36445", "41334", "41922", "4727", "4736", "4813", "49249", "51755", "6341"].map((i) => mk(i, "m")),
-  ...["33210", "33539", "4764", "9248"].map((i) => mk(i, "m", true)),
+  ...["12934", "13737", "14090", "16107", "16108", "23740", "32845", "35808", "36445", "41334", "41922", "4727", "4736", "4813", "49249", "51755", "6341", "4634"].map((i) => mk(i, "m")),
+  ...["33210", "33539", "4764", "9248", "21449"].map((i) => mk(i, "m", true)),
   ...["1299", "23300", "25005", "32161", "32642", "33204", "33328", "33532", "44544", "4573", "46680", "4804", "4834", "49439", "4954", "5179", "5798", "9236"].map((i) => mk(i, "f")),
   ...["32188", "32837", "33352", "4781", "5777"].map((i) => mk(i, "f", true)),
   ...["banking-3", "banking-5", "banking-6", "courts-3", "courts-5", "enforcer-6", "police-1", "police-2", "police-3", "police-6", "police-8", "vigilante-2", "vigilante-3", "vigilante-5", "vigilante-8", "military-4"].map((i) => pt(i, "m")),
@@ -27,7 +27,7 @@ export const REGULAR_LOOKS: Record<string, { g: Gender; old?: boolean; face?: st
   // Varrow
   gus: { g: "m", old: true }, rosa: { g: "f" }, dutch: { g: "m" }, ivy: { g: "f" }, teo: { g: "m" }, mags: { g: "f" },
   lenny: { g: "m" }, bea: { g: "f" }, sully: { g: "m" }, nico: { g: "m" },
-  crowe: { g: "m", old: true, face: "enforcer-3" }, webb: { g: "m", face: "mk4736" },
+  crowe: { g: "m", old: true, face: "enforcer-3" }, webb: { g: "m", face: "mk4634" },
   // Solmarra
   lucia: { g: "f" }, dario: { g: "m" }, marisol: { g: "f" }, beppe: { g: "m" }, ana: { g: "f" }, tomas: { g: "m" },
   pia: { g: "f" }, rico: { g: "m" }, elena: { g: "f" }, matteo: { g: "m" },
@@ -39,7 +39,7 @@ export const REGULAR_LOOKS: Record<string, { g: Gender; old?: boolean; face?: st
   // Meridian
   sloane: { g: "f" }, jules: { g: "m" }, kai: { g: "m" }, dex: { g: "m" }, noor: { g: "f" }, finn: { g: "m" },
   zara: { g: "f" }, milo2: { g: "m" }, reed: { g: "m" }, tess: { g: "f" },
-  vale: { g: "m", old: true, face: "mk4764" }, thorne: { g: "m", face: "mk14090" },
+  vale: { g: "m", old: true, face: "mk21449" }, thorne: { g: "m", face: "mk14090" },
 };
 
 /**

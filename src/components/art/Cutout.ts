@@ -35,7 +35,7 @@ export function heavyCutout(path: string | null | undefined): string {
 }
 
 /** Faces that have a clean cut-out (public/cutouts/face-*.webp). */
-const FACE_CUTS = new Set(["enforcer-3", "enforcer-8", "mk14090", "mk32642", "mk9248"]);
+const FACE_CUTS = new Set(["enforcer-3", "enforcer-8", "mk14090", "mk32642", "mk9248", "mk4634", "mk21449"]);
 /** The cut-out of the same person as a face photo, when there's a clean one. */
 export function faceCutout(photo: string | null | undefined): string | null {
   const base = photo?.match(/\/(?:faces|portraits)\/([\w-]+)\.jpg$/)?.[1];

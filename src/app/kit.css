@@ -462,3 +462,6 @@ img.city-shop-icon { width: 46px; height: 46px; border-radius: 12px; object-fit:
 .stmt-amts .up { color: var(--money); }
 .stmt-amts .down { color: #ff7f86; }
 .stmt-amts .dirty-up { color: var(--gold); }
+
+/* Item and business photos: square, rounded, a thin tier ring. */
+.item-art.photo { object-fit: cover; border-radius: 14px; background: var(--panel-3); }
