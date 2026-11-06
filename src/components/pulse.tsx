@@ -4,7 +4,7 @@ import { ArrowRight, Briefcase, Coins, Crown, Gift, MessageCircle, Radio, Siren,
 import { PlayerAvatar } from "./art/Portraits";
 import { useScrollLock } from "./scrollLock";
 import { motion } from "motion/react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { fmt, type GameApi } from "./useGame";
 
 export type FeedItem = { at: number; text: string; kind: "city" | "street" };
@@ -17,27 +17,67 @@ export type Heavy = {
 type Pulse = { feed: FeedItem[]; needs: CrewNeed[]; heavies?: Heavy[]; stats?: { out: number; crews: number; wanted: number; fires: number; war?: string | null; election?: boolean } };
 
 /** The street feed and your crew's needs, refreshed every minute while the page is visible. */
-export function usePulse(country: string) {
-  const [pulse, setPulse] = useState<Pulse | null>(null);
-  const load = useCallback(async () => {
+const shared: { pulse: Pulse | null; country: string | null; at: number; inflight: Promise<void> | null; subs: Set<(p: Pulse | null) => void>; timer: ReturnType<typeof setInterval> | null; soon: ReturnType<typeof setTimeout> | null } = {
+  pulse: null, country: null, at: 0, inflight: null, subs: new Set(), timer: null, soon: null,
+};
+
+function loadPulse(force = false) {
+  if (shared.inflight) return shared.inflight;
+  if (!force && Date.now() - shared.at < 10_000) return Promise.resolve();
+  shared.inflight = (async () => {
     try {
       const res = await fetch("/api/community?pulse=1", { cache: "no-store" });
-      if (res.ok) setPulse(await res.json());
+      if (res.ok) {
+        shared.pulse = await res.json();
+        shared.at = Date.now();
+        shared.subs.forEach((f) => f(shared.pulse));
+      }
     } catch {
       // Offline for a moment; keep what we have.
+    } finally {
+      shared.inflight = null;
     }
-  }, []);
+  })();
+  return shared.inflight;
+}
+
+/** After an action, refresh once a few seconds later, however many panels are listening. */
+function pulseSoon() {
+  if (shared.soon) return;
+  shared.soon = setTimeout(() => {
+    shared.soon = null;
+    loadPulse(true);
+  }, 2_500);
+}
+
+/**
+ * The street feed, your crew's needs and the city's numbers: one copy for the whole page,
+ * refreshed every minute while the page is visible and shortly after you do something.
+ */
+export function usePulse(country: string) {
+  const [pulse, setPulse] = useState<Pulse | null>(shared.country === country ? shared.pulse : null);
   useEffect(() => {
-    load();
-    const t = setInterval(() => {
-      if (document.visibilityState === "visible") load();
-    }, 60_000);
-    window.addEventListener("conspira:changed", load);
+    if (shared.country !== country) {
+      shared.country = country;
+      shared.pulse = null;
+      shared.at = 0;
+    }
+    shared.subs.add(setPulse);
+    if (shared.pulse) setPulse(shared.pulse);
+    loadPulse();
+    if (!shared.timer) {
+      shared.timer = setInterval(() => document.visibilityState === "visible" && loadPulse(true), 60_000);
+      window.addEventListener("conspira:changed", pulseSoon);
+    }
     return () => {
-      clearInterval(t);
-      window.removeEventListener("conspira:changed", load);
+      shared.subs.delete(setPulse);
+      if (!shared.subs.size && shared.timer) {
+        clearInterval(shared.timer);
+        shared.timer = null;
+        window.removeEventListener("conspira:changed", pulseSoon);
+      }
     };
-  }, [load, country]);
+  }, [country]);
   return pulse;
 }
 

@@ -17,7 +17,25 @@ const ago = (t: number) => {
   return m < 1 ? "now" : m < 60 ? `${m}m` : `${Math.round(m / 60)}h`;
 };
 
+/** Wide enough for the side panel (it's hidden below this width). */
+function useWide() {
+  const [wide, setWide] = useState(false);
+  useEffect(() => {
+    const m = window.matchMedia("(min-width: 1280px)");
+    const on = () => setWide(m.matches);
+    on();
+    m.addEventListener("change", on);
+    return () => m.removeEventListener("change", on);
+  }, []);
+  return wide;
+}
+
 export function CityChatRail({ game }: { game: GameApi }) {
+  const wide = useWide();
+  return wide ? <CityChat game={game} /> : null;
+}
+
+function CityChat({ game }: { game: GameApi }) {
   const view = game.view!;
   const channel = `country:${view.location.country}`;
   const pulse = usePulse(view.location.country);
@@ -39,7 +57,7 @@ export function CityChatRail({ game }: { game: GameApi }) {
   }, [channel]);
   useEffect(() => {
     load();
-    const t = setInterval(() => document.visibilityState === "visible" && load(), 5000);
+    const t = setInterval(() => document.visibilityState === "visible" && load(), 8000);
     return () => clearInterval(t);
   }, [load]);
 

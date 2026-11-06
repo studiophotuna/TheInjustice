@@ -1,5 +1,21 @@
 # Changelog
 
+## 4.7.0: lighter on the network, fairer pay between careers
+
+- **Fewer requests:** the city's news, crew needs and numbers are now fetched once for the whole
+  page instead of once per panel, and only once after an action instead of three times. The
+  city chat only checks for messages on wide screens, where it's shown, and every 8 seconds
+  instead of 5. A phone now makes 4 requests a minute instead of 18; a wide screen 12 instead
+  of 18.
+- **Balance: the newer careers no longer earn double.** Mechanic, Hacker and Fire Department
+  reach their best job at rank 7 (about day 36 for someone playing three times a day), while the
+  older careers wait until rank 8 (about day 63), and their best jobs had almost no risk. In the
+  simulator they earned $600k to $730k from work by day 60 against $290k to $400k for everyone
+  else. Their jobs from rank 4 up now pay about a third less, and Military's from rank 5 up
+  about 15% less. Day-60 earnings now run from $293k to $465k across all ten careers.
+- The pacing simulator now also reports money earned from work, not just money left over.
+- "You found" messages no longer include an emoji.
+
 ## 4.6.0: new art (photos for every item, more boss cut-outs)
 
 - **Every item and business is a photo now,** in the same style as the scenes and faces: food,

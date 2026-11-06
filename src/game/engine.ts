@@ -857,7 +857,7 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
   if (job.find && rng() < job.find.chance) {
     const item = ITEM_BY_ID[job.find.itemId];
     p.inventory[item.id] = (p.inventory[item.id] ?? 0) + 1;
-    events.push({ tone: "good", text: `You found: ${item.icon} ${item.name}.` });
+    events.push({ tone: "good", text: `You found: ${item.name}.` });
   }
   checkProgress(p, events);
   maybeMugging(p, job, now, rng, events);

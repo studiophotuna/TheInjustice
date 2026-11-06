@@ -74,7 +74,7 @@ function tryAct(p: Player, action: Record<string, unknown>, now: number): boolea
 }
 
 /** Plays one career for `days` and returns the day (fractional) each rank was reached. */
-export function simulate(path: PathId, schedule: Schedule, days = 120, seed = 1): { reached: Record<number, number>; playMinutes: number; actions: number; days: number; worth: Record<number, number>; final: Record<string, unknown> } {
+export function simulate(path: PathId, schedule: Schedule, days = 120, seed = 1): { reached: Record<number, number>; playMinutes: number; actions: number; days: number; worth: Record<number, number>; earned: Record<number, number>; final: Record<string, unknown> } {
   let s = seed;
   const rand = () => {
     s = (s * 16807) % 2147483647;
@@ -99,6 +99,10 @@ export function simulate(path: PathId, schedule: Schedule, days = 120, seed = 1)
     let played = 0;
     // Money on hand + savings (clean and dirty) at the end of some days.
     const worth: Record<number, number> = {};
+    // Money brought in by work (jobs and their side income), before anything is spent.
+    const earned: Record<number, number> = {};
+    let income = 0;
+    const money = () => p.cash + p.bank + (p.dirty ?? 0);
     let playMinutes = 0;
     let actions = 0;
     const food = ITEMS.filter((i) => i.kind === "food").sort((a, b) => (b.energy ?? 0) - (a.energy ?? 0));
@@ -130,7 +134,9 @@ export function simulate(path: PathId, schedule: Schedule, days = 120, seed = 1)
           for (let k = 0; k < 6; k++) {
             let did = false;
             for (const a of pickActions(p)) {
+              const before = money();
               const ok = a.kind === "job" ? tryAct(p, { type: "job", jobId: a.job.id }, now) : tryAct(p, { type: "train", stat: a.stat }, now);
+              if (ok && a.kind === "job") income += Math.max(0, money() - before);
               if (ok) {
                 did = true;
                 actions++;
@@ -145,10 +151,13 @@ export function simulate(path: PathId, schedule: Schedule, days = 120, seed = 1)
           if (p.hasBankAccount && p.cash > 60) tryAct(p, { type: "bank", op: "deposit", amount: p.cash - 30 }, now);
         }
       }
-      if ([7, 30, 60].includes(day + 1)) worth[day + 1] = Math.round(p.cash + p.bank + (p.dirty ?? 0));
+      if ([7, 30, 60].includes(day + 1)) {
+        worth[day + 1] = Math.round(money());
+        earned[day + 1] = Math.round(income);
+      }
       if (p.rank >= PATHS[path].ranks.length && day >= 60) break;
     }
-    return { reached, playMinutes, actions, days: played, worth, final: { housing: p.housing, cash: Math.round(p.cash), bank: Math.round(p.bank), dirty: Math.round(p.dirty ?? 0), jobs: p.jobCounts } };
+    return { reached, playMinutes, actions, days: played, worth, earned, final: { housing: p.housing, cash: Math.round(p.cash), bank: Math.round(p.bank), dirty: Math.round(p.dirty ?? 0), jobs: p.jobCounts } };
   } finally {
     Math.random = oldRandom;
   }
