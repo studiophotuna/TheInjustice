@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.9.1: the shop shows only what this city sells
+
+- Weapons and armor sold in other cities no longer appear in the shop: you only see what's on
+  sale where you are. Travel to find the rest.
+- Every weapon and armor shows its stock: "In stock: 4", or "In stock: 0" when it's sold out
+  until the next shipment.
+
 ## 6.9.0: armor pairs, gear by city, stock and shipments, no more repairs
 
 - **Four new armors**, so every price has a choice between a light piece (keeps you quick,

@@ -309,7 +309,7 @@ export function ShopTab({ game }: { game: GameApi }) {
       )}
       {cat !== "business" && (
     <motion.div key={cat} className="shop-grid" variants={list} initial="hidden" animate="show">
-      {view.shop.filter((i) => kinds.includes(i.kind)).map((i) => {
+      {view.shop.filter((i) => kinds.includes(i.kind) && (!GEAR_HOME[i.id] || GEAR_HOME[i.id] === view.location.country)).map((i) => {
         const price = shelfPrice(i.price, shopFor(shops.data, i.kind));
         // Weapons and armor: each city sells its own, in limited stock.
         const home = GEAR_HOME[i.id];
@@ -323,8 +323,7 @@ export function ShopTab({ game }: { game: GameApi }) {
             <span className="chip">{KIND_LABEL[i.kind]}</span>
             <h3>{i.name}</h3>
             <p className="muted">{i.description}</p>
-            {away && <p className="fine stock-note">Sold in {away}</p>}
-            {left !== null && <p className={`fine stock-note ${soldOut ? "out" : ""}`}>{soldOut ? "Sold out until the next shipment" : `${left} on the shelf`}</p>}
+            {left !== null && <p className={`fine stock-note ${soldOut ? "out" : ""}`}>In stock: {left}{soldOut ? " · next shipment soon" : ""}</p>}
           </div>
           <motion.button
             whileTap={{ scale: 0.94 }}
