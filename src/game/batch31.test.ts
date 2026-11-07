@@ -35,16 +35,20 @@ describe("city groups", () => {
   });
 });
 
-describe("NPCs are drawn as their career, as a man or a woman", () => {
-  it("contacts and regulars get their own career's character", async () => {
-    const { NPC_FACES, careerFace } = await import("./content/faces");
-    const { regularPhoto, ROSTER } = await import("./regulars");
-    expect(NPC_FACES.reyes).toBe("/careers/police-f-face.webp");
-    expect(NPC_FACES.kozak).toBe("/careers/enforcer-face.webp");
-    expect(NPC_FACES.mugger).toBe("/careers/street-face.webp");
-    // Careers without a woman's picture share one.
-    expect(careerFace("military", "f")).toBe("/careers/military-face.webp");
-    const lucia = ROSTER.solmarra.find((d) => d.key === "lucia")!;
-    expect(regularPhoto("solmarra", "lucia")).toBe(careerFace(lucia.path, "f"));
+describe("NPCs are drawn as their career and rank", () => {
+  it("a different photo for every rank, and contacts keep their own", async () => {
+    const { NPC_FACES, rankPortrait } = await import("./content/faces");
+    const { regularPhoto } = await import("./regulars");
+    // Mafia: the soldier and the boss are different people; the Boss is the old man.
+    expect(rankPortrait("enforcer", 2)).not.toBe(rankPortrait("enforcer", 7));
+    expect(rankPortrait("enforcer", 7)).toBe("/portraits/enforcer-3.jpg");
+    // An intern isn't the doctor.
+    expect(rankPortrait("medicine", 2)).not.toBe(rankPortrait("medicine", 4));
+    for (const p of ["police", "enforcer", "courts", "vigilante", "medicine", "banking", "military", "mechanic", "hacker", "fire"]) {
+      const all = new Set(Array.from({ length: 8 }, (_, i) => rankPortrait(p, i + 1)));
+      expect(all.size, p).toBeGreaterThanOrEqual(7);
+    }
+    expect(NPC_FACES.reyes).toBe("/portraits/police-4.jpg");
+    expect(regularPhoto("solmarra", "lucia")).toMatch(/^\/portraits\/[a-z0-9-]+\.jpg$/);
   });
 });

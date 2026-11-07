@@ -54,29 +54,35 @@ export const REGULAR_LOOKS: Record<string, { g: Gender; old?: boolean; face?: st
  */
 export const NPC_FACES: Record<string, string> = {};
 
-/** Every NPC is drawn as their career's character. People without a career are the street. */
-export const CAREER_ART = ["police", "enforcer", "courts", "vigilante", "medicine", "banking", "military", "mechanic", "hacker", "fire", "street"] as const;
-/** Careers drawn as a woman too. The rest (soldier, mechanic, hacker, firefighter) are shared. */
-const WOMEN = new Set(["police", "enforcer", "courts", "medicine", "banking", "vigilante", "street"]);
-const artOf = (path: string | null | undefined, g: Gender = "m") => {
-  const career = path && (CAREER_ART as readonly string[]).includes(path) ? path : "street";
-  return g === "f" && WOMEN.has(career) ? `${career}-f` : career;
-};
-export const careerFace = (path: string | null | undefined, g: Gender = "m") => `/careers/${artOf(path, g)}-face.webp`;
-export const careerCutout = (path: string | null | undefined, g: Gender = "m") => `/careers/${artOf(path, g)}.webp`;
+/** How many rank portraits each career has (public/portraits/<career>-<rank>.jpg). */
+const RANKS: Record<string, number> = { police: 8, enforcer: 8, courts: 8, vigilante: 8, medicine: 8, banking: 8, military: 8, mechanic: 7, hacker: 7, fire: 7 };
+/** Mafia portraits were shot out of order: rank → file, so the Boss is the old man, not a soldier. */
+const ORDER: Record<string, number[]> = { enforcer: [1, 2, 6, 4, 5, 7, 3, 8] };
+/** People without a career: a few faces of the street, picked by name. */
+const STREET: Record<Gender, string[]> = { m: ["street", "street-m1", "street-m2", "street-m3", "street-m4"], f: ["street-f1", "street-f2"] };
+
+/** The portrait for someone in a career at a rank: a different photo for every rank. */
+export function rankPortrait(path: string | null | undefined, rank: number | null | undefined, key = "", g: Gender = "m"): string {
+  const max = path ? RANKS[path] : undefined;
+  if (!path || !max) {
+    const list = STREET[g];
+    return `/portraits/${list[hash(key || "street") % list.length]}.jpg`;
+  }
+  const r = Math.max(1, Math.min(max, Math.round(rank ?? 1)));
+  return `/portraits/${path}-${ORDER[path]?.[r - 1] ?? r}.jpg`;
+}
 /** The gender a regular is written as. */
 export const regularGender = (key: string): Gender => REGULAR_LOOKS[key]?.g ?? "m";
 
-/** The story's own people and the street toughs, by career. */
-const NPC_WOMEN = new Set(["reyes", "marsh", "mercy", "quell", "dobrev", "okafor"]);
-export const NPC_CAREER: Record<string, string> = {
-  reyes: "police", kozak: "enforcer", marsh: "courts", silas: "vigilante", mercy: "medicine", quell: "banking",
-  brann: "military", dobrev: "mechanic", okafor: "hacker", brennan: "fire", crane: "courts", benny: "street",
-  alley_rat: "street", drunk_sailor: "street", dock_brawler: "street", southside_bruiser: "street", iron_foreman: "mechanic",
-  mugger: "street", beach_hustler: "street", casino_bouncer: "enforcer", rail_rat: "street", state_enforcer: "police",
-  undercity_scav: "street", corp_security: "police", road_gang: "street",
+/** The story's own people and the street toughs: career and rank (or a fixed photo). */
+const NPC_PHOTO: Record<string, string> = {
+  reyes: "police-4", kozak: "enforcer-6", marsh: "courts-4", silas: "vigilante-3", mercy: "medicine-8", quell: "banking-2",
+  brann: "military-4", dobrev: "mechanic-6", okafor: "hacker-6", brennan: "fire-6", crane: "courts-7", benny: "street-m2",
+  alley_rat: "vigilante-5", drunk_sailor: "street-m4", dock_brawler: "street-m3", southside_bruiser: "street-m2", iron_foreman: "mechanic-6",
+  mugger: "enforcer-1", beach_hustler: "street-m1", casino_bouncer: "enforcer-2", rail_rat: "street", state_enforcer: "police-3",
+  undercity_scav: "vigilante-8", corp_security: "police-6", road_gang: "enforcer-1",
 };
-for (const [id, path] of Object.entries(NPC_CAREER)) NPC_FACES[id] = careerFace(path, NPC_WOMEN.has(id) ? "f" : "m");
+for (const [id, file] of Object.entries(NPC_PHOTO)) NPC_FACES[id] = `/portraits/${file}.jpg`;
 const NPC_SRCS = new Set(Object.values(NPC_FACES));
 
 /** Which regulars share a city (the same order as the roster). */

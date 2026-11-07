@@ -944,11 +944,9 @@ button.style-preview:hover .try-hint, button.style-preview:focus-visible .try-hi
 .die i.on { background: #15171c; }
 .casino-break .row { gap: 8px; }
 
-/* Career characters are cut out: give them a backdrop wherever they sit in a frame. */
-img[src^="/careers/"] { background: radial-gradient(circle at 50% 30%, #3b4150, #171a21 72%); }
-img[src^="/careers/"].hero2-cut, img[src^="/careers/"].boss-cut { background: none; }
 
 /* Car photos. */
 .car-photo { display: block; object-fit: cover; border-radius: 10px; background: #12151c; }
 .car-photo.garage-art { width: 112px; height: 76px; flex: none; }
 .car-photo.route-car { width: 100%; height: 64px; }
+.logo-word-img { display: block; width: 170px; height: auto; max-width: 100%; }

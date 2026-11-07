@@ -1,5 +1,19 @@
 # Changelog
 
+## 6.6.0: the new logo, and a photo for every rank
+
+- **New logo.** The new Conspira badge (the eye over the die, cards, the scales of justice, the
+  pistols and the gold police shield) on the start screen, the loading splash and the app
+  icons; the new wordmark in the sidebar and on the moderator page; the eye in the triangle as
+  the browser-tab icon.
+- **A different photo for every career rank.** A soldier no longer looks like the boss, an intern
+  no longer looks like the doctor. Regulars, contacts, street toughs, boss cards and your own
+  portrait all use the photo for their career and rank. Mechanic, Hacker and Fire Department got
+  seven new rank photos each; people without a career get one of six street photos. The Mafia
+  photos were reordered so the Boss is the old man in sunglasses, not a Made Man.
+- **No more cut-outs.** Every background-removed image is gone; photos stay whole, in a frame.
+  The player's portrait is a still photo now (no video), which also makes Home lighter to load.
+
 ## 6.5.0: every NPC is their career
 
 - **NPCs are drawn as their career, no more random faces.** Regulars, contacts, suspects, bosses

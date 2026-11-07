@@ -9,7 +9,7 @@
 // invited, or bountied, and they carry only pocket money (refilled every few hours), so nobody
 // can farm them.
 
-import { careerFace, regularGender } from "./content/faces";
+import { rankPortrait, regularGender } from "./content/faces";
 import { STAT_KEYS, type CountryId, type PathId, type Player, type StatKey } from "./types";
 
 export const REGULARS = {
@@ -153,7 +153,10 @@ export const isHeavy = (p: Player) => !!defFor(p)?.heavy;
 
 /** Keeps a regular in shape: pocket money refills every few hours, and they don't hold heat. */
 /** Each regular is drawn as their career's character (the street, without one). */
-export const regularPhoto = (country: string, key: string) => careerFace(ROSTER[country as CountryId]?.find((d) => d.key === key)?.path ?? null, regularGender(key));
+export const regularPhoto = (country: string, key: string) => {
+  const def = ROSTER[country as CountryId]?.find((d) => d.key === key);
+  return rankPortrait(def?.path ?? null, def?.rank ?? 1, key, regularGender(key));
+};
 
 export function regularUpkeep(p: Player, now: number) {
   if (!p.regular) return;

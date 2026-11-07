@@ -32,7 +32,11 @@ export function Logo({ small = false }: { small?: boolean }) {
   return (
     <div className={`logo ${small ? "logo-sm" : ""}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className="logo-emblem" src={small ? "/brand/logo-320.webp" : "/brand/logo-640.webp"} width={small ? 132 : 240} height={small ? 139 : 253} alt={GAME_NAME} />
+      {small ? (
+        <img className="logo-word-img" src="/brand/wordmark-400.webp" width={170} height={50} alt={GAME_NAME} />
+      ) : (
+        <img className="logo-emblem" src="/brand/logo-640.webp" width={240} height={238} alt={GAME_NAME} />
+      )}
       {!small && <span className="logo-sub">{SLOGAN}</span>}
     </div>
   );

@@ -1,4 +1,0 @@
-Cut-outs made from the career portraits in /public/portraits (stills from Mixkit stock video, used
-under the Mixkit Stock Video Free License; see /public/scenes/CREDITS.md). The backgrounds were
-removed automatically (rembg, isnet-general-use). Only clean single-person cut-outs are kept;
-screens fall back to the framed portrait otherwise.
