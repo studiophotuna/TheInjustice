@@ -4,6 +4,7 @@
 //    bank records) or bury them for a fee.
 //  - Vigilantes hunt suspects on cold cases the police couldn't close, outside the law.
 
+import { fightFace } from "./social";
 import { BALANCE } from "./balance";
 import { playerFighter, resolveFight } from "./combat";
 import { CRIMES, addTip, caseCold, suspectsFor, type SuspectMatch } from "./crime";
@@ -149,7 +150,7 @@ export function hunt(
   v.heat += C.vigilante.heat * COUNTRY_BY_ID[c.country].heatMult;
 
   const res = resolveFight(playerFighter(v, 100), { ...playerFighter(suspect, 100), hp: suspect.hp }, rng);
-  const fight: FightSummary = { opponent: suspect.name, icon: "🧍", won: res.won, lines: res.lines, outcome: res.won ? "win" : "loss" };
+  const fight: FightSummary = { opponent: suspect.name, icon: "🧍", won: res.won, lines: res.lines, outcome: res.won ? "win" : "loss", face: fightFace(suspect) };
   v.hp = res.playerHp;
   const crime = CRIMES[c.kind].name.toLowerCase();
   let restitution = 0;

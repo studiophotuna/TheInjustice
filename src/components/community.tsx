@@ -650,6 +650,12 @@ function Chat({ game, hub, initial }: { game: GameApi; hub: Hub; initial?: strin
           ))}
         </AnimatePresence>
       </div>
+      {channel === "global" && !view.favors.owned.includes("item:mic") ? (
+        <p className="chat-locked">
+          Only players with a microphone speak in Global. Everyone can listen.{" "}
+          <button className="link" onClick={() => window.dispatchEvent(new CustomEvent("injustice:go", { detail: "tab:shop" }))}>Get one in Shop → Style → Extras</button>
+        </p>
+      ) : (
       <form
         className="chat-input"
         onSubmit={async (e) => {
@@ -665,6 +671,7 @@ function Chat({ game, hub, initial }: { game: GameApi; hub: Hub; initial?: strin
         <input maxLength={280} placeholder={`Message ${CHANNEL_NAME(channel, view.location.city, hub.myCrew?.tag)}`} value={text} onChange={(e) => setText(e.target.value)} />
         <button className="btn btn-primary btn-sm" disabled={game.busy || !text.trim()}><Send size={14} /></button>
       </form>
+      )}
       <p className="fine">Be decent. Blocked players&apos; messages are hidden from you.</p>
     </section>
   );

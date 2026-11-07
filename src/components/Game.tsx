@@ -656,12 +656,16 @@ function FightScene({ fight, view, onClose }: { fight: FightSummary; view: Publi
     <motion.div className="fight-scene" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={done ? onClose : undefined}>
       <div className="fight-stage">
         <motion.div initial={{ x: -120, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 200, damping: 18 }}>
-          <PlayerAvatar name={view.name} path={view.path?.id} className="avatar-fight" />
+          <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo ?? careerStill(view.path?.id, view.ladder?.current)} look={view.look} className="avatar-fight" />
           <p>{view.name}</p>
         </motion.div>
         <motion.span className="vs" initial={{ scale: 3, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.25 }}>VS</motion.span>
         <motion.div initial={{ x: 120, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 200, damping: 18 }}>
-          <NpcPortrait id={npcId} className="avatar-fight" />
+          {fight.face ? (
+            <PlayerAvatar name={fight.opponent} path={fight.face.path} photo={fight.face.photo} look={fight.face.look} className="avatar-fight" />
+          ) : (
+            <NpcPortrait id={npcId} className="avatar-fight" />
+          )}
           <p>{fight.opponent}</p>
         </motion.div>
       </div>

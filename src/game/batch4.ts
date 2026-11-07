@@ -1,5 +1,6 @@
 // Election campaigns and vote buying, loans and loan sharks, revenge contracts.
 
+import { fightFace } from "./social";
 import { assertNotAlt } from "./anticheat";
 import { BALANCE } from "./balance";
 import { playerFighter, resolveFight } from "./combat";
@@ -152,7 +153,7 @@ export function collectLoan(lender: Player, borrower: Player, id: string, now: n
   if (lender.energy < L.collectEnergy) throw new GameError("You're too tired.");
   lender.energy -= L.collectEnergy;
   const res = resolveFight(playerFighter(lender, 100), { ...playerFighter(borrower, 100), hp: borrower.hp }, rng);
-  const fight: FightSummary = { opponent: borrower.name, icon: "🧍", won: res.won, lines: res.lines, outcome: res.won ? "win" : "loss" };
+  const fight: FightSummary = { opponent: borrower.name, icon: "🧍", won: res.won, lines: res.lines, outcome: res.won ? "win" : "loss", face: fightFace(borrower) };
   lender.hp = Math.max(5, res.playerHp);
   lender.heat += 4;
   if (!res.won) {

@@ -1,5 +1,17 @@
 # Changelog
 
+## 5.8.0: real faces in fights, the microphone, more dogs
+
+- **Fights show the right faces.** Your side of the fight scene now uses your own photo (or
+  career portrait) and the frame you wear, and a player or regular you fight shows their own
+  face and frame instead of a generic street tough.
+- **The microphone (Favors, Shop → Style → Extras, 400):** only players with a microphone can
+  speak in Global chat; everyone can still read it. City, crew and forum chat stay open to all.
+  Yours for good once bought.
+- **Six more dog breeds:** junkyard dog, husky, labrador, bulldog, pit bull and rottweiler,
+  alongside the pound mutt, shepherd and mastiff. Every breed has a photo, in the shop list
+  and on your dog's card.
+
 ## 5.7.0: street regulars do their jobs
 
 - **Regulars with a career now work for you, for a fee.** Tap one in People and

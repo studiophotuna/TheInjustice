@@ -5,7 +5,7 @@
 
 import { GameError, type GameEvent, type Player } from "./types";
 
-export type CosmeticKind = "frame" | "color" | "banner";
+export type CosmeticKind = "frame" | "color" | "banner" | "item";
 export interface Cosmetic { id: string; kind: CosmeticKind; name: string; price: number; /** Animated, premium. */ fx?: boolean }
 
 export const FAVORS = {
@@ -25,6 +25,7 @@ const C = (kind: CosmeticKind, id: string, name: string, price: number): Cosmeti
 const FX = (kind: CosmeticKind, id: string, name: string, price: number): Cosmetic => ({ ...C(kind, id, name, price), fx: true });
 
 export const COSMETICS: Cosmetic[] = [
+  C("item", "mic", "Microphone", 400),
   FX("frame", "goldrush", "Gold rush", 500),
   FX("frame", "wildfire", "Wildfire", 500),
   FX("frame", "livewire", "Live wire", 450),
@@ -96,15 +97,20 @@ export function buyCosmetic(p: Player, id: string, now: number): GameEvent[] {
   if (owned.includes(id)) throw new GameError("You already have it.");
   if ((p.favors ?? 0) < item.price) throw new GameError("You don't have enough Favors.");
   p.favors = (p.favors ?? 0) - item.price;
-  p.cosmetics = { ...(p.cosmetics ?? { owned: [] }), owned: [...owned, id], [item.kind]: id };
+  p.cosmetics = { ...(p.cosmetics ?? { owned: [] }), owned: [...owned, id], ...(item.kind === "item" ? {} : { [item.kind]: id }) };
   log(p, -item.price, item.name, now);
+  if (id === MIC) return [{ tone: "good", text: "The microphone is yours. You can speak in Global chat now, for good." }];
   return [{ tone: "good", text: `${item.name} is yours, and you're wearing it.` }];
 }
+
+/** The microphone: owning it lets you post in Global chat (everyone can still read it). */
+export const MIC = "item:mic";
+export const hasMic = (p: Player) => (p.cosmetics?.owned ?? []).includes(MIC);
 
 export function equipCosmetic(p: Player, kind: CosmeticKind, id: string | null): GameEvent[] {
   if (!["frame", "color", "banner"].includes(kind)) throw new GameError("Bad request.");
   if (id?.startsWith("upload:")) {
-    const own = kind !== "color" ? p.customLooks?.[kind] : undefined;
+    const own = kind === "frame" || kind === "banner" ? p.customLooks?.[kind] : undefined;
     if (!own || own.id !== id.slice(7) || own.status !== "approved") throw new GameError("That isn't approved yet.");
     p.cosmetics = { ...(p.cosmetics ?? { owned: [] }), [kind]: id };
     return [{ tone: "good", text: `Now wearing your own ${kind}.` }];

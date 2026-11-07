@@ -2,6 +2,7 @@
 // (a yard-only chat), fight each other for respect, work prison shifts (good behavior takes
 // time off a sentence) and get recruited by crew leaders doing time with them.
 
+import { fightFace } from "./social";
 import { playerMaxHp } from "./wounds";
 import { BALANCE } from "./balance";
 import { playerFighter, resolveFight } from "./combat";
@@ -42,7 +43,7 @@ export function yardFight(a: Player, t: Player, now: number, rng: Rng): { events
   const af = playerFighter(a, playerMaxHp(a));
   const tf = playerFighter(t, playerMaxHp(t));
   const res = resolveFight({ ...af, strength: af.strength + mine.edge }, { ...tf, strength: tf.strength + theirs.edge, hp: t.hp }, rng);
-  const fight: FightSummary = { opponent: t.name, icon: "🧍", won: res.won, lines: res.lines, outcome: res.won ? "win" : "loss" };
+  const fight: FightSummary = { opponent: t.name, icon: "🧍", won: res.won, lines: res.lines, outcome: res.won ? "win" : "loss", face: fightFace(t) };
   // The guards break it up before anyone dies: nobody drops below a few points of health.
   a.hp = Math.max(5, res.playerHp);
   const winner = res.won ? a : t;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Dog, EyeOff, Home } from "lucide-react";
+import { EyeOff, Home } from "lucide-react";
 import type { GameApi } from "./useGame";
 
 const money = (n: number) => `$${n.toLocaleString()}`;
@@ -117,7 +117,10 @@ export function DogCard({ game }: { game: GameApi }) {
     const hungry = dog.state === "hungry";
     return (
       <section className="card dog-card">
-        <h3 className="card-title"><Dog size={16} /> {dog.name} · {dog.breed}</h3>
+        <div className="dog-head">
+          <img className="dog-photo" src={`/dogs/${dog.breedId}.jpg`} alt="" />
+          <h3 className="card-title">{dog.name} · {dog.breed}</h3>
+        </div>
         <p className={`fine ${hungry ? "text-red" : "muted"}`}>
           {hungry
             ? `${dog.name} is hungry and guarding half as well. Feed them before ${new Date(dog.leavesAt).toLocaleDateString()} or they'll find a new home.`
@@ -136,17 +139,19 @@ export function DogCard({ game }: { game: GameApi }) {
   }
   return (
     <section className="card dog-card">
-      <h3 className="card-title"><Dog size={16} /> A dog for the door</h3>
+      <h3 className="card-title">A dog for the door</h3>
       <p className="muted fine">
         A dog makes break-ins harder, barks when someone tries the door, and lets you know about it. It needs feeding every three days: a hungry dog guards
         half as well, and one left alone for a week finds a new home.
       </p>
       <input className="stash-amount" placeholder="Name your dog" maxLength={16} value={name} onChange={(e) => setName(e.target.value)} />
-      <ul className="officials stash-rows">
+      <ul className="dog-list">
         {breeds.map((b) => (
           <li key={b.id}>
-            <span>
-              <b>{b.name}</b> <span className="muted">· {b.blurb} Food ${b.food} every three days.</span>
+            <img className="dog-photo" src={`/dogs/${b.id}.jpg`} alt="" loading="lazy" />
+            <span className="dog-info">
+              <b>{b.name}</b>
+              <span className="muted fine">{b.blurb} Food ${b.food} every three days.</span>
             </span>
             <button
               className="btn btn-ghost btn-xs"

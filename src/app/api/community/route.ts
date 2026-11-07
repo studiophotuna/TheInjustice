@@ -1,4 +1,4 @@
-import { lookOf } from "@/game/favors";
+import { hasMic, lookOf } from "@/game/favors";
 import { servicesOf, useService, type ServiceId } from "@/game/regularwork";
 import { assertActive, assertCanSpeak, checkReport, isBanned } from "@/game/moderation";
 import { acceptAlliance, breakAlliance, declineAlliance, proposeAlliance } from "@/game/batch7";
@@ -721,6 +721,7 @@ export async function POST(req: Request) {
         const author = await store.update(playerId, (p) => {
           if (!p) throw new GameError("Create a character first.");
           if (channel.startsWith("forum:") ? !canUseForum(forumCrew, p) : !channelsFor(p).includes(channel)) throw new GameError("You can't post there.");
+          if (channel === "global" && !hasMic(p)) throw new GameError("Only players with a microphone can speak in Global. Get one in Shop → Style → Extras.");
           assertCanSpeak(p, now);
           if (now - (p.lastChatAt ?? 0) < BALANCE.chat.cooldownMs) throw new GameError("Slow down a little.");
           p.lastChatAt = now;

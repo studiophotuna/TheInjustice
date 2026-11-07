@@ -709,3 +709,16 @@ button.style-preview:hover .try-hint, button.style-preview:focus-visible .try-hi
 
 .hud-name, .file-name, .msg-author, .map-name { position: relative; display: inline-block; }
 .portrait-photo.fx, .portrait-photo[class*="frame-"] { border-radius: 50% !important; }
+
+.style-item-icon { display: grid; place-items: center; width: 72px; height: 72px; border-radius: 50%; background: radial-gradient(circle, #3a2f12, #1a1e27); color: var(--gold); }
+.owned-tag { font-size: 12px; font-weight: 800; color: var(--money); text-align: center; padding: 8px 0; }
+.chat-locked { margin: 0; padding: 10px 12px; border-radius: 12px; background: #2b2412; color: #f6d98a; font-size: 13px; font-weight: 700; }
+
+/* Dogs: a photo for every breed. */
+.dog-head { display: flex; gap: 12px; align-items: center; }
+.dog-photo { width: 56px; height: 56px; border-radius: 14px; object-fit: cover; flex: none; }
+.dog-head .dog-photo { width: 72px; height: 72px; border-radius: 16px; }
+.dog-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; }
+.dog-list li { display: flex; gap: 12px; align-items: center; }
+.dog-info { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.dog-info .fine { margin: 0; }

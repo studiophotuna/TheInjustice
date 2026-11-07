@@ -26,7 +26,7 @@ export type TravelMode = "bus" | "train" | "plane" | "car";
 /** Who you were before prison (picked at character creation). */
 export type BackgroundId = "street" | "boxer" | "cadet" | "nurse" | "paralegal" | "clerk" | "garage" | "watch" | "phones" | "firevol";
 
-export type DogBreed = "mutt" | "shepherd" | "mastiff";
+export type DogBreed = "mutt" | "junkyard" | "husky" | "labrador" | "bulldog" | "pitbull" | "shepherd" | "rottweiler" | "mastiff";
 
 /** A guard dog at one home. */
 export interface Dog {
@@ -756,6 +756,8 @@ export interface FightSummary {
   /** Descriptive round-by-round lines, no numbers. */
   lines: string[];
   outcome: "win" | "loss" | "ko" | "death";
+  /** The opponent's own face when it's a player or a regular (NPCs use their portrait). */
+  face?: { photo: string | null; path: string | null; look: { frame: string | null; color: string | null; banner: string | null } | null };
 }
 
 export interface GameEvent {

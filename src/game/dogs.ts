@@ -9,7 +9,13 @@ import { GameError, type CountryId, type Dog, type DogBreed, type GameEvent, typ
 export const DOGS = {
   breeds: {
     mutt: { name: "Pound mutt", price: 300, food: 15, guard: 0.15, blurb: "All bark. Loud bark, though." },
+    junkyard: { name: "Junkyard dog", price: 600, food: 20, guard: 0.18, blurb: "Came with the scrapyard. Trusts nobody, you included." },
+    husky: { name: "Husky", price: 900, food: 25, guard: 0.12, blurb: "Howls at burglars. Also at the moon, the kettle and the mail." },
+    labrador: { name: "Labrador", price: 1_200, food: 25, guard: 0.12, blurb: "Will greet the burglar warmly, then sit on him." },
+    bulldog: { name: "Bulldog", price: 1_600, food: 30, guard: 0.2, blurb: "Snores like a truck. Doesn't let go like one either." },
+    pitbull: { name: "Pit bull", price: 2_000, food: 30, guard: 0.23, blurb: "Sweet with family. Strangers get a different dog." },
     shepherd: { name: "Shepherd", price: 2_500, food: 35, guard: 0.25, blurb: "Smart, loyal, and very sure about strangers." },
+    rottweiler: { name: "Rottweiler", price: 5_000, food: 50, guard: 0.3, blurb: "Sits by the door like a bouncer and checks the list." },
     mastiff: { name: "Mastiff", price: 8_000, food: 70, guard: 0.35, blurb: "Weighs more than most burglars. Knows it." },
   } satisfies Record<DogBreed, { name: string; price: number; food: number; guard: number; blurb: string }>,
   /** A meal lasts this long. */
@@ -99,6 +105,7 @@ export function dogView(p: Player, now: number) {
       ? {
           name: d.name,
           breed: DOGS.breeds[d.breed].name,
+          breedId: d.breed,
           state,
           fedUntil: d.fedAt + DOGS.fedMs,
           leavesAt: d.fedAt + DOGS.leaveMs,

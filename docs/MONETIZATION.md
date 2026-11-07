@@ -11,6 +11,8 @@ The rules every paid feature follows. Decided with the owner in November 2026.
 - Never buy power: no energy, stats, gear, cash, property, rank, odds, or time off a jail,
   hospital or travel timer.
 - Never turn back into real money.
+- One social extra, by the owner's choice: the microphone (speak in Global chat). It gives no
+  advantage in play.
 - No loot boxes or random paid rewards.
 - Every credit has a reference (payment or grant id) and is counted once, so a payment
   provider can resend its notice safely (`creditFavors` in src/game/favors.ts).

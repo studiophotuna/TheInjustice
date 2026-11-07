@@ -27,6 +27,9 @@ export function notify(p: Player, text: string, tone: GameEventTone, from?: Play
   ].slice(0, 30);
 }
 
+/** A fighter's face for the fight scene: their photo, career and the looks they wear. */
+export const fightFace = (t: Player): NonNullable<FightSummary["face"]> => ({ photo: t.profile?.photo ?? null, path: t.path ?? null, look: lookOf(t) });
+
 /** Total bounty on a player's head. */
 export function bountyOn(p: Player): number {
   return (p.bounties ?? []).reduce((s, b) => s + b.amount, 0);
@@ -97,7 +100,7 @@ export function attackPlayer(a: Player, t: Player, now: number, rng: Rng): { eve
   const res = resolveFight(playerFighter(a, playerMaxHp(a)), { ...playerFighter(t, playerMaxHp(t)), hp: t.hp }, rng);
   const broke = wearGear(a, ["weapon", "armor"]);
   for (const e of wearGear(t, ["weapon", "armor"])) notify(t, e.text, "bad", undefined, now);
-  const fight: FightSummary = { opponent: t.name, icon: "🧍", won: res.won, lines: res.lines, outcome: res.won ? "win" : "loss" };
+  const fight: FightSummary = { opponent: t.name, icon: "🧍", won: res.won, lines: res.lines, outcome: res.won ? "win" : "loss", face: fightFace(t) };
   const events: GameEvent[] = [{ tone: res.won ? "good" : "bad", text: `Fight: ${t.name}`, fight }];
 
   // The defender takes roughly the damage the attacker dealt.

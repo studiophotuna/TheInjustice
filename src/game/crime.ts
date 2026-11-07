@@ -2,6 +2,7 @@
 // Crimes are anonymous: the victim only learns what witnesses, bystanders and detectives
 // piece together. Every tip reveals one trait, and some tips are wrong.
 
+import { fightFace } from "./social";
 import { clinicFactor } from "./specialties";
 import { addWound, playerMaxHp } from "./wounds";
 import { ALT_BLOCK, sameOwner } from "./anticheat";
@@ -293,7 +294,7 @@ export function commitCrime(
 
   if (kind === "mug") {
     const res = resolveFight(playerFighter(a, playerMaxHp(a)), { ...playerFighter(t, playerMaxHp(t)), hp: t.hp }, rng);
-    fight = { opponent: t.name, icon: "🧍", won: res.won, lines: res.lines, outcome: res.won ? "win" : "loss" };
+    fight = { opponent: t.name, icon: "🧍", won: res.won, lines: res.lines, outcome: res.won ? "win" : "loss", face: fightFace(t) };
     events.push({ tone: res.won ? "good" : "bad", text: `Mugging: ${t.name}`, fight });
     a.hp = res.playerHp;
     success = res.won;

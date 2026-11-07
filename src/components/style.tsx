@@ -3,6 +3,7 @@
 // Style: spend Favors on looks. Frames around your face, the colour of your name, the banner
 // behind your profile. Each one previews on your own face before you buy it.
 
+import { Mic } from "lucide-react";
 import { useState } from "react";
 import { COSMETICS, CUSTOM, FAVORS, type CosmeticKind, type CustomKind } from "@/game/favors";
 import { FxName, NAME_FX, type NameFxKind } from "./art/FxRing";
@@ -16,6 +17,7 @@ const KINDS: { id: CosmeticKind; label: string }[] = [
   { id: "frame", label: "Frames" },
   { id: "color", label: "Name colours" },
   { id: "banner", label: "Banners" },
+  { id: "item", label: "Extras" },
 ];
 
 const short = (id: string | null) => (id ? id.split(":")[1] : null);
@@ -121,13 +123,15 @@ export function StyleShop({ game }: { game: GameApi }) {
 
       <UploadRules kind={kind} />
       <div className={`style-grid kind-${kind}`}>
-        {kind !== "color" && <OwnLook game={game} kind={kind} tryOn={setTryOn} need={need} />}
+        {(kind === "frame" || kind === "banner") && <OwnLook game={game} kind={kind} tryOn={setTryOn} need={need} />}
         {list.map((c) => {
           const owned = f.owned.includes(c.id);
-          const on = f.equipped[c.kind] === c.id;
+          const on = c.kind !== "item" && f.equipped[c.kind] === c.id;
           const name = short(c.id);
           const open = () =>
-            setTryOn({
+            c.kind === "item"
+              ? !owned && game.act({ type: "buy_cosmetic", id: c.id })
+              : setTryOn({
               kind: c.kind,
               value: name!,
               title: c.name,
@@ -139,7 +143,9 @@ export function StyleShop({ game }: { game: GameApi }) {
           return (
             <article key={c.id} className={`style-item ${on ? "on" : ""}`}>
               <button className="style-preview" onClick={open} aria-label={`Try on ${c.name}`}>
-                {c.kind === "banner" ? (
+                {c.kind === "item" ? (
+                  <span className="style-item-icon"><Mic size={40} /></span>
+                ) : c.kind === "banner" ? (
                   <img className="style-banner" src={`/scenes/${name}.jpg`} alt="" loading="lazy" />
                 ) : c.kind === "frame" ? (
                   <PlayerAvatar name={view.name} path={view.path?.id} photo={photo} look={{ frame: name, color: null, banner: null }} className="style-face" />
@@ -150,7 +156,10 @@ export function StyleShop({ game }: { game: GameApi }) {
               </button>
               <div className="style-meta">
                 <b>{c.name}{c.fx && <span className="fx-tag">Animated</span>}</b>
-                {on ? (
+                {c.kind === "item" && <span className="fine muted">Speak in Global chat. Yours for good.</span>}
+                {c.kind === "item" && owned ? (
+                  <span className="owned-tag">Owned</span>
+                ) : on ? (
                   <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => game.act({ type: "equip_cosmetic", kind: c.kind, id: null })}>Take off</button>
                 ) : owned ? (
                   <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => game.act({ type: "equip_cosmetic", kind: c.kind, id: c.id })}>Wear</button>
@@ -288,7 +297,7 @@ function OwnLook({ game, kind, tryOn, need }: { game: GameApi; kind: CustomKind;
 
 /** What's allowed, shown under the uploads. */
 export function UploadRules({ kind }: { kind: CosmeticKind }) {
-  if (kind === "color") return null;
+  if (kind !== "frame" && kind !== "banner") return null;
   return (
     <p className="fine muted upload-rules">
       {kind === "frame" ? "Frames: a PNG with a see-through middle, shown around your face." : "Banners: a wide photo, shown behind your profile."}{" "}
