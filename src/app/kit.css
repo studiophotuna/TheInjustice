@@ -779,3 +779,7 @@ button.style-preview:hover .try-hint, button.style-preview:focus-visible .try-hi
 .event-text { margin: 0; font-size: 15px; font-weight: 600; }
 .event-effects { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .event-effects li { padding: 9px 12px; border-radius: 12px; background: var(--panel-2, #232836); font-size: 13.5px; font-weight: 700; }
+
+/* Hidden work that has just turned up. */
+.job-new { padding: 2px 8px; border-radius: 999px; background: var(--gold); color: #1a1408; font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+.job-line .mk.grade { color: var(--gold); }

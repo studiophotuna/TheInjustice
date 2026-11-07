@@ -1,5 +1,6 @@
 import { BALANCE } from "../balance";
 import type { DistrictId, PathId, Player, StatKey } from "../types";
+import { LADDER_JOBS } from "./ladders";
 
 export interface JobRisk {
   /** Stats averaged to resolve success. */
@@ -31,6 +32,10 @@ export interface JobDef {
   find?: { itemId: string; chance: number };
   path?: PathId;
   minRank?: number;
+  /** Hidden until you've done these jobs this many times in total. */
+  reveal?: { after: string[]; times: number };
+  /** How hard a hidden job is (1 to 3), shown in words. */
+  grade?: 1 | 2 | 3;
   /** Extra lock check; returns a reason or null. */
   requires?: (p: Player) => string | null;
   lines: string[];
@@ -2703,5 +2708,12 @@ export const JOBS: JobDef[] = [
     ],
   },
 ];
+
+JOBS.push(...LADDER_JOBS);
+
+/** Rounds done toward a hidden job turning up. */
+export const revealCount = (p: Player, j: JobDef) => (j.reveal ? j.reveal.after.reduce((s, id) => s + (p.jobCounts[id] ?? 0), 0) : 0);
+/** Whether you've heard about this work yet. */
+export const revealed = (p: Player, j: JobDef) => !j.reveal || revealCount(p, j) >= j.reveal.times || (p.jobCounts[j.id] ?? 0) > 0;
 
 export const JOB_BY_ID = Object.fromEntries(JOBS.map((j) => [j.id, j])) as Record<string, JobDef>;

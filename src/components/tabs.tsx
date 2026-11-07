@@ -169,10 +169,12 @@ function JobCard({ job, energy, blocked, best, flash, onWork }: {
         <div className="job-head">
           <h3>{job.name}</h3>
           {best && <span className="best-now">Best now</span>}
+          {job.fresh && <span className="job-new">New</span>}
         </div>
         <p className="job-line">
           {job.tag}
-          {job.risky && <i className="mk risky">risky</i>}
+          {job.grade && <i className="mk grade">{job.grade}</i>}
+          {job.risky && !job.grade && <i className="mk risky">risky</i>}
           {job.crime && <i className="mk shady">shady</i>}
         </p>
         {job.locked && <p className="job-lock"><Lock size={12} /> {job.locked}</p>}

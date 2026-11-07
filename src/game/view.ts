@@ -20,7 +20,8 @@ import { streetTitle } from "./titles";
 import { BALANCE, maxEnergy, regenMs } from "./balance";
 import { DISTRICT_BY_ID, DISTRICTS } from "./content/districts";
 import { ITEMS, ITEM_BY_ID } from "./content/items";
-import { JOBS } from "./content/jobs";
+import { JOBS, revealed } from "./content/jobs";
+import { GRADE_WORDS } from "./content/ladders";
 import { NPCS } from "./content/npcs";
 import { PATHS, promotionHint, rankTitle } from "./content/paths";
 import { familyGate, ratOf } from "./family";
@@ -52,6 +53,10 @@ export interface JobView {
   crime: boolean;
   locked: string | null;
   pathJob: boolean;
+  /** How hard a hidden job is, in words. */
+  grade?: string;
+  /** Turned up recently and not tried yet. */
+  fresh?: boolean;
 }
 
 export interface PublicView {
@@ -274,7 +279,7 @@ export function toView(p: Player, now: number): PublicView {
   const localDistrict = (id: DistrictId) => DISTRICT_BY_ID[id].country === here;
   // Work above your rank isn't shown at all: you find out about it when you get there.
   const jobs: JobView[] = JOBS.filter(
-    (j) => (j.path ? j.path === p.path && (j.minRank ?? 1) <= p.rank : localDistrict(j.district)),
+    (j) => (j.path ? j.path === p.path && (j.minRank ?? 1) <= p.rank : localDistrict(j.district)) && revealed(p, j),
   ).map((j) => ({
     id: j.id,
     name: j.name,
@@ -286,6 +291,8 @@ export function toView(p: Player, now: number): PublicView {
     crime: (j.integrity ?? 0) < 0 || (j.heat ?? 0) > 0,
     locked: jobLock(p, j),
     pathJob: !!j.path,
+    ...(j.grade ? { grade: GRADE_WORDS[j.grade] } : {}),
+    ...(j.reveal && !p.jobCounts[j.id] ? { fresh: true } : {}),
   }));
 
   // Best honest-ish money per energy among jobs doable now; path jobs first.

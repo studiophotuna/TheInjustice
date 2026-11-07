@@ -17,7 +17,7 @@ import { gutRead, npcFighter, playerFighter, power, resolveFight } from "./comba
 import { DISTRICT_BY_ID, totalJobs } from "./content/districts";
 import { CHAPTER_BY_ID } from "./content/story";
 import { ITEM_BY_ID } from "./content/items";
-import { JOB_BY_ID, type JobDef } from "./content/jobs";
+import { JOB_BY_ID, JOBS, revealCount, revealed, type JobDef } from "./content/jobs";
 import { mugger, NPC_BY_ID, roadGang, type NpcDef } from "./content/npcs";
 import { isGraduation, keyStatAvg, meritNeeded, PATHS } from "./content/paths";
 import { SCHOOL_BY_ID, schoolsFor } from "./content/schools";
@@ -475,6 +475,7 @@ export function jobLock(p: Player, job: JobDef): string | null {
   if (!job.path && DISTRICT_BY_ID[job.district].country !== countryOf(p)) return "That's in another country.";
   if (job.path && p.path !== job.path) return "Not your line of work.";
   if (job.minRank && p.rank < job.minRank) return `Needs rank: ${PATHS[job.path!].ranks[job.minRank - 1]}.`;
+  if (!revealed(p, job)) return "You haven't heard about that work yet.";
   const d = DISTRICT_BY_ID[job.district].locked(p);
   if (d && !job.path) return d;
   return job.requires?.(p) ?? null;
@@ -532,7 +533,7 @@ export function deathChance(threat: number): number {
   return clamp((threat - d.safeRatio) * d.slope, 0, d.maxChance);
 }
 
-function die(p: Player, now: number, cause: string, events: GameEvent[]) {
+export function die(p: Player, now: number, cause: string, events: GameEvent[]) {
   const keep = BALANCE.death.statsKept;
   for (const k of STAT_KEYS) p.stats[k] *= keep;
   p.stats.integrity *= keep;
@@ -810,6 +811,12 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
   if (p.energy < job.energy) throw new GameError("You're too tired. Rest or eat something.");
   p.energy -= job.energy;
   p.jobCounts[job.id] = (p.jobCounts[job.id] ?? 0) + 1;
+  // Getting good at something gets you noticed: harder work turns up.
+  for (const next of JOBS) {
+    if (next.reveal?.after.includes(job.id) && revealCount(p, next) === next.reveal.times && !p.jobCounts[next.id] && !jobLock(p, next)) {
+      events.push({ tone: "story", text: `Word gets around. Someone has harder work for you: ${next.name}. It's on your Jobs list.` });
+    }
+  }
   const falloff = practiceFalloff(p, job.id, now);
 
   if (job.risk) {

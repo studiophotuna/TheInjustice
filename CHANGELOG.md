@@ -1,5 +1,21 @@
 # Changelog
 
+## 6.0.0: harder work turns up as you get good
+
+- **31 new jobs, hidden until you earn them.** Seven street areas (the Gutter, Old Market, the
+  Boardwalk, the Marina, Rail Yards, the Foundry and the Undercity) each get three steps of
+  harder work. The first turns up after 15 rounds of the area's ordinary jobs, each next one
+  after 10 rounds of the step before. Every step costs more energy, is a tougher check, hurts
+  more when it goes wrong, and pays and trains more. Some stay honest; some slide into crime.
+- **Careers get one each, and only one**: a senior job that turns up from the fourth rank on,
+  after 20 rounds of the career's senior work (for example Cold case squad, Collect from the
+  untouchable, Mass-casualty night, Night insertion).
+- You don't see hidden work at all until it turns up. When it does you get a message ("Word
+  gets around...") and the card shows "New" until you try it. How hard it is shows in words
+  (Rough work, Hard work, Only for the hardened), never as odds.
+- Checked: dying can never leave a character weaker than a new one. Death halves what you've
+  trained, never the base you start with. A test now holds this in place.
+
 ## 5.9.3: city events explain themselves
 
 - **Tap a city event on Home (a blackout, heat wave, festival, storm or payday) and a card
