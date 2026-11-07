@@ -34,6 +34,19 @@ function hash(s: string): number {
   return h;
 }
 
+/** What an event changes, in plain words for players. Crime chances stay words, never numbers. */
+export function eventEffects(e: CityEvent): string[] {
+  const out: string[] = [];
+  if (e.payMult > 1) out.push(`Jobs pay ${Math.round((e.payMult - 1) * 100)}% more`);
+  if (e.payMult < 1) out.push(`Jobs pay ${Math.round((1 - e.payMult) * 100)}% less`);
+  if (e.crimeOdds >= 1.15) out.push("Crimes are much easier to pull off");
+  else if (e.crimeOdds > 1) out.push("Crimes are a little easier to pull off");
+  if (e.maxWitnesses !== undefined) out.push("Hardly anyone sees anything: few witnesses");
+  if (e.crimeHeat < 1) out.push("Crimes draw less heat from the police");
+  if (e.crimeHeat > 1) out.push("Crimes draw more heat than usual");
+  return out;
+}
+
 /** What's happening in this city this hour, if anything (about one hour in three). */
 export function cityEvent(country: CountryId, now: number): CityEvent | null {
   const hour = Math.floor(now / HOUR);

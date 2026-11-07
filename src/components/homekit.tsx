@@ -3,7 +3,7 @@
 // Home in the live-game style: a stories row of what's happening, a hero your character breaks
 // out of, tinted tiles for the state of the city, and the big fish leaning out of his card.
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { CareerPortrait } from "./art/CareerPortrait";
 import { FxName, NAME_FX, type NameFxKind } from "./art/FxRing";
 import { cutoutFor, faceCutout } from "./art/Cutout";
@@ -14,6 +14,45 @@ import { SkelCard, SkelTiles } from "./skeleton";
 
 // ── Stories ────────────────────────────────────────────────────────────────
 
+/** A photo for each city event. */
+const EVENT_SCENE: Record<string, string> = { heatwave: "southside", festival: "boardwalk", blackout: "undercity", storm: "street", payday: "exchange" };
+
+/** What a city event is and what it changes, with a clock until it ends. */
+function EventSheet({ game, go, close }: { game: GameApi; go: (t: string) => void; close: () => void }) {
+  const e = game.view!.event;
+  const [, tick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => tick((n) => n + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+  if (!e) return null;
+  const left = Math.max(0, e.endsAt - Date.now());
+  return (
+    <div className="tryon-backdrop" onClick={close} role="dialog" aria-modal="true" aria-label={e.name}>
+      <div className="tryon event-sheet" onClick={(x) => x.stopPropagation()}>
+        <div className="event-hero">
+          <img src={`/scenes/${EVENT_SCENE[e.id] ?? "city"}.jpg`} alt="" />
+          <div>
+            <span className="kicker">{game.view!.location.city} · ends in {fmt(left)}</span>
+            <b>{e.name}</b>
+          </div>
+        </div>
+        <p className="event-text">{e.text}</p>
+        {e.effects.length > 0 && (
+          <ul className="event-effects">
+            {e.effects.map((x) => <li key={x}>{x}</li>)}
+          </ul>
+        )}
+        <p className="fine muted">Every city gets an event now and then, for about an hour. Everyone in {game.view!.location.city} feels it.</p>
+        <div className="tryon-acts">
+          <button className="btn btn-ghost" onClick={close}>Close</button>
+          <button className="btn btn-red" onClick={() => { close(); go("tab:jobs"); }}>Go to work</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 type Story = { key: string; label: string; img: string; fresh: boolean; sub?: string; run: () => unknown };
 
 const NEED_ART: Record<string, string> = { ambush: "street", heist: "bank", breakout: "prison", war: "marina" };
@@ -22,6 +61,7 @@ const NEED_ART: Record<string, string> = { ambush: "street", heist: "bank", brea
 export function Stories({ game, go, needs, onRead, war, heavies, fires, election }: { game: GameApi; go: (t: string) => void; needs: CrewNeed[]; onRead: (id: string) => void; war?: string | null; heavies?: Heavy[]; fires?: number; election?: boolean }) {
   const view = game.view!;
   const live = game.live!;
+  const [showEvent, setShowEvent] = useState(false);
   const s: Story[] = [];
   const scene = (n: string) => `/scenes/${n}.jpg`;
   const chapter = view.chapters.find((c) => c.unlocked && !c.read);
@@ -43,13 +83,15 @@ export function Stories({ game, go, needs, onRead, war, heavies, fires, election
   const medic = view.specialties.find((x) => x.id === "combat_medic" && x.tier > 0);
   if (medic?.ready && view.hp < view.maxHp) s.push({ key: "dressing", label: "Patch up", img: scene("hospital"), fresh: true, run: () => game.act({ type: "field_dressing" }) });
   if (live.full === 0 && live.energy < view.maxEnergy) s.push({ key: "food", label: "Eat", img: scene("oldmarket"), fresh: true, run: () => go("tab:shop") });
-  if (view.event) s.push({ key: "event", label: view.event.name, img: scene("city"), fresh: false, run: () => go("tab:city") });
+  if (view.event) s.push({ key: "event", label: view.event.name, img: scene(EVENT_SCENE[view.event.id] ?? "city"), fresh: true, run: () => setShowEvent(true) });
   // Timers: grey rings with the time left.
   if (live.fullIn > 0) s.push({ key: "energy", label: "Energy full", sub: fmt(live.fullIn), img: scene("ironrow"), fresh: false, run: () => go("tab:jobs") });
   if (live.hospital > 0) s.push({ key: "clinic", label: "Clinic", sub: fmt(live.hospital), img: scene("hospital"), fresh: false, run: () => undefined });
   if (view.travel) s.push({ key: "travel", label: view.travel.city, sub: fmt(live.travel), img: scene("station"), fresh: false, run: () => undefined });
   if (!s.length) return null;
   return (
+    <>
+    {showEvent && <EventSheet game={game} go={go} close={() => setShowEvent(false)} />}
     <div className="stories" role="list" aria-label="What's happening">
       {s.map((x) => (
         <button key={x.key} role="listitem" className={`story ${x.fresh ? "fresh" : ""}`} onClick={() => x.run()} disabled={game.busy}>
@@ -59,6 +101,7 @@ export function Stories({ game, go, needs, onRead, war, heavies, fires, election
         </button>
       ))}
     </div>
+    </>
   );
 }
 

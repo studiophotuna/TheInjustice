@@ -12,7 +12,7 @@ import { gearView, usesLeft } from "./gear";
 import { marketView } from "./drugs";
 import { tutorialView } from "./tutorial";
 import { launderOptions } from "./money";
-import { cityEvent } from "./events";
+import { cityEvent, eventEffects } from "./events";
 import { streetTitle } from "./titles";
 // The only shape of player data that ever leaves the server.
 // Hidden stats are converted into words here and never included as numbers.
@@ -195,7 +195,7 @@ export interface PublicView {
   dirty: number;
   launder: ReturnType<typeof launderOptions>;
   /** What's going on in your city this hour. */
-  event: { name: string; text: string; endsAt: number } | null;
+  event: { id: string; name: string; text: string; endsAt: number; effects: string[] } | null;
   /** What the street calls you. */
   streetTitle: string | null;
   /** Your lawyer on retainer, if any. */
@@ -362,7 +362,7 @@ export function toView(p: Player, now: number): PublicView {
     launder: launderOptions(p, now),
     event: (() => {
       const e = cityEvent(countryOf(p), now);
-      return e ? { name: e.name, text: e.text, endsAt: e.endsAt } : null;
+      return e ? { id: e.id, name: e.name, text: e.text, endsAt: e.endsAt, effects: eventEffects(e) } : null;
     })(),
     streetTitle: streetTitle(p),
     retainer: p.retainer && p.retainer.until > now ? { name: p.retainer.name, until: p.retainer.until } : null,

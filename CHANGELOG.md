@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.9.3: city events explain themselves
+
+- **Tap a city event on Home (a blackout, heat wave, festival, storm or payday) and a card
+  opens** with a photo, how long it has left, what's going on, and what it changes in plain
+  words: for example "Jobs pay 10% less", "Crimes are much easier to pull off" and "Hardly
+  anyone sees anything: few witnesses". No odds. "Go to work" takes you to Jobs. Before, the
+  bubble just jumped to City without saying anything.
+
 ## 5.9.2: top bar hints on a tap
 
 - **Tap a pill in the top bar to see what it means:** cash (and what's in the bank), dirty money,
