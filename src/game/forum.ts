@@ -3,6 +3,7 @@
 // who cleans money); they can read and post there without joining the crew.
 
 import { notify } from "./social";
+import { checkText } from "./textfilter";
 import { GameError, type Crew, type GameEvent, type Player } from "./types";
 
 export const FORUM = { cost: 1000, maxGuests: 20, nameMax: 30 };
@@ -24,6 +25,7 @@ export function createForum(crew: Crew, leader: Player, name: unknown, now: numb
   if (crew.forum) throw new GameError("Your crew already has a forum.");
   const n = typeof name === "string" ? name.replace(/\s+/g, " ").trim().slice(0, FORUM.nameMax) : "";
   if (n.length < 3) throw new GameError("Give the forum a name (3 or more letters).");
+  checkText(n, "name");
   if (crew.vault < FORUM.cost) throw new GameError(`Setting it up costs $${FORUM.cost} from the vault.`);
   crew.vault -= FORUM.cost;
   crew.forum = { name: n, createdAt: now, guests: [] };

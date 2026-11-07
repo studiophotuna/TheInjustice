@@ -4,6 +4,7 @@
 // draw a salary from the treasury... and can quietly skim it, which internal affairs can catch.
 
 import { seatsView } from "./seats";
+import { checkText } from "./textfilter";
 import { guardBlock, martialBlock, martialOn } from "./military";
 import { BALANCE } from "./balance";
 import { rankTitle } from "./content/paths";
@@ -108,6 +109,7 @@ export function runForMayor(c: City, p: Player, pitch: unknown, now: number): Ga
   const block = runBlock(c, p, now);
   if (block) throw new GameError(block);
   const text = typeof pitch === "string" ? pitch.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, 140) : "";
+  if (text) checkText(text, "bio");
   p.bank -= B.runFee;
   c.candidates.push({ id: p.id, name: p.name, title: rankTitle(p) ?? "Nobody", reputation: p.reputation, pitch: text, at: now });
   announce(c, `${p.name} is running for mayor.`, now);

@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { reportError } from "@/server/errors";
 import { NextResponse } from "next/server";
 import { reviewUpload, startUpload, validUpload, type CustomKind } from "@/game/favors";
 import { GameError } from "@/game/types";
@@ -11,7 +12,7 @@ export const dynamic = "force-dynamic";
 function failure(e: unknown) {
   if (e instanceof GameError) return NextResponse.json({ error: e.message }, { status: 400 });
   if (e instanceof StoreConfigError) return NextResponse.json({ error: e.message }, { status: 503 });
-  console.error(e);
+  reportError("api/upload", e);
   return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
 }
 

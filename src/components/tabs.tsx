@@ -1,6 +1,7 @@
 "use client";
 
 import { motionChoice, setMotion } from "./motion";
+import { DeleteAccount, HelpLinks } from "./legal";
 import { StyleShop } from "./style";
 import { StoryLine } from "./storyline";
 import { Hero } from "./homekit";
@@ -565,7 +566,10 @@ export function ProfileTab({ game }: { game: GameApi }) {
             <AuthForm game={game} onDone={(claimed) => game.pushToasts([{ tone: "good", text: claimed ? "Character saved to your account." : "Logged in." }])} />
           </>
         )}
+        <DeleteAccount hasAccount={!!game.account} />
       </section>
+
+      <HelpLinks />
     </div>
   );
 }
@@ -1204,26 +1208,24 @@ const ROMAN = ["", "I", "II", "III"];
 function Specialties({ game }: { game: GameApi }) {
   const view = game.view!;
   const [open, setOpen] = useState<string | null>(null);
-  const list = [...view.specialties].sort((a, b) => b.tier - a.tier || b.progress / (b.next ?? 1) - a.progress / (a.next ?? 1));
+  // What you have, nothing about how close you are or how to get more.
+  const list = view.specialties.filter((s) => s.tier > 0).sort((a, b) => b.tier - a.tier);
   return (
     <section className="card specialties">
       <h3 className="card-title">Specialties</h3>
+      {list.length === 0 && <p className="fine muted">Nothing yet. Some things only come with time.</p>}
       <ul className="spec-grid">
         {list.map((s) => {
-          const pct = s.next ? Math.min(100, ((s.progress - s.from) / (s.next - s.from)) * 100) : 100;
           const isOpen = open === s.id;
           return (
-            <li key={s.id} className={`${s.tier ? "has" : ""} ${isOpen ? "open" : ""}`}>
+            <li key={s.id} className={`has ${isOpen ? "open" : ""}`}>
               <button className="spec-tile" onClick={() => setOpen(isOpen ? null : s.id)} aria-expanded={isOpen}>
-                <b className="spec-name">{s.name}{s.tier ? <span className="spec-tier"> {ROMAN[s.tier]}</span> : null}</b>
-                <div className="spec-bar"><span style={{ width: `${pct}%` }} /></div>
-                <span className="spec-count">{s.next ? `${s.progress} / ${s.next}` : "Mastered"}</span>
+                <b className="spec-name">{s.name}<span className="spec-tier"> {ROMAN[s.tier]}</span></b>
+                {s.mastered && <span className="spec-count">Mastered</span>}
               </button>
-              {isOpen && (
+              {isOpen && s.perk && (
                 <div className="spec-more">
-                  {s.perk && <p className="fine spec-perk">{s.perk}</p>}
-                  {s.nextPerk && <p className="fine muted">{s.tier ? "Next: " : ""}{s.nextPerk}</p>}
-                  <p className="fine muted spec-how">{s.how}</p>
+                  <p className="fine spec-perk">{s.perk}</p>
                 </div>
               )}
               {s.id === "combat_medic" && s.tier > 0 && (

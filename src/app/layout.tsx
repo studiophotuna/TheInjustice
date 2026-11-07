@@ -3,6 +3,8 @@ import { Anton, Bangers, JetBrains_Mono, Manrope } from "next/font/google";
 import "./globals.css";
 import "./game.css";
 import "./kit.css";
+import { CrashReporter } from "@/components/crashes";
+import pkg from "../../package.json";
 
 // Game type: Manrope for the interface, Anton (condensed) for headlines and names only, a mono for timers.
 const body = Manrope({ weight: ["400", "500", "600", "700", "800"], subsets: ["latin"], display: "swap", variable: "--font-body" });
@@ -29,7 +31,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${body.variable} ${display.variable} ${mono.variable} ${bangers.variable}`}>
-      <body>{children}</body>
+      <body>
+        <CrashReporter version={pkg.version} />
+        {children}
+      </body>
     </html>
   );
 }

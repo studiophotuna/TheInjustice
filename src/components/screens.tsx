@@ -290,6 +290,9 @@ export function Landing({ game }: { game: GameApi }) {
             </AnimatePresence>
           </>
         )}
+        <p className="fine muted landing-legal">
+          By playing you agree to the <a href="/terms">terms</a> and <a href="/rules">player rules</a>. <a href="/privacy">Privacy</a> · <a href="/guide">How to play</a>
+        </p>
       </motion.div>
     </div>
   );

@@ -10,6 +10,7 @@
 // write a column, and sets a price for quietly burying a story for anyone who pays.
 
 import { COUNTRY_BY_ID } from "./content/world";
+import { checkText } from "./textfilter";
 import { countryOf } from "./engine";
 import { payIllegal, canPayIllegal, earnDirty } from "./money";
 import { seasonId, seasonName } from "./season";
@@ -208,6 +209,7 @@ export function setBuryPrice(c: City, p: Player, price: number): GameEvent[] {
 export function writeEditorial(c: City, p: Player, text: unknown, now: number): GameEvent[] {
   if (!isEditor(c, p)) throw new GameError("Only the editor can do that.");
   const t = typeof text === "string" ? text.replace(/\s+/g, " ").trim().slice(0, EDITOR.maxEditorial) : "";
+  if (t) checkText(t, "bio");
   c.editorial = t ? { text: t, at: now } : null;
   return [{ tone: "good", text: t ? "Your column runs in the next edition." : "Column pulled." }];
 }

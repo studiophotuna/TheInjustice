@@ -1,5 +1,7 @@
 import "server-only";
 import { createHash, randomBytes, scrypt as scryptCb, timingSafeEqual, type ScryptOptions } from "node:crypto";
+import { requester, throttle } from "./ratelimit";
+import { checkText } from "@/game/textfilter";
 import { GameError } from "@/game/types";
 
 const scrypt = (pw: string, salt: Buffer, len: number, opts: ScryptOptions) =>
@@ -23,7 +25,7 @@ export function validateUsername(raw: unknown): string {
   if (!/^[A-Za-z0-9_]{3,20}$/.test(u)) {
     throw new GameError("Username: 3–20 letters, numbers or underscores.");
   }
-  return u;
+  return checkText(u, "name");
 }
 
 export function validatePassword(raw: unknown): string {
@@ -85,4 +87,6 @@ export function assertJson(req: Request): void {
   if (!req.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
     throw new GameError("Bad request.");
   }
+  // Every action comes through here, so this is where the speed limit lives.
+  throttle(requester(req));
 }

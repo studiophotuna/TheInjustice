@@ -1,5 +1,7 @@
 import { hasMic, lookOf } from "@/game/favors";
+import { reportError } from "@/server/errors";
 import { servicesOf, useService, type ServiceId } from "@/game/regularwork";
+import { checkText } from "@/game/textfilter";
 import { assertActive, assertCanSpeak, checkReport, isBanned } from "@/game/moderation";
 import { acceptAlliance, breakAlliance, declineAlliance, proposeAlliance } from "@/game/batch7";
 import { ceremonyBlock, isMade, makeMember } from "@/game/family";
@@ -116,7 +118,7 @@ function failure(e: unknown) {
   if (e instanceof GameError) return NextResponse.json({ error: e.message }, { status: 400 });
   if (e instanceof StoreConfigError) return NextResponse.json({ error: e.message }, { status: 503 });
   if ((e as { code?: string })?.code === "23505") return NextResponse.json({ error: "That crew tag is taken." }, { status: 400 });
-  console.error(e);
+  reportError("api/community", e);
   return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
 }
 
@@ -690,7 +692,7 @@ const cleanBody = (raw: unknown) => {
   const body = typeof raw === "string" ? raw.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim() : "";
   if (!body) throw new GameError("Say something.");
   if (body.length > BALANCE.chat.maxLength) throw new GameError(`Keep it under ${BALANCE.chat.maxLength} characters.`);
-  return body;
+  return checkText(body, "chat");
 };
 
 const str = (v: unknown) => {

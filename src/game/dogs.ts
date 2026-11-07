@@ -3,6 +3,7 @@
 // well, and one left unfed for a week finds a new home.
 
 import { COUNTRY_BY_ID } from "./content/world";
+import { checkText } from "./textfilter";
 import { countryOf } from "./engine";
 import { GameError, type CountryId, type Dog, type DogBreed, type GameEvent, type Player } from "./types";
 
@@ -52,7 +53,7 @@ export function dogGuard(p: Player, country: CountryId, now: number): number {
 function cleanName(raw: string): string {
   const name = raw.replace(/[^\p{L}\p{N} '-]/gu, "").trim().slice(0, 16);
   if (!name) throw new GameError("Give your dog a name.");
-  return name;
+  return checkText(name, "name");
 }
 
 export function buyDog(p: Player, breed: DogBreed, rawName: string, now: number): GameEvent[] {

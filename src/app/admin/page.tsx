@@ -14,7 +14,36 @@ type Data = {
   restricted: { id: string; name: string; bannedUntil: number | null; mutedUntil: number | null; reason: string | null }[];
   people?: { id: string; name: string; favors: number }[];
   uploads?: { id: string; kind: "frame" | "banner"; playerId: string; playerName: string; at: number; cost: number }[];
+  errors?: { id: number; at: number; source: "client" | "server"; message: string; place: string; stack: string; version: string }[];
 };
+
+/** Crashes, grouped by message so a flood shows as one line with a count. */
+function Crashes({ data }: { data: Data }) {
+  const [open, setOpen] = useState<string | null>(null);
+  const groups = new Map<string, NonNullable<Data["errors"]>>();
+  for (const e of data.errors ?? []) {
+    const k = `${e.source}|${e.message}`;
+    groups.set(k, [...(groups.get(k) ?? []), e]);
+  }
+  return (
+    <section className="card">
+      <h3 className="card-title">Crashes · last 30 days</h3>
+      {groups.size === 0 && <p className="muted">No crashes reported.</p>}
+      {[...groups.entries()].map(([k, list]) => {
+        const e = list[0];
+        return (
+          <article key={k} className="admin-report">
+            <button className="row between crash-row" onClick={() => setOpen(open === k ? null : k)}>
+              <b>{e.message}</b>
+              <span className="fine muted">{e.source} · {e.place} · v{e.version} · {when(e.at)}{list.length > 1 ? ` · ${list.length}×` : ""}</span>
+            </button>
+            {open === k && e.stack && <pre className="crash-stack">{e.stack}</pre>}
+          </article>
+        );
+      })}
+    </section>
+  );
+}
 
 /** Uploaded frames and banners: nobody else sees one until it's approved here. */
 function UploadQueue({ data, busy, act }: { data: Data; busy: boolean; act: (p: Record<string, unknown>) => Promise<void> }) {
@@ -121,6 +150,7 @@ export default function AdminPage() {
         <>
           <UploadQueue data={data} busy={busy} act={act} />
           <GrantFavors data={data} busy={busy} act={act} />
+          <Crashes data={data} />
           <section className="card">
             <h3 className="card-title">Open reports · {data.open.length}</h3>
             {data.open.length === 0 && <p className="muted">Nothing to review.</p>}

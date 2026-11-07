@@ -1,5 +1,28 @@
 # Changelog
 
+## 6.1.0: ready for strangers
+
+- **Specialties show only what you have.** The Me page lists the specialties you've earned,
+  their level, and what each gives you. No counters, no progress bars, no "how to get it" and
+  no "next" hints. The numbers aren't sent to the browser any more either.
+- **How to play** (/guide): the city in plain words: energy and work, hidden stats, careers,
+  money and dirty money, heat and the law, fights and death, crews, travel, homes, the city and
+  Favors. No numbers or odds.
+- **Player rules** (/rules): one character per person, no bots or bug abuse, no real-money
+  trading, no hate, harassment, threats, sexual content or personal details, and what happens
+  when rules are broken.
+- **Terms** (/terms) and **Privacy** (/privacy), marked as drafts until they're reviewed. The
+  start screen links to all four, and so does a new Help and rules card on the Me page.
+- **Chat filter.** Chat, character and crew names, usernames, bios, forum names, dog names,
+  newspaper columns and mayor pitches now refuse slurs (also when disguised with numbers,
+  spaces or repeated letters), telling people to hurt themselves, and links. Swearing is fine.
+- **Speed limit.** Every account can send at most a quick burst of actions every few seconds
+  and a set number a minute. A person tapping fast never hits it; scripts do.
+- **Delete my account** (Me → Account). Removes the character, the login, its chat messages and
+  uploads for good, after your password (or typing DELETE as a guest). Leave your crew first.
+- **Crash reports.** Errors in players' browsers and on the server are recorded (message, page,
+  version; nothing personal) and listed on /admin, grouped with a count, kept for 30 days.
+
 ## 6.0.0: harder work turns up as you get good
 
 - **31 new jobs, hidden until you earn them.** Seven street areas (the Gutter, Old Market, the

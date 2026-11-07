@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { reportError } from "@/server/errors";
 import { linkedGroups } from "@/game/anticheat";
 import { COUNTRIES } from "@/game/content/world";
 import { reviewUpload } from "@/game/favors";
@@ -14,7 +15,7 @@ export const dynamic = "force-dynamic";
 function failure(e: unknown) {
   if (e instanceof GameError) return NextResponse.json({ error: e.message }, { status: 400 });
   if (e instanceof StoreConfigError) return NextResponse.json({ error: e.message }, { status: 503 });
-  console.error(e);
+  reportError("api/admin", e);
   return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
 }
 
@@ -54,6 +55,8 @@ export async function GET(req: Request) {
       // For granting Favors by name (testing and support).
       people: players.filter((p) => !p.regular).map((p) => ({ id: p.id, name: p.name, favors: p.favors ?? 0 })).slice(0, 500),
       restricted,
+      // Crashes from players' browsers and the server, newest first.
+      errors: await store.listErrors(40),
     });
   } catch (e) {
     return failure(e);

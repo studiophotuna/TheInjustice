@@ -783,3 +783,34 @@ button.style-preview:hover .try-hint, button.style-preview:focus-visible .try-hi
 /* Hidden work that has just turned up. */
 .job-new { padding: 2px 8px; border-radius: 999px; background: var(--gold); color: #1a1408; font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
 .job-line .mk.grade { color: var(--gold); }
+
+/* Help links and deleting an account. */
+.help-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.help-links a { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--border); color: var(--text); font-size: 13px; font-weight: 700; text-decoration: none; }
+.delete-open { margin-top: 10px; color: var(--muted); }
+.delete-box { margin-top: 12px; display: grid; gap: 8px; padding: 12px; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.06); }
+.delete-box .row { gap: 8px; }
+
+/* Admin: crash list. */
+.crash-row { width: 100%; background: none; border: 0; color: inherit; text-align: left; padding: 0; cursor: pointer; gap: 12px; font: inherit; }
+.crash-stack { margin: 8px 0 0; padding: 10px; border-radius: 10px; background: rgba(0,0,0,0.35); font-size: 11px; white-space: pre-wrap; word-break: break-word; max-height: 260px; overflow: auto; }
+
+/* Help and legal pages. */
+.info-page { min-height: 100vh; background: var(--bg, #0e1015); color: var(--text); }
+.info-head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 14px 16px; background: rgba(14, 16, 21, 0.92); border-bottom: 1px solid var(--border); backdrop-filter: blur(8px); }
+.info-back { font-family: var(--font-display), Anton, sans-serif; font-size: 22px; letter-spacing: 0.04em; color: var(--red, #e5383b); text-decoration: none; }
+.info-head nav { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.info-head nav a { color: var(--muted); font-size: 13px; font-weight: 700; text-decoration: none; }
+.info-head nav a:hover { color: var(--text); }
+.info-body { max-width: 720px; margin: 0 auto; padding: 28px 16px 64px; line-height: 1.6; font-size: 15.5px; }
+.info-body .kicker { color: var(--gold); font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+.info-body h1 { font-family: var(--font-display), Anton, sans-serif; font-weight: 400; font-size: clamp(36px, 8vw, 56px); line-height: 1; text-transform: uppercase; margin: 6px 0 18px; }
+.info-body h2 { font-size: 18px; margin: 30px 0 8px; }
+.info-body p, .info-body li { color: rgba(236, 238, 243, 0.86); }
+.info-body ul { padding-left: 20px; display: grid; gap: 6px; }
+.info-body a { color: var(--gold); }
+.info-body .lead { font-size: 17px; color: var(--text); }
+.info-draft { padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(242, 182, 50, 0.4); background: rgba(242, 182, 50, 0.08); font-size: 13.5px; }
+.info-foot { margin-top: 40px; }
+.landing-legal { margin-top: 12px; }
+.landing-legal a { color: inherit; text-decoration: underline; }

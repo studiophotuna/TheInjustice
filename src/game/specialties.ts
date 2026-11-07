@@ -134,17 +134,12 @@ export function specTier(p: Player, id: SpecId): number {
 export function specialtiesView(p: Player, now: number) {
   return SPECIALTIES.map((s) => {
     const tier = specTier(p, s.id);
-    const progress = s.progress(p);
     return {
       id: s.id,
       name: s.name,
-      how: s.how,
       tier,
-      progress: Math.floor(progress),
-      next: tier < 3 ? s.tiers[tier] : null,
-      from: tier > 0 ? s.tiers[tier - 1] : 0,
+      mastered: tier >= 3,
       perk: tier > 0 ? s.perks[tier - 1] : null,
-      nextPerk: tier < 3 ? s.perks[tier] : null,
       ready:
         s.id === "combat_medic" && tier > 0
           ? now - (p.dressingAt ?? 0) >= SPECIALTY.dressingCooldownMs

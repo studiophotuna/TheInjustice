@@ -2,6 +2,7 @@
 // can't be changed: detectives' clues are built from it, and case files, crews and trials keep it.
 
 import { FACE_SRCS } from "./content/faces";
+import { checkText } from "./textfilter";
 import { GameError, type GameEvent, type Player } from "./types";
 
 export const PROFILE = {
@@ -15,7 +16,7 @@ const PHOTO_RE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
 
 export function cleanBio(raw: unknown): string {
   if (typeof raw !== "string") return "";
-  return raw.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, PROFILE.bioMax);
+  return checkText(raw.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, PROFILE.bioMax), "bio");
 }
 
 export function validPhoto(raw: unknown): string | null {

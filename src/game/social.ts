@@ -2,6 +2,7 @@
 // the server loads and saves both sides inside one transaction.
 
 import { lookOf, type Look } from "./favors";
+import { checkText } from "./textfilter";
 import { clinicFactor } from "./specialties";
 import { addWound, playerMaxHp } from "./wounds";
 import { ALT_BLOCK, assertNotAlt, sameOwner } from "./anticheat";
@@ -225,6 +226,8 @@ export function validateCrew(name: unknown, tag: unknown): { name: string; tag: 
   const t = typeof tag === "string" ? tag.trim().toUpperCase() : "";
   if (!/^[\p{L}\p{N} '&.-]{3,24}$/u.test(n)) throw new GameError("Crew name: 3–24 letters, numbers or spaces.");
   if (!/^[A-Z0-9]{2,4}$/.test(t)) throw new GameError("Crew tag: 2–4 letters or numbers.");
+  checkText(n, "name");
+  checkText(t, "name");
   return { name: n, tag: t };
 }
 

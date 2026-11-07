@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { reportError } from "@/server/errors";
 import { NextResponse } from "next/server";
 import { GameError } from "@/game/types";
 import {
@@ -98,6 +99,37 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true });
     }
 
+    if (body.op === "delete_account") {
+      // Gone for good: the character, its login, its chat messages and uploads.
+      const jar = await cookies();
+      const token = jar.get(SESSION_COOKIE)?.value;
+      const session = token ? await store.getSession(hashToken(token)) : null;
+      const guest = jar.get(GUEST_COOKIE)?.value;
+      let playerId: string;
+      if (session) {
+        const account = await store.findAccount(session.username);
+        if (!account) throw new GameError("Log in first.");
+        if (account.lockedUntil && account.lockedUntil > Date.now()) {
+          throw new GameError("Too many failed attempts. Try again in 15 minutes.");
+        }
+        const ok = typeof body.password === "string" && (await verifyPassword(body.password, account.passwordHash));
+        await store.recordLogin(account.id, ok);
+        if (!ok) throw new GameError("That password isn't right.");
+        playerId = accountPlayerId(account.id);
+      } else if (guest && /^[a-f0-9]{48}$/.test(guest)) {
+        if (body.confirm !== "DELETE") throw new GameError('Type DELETE to confirm.');
+        playerId = guest;
+      } else {
+        throw new GameError("There's no character on this device.");
+      }
+      const player = await store.get(playerId);
+      if (player?.crewId) throw new GameError("Leave your crew first, so it isn't left hanging.");
+      await store.eraseCharacter(playerId, session?.accountId ?? null);
+      jar.delete(SESSION_COOKIE);
+      jar.delete(GUEST_COOKIE);
+      return NextResponse.json({ ok: true });
+    }
+
     const username = validateUsername(body.username);
     const password = validatePassword(body.password);
 
@@ -131,7 +163,7 @@ export async function POST(req: Request) {
   } catch (e) {
     if (e instanceof GameError) return NextResponse.json({ error: e.message }, { status: 400 });
     if (e instanceof StoreConfigError) return NextResponse.json({ error: e.message }, { status: 503 });
-    console.error(e);
+    reportError("api/auth", e);
     return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
   }
 }

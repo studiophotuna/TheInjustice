@@ -69,6 +69,12 @@ export interface PlayerStore {
   deleteSession(tokenHash: string): Promise<void>;
   setRecovery(accountId: string, recoveryHash: string): Promise<void>;
   setPassword(accountId: string, passwordHash: string): Promise<void>;
+  /** Deletes a character for good: the player, their chat messages and uploads, and the login
+   *  (with its sessions) if there is one. Moderation reports are kept. */
+  eraseCharacter(playerId: string, accountId: string | null): Promise<void>;
+  /** Crash reports (kept for 30 days). */
+  logError(e: Omit<ErrorLog, "id" | "at">): Promise<void>;
+  listErrors(limit: number): Promise<ErrorLog[]>;
 
   /** Runs `fn` inside one transaction with row locks. */
   transaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T>;
@@ -102,6 +108,18 @@ export interface PlayerStore {
 
 export class StoreConfigError extends Error {}
 
+export interface ErrorLog {
+  id: number;
+  at: number;
+  source: "client" | "server";
+  message: string;
+  place: string;
+  stack: string;
+  version: string;
+}
+
+
+
 const titleOf = (p: Player) => rankTitle(p) ?? "Nobody";
 
 // ─── Local JSON file (development) ──────────────────────────────────────────
@@ -119,6 +137,7 @@ interface FileData {
   cities: Record<string, City>;
   reports: Report[];
   uploads?: Upload[];
+  errors?: ErrorLog[];
 }
 
 export class FileStore implements PlayerStore {
@@ -257,6 +276,29 @@ export class FileStore implements PlayerStore {
   setRecovery(accountId: string, recoveryHash: string) {
     return this.serial((d) => {
       if (d.accounts[accountId]) d.accounts[accountId].recoveryHash = recoveryHash;
+    });
+  }
+
+  logError(e: Omit<ErrorLog, "id" | "at">) {
+    return this.serial((d) => {
+      const list = d.errors ?? [];
+      d.errors = [...list, { ...e, id: (list[list.length - 1]?.id ?? 0) + 1, at: Date.now() }].slice(-500);
+    });
+  }
+
+  async listErrors(limit: number) {
+    return [...((await this.load()).errors ?? [])].reverse().slice(0, limit);
+  }
+
+  eraseCharacter(playerId: string, accountId: string | null) {
+    return this.serial((d) => {
+      delete d.players[playerId];
+      d.messages = d.messages.filter((m) => m.authorId !== playerId);
+      d.uploads = (d.uploads ?? []).filter((u) => u.playerId !== playerId);
+      if (accountId) {
+        delete d.accounts[accountId];
+        for (const [k, s] of Object.entries(d.sessions)) if (s.accountId === accountId) delete d.sessions[k];
+      }
     });
   }
 
@@ -667,6 +709,28 @@ class PostgresStore implements PlayerStore {
 
   async deleteMessage(id: number) {
     await this.sql`delete from injustice.messages where id = ${id}`;
+  }
+
+  async logError(e: Omit<ErrorLog, "id" | "at">) {
+    await this.sql`insert into injustice.errors (source, message, place, stack, version)
+      values (${e.source}, ${e.message}, ${e.place}, ${e.stack}, ${e.version})`;
+    // Keep a month; trim now and then rather than on every write.
+    if (Math.random() < 0.05) await this.sql`delete from injustice.errors where created_at < now() - interval '30 days'`;
+  }
+
+  async listErrors(limit: number) {
+    const rows = await this.sql<{ id: string; source: ErrorLog["source"]; message: string; place: string; stack: string; version: string; created_at: Date }[]>`
+      select id, source, message, place, stack, version, created_at from injustice.errors order by id desc limit ${limit}`;
+    return rows.map((r) => ({ id: Number(r.id), at: new Date(r.created_at).getTime(), source: r.source, message: r.message, place: r.place, stack: r.stack, version: r.version }));
+  }
+
+  async eraseCharacter(playerId: string, accountId: string | null) {
+    await this.sql.begin(async (tx) => {
+      await tx`delete from injustice.messages where author_id = ${playerId}`;
+      await tx`delete from injustice.uploads where player_id = ${playerId}`;
+      await tx`delete from injustice.players where id = ${playerId}`;
+      if (accountId) await tx`delete from injustice.accounts where id = ${accountId}`;
+    });
   }
 
   async addReport(r: Omit<Report, "id" | "at" | "status">) {

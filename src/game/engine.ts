@@ -2,6 +2,7 @@
 // API route today and a database function (or worker) later without changes.
 
 import { buyCosmetic, equipCosmetic } from "./favors";
+import { checkText } from "./textfilter";
 import { regularUpkeep } from "./regulars";
 import { journalTick } from "./journal";
 import { chooseEncounter, maybeEncounter } from "./encounters";
@@ -69,7 +70,7 @@ export function cleanName(raw: string): string {
   if (name.length < 2 || name.length > 20 || !/^[\p{L}\p{N} ._'-]+$/u.test(name)) {
     throw new GameError("Pick a street name of 2–20 letters, numbers, spaces or . _ ' -");
   }
-  return name;
+  return checkText(name, "name");
 }
 
 export function createPlayer(id: string, rawName: string, now: number, country: CountryId = "varrow"): Player {
