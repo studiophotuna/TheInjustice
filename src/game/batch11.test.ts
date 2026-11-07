@@ -90,7 +90,7 @@ describe("the hit", () => {
   it("a kill: the target keeps the career, loses a rank, cash and gear, and spends hours in the morgue; a murder case opens", () => {
     const s = setup();
     s.target.cash = 2000;
-    applyAction(s.target, { type: "buy", itemId: "vest" }, LATER, always(0.5));
+    applyAction(s.target, { type: "buy", itemId: "jacket" }, LATER, always(0.5));
     const ready = caseIt(s);
     const rolls = [0.5, 0.01, 0.01];
     const out = executeHit(s.crew, s.hitman, s.target, s.city, ready, () => rolls.shift() ?? 0.5, { caseId: "H1", crewTag: "IRW", witnesses: [] });

@@ -96,8 +96,8 @@ export function parseAction(body: unknown): Action {
       return { type: "use", itemId: str(b.itemId) };
     case "equip":
       return { type: "equip", itemId: str(b.itemId) };
-    case "repair":
-      return { type: "repair", itemId: str(b.itemId) };
+    case "reissue":
+      return { type: "reissue", itemId: str(b.itemId) };
     case "leave_career":
       return { type: "leave_career" };
     case "start_exit":

@@ -8,8 +8,6 @@ import { GameError, type GameEvent, type Player } from "./types";
 export type Slot = "weapon" | "armor";
 
 export const GEAR = {
-  /** Repairs cost this share of the price for a fully worn item. */
-  repairShare: 0.6,
   /** Worn gear still gives at least this share of its power until it breaks. */
   wornFloor: 0.6,
   armoryCooldownMs: 24 * 60 * 60_000,
@@ -100,8 +98,8 @@ export function wearGear(p: Player, slots: Slot[], uses = 1): GameEvent[] {
     const after = Math.max(0, before - uses);
     p.wear = { ...(p.wear ?? {}), [id]: after };
     const def = ITEM_BY_ID[id];
-    if (after === 0) out.push({ tone: "bad", text: `Your ${def.name.toLowerCase()} is broken. It's useless until it's repaired.` });
-    else if (before / maxUses(def) > 0.25 && after / maxUses(def) <= 0.25) out.push({ tone: "info", text: `Your ${def.name.toLowerCase()} is badly worn. Get it repaired soon.` });
+    if (after === 0) out.push({ tone: "bad", text: `Your ${def.name.toLowerCase()} is broken. It's useless now: time for a new one.` });
+    else if (before / maxUses(def) > 0.25 && after / maxUses(def) <= 0.25) out.push({ tone: "info", text: `Your ${def.name.toLowerCase()} is badly worn. It won't last much longer.` });
   }
   return out;
 }
@@ -120,42 +118,29 @@ export function unequip(p: Player, slot: Slot): GameEvent[] {
   return [{ tone: "info", text: slot === "weapon" ? "Empty-handed." : "No armor." }];
 }
 
-/** What a repair costs now (0 for issued gear at the armory, if it's due). */
-export function repairCost(p: Player, itemId: string, now: number): number | null {
+/** Issued gear (police, army) can't be bought: the armory swaps a broken piece once a day. */
+export function canReissue(p: Player, itemId: string, now: number): boolean {
   const def = ITEM_BY_ID[itemId];
-  if (!isGear(def) || !p.inventory[itemId]) return null;
-  const missing = 1 - condition(p, itemId);
-  if (missing <= 0) return null;
-  if (def.issued) return now - (p.armoryAt ?? 0) >= GEAR.armoryCooldownMs ? 0 : null;
-  // Black-market gear can't go to a legal repair shop: a fence does it, at a premium.
-  const base = def.price || 2000;
-  return Math.max(5, Math.ceil(base * GEAR.repairShare * missing * (def.contraband ? 1.5 : 1)));
+  return !!def?.issued && !!p.inventory[itemId] && condition(p, itemId) <= 0 && now - (p.armoryAt ?? 0) >= GEAR.armoryCooldownMs;
 }
 
-export function repair(p: Player, itemId: string, now: number, price: (base: number) => number): GameEvent[] {
+export function reissue(p: Player, itemId: string, now: number): GameEvent[] {
   const def = ITEM_BY_ID[itemId];
   if (!isGear(def) || !p.inventory[itemId]) throw new GameError("You don't have that.");
-  if (condition(p, itemId) >= 1) throw new GameError("It's in perfect shape.");
-  if (def.issued) {
-    if (now - (p.armoryAt ?? 0) < GEAR.armoryCooldownMs) throw new GameError("The armory services your gear once a day.");
-    p.armoryAt = now;
-    p.wear = { ...(p.wear ?? {}), [itemId]: maxUses(def) };
-    return [{ tone: "good", text: `The armory services your ${def.name.toLowerCase()}. Good as new.` }];
-  }
-  const cost = price(repairCost(p, itemId, now) ?? 0);
-  if (p.cash < cost) throw new GameError(`The repair costs $${cost}. Cash only.`);
-  p.cash -= cost;
+  if (!def.issued) throw new GameError("Nothing gets repaired. Buy a new one.");
+  if (condition(p, itemId) > 0) throw new GameError("It still works.");
+  if (now - (p.armoryAt ?? 0) < GEAR.armoryCooldownMs) throw new GameError("The armory hands out one replacement a day.");
+  p.armoryAt = now;
   p.wear = { ...(p.wear ?? {}), [itemId]: maxUses(def) };
-  return [{ tone: "good", text: `Your ${def.name.toLowerCase()} is repaired. -$${cost}` }];
+  return [{ tone: "good", text: `The armory takes your broken ${def.name.toLowerCase()} and hands you a new one.` }];
 }
 
 /** For the player's own view. */
-export function gearView(p: Player, now: number, price: (base: number) => number) {
+export function gearView(p: Player, now: number) {
   return Object.keys(p.inventory)
     .filter((id) => p.inventory[id] > 0 && isGear(ITEM_BY_ID[id]))
     .map((id) => {
       const def = ITEM_BY_ID[id];
-      const cost = repairCost(p, id, now);
       return {
         id,
         name: def.name,
@@ -165,8 +150,7 @@ export function gearView(p: Player, now: number, price: (base: number) => number
         condition: Math.round(condition(p, id) * 100),
         broken: condition(p, id) <= 0,
         issued: !!def.issued,
-        repairCost: cost === null ? null : def.issued ? 0 : price(cost),
-        canRepair: cost !== null,
+        canReissue: canReissue(p, id, now),
       };
     })
     .sort((a, b) => (a.slot === b.slot ? Number(b.equipped) - Number(a.equipped) : a.slot === "weapon" ? -1 : 1));

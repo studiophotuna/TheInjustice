@@ -1,4 +1,5 @@
 import { trackDevice } from "@/game/anticheat";
+import { GEAR_HOME, returnToStock, takeFromStock } from "@/game/stock";
 import { oldEnough, parseBirthDate, UNDERAGE } from "@/game/age";
 import { cookies } from "next/headers";
 
@@ -132,6 +133,9 @@ export async function POST(req: Request) {
         throw new GameError(UNDERAGE);
       }
     }
+    // Gear comes off this city's shelf first; it goes back if the purchase doesn't go through.
+    const gearBuy = action.type === "buy" && GEAR_HOME[action.itemId] ? { id: action.itemId, country: buyer ? countryOf(buyer) : null } : null;
+    if (gearBuy?.country) await withCity(store, gearBuy.country, now, (c) => takeFromStock(c, gearBuy.id));
     const out = await store.update(playerId!, (p) => {
       if (action.type === "create") {
         if (p) throw new GameError("You already have a character.");
@@ -174,6 +178,10 @@ export async function POST(req: Request) {
         p.pendingDeposit = null;
       }
       return { player: p, result: { view: toView(p, now), events } };
+    }).catch(async (e) => {
+      // The sale fell through: the piece goes back on the shelf.
+      if (gearBuy?.country) await withCity(store, gearBuy.country, now, (c) => returnToStock(c, gearBuy.id)).catch(() => undefined);
+      throw e;
     });
     // A big laundering gets flagged for detectives.
     const lf = launderFlag as { amount: number; method: string } | null;

@@ -46,3 +46,7 @@ Video Free License (see /public/scenes/CREDITS.md), cropped square.
 | snub_pistol | 33600 robber holding a gun portrait |
 | machine_pistol | 41792 mercenary pointing his gun |
 | hatchet | 13280 chopping wood with an axe |
+| leathers | 39930 motorcyclist going down a road seen from the front |
+| undersuit | 51533 a young man wearing a black suit immersed in a |
+| steel_coat | 41495 man from a bygone age putting on his coat |
+| concealed_vest | 49440 detective undercover in their car observing a suspect with binoculars |

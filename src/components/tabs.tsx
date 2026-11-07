@@ -1,6 +1,7 @@
 "use client";
 
 import { motionChoice, setMotion } from "./motion";
+import { GEAR_HOME, soldIn } from "@/game/stock";
 import { CarPhoto } from "./art/CarPhoto";
 import { DeleteAccount, HelpLinks } from "./legal";
 import { AlertsCard } from "./alerts";
@@ -310,16 +311,28 @@ export function ShopTab({ game }: { game: GameApi }) {
     <motion.div key={cat} className="shop-grid" variants={list} initial="hidden" animate="show">
       {view.shop.filter((i) => kinds.includes(i.kind)).map((i) => {
         const price = shelfPrice(i.price, shopFor(shops.data, i.kind));
+        // Weapons and armor: each city sells its own, in limited stock.
+        const home = GEAR_HOME[i.id];
+        const away = home && home !== view.location.country ? soldIn(i.id) : null;
+        const left = home && !away ? (shops.data?.stock?.[i.id] ?? null) : null;
+        const soldOut = left === 0;
         return (
         <motion.article key={i.id} variants={item} className={`shop-item ${i.owned ? "owned" : ""}`}>
           <ItemArt id={i.id} icon={i.icon} name={i.name} price={price} className="shop-art" />
           <div className="shop-body">
-            <span className="chip">{KIND_LABEL[i.kind]}{i.trait ? ` · ${i.trait}` : ""}</span>
+            <span className="chip">{KIND_LABEL[i.kind]}</span>
             <h3>{i.name}</h3>
             <p className="muted">{i.description}</p>
+            {away && <p className="fine stock-note">Sold in {away}</p>}
+            {left !== null && <p className={`fine stock-note ${soldOut ? "out" : ""}`}>{soldOut ? "Sold out until the next shipment" : `${left} on the shelf`}</p>}
           </div>
-          <motion.button whileTap={{ scale: 0.94 }} className="btn btn-primary btn-sm" disabled={game.busy || i.owned || view.cash < price} onClick={() => game.act({ type: "buy", itemId: i.id, maxPrice: price })}>
-            {i.owned ? "Owned" : view.gear.some((g) => g.id === i.id && g.broken) ? `Replace $${price.toLocaleString()}` : `$${price.toLocaleString()}`}
+          <motion.button
+            whileTap={{ scale: 0.94 }}
+            className="btn btn-primary btn-sm"
+            disabled={game.busy || i.owned || view.cash < price || !!away || soldOut}
+            onClick={() => game.act({ type: "buy", itemId: i.id, maxPrice: price }).then(() => shops.load())}
+          >
+            {i.owned ? "Owned" : away ? "Elsewhere" : soldOut ? "Sold out" : view.gear.some((g) => g.id === i.id && g.broken) ? `Replace $${price.toLocaleString()}` : `$${price.toLocaleString()}`}
           </motion.button>
         </motion.article>
         );
@@ -360,7 +373,7 @@ export function GearCard({ game }: { game: GameApi }) {
         })}
       </div>
       {gear.length === 0 ? (
-        <p className="muted fine">Buy weapons and armor in the Shop. Only what you equip counts in a fight, and everything wears out.</p>
+        <p className="muted fine">Buy weapons and armor in the Shop. Only what you equip counts in a fight. Everything wears out, and nothing gets repaired.</p>
       ) : (
         <ul className="officials gear-list">
           {gear.map((g) => (
@@ -375,14 +388,9 @@ export function GearCard({ game }: { game: GameApi }) {
                 {g.equipped && (
                   <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => game.act({ type: "unequip", slot: g.slot })}>Take off</button>
                 )}
-                {g.condition < 100 && (
-                  <button
-                    className="btn btn-primary btn-xs"
-                    disabled={game.busy || !g.canRepair || (g.repairCost ?? 0) > view.cash}
-                    title={g.issued && !g.canRepair ? "The armory services issued gear once a day." : ""}
-                    onClick={() => game.act({ type: "repair", itemId: g.id })}
-                  >
-                    {g.issued ? (g.canRepair ? "Armory (free)" : "Armory: tomorrow") : `Repair $${g.repairCost}`}
+                {g.issued && g.broken && (
+                  <button className="btn btn-primary btn-xs" disabled={game.busy || !g.canReissue} onClick={() => game.act({ type: "reissue", itemId: g.id })}>
+                    {g.canReissue ? "Armory: new one" : "Armory: tomorrow"}
                   </button>
                 )}
               </span>

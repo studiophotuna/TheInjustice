@@ -30,6 +30,9 @@ export interface ShopsData {
   maxOwned: number;
   range: { min: number; max: number };
   costShare: number;
+  /** Gear on the shelves here, and when each owner can order next. */
+  stock?: Record<string, number>;
+  nextOrder?: { guns: number; armor: number };
   elsewhere: { country: string; city: string; kind: string; name: string; icon: string; till: number; offers: number }[];
 }
 
@@ -93,6 +96,21 @@ export function ShopOwnerStrip({ row, onManage }: { row: ShopRow; onManage: () =
       <button className="btn btn-ghost btn-xs" onClick={onManage}>
         {row.mine ? "Manage" : row.owner ? "Details" : "Take it over"}
       </button>
+    </div>
+  );
+}
+
+/** The owner orders stock. What turns up is luck: one piece, or a full shelf. */
+function Shipment({ data, kind, busy, call }: { data: ShopsData; kind: "guns" | "armor"; busy: boolean; call: (b: Record<string, unknown>) => Promise<unknown> }) {
+  const next = data.nextOrder?.[kind] ?? 0;
+  const wait = next - Date.now();
+  const hours = Math.ceil(wait / 3_600_000);
+  return (
+    <div className="shipment">
+      <span className="fine muted">
+        {wait > 0 ? `Next shipment can be ordered in ${hours} hour${hours === 1 ? "" : "s"}.` : "You can order a shipment. What arrives is luck: anything from a single piece to a full shelf."}
+      </span>
+      <button className="btn btn-ghost btn-sm" disabled={busy || wait > 0} onClick={() => call({ op: "restock", kind })}>Order a shipment</button>
     </div>
   );
 }
@@ -174,6 +192,7 @@ function ShopCard({
               Collect
             </button>
           </div>
+          {(kind === "guns" || kind === "armor") && <Shipment data={data} kind={kind} busy={busy} call={call} />}
           <label className="markup-row">
             <span className="crime-label">Your prices</span>
             <input

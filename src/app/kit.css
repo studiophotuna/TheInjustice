@@ -956,3 +956,8 @@ button.style-preview:hover .try-hint, button.style-preview:focus-visible .try-hi
 .age-gate h2 { margin: 6px 0 0; font-family: var(--headline); font-weight: 400; font-size: 30px; text-transform: uppercase; }
 .age-gate p { margin: 0; }
 input[type="date"] { color-scheme: dark; }
+
+/* Gear stock. */
+.stock-note { margin: 4px 0 0; color: var(--gold); font-weight: 700; }
+.stock-note.out { color: #ff6b6e; }
+.shipment { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }

@@ -10,7 +10,7 @@ import { playerMaxHp, woundHint } from "./wounds";
 import { careerGapBlock, careerRecordView } from "./career";
 import { publicProfile } from "./profile";
 import { threatView } from "./hit";
-import { gearTrait, gearView, usesLeft } from "./gear";
+import { gearView, usesLeft } from "./gear";
 import { marketView } from "./drugs";
 import { tutorialView } from "./tutorial";
 import { launderOptions } from "./money";
@@ -99,7 +99,7 @@ export interface PublicView {
   districts: { id: DistrictId; name: string; tagline: string; locked: string | null }[];
   jobs: JobView[];
   recommendedJobId: string | null;
-  shop: { id: string; name: string; icon: string; price: number; description: string; kind: string; owned: boolean; trait?: string }[];
+  shop: { id: string; name: string; icon: string; price: number; description: string; kind: string; owned: boolean }[];
   fights: {
     id: string;
     name: string;
@@ -406,7 +406,7 @@ export function toView(p: Player, now: number): PublicView {
       buyable: pr.country === here && !p.properties?.[pr.id],
     })),
     crewId: p.crewId ?? null,
-    gear: gearView(p, now, (base) => Math.round(base * COUNTRY_BY_ID[countryOf(p)].priceMult)),
+    gear: gearView(p, now),
     inventory: Object.entries(p.inventory)
       .filter(([id, n]) => n > 0 && ITEM_BY_ID[id].kind !== "weapon" && ITEM_BY_ID[id].kind !== "armor")
       .map(([id, count]) => {
@@ -454,7 +454,6 @@ export function toView(p: Player, now: number): PublicView {
       price: itemPrice(p, i.price),
       description: i.description,
       kind: i.kind,
-      ...(gearTrait(i) ? { trait: gearTrait(i)! } : {}),
       owned:
         i.kind === "housing"
           ? p.housing >= (i.housing ?? 0)

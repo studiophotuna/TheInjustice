@@ -4,6 +4,7 @@
 // draw a salary from the treasury... and can quietly skim it, which internal affairs can catch.
 
 import { seatsView } from "./seats";
+import { systemRestock } from "./stock";
 import { checkText } from "./textfilter";
 import { guardBlock, martialBlock, martialOn } from "./military";
 import { BALANCE } from "./balance";
@@ -60,7 +61,7 @@ export function tally(c: City): Map<string, number> {
 
 /** Closes every term that has ended: counts the votes and swears in the winner. */
 export function advanceCity(c: City, now: number): boolean {
-  let changed = false;
+  let changed = systemRestock(c, now, Math.random);
   while (c.term < termIndex(now)) {
     changed = true;
     const ended = termEnds(c.term);

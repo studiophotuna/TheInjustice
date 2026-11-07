@@ -1,5 +1,26 @@
 # Changelog
 
+## 6.9.0: armor pairs, gear by city, stock and shipments, no more repairs
+
+- **Four new armors**, so every price has a choice between a light piece (keeps you quick,
+  soaks a little less) and a heavy one (soaks more, slows you): Motorcycle leathers next to the
+  Padded jacket, a Steel-lined coat next to the Old kevlar vest, a Concealed vest next to Riot
+  gear, a Ballistic undersuit next to the Tactical plate carrier. Each pair balanced to be worth
+  the same.
+- **The shop no longer says Quick, Heavy or Light**: players find out for themselves.
+- **Every city sells different gear.** Grayhaven carries the cheapest pairs; the rest are spread
+  over Port Solace (baseball bat, snub-nose pistol, kevlar and concealed vests), Ironmoor
+  (hatchet, revolver, shotgun, steel-lined coat, riot gear, plate carrier) and Halcyon
+  (switchblade, machine pistol, ballistic undersuit). The shop shows where the rest is sold.
+- **Limited stock.** Gun shops and armor outfitters hold a few of each piece (plenty of cheap
+  gear, a couple of the expensive). A shop owner orders a shipment every 6 hours; a shop nobody
+  runs gets one every 4 hours. What arrives is pure luck: anything from a single piece to full
+  shelves, and nothing a player has changes it. A shop whose owner hasn't ordered in two days
+  gets one sent anyway.
+- **Nothing gets repaired.** Worn-out gear is replaced by buying a new one. Issued police and
+  army gear can't be bought, so the armory swaps a broken piece for a new one once a day.
+- The guide explains gear, cities and stock.
+
 ## 6.8.0: two weapons at every price
 
 - **Five new weapons**, so every price has a choice between a quick weapon (speed: you strike

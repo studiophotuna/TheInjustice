@@ -2,6 +2,7 @@
 // API route today and a database function (or worker) later without changes.
 
 import { buyCosmetic, equipCosmetic } from "./favors";
+import { GEAR_HOME, soldIn } from "./stock";
 import { oldEnough, parseBirthDate } from "./age";
 import { CASINO, doubleDown, hit, playRoulette, playSeven, stand, startTwentyOne, takeBreak, type RouletteBet, type SevenBet } from "./casino";
 import { addMarks, buyPass, claimReward } from "./pass";
@@ -15,7 +16,7 @@ import { argueSentence, clinicFactor, fieldDressing, specialtyUps, travelFactor 
 import { communityService, recordMoney } from "./daily_life";
 import { updateProfile } from "./profile";
 import { hireBodyguards, lieLow } from "./hit";
-import { ensureEquipped, equip, equippedId, repair, unequip, usesLeft, wearGear } from "./gear";
+import { ensureEquipped, equip, equippedId, reissue, unequip, usesLeft, wearGear } from "./gear";
 import { BALANCE, maxEnergy, regenMs } from "./balance";
 import { gutRead, npcFighter, playerFighter, power, resolveFight } from "./combat";
 import { DISTRICT_BY_ID, totalJobs } from "./content/districts";
@@ -900,6 +901,9 @@ export function itemPrice(p: Player, base: number): number {
 function buy(p: Player, itemId: string, events: GameEvent[], ctx: ActionContext = {}, maxPrice?: number) {
   const item = ITEM_BY_ID[itemId];
   if (!item || item.issued || item.contraband) throw new GameError("That item isn't for sale.");
+  if ((item.kind === "weapon" || item.kind === "armor") && GEAR_HOME[item.id] && GEAR_HOME[item.id] !== countryOf(p)) {
+    throw new GameError(`That isn't sold here. Try ${soldIn(item.id)}.`);
+  }
   const local = itemPrice(p, item.price);
   const kind = shopKindFor(item.kind);
   const run = ctx.shopMarkups?.[kind];
@@ -913,8 +917,8 @@ function buy(p: Player, itemId: string, events: GameEvent[], ctx: ActionContext 
     p.housing = item.housing!;
     p.homes = { ...(p.homes ?? {}), [countryOf(p)]: p.housing };
   } else if (item.kind === "weapon" || item.kind === "armor") {
-    // A broken one can be replaced; a working one should be repaired instead.
-    if (p.inventory[item.id] && usesLeft(p, item.id) > 0) throw new GameError("You already own one. Repair it when it wears out.");
+    // A broken one can be replaced; nothing gets repaired.
+    if (p.inventory[item.id] && usesLeft(p, item.id) > 0) throw new GameError("You already have a working one.");
     p.inventory[item.id] = 1;
     if (p.wear) delete p.wear[item.id];
     ensureEquipped(p);
@@ -1157,7 +1161,7 @@ function ledgerLabel(action: Action, events: GameEvent[]): string {
   const named: Partial<Record<Action["type"], string>> = {
     job: "Work", fight: "Street fight", buy: "Shop", bank: "Bank", launder: "Laundering", claim_daily: "Daily reward",
     collect_property: "Business income", buy_property: "Bought a business", train: "Gym", travel: "Travel", use: "Used an item",
-    repair: "Repairs", drug_buy: "Bought product", drug_sell: "Sold product", drive: "Fuel", car_buy: "Bought a car", car_sell: "Sold a car", car_repair: "Mechanic", car_compartment: "Mechanic", cargo_buy: "Bought cargo", cargo_sell: "Sold cargo", stash: "Home stash", car_chop: "Chop shop", car_plates: "New plates", fit_alarm: "Home alarm", dog_buy: "Bought a dog", dog_feed: "Dog food", encounter: "On the street", tutorial: "First-day reward",
+    reissue: "Armory", drug_buy: "Bought product", drug_sell: "Sold product", drive: "Fuel", car_buy: "Bought a car", car_sell: "Sold a car", car_repair: "Mechanic", car_compartment: "Mechanic", cargo_buy: "Bought cargo", cargo_sell: "Sold cargo", stash: "Home stash", car_chop: "Chop shop", car_plates: "New plates", fit_alarm: "Home alarm", dog_buy: "Bought a dog", dog_feed: "Dog food", encounter: "On the street", tutorial: "First-day reward",
     claim_contract: "Contract reward", hire_bodyguards: "Bodyguards", lie_low: "Safe house",
   };
   const base = named[action.type] ?? action.type.replace(/_/g, " ");
@@ -1205,8 +1209,8 @@ function applyActionInner(p: Player, action: Action, now: number, rng: Rng, ctx:
     case "unequip":
       events.push(...unequip(p, action.slot));
       break;
-    case "repair":
-      events.push(...repair(p, action.itemId, now, (base) => itemPrice(p, base)));
+    case "reissue":
+      events.push(...reissue(p, action.itemId, now));
       break;
     case "hire_bodyguards":
       events.push(...hireBodyguards(p, now));

@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { readCity } from "@/server/city";
+import { nextOrderAt, ownerRestock, stockView } from "@/game/stock";
 import { reportError } from "@/server/errors";
 import { advanceCity, newCity } from "@/game/city";
 import { COUNTRIES } from "@/game/content/world";
@@ -41,7 +43,8 @@ const kindOf = (v: unknown): ShopKind => {
 async function view(store: ReturnType<typeof getStore>, me: Player, now: number) {
   const country = countryOf(me);
   const cities = await store.listCities();
-  const c = cities.find((x) => x.country === country) ?? newCity(country, now);
+  // Reading the city also lands any shipment that's due for a shop nobody runs.
+  const c = await readCity(store, country, now);
   const ownerIds = [...new Set(Object.values(c.shops ?? {}).map((h) => h!.ownerId))];
   const owners = Object.fromEntries((await Promise.all(ownerIds.map((id) => store.get(id)))).map((o, i) => [ownerIds[i], o]));
   const elsewhere = shopsOwnedBy(cities, me.id)
@@ -57,6 +60,8 @@ async function view(store: ReturnType<typeof getStore>, me: Player, now: number)
     maxOwned: SHOP.maxOwned,
     range: { min: SHOP.minMarkup, max: SHOP.maxMarkup },
     costShare: SHOP.costShare,
+    stock: stockView(c),
+    nextOrder: { guns: nextOrderAt(c, "guns"), armor: nextOrderAt(c, "armor") },
     elsewhere,
   };
 }
@@ -156,6 +161,11 @@ export async function POST(req: Request) {
         }
         case "sell":
           out = sellBack(c, p, kind, now);
+          break;
+        case "restock":
+          if (kind !== "guns" && kind !== "armor") throw new GameError("Only the gun shop and the armor outfitter take shipments.");
+          if (!ownCity) throw new GameError("Go there to order a shipment.");
+          out = ownerRestock(c, p.id, kind, now, Math.random);
           break;
         default:
           throw new GameError("Bad request.");

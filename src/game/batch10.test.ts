@@ -50,18 +50,18 @@ describe("equipment", () => {
     p.cash = 1000;
     applyAction(p, { type: "buy", itemId: "pipe" }, LATER, always(0.5));
     expect(usesLeft(p, "pipe")).toBe(ITEM_BY_ID.pipe.durability);
-    expect(() => applyAction(p, { type: "buy", itemId: "pipe" }, LATER, always(0.5))).toThrow(/Repair it/);
+    expect(() => applyAction(p, { type: "buy", itemId: "pipe" }, LATER, always(0.5))).toThrow(/working one/);
   });
 
-  it("repairs cost money in proportion to the wear; issued gear is serviced free once a day", () => {
+  it("nothing is repaired: broken gear is replaced; the armory swaps broken issued gear once a day", () => {
     const p = mk("p", "Pia");
     p.cash = 2000;
-    applyAction(p, { type: "buy", itemId: "vest" }, LATER, always(0.5));
-    wearGear(p, ["armor"], 20);
-    const before = p.cash;
-    applyAction(p, { type: "repair", itemId: "vest" }, LATER, always(0.5));
-    expect(p.cash).toBeLessThan(before);
-    expect(usesLeft(p, "vest")).toBe(ITEM_BY_ID.vest.durability);
+    applyAction(p, { type: "buy", itemId: "jacket" }, LATER, always(0.5));
+    wearGear(p, ["armor"], 200);
+    expect(usesLeft(p, "jacket")).toBe(0);
+    expect(() => applyAction(p, { type: "reissue", itemId: "jacket" }, LATER, always(0.5))).toThrow(/Buy a new one/);
+    applyAction(p, { type: "buy", itemId: "jacket" }, LATER, always(0.5));
+    expect(usesLeft(p, "jacket")).toBe(ITEM_BY_ID.jacket.durability);
 
     const cop = mk("c", "Cole");
     cop.path = "police";
@@ -69,9 +69,11 @@ describe("equipment", () => {
     tick(cop, LATER + 1);
     expect(equippedId(cop, "weapon")).toBe("service_pistol");
     wearGear(cop, ["weapon"], 10);
-    applyAction(cop, { type: "repair", itemId: "service_pistol" }, LATER + 2, always(0.5));
-    wearGear(cop, ["weapon"], 10);
-    expect(() => applyAction(cop, { type: "repair", itemId: "service_pistol" }, LATER + 3, always(0.5))).toThrow(/once a day/);
+    expect(() => applyAction(cop, { type: "reissue", itemId: "service_pistol" }, LATER + 2, always(0.5))).toThrow(/still works/);
+    wearGear(cop, ["weapon"], 500);
+    applyAction(cop, { type: "reissue", itemId: "service_pistol" }, LATER + 2, always(0.5));
+    wearGear(cop, ["weapon"], 500);
+    expect(() => applyAction(cop, { type: "reissue", itemId: "service_pistol" }, LATER + 3, always(0.5))).toThrow(/one replacement a day/);
   });
 
   it("player fights wear both sides' gear", () => {

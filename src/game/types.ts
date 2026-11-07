@@ -824,7 +824,7 @@ export type Action =
   | { type: "use"; itemId: string }
   | { type: "equip"; itemId: string }
   | { type: "unequip"; slot: "weapon" | "armor" }
-  | { type: "repair"; itemId: string }
+  | { type: "reissue"; itemId: string }
   | { type: "hire_bodyguards" }
   | { type: "profile"; bio?: string; photo?: string | null }
   | { type: "buy_cosmetic"; id: string }
@@ -946,6 +946,10 @@ export interface City {
   customs?: CustomsPost[];
   /** Player-run storefronts. */
   shops?: Partial<Record<ShopKind, ShopHold>>;
+  /** Gear on the shelves of this city's gun shop and armor outfitter. */
+  stock?: Record<string, number>;
+  /** When each of them last got a shipment. */
+  stockAt?: Partial<Record<"guns" | "armor", number>>;
   /** Last time a street regular spoke in city chat. */
   regularChatAt?: number;
   country: CountryId;

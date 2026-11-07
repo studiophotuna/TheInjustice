@@ -54,10 +54,15 @@ export const ITEMS: ItemDef[] = [
   { id: "machine_pistol", name: "Machine pistol", kind: "weapon", price: 46000, power: 22, agility: 4, durability: 90, icon: "🔫", description: "Light, fast and loud. Empties before the other side can aim." },
   { id: "shotgun", name: "Sawed-off shotgun", kind: "weapon", price: 45000, power: 28, agility: -1, durability: 100, icon: "💣", description: "Loud, ugly and final. Nobody argues twice." },
   // ── Armor ──
+  // Two at each price: a light one that keeps you quick, and a heavy one that soaks up more.
   { id: "jacket", name: "Padded jacket", kind: "armor", price: 200, power: 6, durability: 35, icon: "🧥", description: "Takes the edge off a punch." },
+  { id: "leathers", name: "Motorcycle leathers", kind: "armor", price: 220, power: 8, agility: -1, durability: 40, icon: "🧥", description: "Thick hide, stiff in the knees. Road rash is the least of your worries." },
   { id: "vest", name: "Old kevlar vest", kind: "armor", price: 1100, power: 12, durability: 55, icon: "🦺", description: "Scuffed and ugly. It still works." },
+  { id: "steel_coat", name: "Steel-lined coat", kind: "armor", price: 1200, power: 14, agility: -1, durability: 60, icon: "🧥", description: "A tailor in Ironmoor sews plates into the lining. Heavy on the shoulders." },
   { id: "riot_gear", name: "Riot gear", kind: "armor", price: 9000, power: 19, agility: -1, durability: 80, icon: "🛡️", description: "Fell off a police truck. Fits like it was made for you." },
+  { id: "concealed_vest", name: "Concealed vest", kind: "armor", price: 9500, power: 17, durability: 80, icon: "🦺", description: "Thin enough to wear under a shirt. Nobody knows until the knife bounces." },
   { id: "tactical_plate", name: "Tactical plate carrier", kind: "armor", price: 40000, power: 26, agility: -2, durability: 110, icon: "🛡️", description: "Ceramic plates front and back. Professionals only." },
+  { id: "undersuit", name: "Ballistic undersuit", kind: "armor", price: 42000, power: 23, durability: 110, icon: "🦺", description: "Woven like silk, stops like steel. Made for people who can't look armed." },
   // ── Issued gear ──
   {
     id: "service_pistol",

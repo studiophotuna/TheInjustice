@@ -62,6 +62,14 @@ export default function GuidePage() {
         rank lost.
       </p>
 
+      <h2>Weapons and armor</h2>
+      <p>
+        Only what you carry and wear counts in a fight. Every city sells different gear, so the piece you want may be a trip away,
+        and the shelves are limited: when it&apos;s sold out, you wait for the next shipment. Gear wears out with use and nothing
+        gets repaired, so plan to buy again. At every price there&apos;s more than one choice, and they don&apos;t fight the same way.
+        Finding out which suits you is part of the game.
+      </p>
+
       <h2>Crews</h2>
       <p>
         Crews are Mafia families. They pool money in a vault, run districts as turf, go to war with other crews, run fronts, and can
