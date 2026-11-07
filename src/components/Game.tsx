@@ -454,7 +454,7 @@ function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonN
     <div className="hud-spacer" style={{ height: full }} aria-hidden />
     <header ref={ref} className={`hud${compact ? " compact" : ""}`}>
       <div className="hud-top">
-        <button className="hud-avatar" onClick={onProfile} aria-label="Open your profile" style={{ ["--p" as string]: `${progress}%`, ["--rim" as string]: view.path ? PATH_LOOKS[view.path.id]?.rim : "#8d96a8" }}>
+        <button className={`hud-avatar${view.look?.frame ? " framed" : ""}`} onClick={onProfile} aria-label="Open your profile" style={{ ["--p" as string]: `${progress}%`, ["--rim" as string]: view.path ? PATH_LOOKS[view.path.id]?.rim : "#8d96a8" }}>
           <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo ?? careerStill(view.path?.id, view.ladder?.current)} look={view.look} className="avatar-sm" />
         </button>
         <div className="hud-who">
@@ -475,9 +475,11 @@ function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonN
           )}
           <span className={`hud-pill meter energy ${live.energy >= view.maxEnergy ? "full" : ""}`} title={live.energy >= view.maxEnergy ? "Energy full" : `+1 in ${fmt(live.nextIn)} · full in ${fmt(live.fullIn)}`}>
             <Zap size={14} /> {live.energy}<i style={{ ["--v" as string]: `${Math.round((live.energy / view.maxEnergy) * 100)}%` }} />
+            <small className="pill-timer">{live.energy >= view.maxEnergy ? "full" : `+1 ${fmt(live.nextIn)}`}</small>
           </span>
           <span className={`hud-pill meter health ${hurt ? "hurt" : ""}`} title={hurt ? `In the clinic for ${fmt(live.hospital)}` : view.hp >= view.maxHp ? "Healthy" : "Recovering"}>
             <Heart size={14} /> {hurt ? fmt(live.hospital) : view.hp}<i style={{ ["--v" as string]: `${hurt ? 0 : Math.round((view.hp / view.maxHp) * 100)}%` }} />
+            {hurt && <small className="pill-timer">clinic</small>}
           </span>
         </div>
         <button className="hud-search" onClick={onSearch} aria-label="Search and do anything (Ctrl+K)" title="Do anything (Ctrl+K)">

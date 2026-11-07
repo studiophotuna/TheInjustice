@@ -749,3 +749,19 @@ button.style-preview:hover .try-hint, button.style-preview:focus-visible .try-hi
 .hud-avatar .portrait-photo[class*="frame-"] { box-shadow: none !important; }
 .motion-pick { display: flex; }
 .motion-pick button { flex: 1; }
+
+/* Top bar: a worn frame takes the career ring's place. */
+.hud-avatar.framed { background: none !important; padding: 0 !important; }
+/* Top bar timers: the energy countdown (and the clinic) sit in the pills, visible on phones. */
+.pill-timer { font-size: 10.5px; font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; margin-left: 2px; }
+.hud-pill.energy.full .pill-timer { color: var(--gold); opacity: 0.8; }
+@media (max-width: 520px) {
+  .hud-pill.meter i { display: none; }
+  .hud-pill { padding-left: 9px; padding-right: 9px; gap: 4px; }
+  .hud-pill.cash .cash { font-size: 14px; }
+  .hud-pills { gap: 4px; }
+}
+@media (max-width: 520px) {
+  .hud-pills { flex-wrap: wrap; overflow: visible; row-gap: 4px; }
+  .hud-pill { height: 28px; }
+}

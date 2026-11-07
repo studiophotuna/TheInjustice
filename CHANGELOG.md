@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.9.1: timers back in the top bar
+
+- **The energy countdown is visible again:** the energy pill shows "+1 0:27" until the next
+  point (or "full"), and health shows the clinic countdown when you're in. On phones the pills
+  wrap onto two rows beside your face, so energy and health are no longer cut off the edge.
+- **A frame replaces the career ring** around your face in the top bar; with no frame, the
+  career colour ring shows.
+
 ## 5.9.0: a Motion setting, and a cleaner top bar face
 
 - **Motion setting (Me → Motion):** the game follows your phone's Reduce Motion setting by
