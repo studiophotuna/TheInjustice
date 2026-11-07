@@ -21,7 +21,15 @@ export function parseAction(body: unknown): Action {
     case "create":
       if (b.country !== undefined && !COUNTRY_IDS.includes(b.country as CountryId)) throw new GameError("Bad request.");
       if (b.background !== undefined && !isBackground(b.background)) throw new GameError("Bad request.");
-      return { type: "create", name: str(b.name, 60), country: b.country as CountryId | undefined, background: b.background as BackgroundId | undefined };
+      return {
+        type: "create",
+        name: str(b.name, 60),
+        country: b.country as CountryId | undefined,
+        background: b.background as BackgroundId | undefined,
+        ...(typeof b.birthDate === "string" ? { birthDate: b.birthDate.slice(0, 10) } : {}),
+      };
+    case "birthdate":
+      return { type: "birthdate", birthDate: str(b.birthDate, 10) };
     case "travel":
       if (!COUNTRY_IDS.includes(b.to as CountryId) || !MODES.includes(b.mode as TravelMode)) throw new GameError("Bad request.");
       return { type: "travel", to: b.to as CountryId, mode: b.mode as TravelMode };

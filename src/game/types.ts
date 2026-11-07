@@ -337,6 +337,10 @@ export interface Player {
   exchangeWeek?: { week: number; sold: number; bought: number };
   /** The casino: today's bets, a hand in progress, a break the player asked for. */
   casino?: import("./casino").CasinoState;
+  /** Date of birth ("YYYY-MM-DD"), private: only used to check the player is old enough. */
+  birthDate?: string;
+  /** Too young to play: the character is held. */
+  ageBlocked?: boolean;
   /** This month's season pass. */
   pass?: { season: number; marks: number; premium: boolean; claimed: string[] };
   /** Phone alerts: where to send them and what was last sent. */
@@ -813,7 +817,8 @@ export interface GameEvent {
 export type Rng = () => number;
 
 export type Action =
-  | { type: "create"; name: string; country?: CountryId; background?: BackgroundId }
+  | { type: "create"; name: string; country?: CountryId; background?: BackgroundId; birthDate?: string }
+  | { type: "birthdate"; birthDate: string }
   | { type: "job"; jobId: string }
   | { type: "buy"; itemId: string; maxPrice?: number }
   | { type: "use"; itemId: string }

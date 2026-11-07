@@ -13,6 +13,8 @@ export const GEAR = {
   /** Worn gear still gives at least this share of its power until it breaks. */
   wornFloor: 0.6,
   armoryCooldownMs: 24 * 60 * 60_000,
+  /** Armor power at which it soaks half of every hit. */
+  blockHalf: 28,
 };
 
 const isGear = (d: ItemDef | undefined): d is ItemDef => !!d && (d.kind === "weapon" || d.kind === "armor");
@@ -63,6 +65,28 @@ export function gearPower(p: Player, slot: Slot): number {
   const c = condition(p, id);
   if (c <= 0) return 0;
   return (def.power ?? 0) * (GEAR.wornFloor + (1 - GEAR.wornFloor) * c);
+}
+
+/** How gear feels, in a word: quick weapons, heavy gear. Never a number. */
+export function gearTrait(def: ItemDef): string | null {
+  if (def.kind !== "weapon" && def.kind !== "armor") return null;
+  const a = def.agility ?? 0;
+  if (a > 0) return "Quick";
+  if (a < 0) return "Heavy";
+  return def.kind === "armor" && (def.power ?? 0) <= 12 ? "Light" : null;
+}
+
+/** How gear changes your speed: quick weapons help, heavy gear slows you (while it isn't broken). */
+export function gearAgility(p: Player, slot: Slot): number {
+  const id = equippedId(p, slot);
+  if (!id || condition(p, id) <= 0) return 0;
+  return ITEM_BY_ID[id].agility ?? 0;
+}
+
+/** The share of every hit your armor soaks up. Worn armor soaks less; broken armor none. */
+export function armorBlock(p: Player): number {
+  const power = gearPower(p, "armor");
+  return power > 0 ? power / (power + GEAR.blockHalf) : 0;
 }
 
 /** One use of the gear in these slots. Returns a line for anything that just broke. */

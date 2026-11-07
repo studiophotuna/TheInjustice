@@ -114,6 +114,7 @@ function NameForm({ game, label = "Start" }: { game: GameApi; label?: string }) 
   const [name, setName] = useState("");
   const [country, setCountry] = useState<CountryId>("varrow");
   const [background, setBackground] = useState<BackgroundId | null>(null);
+  const [birthDate, setBirthDate] = useState("");
   const chosen = COUNTRIES.find((c) => c.id === country)!;
   const bg = BACKGROUNDS.find((b) => b.id === background) ?? null;
   return (
@@ -121,12 +122,17 @@ function NameForm({ game, label = "Start" }: { game: GameApi; label?: string }) 
       className="name-form"
       onSubmit={(e) => {
         e.preventDefault();
-        game.act({ type: "create", name, country, background: background ?? undefined });
+        game.act({ type: "create", name, country, background: background ?? undefined, birthDate });
       }}
     >
       <label className="field">
         <span>Your name on the street</span>
         <input autoFocus maxLength={20} placeholder="e.g. Rook" value={name} onChange={(e) => setName(e.target.value)} />
+      </label>
+      <label className="field">
+        <span>Your date of birth</span>
+        <input type="date" value={birthDate} max={new Date().toISOString().slice(0, 10)} onChange={(e) => setBirthDate(e.target.value)} required />
+        <span className="fine muted">Kept private. Never shown to other players.</span>
       </label>
       <div className="field">
         <span>Where will you live?</span>
@@ -169,7 +175,7 @@ function NameForm({ game, label = "Start" }: { game: GameApi; label?: string }) 
           {bg ? `Before the judge put you away, you ${bg.story} A small head start, and ${PATHS[bg.career].contact} may come looking for someone like you.` : "Optional. It gives you a small head start and points you to a career that fits. You can still become anything."}
         </p>
       </div>
-      <button className="btn btn-primary btn-lg" disabled={game.busy || name.trim().length < 2}>
+      <button className="btn btn-primary btn-lg" disabled={game.busy || name.trim().length < 2 || !birthDate}>
         {label} <ArrowRight size={18} />
       </button>
     </form>
@@ -357,6 +363,47 @@ export function ChapterViewer({ id, onDone }: { id: string; onDone: () => void }
         </div>
       </div>
     </motion.div>
+  );
+}
+
+/** Characters made before the age check: ask once, then carry on. */
+export function AgeGate({ game }: { game: GameApi }) {
+  const [birthDate, setBirthDate] = useState("");
+  return (
+    <div className="landing">
+      <div className="landing-card glass age-gate">
+        <Logo />
+        <h2>One quick thing</h2>
+        <p className="muted">Enter your date of birth to keep playing. It&apos;s kept private and never shown to other players.</p>
+        <form
+          className="name-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            game.act({ type: "birthdate", birthDate });
+          }}
+        >
+          <label className="field">
+            <span>Your date of birth</span>
+            <input type="date" value={birthDate} max={new Date().toISOString().slice(0, 10)} onChange={(e) => setBirthDate(e.target.value)} required />
+          </label>
+          <button className="btn btn-primary btn-lg" disabled={game.busy || !birthDate}>Continue</button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/** Too young to play: nothing else is reachable. */
+export function AgeBlocked({ game }: { game: GameApi }) {
+  return (
+    <div className="landing">
+      <div className="landing-card glass age-gate">
+        <Logo />
+        <h2>Sorry</h2>
+        <p className="muted">Conspira isn&apos;t available to you. It has crime, violence and gambling themes, and it&apos;s made for adults.</p>
+        {game.account && <button className="btn btn-ghost" onClick={() => game.auth("logout")}>Log out</button>}
+      </div>
+    </div>
   );
 }
 

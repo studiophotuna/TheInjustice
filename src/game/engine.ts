@@ -2,6 +2,7 @@
 // API route today and a database function (or worker) later without changes.
 
 import { buyCosmetic, equipCosmetic } from "./favors";
+import { oldEnough, parseBirthDate } from "./age";
 import { CASINO, doubleDown, hit, playRoulette, playSeven, stand, startTwentyOne, takeBreak, type RouletteBet, type SevenBet } from "./casino";
 import { addMarks, buyPass, claimReward } from "./pass";
 import { checkText } from "./textfilter";
@@ -1418,6 +1419,12 @@ function applyActionInner(p: Player, action: Action, now: number, rng: Rng, ctx:
       break;
     case "create":
       throw new GameError("You already have a character.");
+    case "birthdate": {
+      const birth = parseBirthDate(action.birthDate, now);
+      p.birthDate = birth;
+      if (!oldEnough(birth, now)) p.ageBlocked = true;
+      break;
+    }
     default:
       throw new GameError("Unknown action.");
   }

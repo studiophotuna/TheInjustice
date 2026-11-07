@@ -950,3 +950,9 @@ button.style-preview:hover .try-hint, button.style-preview:focus-visible .try-hi
 .car-photo.garage-art { width: 112px; height: 76px; flex: none; }
 .car-photo.route-car { width: 100%; height: 64px; }
 .logo-word-img { display: block; width: 170px; height: auto; max-width: 100%; }
+.info-back img { display: block; width: 150px; height: auto; }
+.info-badge { display: block; width: 120px; height: auto; margin: 0 0 14px; }
+.age-gate { display: grid; gap: 12px; }
+.age-gate h2 { margin: 6px 0 0; font-family: var(--headline); font-weight: 400; font-size: 30px; text-transform: uppercase; }
+.age-gate p { margin: 0; }
+input[type="date"] { color-scheme: dark; }

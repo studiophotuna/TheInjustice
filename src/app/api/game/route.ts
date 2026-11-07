@@ -1,4 +1,8 @@
 import { trackDevice } from "@/game/anticheat";
+import { oldEnough, parseBirthDate, UNDERAGE } from "@/game/age";
+import { cookies } from "next/headers";
+
+const AGE_COOKIE = "cns_age";
 import { reportError } from "@/server/errors";
 import { assertActive } from "@/game/moderation";
 import { NextResponse } from "next/server";
@@ -119,16 +123,28 @@ export async function POST(req: Request) {
     const customs = leaver ? searchingOfficers(await store.getCity(countryOf(leaver)), now, playerId!).map((x) => ({ id: x.id, name: x.name, eye: x.eye })) : [];
     let seizure: { officerId: string; value: number; what: string; from: string } | null = null;
     let launderFlag: { amount: number; method: string } | null = null;
+    if (action.type === "create") {
+      const jar = await cookies();
+      if (jar.get(AGE_COOKIE)) throw new GameError(UNDERAGE);
+      const birth = parseBirthDate(action.birthDate, now);
+      if (!oldEnough(birth, now)) {
+        jar.set(AGE_COOKIE, "1", { httpOnly: true, sameSite: "lax", secure: true, path: "/", maxAge: 30 * 86_400 });
+        throw new GameError(UNDERAGE);
+      }
+    }
     const out = await store.update(playerId!, (p) => {
       if (action.type === "create") {
         if (p) throw new GameError("You already have a character.");
         const fresh = createPlayer(playerId!, action.name, now, action.country);
+        fresh.birthDate = parseBirthDate(action.birthDate, now);
         if (action.background) applyBackground(fresh, action.background);
         trackDevice(fresh, deviceId, ipHash);
         return { player: fresh, result: { view: toView(fresh, now), events: [] as GameEvent[] } };
       }
       if (!p) throw new GameError("Create a character first.");
       assertActive(p, now);
+      if (p.ageBlocked) throw new GameError(UNDERAGE);
+      if (!p.birthDate && action.type !== "birthdate") throw new GameError("Enter your date of birth first.");
       trackDevice(p, deviceId, ipHash);
       const events = applyAction(p, action, now, Math.random, { taxRates: rates, turf, allies, shopMarkups: markups, customs });
       if (p.customsSeizure) {

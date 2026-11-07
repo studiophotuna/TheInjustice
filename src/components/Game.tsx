@@ -35,7 +35,7 @@ import type { PublicView } from "@/game/view";
 import { NpcPortrait, PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 import { Skyline } from "./art/Skyline";
 import { Vehicle } from "./art/Vehicles";
-import { AuthForm, ChapterViewer, DeathScreen, Landing, Logo, Prologue } from "./screens";
+import { AgeBlocked, AgeGate, AuthForm, ChapterViewer, DeathScreen, Landing, Logo, Prologue } from "./screens";
 import { DeanLetter, FightTab, JobsTab, ProfileTab, ShopTab } from "./tabs";
 import { CityPlaces, type Building } from "./places";
 import { careerStill } from "./art/Cutout";
@@ -85,11 +85,18 @@ export default function Game() {
       </div>
     );
   }
-  if (!view) return <Landing game={game} />;
+  if (!view) {
+    return (
+      <>
+        <Landing game={game} />
+        <Toasts game={game} />
+      </>
+    );
+  }
   if (!view.flags.includes("seen_prologue")) return <Prologue onDone={() => game.act({ type: "flag", flag: "seen_prologue" })} />;
   return (
     <>
-      {view.dead ? <DeathScreen game={game} view={view} /> : <Shell game={game} view={view} />}
+      {view.ageBlocked ? <AgeBlocked game={game} /> : view.needsBirthDate ? <AgeGate game={game} /> : view.dead ? <DeathScreen game={game} view={view} /> : <Shell game={game} view={view} />}
       <Toasts game={game} />
       <AnimatePresence>{game.recoveryCode && <RecoveryCodeModal game={game} />}</AnimatePresence>
       <AnimatePresence>{game.fight && <FightScene fight={game.fight} view={view} onClose={game.closeFight} />}</AnimatePresence>

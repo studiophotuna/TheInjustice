@@ -14,6 +14,7 @@ export default function PrivacyPage() {
       <h2>What we store</h2>
       <ul>
         <li><b>Your account:</b> your username, your password and recovery code (only as scrambled hashes we can&apos;t read back), and login sessions.</li>
+        <li><b>Your date of birth:</b> only to check you&apos;re old enough to play. It&apos;s never shown to anyone.</li>
         <li><b>Your character:</b> everything you do in the game: name, progress, money, items, messages to the game&apos;s systems, and your journal.</li>
         <li><b>What you post:</b> chat messages, your bio and profile photo, uploaded frames and banners, crew notes and forum posts.</li>
         <li><b>Reports:</b> reports you make or that are made about you, and what moderators decided.</li>

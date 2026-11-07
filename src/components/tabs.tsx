@@ -314,7 +314,7 @@ export function ShopTab({ game }: { game: GameApi }) {
         <motion.article key={i.id} variants={item} className={`shop-item ${i.owned ? "owned" : ""}`}>
           <ItemArt id={i.id} icon={i.icon} name={i.name} price={price} className="shop-art" />
           <div className="shop-body">
-            <span className="chip">{KIND_LABEL[i.kind]}</span>
+            <span className="chip">{KIND_LABEL[i.kind]}{i.trait ? ` · ${i.trait}` : ""}</span>
             <h3>{i.name}</h3>
             <p className="muted">{i.description}</p>
           </div>

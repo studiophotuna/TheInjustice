@@ -1,4 +1,4 @@
-import { gearPower } from "./gear";
+import { armorBlock, gearAgility, gearPower } from "./gear";
 import type { NpcDef } from "./content/npcs";
 import { sv } from "./stats";
 import type { Player, Rng } from "./types";
@@ -9,6 +9,8 @@ export interface Fighter {
   agility: number;
   hp: number;
   maxHp: number;
+  /** Share of every hit that armor soaks up (0 to about 0.45). */
+  block?: number;
 }
 
 export interface FightResult {
@@ -24,8 +26,9 @@ export interface FightResult {
 export function playerFighter(p: Player, maxHp: number): Fighter {
   return {
     strength: sv(p, "strength") + gearPower(p, "weapon"),
-    toughness: sv(p, "toughness") + gearPower(p, "armor"),
-    agility: sv(p, "agility"),
+    toughness: sv(p, "toughness"),
+    agility: Math.max(5, sv(p, "agility") + gearAgility(p, "weapon") + gearAgility(p, "armor")),
+    block: armorBlock(p),
     hp: p.hp,
     maxHp,
   };
@@ -35,8 +38,9 @@ export function npcFighter(n: NpcDef): Fighter {
   return { strength: n.strength, toughness: n.toughness, agility: n.agility, hp: n.hp, maxHp: n.hp };
 }
 
-export function power(f: Pick<Fighter, "strength" | "toughness" | "agility">): number {
-  return (f.strength + f.toughness + f.agility * 0.6) / 2.6;
+export function power(f: Pick<Fighter, "strength" | "toughness" | "agility" | "block">): number {
+  // Armor soaks a share of every hit: count it as extra toughness when sizing people up.
+  return (f.strength + f.toughness * (1 + 2 * (f.block ?? 0)) + f.agility * 0.6) / 2.6;
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -44,8 +48,8 @@ const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v
 function hit(att: Fighter, def: Fighter, rng: Rng): number {
   const chance = clamp(0.75 + (att.agility - def.agility) / 120, 0.35, 0.95);
   if (rng() > chance) return 0;
-  const raw = 5 + att.strength * 0.4 * (0.8 + rng() * 0.4) - def.toughness * 0.15;
-  return Math.max(2, raw);
+  const raw = Math.max(2, 5 + att.strength * 0.4 * (0.8 + rng() * 0.4) - def.toughness * 0.15);
+  return Math.max(1, raw * (1 - (def.block ?? 0)));
 }
 
 function describeHit(dmg: number, max: number, mine: boolean): string {

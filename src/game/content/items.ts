@@ -15,6 +15,8 @@ export interface ItemDef {
   housing?: HousingTier;
   /** weapon/armor: combat bonus */
   power?: number;
+  /** weapon/armor: how it changes your speed. Quick weapons add, heavy gear takes away. */
+  agility?: number;
   /** weapon/armor: uses before it breaks (fights, rough jobs). Issued gear is serviced for free. */
   durability?: number;
   /** medical: hp restored */
@@ -40,15 +42,15 @@ export const ITEMS: ItemDef[] = [
   { id: "penthouse", name: "Penthouse", kind: "housing", price: 160000, housing: 5, icon: "🌆", description: "The whole city under your windows. Nobody rings this doorbell by accident." },
   // ── Weapons (wear out with use; repair at the shop) ──
   { id: "pipe", name: "Lead pipe", kind: "weapon", price: 150, power: 6, durability: 30, icon: "🔧", description: "Crude, heavy, convincing." },
-  { id: "knuckles", name: "Brass knuckles", kind: "weapon", price: 700, power: 11, durability: 45, icon: "👊", description: "Every punch counts double. Almost." },
-  { id: "switchblade", name: "Switchblade", kind: "weapon", price: 3200, power: 15, durability: 60, icon: "🔪", description: "Quick to open, quicker to end an argument." },
+  { id: "knuckles", name: "Brass knuckles", kind: "weapon", price: 700, power: 11, agility: 2, durability: 45, icon: "👊", description: "Every punch counts double. Almost." },
+  { id: "switchblade", name: "Switchblade", kind: "weapon", price: 3200, power: 15, agility: 2, durability: 60, icon: "🔪", description: "Quick to open, quicker to end an argument." },
   { id: "revolver", name: "Old revolver", kind: "weapon", price: 14000, power: 21, durability: 80, icon: "🔫", description: "Six rounds and a long history. Don't ask whose." },
-  { id: "shotgun", name: "Sawed-off shotgun", kind: "weapon", price: 45000, power: 28, durability: 100, icon: "💣", description: "Loud, ugly and final. Nobody argues twice." },
+  { id: "shotgun", name: "Sawed-off shotgun", kind: "weapon", price: 45000, power: 28, agility: -1, durability: 100, icon: "💣", description: "Loud, ugly and final. Nobody argues twice." },
   // ── Armor ──
   { id: "jacket", name: "Padded jacket", kind: "armor", price: 200, power: 6, durability: 35, icon: "🧥", description: "Takes the edge off a punch." },
   { id: "vest", name: "Old kevlar vest", kind: "armor", price: 1100, power: 12, durability: 55, icon: "🦺", description: "Scuffed and ugly. It still works." },
-  { id: "riot_gear", name: "Riot gear", kind: "armor", price: 9000, power: 19, durability: 80, icon: "🛡️", description: "Fell off a police truck. Fits like it was made for you." },
-  { id: "tactical_plate", name: "Tactical plate carrier", kind: "armor", price: 40000, power: 26, durability: 110, icon: "🛡️", description: "Ceramic plates front and back. Professionals only." },
+  { id: "riot_gear", name: "Riot gear", kind: "armor", price: 9000, power: 19, agility: -1, durability: 80, icon: "🛡️", description: "Fell off a police truck. Fits like it was made for you." },
+  { id: "tactical_plate", name: "Tactical plate carrier", kind: "armor", price: 40000, power: 26, agility: -2, durability: 110, icon: "🛡️", description: "Ceramic plates front and back. Professionals only." },
   // ── Issued gear ──
   {
     id: "service_pistol",
@@ -89,6 +91,7 @@ export const ITEMS: ItemDef[] = [
     kind: "armor",
     price: 0,
     power: 22,
+    agility: -1,
     durability: 90,
     icon: "🛡️",
     description: "Plates front and back. Issued to non-commissioned officers.",
@@ -100,6 +103,7 @@ export const ITEMS: ItemDef[] = [
     kind: "weapon",
     price: 0,
     power: 38,
+    agility: -2,
     durability: 110,
     icon: "💥",
     description: "Officers' armory. Signed out to Captains and up.",
@@ -111,6 +115,7 @@ export const ITEMS: ItemDef[] = [
     kind: "armor",
     price: 0,
     power: 30,
+    agility: -2,
     durability: 120,
     icon: "🛡️",
     description: "For colonels and generals, who are not supposed to get shot.",
@@ -134,6 +139,7 @@ export const ITEMS: ItemDef[] = [
     kind: "weapon",
     price: 0,
     power: 34,
+    agility: -2,
     durability: 90,
     icon: "💥",
     description: "Off the back of an army truck. Loud, heavy, and very illegal.",

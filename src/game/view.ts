@@ -10,7 +10,7 @@ import { playerMaxHp, woundHint } from "./wounds";
 import { careerGapBlock, careerRecordView } from "./career";
 import { publicProfile } from "./profile";
 import { threatView } from "./hit";
-import { gearView, usesLeft } from "./gear";
+import { gearTrait, gearView, usesLeft } from "./gear";
 import { marketView } from "./drugs";
 import { tutorialView } from "./tutorial";
 import { launderOptions } from "./money";
@@ -99,7 +99,7 @@ export interface PublicView {
   districts: { id: DistrictId; name: string; tagline: string; locked: string | null }[];
   jobs: JobView[];
   recommendedJobId: string | null;
-  shop: { id: string; name: string; icon: string; price: number; description: string; kind: string; owned: boolean }[];
+  shop: { id: string; name: string; icon: string; price: number; description: string; kind: string; owned: boolean; trait?: string }[];
   fights: {
     id: string;
     name: string;
@@ -183,6 +183,9 @@ export interface PublicView {
   favors: ReturnType<typeof favorsView>;
   pass: ReturnType<typeof passView>;
   casino: ReturnType<typeof casinoView>;
+  /** Ask for a date of birth before playing on. */
+  needsBirthDate: boolean;
+  ageBlocked: boolean;
   look: ReturnType<typeof lookOf>;
   /** Someone casing you, your bodyguards, safe house and morgue time (never who). */
   threat: ReturnType<typeof import("./hit").threatView>;
@@ -363,6 +366,8 @@ export function toView(p: Player, now: number): PublicView {
     favors: favorsView(p),
     pass: passView(p, now),
     casino: casinoView(p, now),
+    needsBirthDate: !p.birthDate && !p.regular,
+    ageBlocked: !!p.ageBlocked,
     look: lookOf(p),
     careerRecord: careerRecordView(p, now),
     gunOffers: (p.gunOffers ?? []).map((o) => ({ ...o, itemName: ITEM_BY_ID[o.itemId]?.name ?? o.itemId, icon: ITEM_BY_ID[o.itemId]?.icon ?? "" })),
@@ -449,6 +454,7 @@ export function toView(p: Player, now: number): PublicView {
       price: itemPrice(p, i.price),
       description: i.description,
       kind: i.kind,
+      ...(gearTrait(i) ? { trait: gearTrait(i)! } : {}),
       owned:
         i.kind === "housing"
           ? p.housing >= (i.housing ?? 0)

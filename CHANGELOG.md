@@ -1,5 +1,23 @@
 # Changelog
 
+## 6.7.0: armor that works, quick and heavy gear, and an age check
+
+- **Armor now soaks a share of every hit** instead of a tiny flat amount. Before, the $40,000
+  plate carrier helped less than a $150 lead pipe; now armor is worth about as much as a weapon
+  at the same price. Worn armor soaks less, broken armor none.
+- **Gear has a feel**: knuckles and the switchblade are *Quick* (you're faster with them); the
+  shotgun, machine guns, riot gear, plate carriers and army armor are *Heavy* (they slow you a
+  little); the jacket and vest are *Light*. The shop shows the word, never a number.
+- **Date of birth.** Making a character now asks for a date of birth, and everyone who already
+  plays is asked once. Conspira is for adults (18+, because of the crime, guns and casino). Too
+  young: the character can't be made (that browser can't try again for 30 days) or, for an
+  existing one, is held. The date is private, never shown to anyone.
+- The terms and privacy pages say 18 and explain the date of birth.
+- **The new logo on the help and legal pages**: the wordmark in the header, the badge above the
+  title.
+- Errors on the start screen (a bad name, a date that's not allowed) now show; before they were
+  silent.
+
 ## 6.6.0: the new logo, and a photo for every rank
 
 - **New logo.** The new Conspira badge (the eye over the die, cards, the scales of justice, the
