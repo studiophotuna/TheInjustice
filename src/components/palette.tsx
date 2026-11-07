@@ -90,7 +90,7 @@ export function CommandPalette({ game, go, open, setOpen }: { game: GameApi; go:
         run: () => game.act({ type: "job", jobId: j.id }),
       })),
       ...(["strength", "toughness", "agility"] as const).map((stat) => ({
-        id: `gym-${stat}`, group: "Gym", label: `Train ${stat}`, hint: `$${view.gym.fee} · ${view.gym.energy} energy`, keywords: "gym train exercise",
+        id: `gym-${stat}`, group: "Gym", label: ({ strength: "Lift weights", toughness: "Spar & condition", agility: "Footwork drills" } as Record<string, string>)[stat] ?? `Train ${stat}`, hint: `$${view.gym.fee} · ${view.gym.energy} energy`, keywords: "gym train exercise",
         block: away ?? (view.energy < view.gym.energy ? "Not enough energy." : null),
         run: () => game.act({ type: "train", stat }),
       })),

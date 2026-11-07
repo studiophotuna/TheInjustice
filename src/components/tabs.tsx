@@ -890,9 +890,9 @@ export function DailyCard({ game }: { game: GameApi }) {
 // ─── Gym ───────────────────────────────────────────────────────────────────
 
 const EXERCISES = [
-  { stat: "strength", name: "Lift weights", note: "Hit harder", Icon: DumbbellIcon },
-  { stat: "toughness", name: "Spar & condition", note: "Take more hits", Icon: Shield },
-  { stat: "agility", name: "Footwork drills", note: "Dodge and strike first", Icon: Wind },
+  { stat: "strength", name: "Lift weights", Icon: DumbbellIcon },
+  { stat: "toughness", name: "Spar & condition", Icon: Shield },
+  { stat: "agility", name: "Footwork drills", Icon: Wind },
 ] as const;
 
 function GymCard({ game }: { game: GameApi }) {
@@ -903,7 +903,7 @@ function GymCard({ game }: { game: GameApi }) {
       <h3 className="card-title"><DumbbellIcon size={16} /> {view.location.city} boxing gym</h3>
       <p className="muted">Pick what to train. You won&apos;t see numbers, but you&apos;ll feel it. ${view.gym.fee} and <Zap size={13} className="zap-inline" />{view.gym.energy} a session.</p>
       <div className="exercises">
-        {EXERCISES.map(({ stat, name, note, Icon }) => (
+        {EXERCISES.map(({ stat, name, Icon }) => (
           <motion.button
             key={stat}
             whileTap={{ scale: 0.94 }}
@@ -913,7 +913,6 @@ function GymCard({ game }: { game: GameApi }) {
           >
             <Icon size={22} />
             <b>{name}</b>
-            <span>{note}</span>
           </motion.button>
         ))}
       </div>

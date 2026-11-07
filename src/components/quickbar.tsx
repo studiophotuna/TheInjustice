@@ -19,6 +19,9 @@ const readKey = (k: string) => {
 type Slot = { key: string; label: string; sub: string; cost?: string; tone: string; Icon: typeof Briefcase; block: string | null; run: () => void; /** Nothing on you: the slot links to the Shop instead. */ shop?: boolean; /** An arrow opens a list to choose from. */ more?: "job" | "gym" };
 type Pocket = { id: string; name: string; count: number; energy: number };
 
+/** The gym's activities by name; the stats they train stay unseen, as on the Fight tab. */
+const GYM_NAME: Record<Stat, string> = { strength: "Lift weights", toughness: "Spar & condition", agility: "Footwork drills" };
+
 const goShop = () => window.dispatchEvent(new CustomEvent("injustice:go", { detail: "tab:shop" }));
 
 /**
@@ -82,7 +85,7 @@ export function QuickBar({ game }: { game: GameApi }) {
     },
     {
       key: "2",
-      label: `Gym · ${gymStat}`,
+      label: GYM_NAME[gymStat],
       sub: `$${view.gym.fee}`,
       cost: String(view.gym.energy),
       tone: "rep",
@@ -161,11 +164,7 @@ export function QuickBar({ game }: { game: GameApi }) {
       </button>
     );
   };
-  const GYM: { id: Stat; note: string }[] = [
-    { id: "strength", note: "Hit harder" },
-    { id: "toughness", note: "Take more hits" },
-    { id: "agility", note: "Dodge and strike first" },
-  ];
+  const GYM = (["strength", "toughness", "agility"] as const).map((id) => ({ id, name: GYM_NAME[id] }));
 
   return (
     <div className="quickbar" role="toolbar" aria-label="Quick actions">
@@ -191,8 +190,8 @@ export function QuickBar({ game }: { game: GameApi }) {
                 act({ type: "train", stat: s.id });
               }}
             >
-              <b>{s.id[0].toUpperCase() + s.id.slice(1)}</b>
-              <small>{keyGym.includes(s.id) ? "Your career · " : ""}{s.note} · ${view.gym.fee}</small>
+              <b>{s.name}</b>
+              <small>${view.gym.fee}</small>
             </button>
           ))}
         </div>

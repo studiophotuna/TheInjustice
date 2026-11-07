@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.8.4: the gym by name
+
+- **The gym shows its activities, not the stats they train:** the quick bar button reads "Lift
+  weights", "Spar & condition" or "Footwork drills" (not "Gym · strength"), and so do its
+  drop-up list and the search. The stats stay unseen, as everywhere else.
+- **No hint lines:** the gym cards on Fight and the quick bar list drop "Hit harder", "Take more
+  hits" and "Dodge and strike first" (and the "Your career" mark). Just the activity and its price.
+
 ## 5.8.3: choose from the quick bar
 
 - **Work and Gym open a list upward.** A small arrow on each button opens a list: your career's
