@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.9.2: top bar hints on a tap
+
+- **Tap a pill in the top bar to see what it means:** cash (and what's in the bank), dirty money,
+  energy (with when the next point comes and when it's full) and health (or the clinic
+  countdown). The hint shows under the top bar and goes away after a few seconds or on a tap.
+  These were hover tooltips before, which phones can't show.
+- **The top bar no longer shrinks when you scroll.**
+
 ## 5.9.1: timers back in the top bar
 
 - **The energy countdown is visible again:** the energy pill shows "+1 0:27" until the next

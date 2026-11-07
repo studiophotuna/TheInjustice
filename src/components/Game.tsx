@@ -425,15 +425,16 @@ function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonN
   // The ring around your face fills as you work toward your next rank.
   const progress = view.promo ? view.promo.work : 0;
   const hurt = live.hospital > 0;
-  // Scrolling down, the HUD tucks away its details so the screen is for the game.
-  const [compact, setCompact] = useState(false);
+  // Tap a pill to see what it means (phones can't hover for a tooltip).
+  const [tip, setTip] = useState<string | null>(null);
   useEffect(() => {
-    // Two thresholds, so it doesn't flicker when you stop near one.
-    const on = () => setCompact((c) => (c ? window.scrollY > 40 : window.scrollY > 140));
-    on();
-    window.addEventListener("scroll", on, { passive: true });
-    return () => window.removeEventListener("scroll", on);
-  }, []);
+    if (!tip) return;
+    const t = setTimeout(() => setTip(null), 3500);
+    return () => clearTimeout(t);
+  }, [tip]);
+  const tap = (text: string) => () => setTip((cur) => (cur === text ? null : text));
+  const healthTip = hurt ? `In the clinic for ${fmt(live.hospital)}.` : `Health ${view.hp} of ${view.maxHp}. ${view.hp >= view.maxHp ? "You're in good shape." : "It comes back over time; food and medkits help."}`;
+  const energyTip = `Energy: jobs and training use it. ${live.energy >= view.maxEnergy ? "It's full." : `+1 in ${fmt(live.nextIn)}, full in ${fmt(live.fullIn)}.`}`;
   // The HUD floats over the page; a spacer of its full height holds its place, so shrinking it
   // never moves what's under your finger.
   const ref = useRef<HTMLElement>(null);
@@ -442,7 +443,7 @@ function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonN
     const el = ref.current;
     if (!el) return;
     const measure = () => {
-      if (!el.classList.contains("compact")) setFull(el.offsetHeight);
+      setFull(el.offsetHeight);
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -452,7 +453,7 @@ function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonN
   return (
     <>
     <div className="hud-spacer" style={{ height: full }} aria-hidden />
-    <header ref={ref} className={`hud${compact ? " compact" : ""}`}>
+    <header ref={ref} className="hud">
       <div className="hud-top">
         <button className={`hud-avatar${view.look?.frame ? " framed" : ""}`} onClick={onProfile} aria-label="Open your profile" style={{ ["--p" as string]: `${progress}%`, ["--rim" as string]: view.path ? PATH_LOOKS[view.path.id]?.rim : "#8d96a8" }}>
           <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo ?? careerStill(view.path?.id, view.ladder?.current)} look={view.look} className="avatar-sm" />
@@ -462,22 +463,22 @@ function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonN
           <span className="hud-title">{view.path ? `${view.path.rank} · ${view.path.name}` : `Nobody · ${view.location.city}`}</span>
         </div>
         <div className="hud-pills">
-          <span className="hud-pill cash" title={`In the bank: $${view.bank.toLocaleString()}`}>
+          <span className="hud-pill cash" title={`Cash on you. In the bank: $${view.bank.toLocaleString()}.`} role="button" tabIndex={0} onClick={tap(`Cash on you. In the bank: $${view.bank.toLocaleString()}.`)}>
             <span className="coin" aria-hidden />
             <Delta value={view.cash} prefix="$" />
             <Counter value={view.cash} className="cash" prefix="" />
-            <button className="pill-plus" aria-label="Open the bank" title={`Bank: $${view.bank.toLocaleString()}`} onClick={() => window.dispatchEvent(new CustomEvent("injustice:go", { detail: "place:bank" }))}>+</button>
+            <button className="pill-plus" aria-label="Open the bank" title={`Bank: $${view.bank.toLocaleString()}`} onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent("injustice:go", { detail: "place:bank" })); }}>+</button>
           </span>
           {view.dirty > 0 && (
-            <span className="hud-pill dirty" title="Dirty money: clean it before the bank or shops will take it">
+            <span className="hud-pill dirty" title="Dirty money: clean it before the bank or shops will take it" role="button" tabIndex={0} onClick={tap("Dirty money: clean it before the bank or shops will take it")}>
               <span className="bill" aria-hidden />{view.dirty.toLocaleString()}
             </span>
           )}
-          <span className={`hud-pill meter energy ${live.energy >= view.maxEnergy ? "full" : ""}`} title={live.energy >= view.maxEnergy ? "Energy full" : `+1 in ${fmt(live.nextIn)} · full in ${fmt(live.fullIn)}`}>
+          <span className={`hud-pill meter energy ${live.energy >= view.maxEnergy ? "full" : ""}`} title={energyTip} role="button" tabIndex={0} onClick={tap(energyTip)}>
             <Zap size={14} /> {live.energy}<i style={{ ["--v" as string]: `${Math.round((live.energy / view.maxEnergy) * 100)}%` }} />
             <small className="pill-timer">{live.energy >= view.maxEnergy ? "full" : `+1 ${fmt(live.nextIn)}`}</small>
           </span>
-          <span className={`hud-pill meter health ${hurt ? "hurt" : ""}`} title={hurt ? `In the clinic for ${fmt(live.hospital)}` : view.hp >= view.maxHp ? "Healthy" : "Recovering"}>
+          <span className={`hud-pill meter health ${hurt ? "hurt" : ""}`} title={healthTip} role="button" tabIndex={0} onClick={tap(healthTip)}>
             <Heart size={14} /> {hurt ? fmt(live.hospital) : view.hp}<i style={{ ["--v" as string]: `${hurt ? 0 : Math.round((view.hp / view.maxHp) * 100)}%` }} />
             {hurt && <small className="pill-timer">clinic</small>}
           </span>
@@ -487,6 +488,7 @@ function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonN
         </button>
         <SoundToggle />
       </div>
+      {tip && <p className="hud-tip" role="status" onClick={() => setTip(null)}>{tip}</p>}
       <div className="hud-tags">
         {view.heatLabel !== "Clean" && <span className={`tag tag-heat heat-${heatTone}`}><Flame size={12} /> {view.heatLabel}</span>}
         {view.immuneUntil > Date.now() && (
