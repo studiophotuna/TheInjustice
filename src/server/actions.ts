@@ -1,3 +1,5 @@
+import { DOG_BREEDS } from "@/game/dogs";
+import type { DogBreed } from "@/game/types";
 import type { Action, CountryId, PathId, TravelMode } from "@/game/types";
 import { GameError } from "@/game/types";
 import { PATHS } from "@/game/content/paths";
@@ -54,7 +56,7 @@ export function parseAction(body: unknown): Action {
     case "fit_alarm":
       return { type: "fit_alarm" };
     case "dog_buy":
-      if (!["mutt", "shepherd", "mastiff"].includes(b.breed as string)) throw new GameError("Bad request.");
+      if (!DOG_BREEDS.includes(b.breed as DogBreed)) throw new GameError("Bad request.");
       return { type: "dog_buy", breed: b.breed as "mutt", name: str(b.name, 40) };
     case "scrub_set":
       if (typeof b.open !== "boolean") throw new GameError("Bad request.");

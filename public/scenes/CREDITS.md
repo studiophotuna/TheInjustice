@@ -16,6 +16,7 @@ Free License. Original clip IDs:
 | prison | 17536 Hand on a wire fence by night |
 | lab | 4719 Scientist mixing liquids in a laboratory |
 | casino | 4100 Luminous sign with the word casino |
+| pound | 34616 Dog behind a kennel fence |
 | crimescene | 32790 Police barricade tape at a crime scene |
 | interrogation | 47802 Man with handcuffs in the interrogation room |
 | academy | 12820 Graduate student in gown holding hat outside university |

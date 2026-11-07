@@ -950,6 +950,9 @@ export interface City {
   stock?: Record<string, number>;
   /** When each of them last got a shipment. */
   stockAt?: Partial<Record<"guns" | "armor", number>>;
+  /** Dogs waiting at the city pound, by breed, and when it last got some. */
+  pound?: Record<string, number>;
+  poundAt?: number;
   /** Last time a street regular spoke in city chat. */
   regularChatAt?: number;
   country: CountryId;

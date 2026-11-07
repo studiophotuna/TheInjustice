@@ -136,3 +136,64 @@ export function stockView(c: City | null | undefined): Record<string, number> {
 export function nextOrderAt(c: City | null | undefined, shop: GearShop): number {
   return (c?.stockAt?.[shop] ?? 0) + STOCK.ownerEveryMs;
 }
+
+// ── The pound ────────────────────────────────────────────────────────────
+// Dogs come from the city pound. Nobody owns it and no crime can touch it: city hall runs it,
+// and its kennels fill by luck, like the gear shops' shelves.
+
+/** Where each breed can be found. */
+export const DOG_HOME: Record<string, CountryId> = {
+  mutt: "varrow", junkyard: "varrow",
+  labrador: "solmarra", pitbull: "solmarra",
+  husky: "kestrova", shepherd: "kestrova", rottweiler: "kestrova",
+  bulldog: "meridian", mastiff: "meridian",
+};
+
+export const POUND = {
+  everyMs: 6 * 3_600_000,
+  /** Most dogs of one breed waiting at once, by how much the breed costs. */
+  cap: (price: number) => (price < 1_000 ? 3 : price < 3_000 ? 2 : 1),
+};
+
+const breedsIn = (country: CountryId) => Object.keys(DOG_HOME).filter((b) => DOG_HOME[b] === country);
+
+/** A delivery to the pound, by luck: one breed or several, a dog or a few. */
+export function poundShipment(c: City, prices: Record<string, number>, rng: Rng): void {
+  const pool = breedsIn(c.country);
+  if (!pool.length) return;
+  c.pound = c.pound ?? {};
+  const kinds = 1 + Math.floor(rng() * pool.length);
+  for (let k = 0; k < kinds; k++) {
+    const b = pool.splice(Math.floor(rng() * pool.length), 1)[0];
+    const cap = POUND.cap(prices[b] ?? 0);
+    const have = c.pound[b] ?? 0;
+    c.pound[b] = Math.min(cap, have + 1 + Math.floor(rng() * cap));
+  }
+}
+
+/** The pound fills up on its own every few hours (and opens with a first delivery). */
+export function poundRestock(c: City, now: number, prices: Record<string, number>, rng: Rng): boolean {
+  if (c.poundAt !== undefined && now - c.poundAt < POUND.everyMs) return false;
+  poundShipment(c, prices, rng);
+  c.poundAt = now;
+  return true;
+}
+
+export function takeDog(c: City, breed: string): void {
+  if (DOG_HOME[breed] !== c.country) throw new GameError(`That breed isn't at this pound. Try ${COUNTRY_BY_ID[DOG_HOME[breed]]?.capital ?? "another city"}.`);
+  const have = c.pound?.[breed] ?? 0;
+  if (have <= 0) throw new GameError("None left. The pound gets new dogs every few hours.");
+  c.pound = { ...(c.pound ?? {}), [breed]: have - 1 };
+}
+
+export function returnDog(c: City, breed: string): void {
+  c.pound = { ...(c.pound ?? {}), [breed]: (c.pound?.[breed] ?? 0) + 1 };
+}
+
+/** Dogs waiting at this city's pound. */
+export function poundView(c: City | null | undefined): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (!c) return out;
+  for (const b of breedsIn(c.country)) out[b] = c.pound?.[b] ?? 0;
+  return out;
+}

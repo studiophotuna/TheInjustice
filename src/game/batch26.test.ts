@@ -25,26 +25,26 @@ const mk = (id: string): Player => {
 describe("guard dogs", () => {
   it("need a home, a name and cash; then make break-ins harder", () => {
     const p = mk("ana");
-    expect(() => applyAction(p, { type: "dog_buy", breed: "shepherd", name: "Rex" }, NOW, always(0.5))).toThrow(/somewhere to live/);
+    expect(() => applyAction(p, { type: "dog_buy", breed: "junkyard", name: "Rex" }, NOW, always(0.5))).toThrow(/somewhere to live/);
     p.housing = 2;
     p.homes = { varrow: 2 };
     const thief = mk("bo");
     const before = breakInOdds(thief, p, "varrow", NOW);
-    applyAction(p, { type: "dog_buy", breed: "shepherd", name: "Rex!!" }, NOW, always(0.5));
+    applyAction(p, { type: "dog_buy", breed: "junkyard", name: "Rex!!" }, NOW, always(0.5));
     expect(p.dogs?.varrow?.name).toBe("Rex");
-    expect(breakInOdds(thief, p, "varrow", NOW)).toBeCloseTo(before * (1 - DOGS.breeds.shepherd.guard));
+    expect(breakInOdds(thief, p, "varrow", NOW)).toBeCloseTo(before * (1 - DOGS.breeds.junkyard.guard));
   });
 
   it("guard half as well when hungry, and leave after a week unfed", () => {
     const p = mk("ana");
     p.housing = 2;
-    applyAction(p, { type: "dog_buy", breed: "mastiff", name: "Brutus" }, NOW, always(0.5));
-    expect(dogGuard(p, "varrow", NOW)).toBe(DOGS.breeds.mastiff.guard);
-    expect(dogGuard(p, "varrow", NOW + DOGS.fedMs + 1)).toBe(DOGS.breeds.mastiff.guard / 2);
+    applyAction(p, { type: "dog_buy", breed: "junkyard", name: "Brutus" }, NOW, always(0.5));
+    expect(dogGuard(p, "varrow", NOW)).toBe(DOGS.breeds.junkyard.guard);
+    expect(dogGuard(p, "varrow", NOW + DOGS.fedMs + 1)).toBe(DOGS.breeds.junkyard.guard / 2);
     expect(dogGuard(p, "varrow", NOW + DOGS.leaveMs + 1)).toBe(0);
     expect(() => applyAction(p, { type: "dog_feed" }, NOW + 60_000, always(0.5))).toThrow(/still full/);
     applyAction(p, { type: "dog_feed" }, NOW + DOGS.fedMs + 1, always(0.5));
-    expect(dogGuard(p, "varrow", NOW + DOGS.fedMs + 2)).toBe(DOGS.breeds.mastiff.guard);
+    expect(dogGuard(p, "varrow", NOW + DOGS.fedMs + 2)).toBe(DOGS.breeds.junkyard.guard);
   });
 
   it("bark when a break-in fails, and the owner hears about it", () => {

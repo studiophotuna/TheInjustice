@@ -1,5 +1,20 @@
 # Changelog
 
+## 6.10.0: the pound
+
+- **The Pound** is a new building in every city. Dogs now come from there instead of Your Place.
+- **Each city has its own breeds.** Grayhaven has the pound mutt and the junkyard dog. Port
+  Solace has the labrador and the pit bull. Ironmoor has the husky, shepherd and rottweiler.
+  Halcyon has the bulldog and the mastiff.
+- **Kennels are limited.** "In kennels: N" shows how many are waiting. A new batch arrives every
+  six hours, and what turns up is pure luck. Each kennel holds up to 3 of a cheap breed, 2 of a
+  mid-priced one and 1 of the big dogs.
+- **The city runs the pound.** No player can buy it, own it or rob it.
+- **Your Place** still shows your dog (feed it, give it away), and sends you to the pound when
+  you don't have one.
+- **Fix:** six breeds could never actually be bought. The server only accepted three of them.
+  All nine work now.
+
 ## 6.9.1: the shop shows only what this city sells
 
 - Weapons and armor sold in other cities no longer appear in the shop: you only see what's on

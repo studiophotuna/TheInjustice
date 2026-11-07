@@ -1,5 +1,5 @@
 import { trackDevice } from "@/game/anticheat";
-import { GEAR_HOME, returnToStock, takeFromStock } from "@/game/stock";
+import { GEAR_HOME, returnDog, returnToStock, takeDog, takeFromStock } from "@/game/stock";
 import { oldEnough, parseBirthDate, UNDERAGE } from "@/game/age";
 import { cookies } from "next/headers";
 
@@ -136,6 +136,10 @@ export async function POST(req: Request) {
     // Gear comes off this city's shelf first; it goes back if the purchase doesn't go through.
     const gearBuy = action.type === "buy" && GEAR_HOME[action.itemId] ? { id: action.itemId, country: buyer ? countryOf(buyer) : null } : null;
     if (gearBuy?.country) await withCity(store, gearBuy.country, now, (c) => takeFromStock(c, gearBuy.id));
+    // Dogs leave the city pound the same way.
+    const adopter = action.type === "dog_buy" ? await store.get(playerId!) : null;
+    const dogBuy = action.type === "dog_buy" && adopter ? { breed: action.breed, country: countryOf(adopter) } : null;
+    if (dogBuy) await withCity(store, dogBuy.country, now, (c) => takeDog(c, dogBuy.breed));
     const out = await store.update(playerId!, (p) => {
       if (action.type === "create") {
         if (p) throw new GameError("You already have a character.");
@@ -181,6 +185,7 @@ export async function POST(req: Request) {
     }).catch(async (e) => {
       // The sale fell through: the piece goes back on the shelf.
       if (gearBuy?.country) await withCity(store, gearBuy.country, now, (c) => returnToStock(c, gearBuy.id)).catch(() => undefined);
+      if (dogBuy?.country) await withCity(store, dogBuy.country, now, (c) => returnDog(c, dogBuy.breed)).catch(() => undefined);
       throw e;
     });
     // A big laundering gets flagged for detectives.

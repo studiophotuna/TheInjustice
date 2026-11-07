@@ -144,26 +144,7 @@ export function DogCard({ game }: { game: GameApi }) {
         A dog makes break-ins harder, barks when someone tries the door, and lets you know about it. It needs feeding every three days: a hungry dog guards
         half as well, and one left alone for a week finds a new home.
       </p>
-      <input className="stash-amount" placeholder="Name your dog" maxLength={16} value={name} onChange={(e) => setName(e.target.value)} />
-      <ul className="dog-list">
-        {breeds.map((b) => (
-          <li key={b.id}>
-            <img className="dog-photo" src={`/dogs/${b.id}.jpg`} alt="" loading="lazy" />
-            <span className="dog-info">
-              <b>{b.name}</b>
-              <span className="muted fine">{b.blurb} Food ${b.food} every three days.</span>
-            </span>
-            <button
-              className="btn btn-ghost btn-xs"
-              disabled={game.busy || !name.trim() || view.cash < b.price}
-              title={!name.trim() ? "Give your dog a name first." : view.cash < b.price ? "Cash only." : ""}
-              onClick={() => game.act({ type: "dog_buy", breed: b.id as "mutt", name }).then(() => setName(""))}
-            >
-              ${b.price.toLocaleString()}
-            </button>
-          </li>
-        ))}
-      </ul>
+      <p className="fine">Get one at the pound. Every city's pound has different breeds.</p>
     </section>
   );
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { poundView } from "@/game/stock";
 import { readCity } from "@/server/city";
 import { nextOrderAt, ownerRestock, stockView } from "@/game/stock";
 import { reportError } from "@/server/errors";
@@ -61,6 +62,7 @@ async function view(store: ReturnType<typeof getStore>, me: Player, now: number)
     range: { min: SHOP.minMarkup, max: SHOP.maxMarkup },
     costShare: SHOP.costShare,
     stock: stockView(c),
+    pound: poundView(c),
     nextOrder: { guns: nextOrderAt(c, "guns"), armor: nextOrderAt(c, "armor") },
     elsewhere,
   };

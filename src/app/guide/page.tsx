@@ -86,7 +86,8 @@ export default function GuidePage() {
       <h2>Home, cars and dogs</h2>
       <p>
         Rent or buy a place to live: it gives you an address, better rest and a stash. Cars get you around and can be stolen. Guard
-        dogs and alarms protect your home from break-ins.
+        dogs and alarms protect your home from break-ins. Dogs come from the city pound: each city has its own breeds, and the
+        kennels fill up by luck every few hours. The pound belongs to the city, so nobody can buy it or rob it.
       </p>
 
       <h2>The city</h2>

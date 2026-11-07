@@ -33,6 +33,8 @@ export interface ShopsData {
   /** Gear on the shelves here, and when each owner can order next. */
   stock?: Record<string, number>;
   nextOrder?: { guns: number; armor: number };
+  /** Dogs waiting at the city pound. */
+  pound?: Record<string, number>;
   elsewhere: { country: string; city: string; kind: string; name: string; icon: string; till: number; offers: number }[];
 }
 

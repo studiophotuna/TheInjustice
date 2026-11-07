@@ -41,10 +41,11 @@ export type SceneKind =
   | "techpark"
   | "solace"
   | "ironmoor"
-  | "halcyon";
+  | "halcyon"
+  | "pound";
 
 /** Every scene has a looping clip in public/scenes/<kind>.mp4 and a poster <kind>.jpg. */
-const VIDEO_SCENES = new Set<SceneKind>(["street", "city", "highrise", "police", "hospital", "court", "bank", "prison", "lab", "casino", "crimescene", "interrogation", "academy", "station", "cityhall", "gutter", "oldmarket", "southside", "ironrow", "precinct", "stbrigids", "courthousehill", "boardwalk", "marina", "exchange", "railyards", "checkpoint", "foundry", "undercity", "techpark", "solace", "ironmoor", "halcyon"]);
+const VIDEO_SCENES = new Set<SceneKind>(["street", "city", "highrise", "police", "hospital", "court", "bank", "prison", "lab", "casino", "crimescene", "interrogation", "academy", "station", "cityhall", "gutter", "oldmarket", "southside", "ironrow", "precinct", "stbrigids", "courthousehill", "boardwalk", "marina", "exchange", "railyards", "checkpoint", "foundry", "undercity", "techpark", "solace", "ironmoor", "halcyon", "pound"]);
 export type CharacterKind = "bum" | "thug" | "detective" | "lawyer" | "doctor" | "banker" | "vigilante";
 
 const rnd = (seed: number) => () => {
@@ -306,6 +307,7 @@ const SCENES: Record<SceneKind, () => ReactNode> = {
   solace: City,
   ironmoor: Street,
   halcyon: Highrise,
+  pound: Street,
 };
 
 /** Plays the scene's clip on a loop; still poster for reduced motion; hidden if it fails. */

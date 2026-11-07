@@ -1,9 +1,10 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Anchor, ArrowLeft, BedDouble, BookUser, Building2, Dices, GraduationCap, HeartPulse, Landmark, Lock, Scale, Shield, Siren, Train } from "lucide-react";
+import { Anchor, ArrowLeft, BedDouble, BookUser, Building2, Dices, GraduationCap, HeartPulse, Landmark, Lock, PawPrint, Scale, Shield, Siren, Train } from "lucide-react";
 import { Casino } from "./casino";
 import { Docks } from "./docks";
+import { Pound } from "./pound";
 import { DogCard, StashCard } from "./stash";
 import { BreakIns } from "./property";
 import { Directory } from "./directory";
@@ -21,7 +22,7 @@ import { ItemArt } from "./art/ItemArt";
 import { LaunderCard, StreetMarket } from "./underworld";
 import type { GameApi } from "./useGame";
 
-export type Building = "police" | "court" | "hospital" | "bank" | "academy" | "cityhall" | "prison" | "street" | "station" | "docks" | "home" | "directory" | "casino";
+export type Building = "police" | "court" | "hospital" | "bank" | "academy" | "cityhall" | "prison" | "street" | "station" | "docks" | "home" | "directory" | "casino" | "pound";
 
 const BUILDINGS: { id: Building; name: string; scene: SceneKind; poster: string; Icon: ComponentType<{ size?: number }>; short: string; tagline: string }[] = [
   { id: "directory", name: "The Directory", scene: "city", poster: "city", Icon: BookUser, short: "Who does what", tagline: "Who in town launders, defends, patches up, repairs or sells, and for how much." },
@@ -36,6 +37,7 @@ const BUILDINGS: { id: Building; name: string; scene: SceneKind; poster: string;
   { id: "street", name: "The Street", scene: "street", poster: "street", Icon: Shield, short: "Rackets and contracts", tagline: "Dealers, rackets, contracts, break-ins, cold cases." },
   { id: "station", name: "Station", scene: "station", poster: "station", Icon: Train, short: "Travel to other cities", tagline: "Bus, train or plane to another country. Or drive." },
   { id: "casino", name: "The Velvet Ace", scene: "casino", poster: "casino", Icon: Dices, short: "Cards, dice and the wheel", tagline: "Twenty-One, roulette and the burning seven. Cash on the table." },
+  { id: "pound", name: "The Pound", scene: "pound", poster: "pound", Icon: PawPrint, short: "Dogs for the door", tagline: "City-run kennels. Different breeds in every city, new arrivals every few hours." },
   { id: "docks", name: "The Docks", scene: "marina", poster: "marina", Icon: Anchor, short: "Cars and cargo", tagline: "Your cars, the lot, and fences who move cargo between cities." },
 ];
 
@@ -186,6 +188,8 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
       );
     case "casino":
       return <Casino game={game} />;
+    case "pound":
+      return <Pound game={game} />;
     case "docks":
       return <Docks game={game} go={(to) => window.dispatchEvent(new CustomEvent("injustice:go", { detail: to }))} />;
   }

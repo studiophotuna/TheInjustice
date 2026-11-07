@@ -3,6 +3,7 @@
 // well, and one left unfed for a week finds a new home.
 
 import { COUNTRY_BY_ID } from "./content/world";
+import { DOG_HOME } from "./stock";
 import { checkText } from "./textfilter";
 import { countryOf } from "./engine";
 import { GameError, type CountryId, type Dog, type DogBreed, type GameEvent, type Player } from "./types";
@@ -26,6 +27,8 @@ export const DOGS = {
 };
 
 export const DOG_BREEDS = Object.keys(DOGS.breeds) as DogBreed[];
+/** Base price of each breed (for the pound's kennel sizes). */
+export const DOG_PRICES: Record<string, number> = Object.fromEntries(DOG_BREEDS.map((b) => [b, DOGS.breeds[b].price]));
 export const isBreed = (v: unknown): v is DogBreed => typeof v === "string" && v in DOGS.breeds;
 
 const priced = (base: number, country: CountryId) => Math.round(base * COUNTRY_BY_ID[country].priceMult);
@@ -60,6 +63,7 @@ export function buyDog(p: Player, breed: DogBreed, rawName: string, now: number)
   const country = countryOf(p);
   if (!isBreed(breed)) throw new GameError("No such dog.");
   if (p.housing < 1) throw new GameError("A dog needs somewhere to live. So do you.");
+  if (DOG_HOME[breed] && DOG_HOME[breed] !== country) throw new GameError(`That breed isn't at this pound. Try ${COUNTRY_BY_ID[DOG_HOME[breed]].capital}.`);
   if (dogAt(p, country, now)) throw new GameError("You already have a dog here.");
   const name = cleanName(rawName);
   const price = priced(DOGS.breeds[breed].price, country);
@@ -114,6 +118,6 @@ export function dogView(p: Player, now: number) {
           canFeed: state !== "gone" && now - d.fedAt >= DOGS.fedMs / 3,
         }
       : null,
-    breeds: DOG_BREEDS.map((b) => ({ id: b, name: DOGS.breeds[b].name, blurb: DOGS.breeds[b].blurb, price: priced(DOGS.breeds[b].price, country), food: priced(DOGS.breeds[b].food, country) })),
+    breeds: DOG_BREEDS.filter((b) => !DOG_HOME[b] || DOG_HOME[b] === country).map((b) => ({ id: b, name: DOGS.breeds[b].name, blurb: DOGS.breeds[b].blurb, price: priced(DOGS.breeds[b].price, country), food: priced(DOGS.breeds[b].food, country) })),
   };
 }
