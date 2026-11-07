@@ -4,6 +4,7 @@
 // as the player's portrait on the home screen and in their profile. Falls back to the poster
 // image when motion is reduced or data saving is on, and to the drawn avatar if it can't load.
 
+import { motionReduced } from "../motion";
 import { useEffect, useRef, useState } from "react";
 import { PATH_LOOKS, PlayerAvatar } from "./Portraits";
 
@@ -18,7 +19,7 @@ export function CareerPortrait({ path, rank, name, className = "" }: { path: str
   const [failed, setFailed] = useState(false);
   const [still, setStill] = useState(false);
   useEffect(() => {
-    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const reduce = motionReduced();
     const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
     if (reduce || saveData) setStill(true);
   }, []);

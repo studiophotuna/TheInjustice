@@ -648,8 +648,8 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 .gavel-swing { animation: gavel 1.2s cubic-bezier(.5, 0, .3, 1.4) both; transform-origin: 200px 220px; }
 @keyframes gavel { from { transform: rotate(-60deg); } to { transform: rotate(-28deg); } }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) { :root:not(.motion-on) *, :root:not(.motion-on) *::before, :root:not(.motion-on) *::after { animation: none !important; transition: none !important; }
+
 }
 
 /* City hints at character creation */
@@ -742,7 +742,8 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 .online-actions p { margin: 0; }
 .pulse { color: var(--green, #3ee08f); animation: pulse 1.6s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
-@media (prefers-reduced-motion: reduce) { .pulse { animation: none; } }
+@media (prefers-reduced-motion: reduce) { :root:not(.motion-on) .pulse { animation: none; } 
+}
 .list-title { margin: 6px 0 0; }
 .mayor-office select { padding: 7px 10px; border-radius: 10px; border: 1px solid var(--border); background: rgba(0, 0, 0, 0.35); color: var(--text); max-width: 100%; }
 .soup-btn { justify-self: start; margin-top: 4px; }
@@ -900,7 +901,8 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 /* The drawn avatars breathe and blink. */
 .portrait-svg { animation: breathe 4.5s ease-in-out infinite; transform-origin: 50% 100%; }
 @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03) translateY(-1px); } }
-@media (prefers-reduced-motion: reduce) { .portrait-svg, .career-portrait { animation: none; } }
+@media (prefers-reduced-motion: reduce) { :root:not(.motion-on) .portrait-svg, :root:not(.motion-on) .career-portrait { animation: none; } 
+}
 .home-hero .scene-content { padding-right: 116px; }
 @media (min-width: 700px) { .home-hero .scene-content { padding-right: 170px; } }
 /* The portrait sits inside the hero's text block, anchored to its bottom-right corner. */
@@ -923,7 +925,8 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 .logo-string { animation: string-glow 3.5s ease-in-out infinite; }
 @keyframes pin-glow { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); filter: drop-shadow(0 0 3px #ff3d5a); } }
 @keyframes string-glow { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .logo-pin, .logo-string { animation: none; } }
+@media (prefers-reduced-motion: reduce) { :root:not(.motion-on) .logo-pin, :root:not(.motion-on) .logo-string { animation: none; } 
+}
 .logo-sub { letter-spacing: 0.22em; }
 
 /* ─── Player profiles ──────────────────────────────────────────────────── */
@@ -977,7 +980,8 @@ textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194,
 .feed-item.city { color: #f2d9a8; }
 .feed-item.street { color: #c9cfdb; }
 @keyframes feed-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-@media (prefers-reduced-motion: reduce) { .feed-track { animation: none; flex-wrap: wrap; white-space: normal; } }
+@media (prefers-reduced-motion: reduce) { :root:not(.motion-on) .feed-track { animation: none; flex-wrap: wrap; white-space: normal; } 
+}
 
 /* Right now */
 .right-now { display: grid; gap: 12px; background: radial-gradient(420px 160px at 0% 0%, rgba(255, 194, 75, 0.16), transparent), var(--surface-2); border-color: rgba(255, 194, 75, 0.28); }

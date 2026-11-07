@@ -5,6 +5,7 @@
 // people who prefer reduced motion (they get the still poster). Characters are SVG and only
 // appear on the illustrated scenes.
 
+import { motionReduced } from "../motion";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 export type SceneKind =
@@ -313,7 +314,7 @@ function SceneVideo({ kind }: { kind: SceneKind }) {
   const [failed, setFailed] = useState(false);
   const [still, setStill] = useState(false);
   useEffect(() => {
-    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const reduce = motionReduced();
     const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
     if (reduce || saveData) setStill(true);
   }, []);

@@ -470,7 +470,8 @@ img.city-shop-icon { width: 46px; height: 46px; border-radius: 12px; object-fit:
 .skel { display: block; flex: none; background: linear-gradient(90deg, var(--panel) 0%, #262b37 50%, var(--panel) 100%); background-size: 200% 100%; animation: skel 1.4s ease-in-out infinite; }
 .card .skel { background: linear-gradient(90deg, #232835 0%, #2e3442 50%, #232835 100%); background-size: 200% 100%; }
 @keyframes skel { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
-@media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
+@media (prefers-reduced-motion: reduce) { :root:not(.motion-on) .skel { animation: none; } 
+}
 .skel-card { display: grid; gap: 12px; }
 .skel-rows { display: grid; gap: 14px; padding: 4px 0; }
 .skel-row { display: flex; gap: 12px; align-items: center; }
@@ -649,10 +650,8 @@ img.city-shop-icon { width: 46px; height: 46px; border-radius: 12px; object-fit:
 @keyframes fx-neon { 0%, 100% { opacity: 1; } 92% { opacity: 1; } 94% { opacity: 0.55; } 96% { opacity: 1; } }
 
 /* Players who turn off motion get the looks, standing still. */
-@media (prefers-reduced-motion: reduce) {
-  .portrait-photo.fx::before, .portrait-photo.fx::after,
-  [class*="name-goldrush"], [class*="name-wildfire"], [class*="name-neon"], [class*="name-chrome"], [class*="name-frost"], [class*="name-aurora"],
-  [class*="-title"] .hero2-title { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { :root:not(.motion-on) .portrait-photo.fx::before, :root:not(.motion-on) .portrait-photo.fx::after, :root:not(.motion-on) [class*="name-goldrush"], :root:not(.motion-on) [class*="name-wildfire"], :root:not(.motion-on) [class*="name-neon"], :root:not(.motion-on) [class*="name-chrome"], :root:not(.motion-on) [class*="name-frost"], :root:not(.motion-on) [class*="name-aurora"], :root:not(.motion-on) [class*="-title"] .hero2-title { animation: none !important; }
+
 }
 .style-preview { height: 120px; }
 
@@ -743,3 +742,10 @@ button.style-preview:hover .try-hint, button.style-preview:focus-visible .try-hi
 .qpick-head { font-size: 10.5px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: 4px 4px 0; }
 .qpick button.on { box-shadow: inset 3px 0 0 var(--gold); }
 .qpick button:disabled { opacity: 0.5; cursor: default; }
+
+/* Top bar: the career colour as a ring behind the face and any frame; no rank number. */
+.hud-avatar { background: var(--rim) !important; padding: 3px !important; }
+.hud-avatar .portrait-photo { box-shadow: 0 0 0 2px var(--bg) !important; }
+.hud-avatar .portrait-photo[class*="frame-"] { box-shadow: none !important; }
+.motion-pick { display: flex; }
+.motion-pick button { flex: 1; }

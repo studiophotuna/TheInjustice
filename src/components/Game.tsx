@@ -1,5 +1,6 @@
 "use client";
 
+import { applyMotion } from "./motion";
 import { NameFx, nameClass } from "./art/FxRing";
 import { AnimatePresence, animate, motion, useMotionValue, useTransform } from "motion/react";
 import {
@@ -142,6 +143,7 @@ function played() {
 }
 
 function Shell({ game, view }: { game: GameApi; view: PublicView }) {
+  useEffect(() => applyMotion(), []);
   useEffect(() => {
     try {
       localStorage.setItem("cns_played", "1");
@@ -454,7 +456,6 @@ function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonN
       <div className="hud-top">
         <button className="hud-avatar" onClick={onProfile} aria-label="Open your profile" style={{ ["--p" as string]: `${progress}%`, ["--rim" as string]: view.path ? PATH_LOOKS[view.path.id]?.rim : "#8d96a8" }}>
           <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo ?? careerStill(view.path?.id, view.ladder?.current)} look={view.look} className="avatar-sm" />
-          {ladder && <span className="hud-rank">{ladder.current}</span>}
         </button>
         <div className="hud-who">
           <b className={`hud-name ${nameClass(view.look?.color)}`}>{view.name}<NameFx color={view.look?.color} /></b>

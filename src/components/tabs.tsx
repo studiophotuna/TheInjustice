@@ -1,5 +1,6 @@
 "use client";
 
+import { motionChoice, setMotion } from "./motion";
 import { StyleShop } from "./style";
 import { StoryLine } from "./storyline";
 import { Hero } from "./homekit";
@@ -390,6 +391,31 @@ export function GearCard({ game }: { game: GameApi }) {
 
 // ─── Me ────────────────────────────────────────────────────────────────────
 
+/** Animations follow the phone's Reduce Motion setting unless the player turns them on here. */
+function MotionSetting() {
+  const [choice, setChoice] = useState<"auto" | "on">("auto");
+  const [deviceReduces, setDeviceReduces] = useState(false);
+  useEffect(() => {
+    setChoice(motionChoice());
+    setDeviceReduces(!!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+  }, []);
+  const pick = (c: "auto" | "on") => {
+    setMotion(c);
+    setChoice(c);
+    if (c === "on" && deviceReduces) window.location.reload();
+  };
+  return (
+    <section className="card">
+      <h3 className="card-title">Motion</h3>
+      <div className="segmented motion-pick">
+        <button className={choice === "auto" ? "on" : ""} onClick={() => pick("auto")}>Follow my phone</button>
+        <button className={choice === "on" ? "on" : ""} onClick={() => pick("on")}>Always animate</button>
+      </div>
+      {deviceReduces && choice === "auto" && <p className="fine muted">Your phone has Reduce Motion on, so frames, names and scenes stand still.</p>}
+    </section>
+  );
+}
+
 /** The photo behind the Me hero: where each career works. */
 const ME_SCENE: Record<string, string> = {
   police: "police", enforcer: "ironrow", courts: "court", vigilante: "undercity", medicine: "hospital",
@@ -502,6 +528,8 @@ export function ProfileTab({ game }: { game: GameApi }) {
         {game.live!.full > 0 && <p className="muted">Still full for {fmt(game.live!.full)}.</p>}
       </section>
       )}
+
+      <MotionSetting />
 
       <section className="card">
         <h3 className="card-title">Alerts</h3>

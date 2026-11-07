@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.9.0: a Motion setting, and a cleaner top bar face
+
+- **Motion setting (Me → Motion):** the game follows your phone's Reduce Motion setting by
+  default, so with it on, animated frames, names, scene videos and other effects stand still.
+  Choose "Always animate" to keep them moving anyway. The choice is saved on this device.
+- **Top bar face:** your career colour now sits as a ring behind your face and any frame you
+  wear, and the rank number is gone.
+
 ## 5.8.5: drop-up lists for food and meds
 
 - **Eat and Medkit get the same arrow as Work and Gym.** The button uses the best thing you carry

@@ -5,6 +5,7 @@
 // the page; rings that are off screen (or in a hidden tab) sleep, and small faces get fewer
 // particles. Players who turn off motion see a single still frame.
 
+import { motionReduced } from "../motion";
 import { useEffect, useRef } from "react";
 
 export type FxKind = "wildfire" | "livewire" | "goldrush" | "frostbite" | "bloodmoon" | "aurora";
@@ -31,7 +32,7 @@ type Ring = {
 const rings = new Set<Ring>();
 let raf = 0;
 let last = 0;
-const reduced = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+const reduced = motionReduced;
 
 // Soft round sprites for fire and sparkles, drawn once.
 const sprites: Partial<Record<string, HTMLCanvasElement>> = {};
