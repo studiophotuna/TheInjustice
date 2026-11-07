@@ -88,6 +88,13 @@ export default function GuidePage() {
         work for you, some will remember what you did to them.
       </p>
 
+      <h2>The casino</h2>
+      <p>
+        The Velvet Ace on the Casino Strip in Port Solace plays Twenty-One, roulette and Burning Seven, a dice game. Bets are cash
+        only, never Favors. Every table tells you what a bet pays, and like every casino the house comes out ahead in the end. There&apos;s
+        a limit on how much you can bet in a night, and the doorman will keep you out for a day, a week or a month if you ask.
+      </p>
+
       <h2>Favors</h2>
       <p>
         Favors buy looks: frames, name colours, banners, car paint, home decor, your own uploaded designs, and a microphone for

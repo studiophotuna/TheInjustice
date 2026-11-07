@@ -1,4 +1,5 @@
 import { favorsView, lookOf } from "./favors";
+import { casinoView } from "./casino";
 import { passView } from "./pass";
 import { disposalView, promoProgress } from "./daily_life";
 import { veteranFactor } from "./career";
@@ -181,6 +182,7 @@ export interface PublicView {
   /** Favors and the looks bought with them. */
   favors: ReturnType<typeof favorsView>;
   pass: ReturnType<typeof passView>;
+  casino: ReturnType<typeof casinoView>;
   look: ReturnType<typeof lookOf>;
   /** Someone casing you, your bodyguards, safe house and morgue time (never who). */
   threat: ReturnType<typeof import("./hit").threatView>;
@@ -360,6 +362,7 @@ export function toView(p: Player, now: number): PublicView {
     profile: publicProfile(p),
     favors: favorsView(p),
     pass: passView(p, now),
+    casino: casinoView(p, now),
     look: lookOf(p),
     careerRecord: careerRecordView(p, now),
     gunOffers: (p.gunOffers ?? []).map((o) => ({ ...o, itemName: ITEM_BY_ID[o.itemId]?.name ?? o.itemId, icon: ITEM_BY_ID[o.itemId]?.icon ?? "" })),

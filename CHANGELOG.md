@@ -1,5 +1,21 @@
 # Changelog
 
+## 6.4.0: The Velvet Ace
+
+- **A casino on the Casino Strip in Port Solace** (City → The Velvet Ace), with three tables:
+  - **Twenty-One**: beat the dealer without going over 21. Hit, stand or double. The dealer
+    stands on 17; a two-card 21 pays 3 to 2.
+  - **Roulette**: one zero. Red or black, odd or even, 1 to 18 or 19 to 36 (pays 1 to 1), or a
+    single number (pays 35 to 1).
+  - **Burning Seven**: two dice, the flaming die from the logo. Under 7 or over 7 pays 1 to 1,
+    exactly 7 pays 4 to 1.
+- Cash on hand only, $10 to $5,000 a bet, up to $100,000 in bets a night. Favors can never be
+  bet, and nothing won has value outside the game. Every table shows what a bet pays, never the
+  chances. The house keeps a small edge, so the casino slowly takes money out of the game.
+- "Tonight" shows whether you're up or down. **Walk away** asks the doorman to keep you out for a
+  day, a week or a month.
+- The guide and the terms explain the casino.
+
 ## 6.3.0: the official logo
 
 - **The Conspira badge is in the game**: on the start screen, the loading splash, the desktop

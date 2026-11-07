@@ -39,6 +39,12 @@ export default function TermsPage() {
         free, for example by moderators for support.
       </p>
 
+      <h2>4a. The casino</h2>
+      <p>
+        The casino in the game is played with in-game money only. Favors can&apos;t be bet, and nothing won there can be cashed out or
+        has any value outside the game. It is not real-money gambling.
+      </p>
+
       <h2>5. What you post</h2>
       <p>
         You keep the rights to what you write and upload, and you give us permission to show it in the game, store it and remove it.

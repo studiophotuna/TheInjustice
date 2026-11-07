@@ -113,6 +113,20 @@ export function parseAction(body: unknown): Action {
       };
     case "buy_cosmetic":
       return { type: "buy_cosmetic", id: str(b.id) };
+    case "casino": {
+      const games = ["roulette", "seven", "deal", "hit", "stand", "double", "break"] as const;
+      const game = games.find((g) => g === b.game);
+      if (!game) throw new GameError("Bad request.");
+      const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? Math.floor(v) : undefined);
+      return {
+        type: "casino",
+        game,
+        ...(typeof b.bet === "string" && b.bet.length < 12 ? { bet: b.bet } : {}),
+        ...(num(b.number) !== undefined ? { number: num(b.number) } : {}),
+        ...(num(b.stake) !== undefined ? { stake: num(b.stake) } : {}),
+        ...(num(b.days) !== undefined ? { days: num(b.days) } : {}),
+      };
+    }
     case "pass_buy":
       return { type: "pass_buy" };
     case "pass_claim":

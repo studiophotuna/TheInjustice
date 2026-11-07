@@ -335,6 +335,8 @@ export interface Player {
   favorHolds?: { amount: number; until: number }[];
   /** Favors sold and bought on the exchange, per week (for the weekly caps). */
   exchangeWeek?: { week: number; sold: number; bought: number };
+  /** The casino: today's bets, a hand in progress, a break the player asked for. */
+  casino?: import("./casino").CasinoState;
   /** This month's season pass. */
   pass?: { season: number; marks: number; premium: boolean; claimed: string[] };
   /** Phone alerts: where to send them and what was last sent. */
@@ -822,6 +824,7 @@ export type Action =
   | { type: "profile"; bio?: string; photo?: string | null }
   | { type: "buy_cosmetic"; id: string }
   | { type: "pass_buy" }
+  | { type: "casino"; game: "roulette" | "seven" | "deal" | "hit" | "stand" | "double" | "break"; bet?: string; number?: number; stake?: number; days?: number }
   | { type: "pass_claim"; level: number; track: "free" | "paid" }
   | { type: "equip_cosmetic"; kind: "frame" | "color" | "banner" | "paint" | "decor"; id: string | null }
   | { type: "leave_career" }

@@ -2,6 +2,7 @@
 // API route today and a database function (or worker) later without changes.
 
 import { buyCosmetic, equipCosmetic } from "./favors";
+import { CASINO, doubleDown, hit, playRoulette, playSeven, stand, startTwentyOne, takeBreak, type RouletteBet, type SevenBet } from "./casino";
 import { addMarks, buyPass, claimReward } from "./pass";
 import { checkText } from "./textfilter";
 import { regularUpkeep } from "./regulars";
@@ -1215,6 +1216,22 @@ function applyActionInner(p: Player, action: Action, now: number, rng: Rng, ctx:
     case "buy_cosmetic":
       events.push(...buyCosmetic(p, action.id, now));
       break;
+    case "casino": {
+      if (countryOf(p) !== CASINO.country) throw new GameError(`${CASINO.name} is on the Casino Strip in Port Solace.`);
+      if (p.travel) throw new GameError("You're on the road.");
+      if (inJail(p, now)) throw new GameError("No tables in a cell.");
+      if (inHospital(p, now)) throw new GameError("Get out of the clinic first.");
+      const stake = action.stake ?? 0;
+      if (action.game === "roulette") events.push(...playRoulette(p, action.bet as RouletteBet, action.number, stake, now, rng));
+      else if (action.game === "seven") events.push(...playSeven(p, action.bet as SevenBet, stake, now, rng));
+      else if (action.game === "deal") events.push(...startTwentyOne(p, stake, now, rng));
+      else if (action.game === "hit") events.push(...hit(p, now, rng));
+      else if (action.game === "stand") events.push(...stand(p, now, rng));
+      else if (action.game === "double") events.push(...doubleDown(p, now, rng));
+      else if (action.game === "break") events.push(...takeBreak(p, action.days ?? 0, now));
+      else throw new GameError("Bad request.");
+      break;
+    }
     case "pass_buy":
       events.push(...buyPass(p, now));
       break;

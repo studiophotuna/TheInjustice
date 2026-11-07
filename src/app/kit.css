@@ -899,3 +899,54 @@ button.style-preview:hover .try-hint, button.style-preview:focus-visible .try-hi
 .logo-sm .logo-emblem { width: 132px; }
 .sidenav .logo { justify-items: center; }
 .logo-mark { height: auto; }
+
+/* The casino. Kit colours only: no neon, no gift boxes. */
+.casino-night { display: grid; gap: 6px; }
+.casino-night > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.casino-night .kicker { color: var(--gold); }
+.casino-night b { font-family: var(--headline); font-weight: 400; font-size: 28px; line-height: 1; }
+.casino-night b.up { color: #3fd68c; } .casino-night b.down { color: #ff6b6e; }
+.casino-night p { margin: 0; }
+.segmented.casino-tables { border-radius: 16px; }
+.segmented.casino-tables button { padding: 9px 6px; font-size: 13.5px; line-height: 1.15; }
+.table-21, .table-roulette, .table-seven { display: grid; gap: 12px; }
+.table-21 > p, .table-roulette > p, .table-seven p { margin: 0; }
+.hand { display: grid; gap: 6px; }
+.hand-who { font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.cards { display: flex; gap: 8px; flex-wrap: wrap; }
+.pcard { width: 52px; height: 74px; border-radius: 8px; background: #f4f1ea; color: #15171c; display: grid; align-content: space-between; padding: 6px 7px; box-shadow: 0 6px 14px rgba(0,0,0,0.45); font-family: var(--headline); }
+.pcard b { font-weight: 400; font-size: 22px; line-height: 1; }
+.pcard i { font-style: normal; font-size: 24px; line-height: 1; justify-self: end; }
+.pcard.red { color: #c8202a; }
+.pcard.down { background: repeating-linear-gradient(45deg, #7a1216 0 6px, #5a0d10 6px 12px); border: 3px solid #f4f1ea; }
+.last-hand { display: grid; gap: 10px; padding: 12px; border-radius: 14px; border: 1px solid var(--border); }
+.last-hand.win, .last-hand.blackjack { border-color: rgba(63, 214, 140, 0.45); }
+.last-hand.lose { border-color: rgba(229, 56, 59, 0.45); }
+.table-acts { gap: 8px; }
+.table-acts .btn { flex: 1; }
+.stake-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 420px) { .stake-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.stake { padding: 8px 4px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2, rgba(255,255,255,0.03)); color: var(--text); font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+.stake.on { border-color: var(--gold); color: var(--gold); background: rgba(242, 182, 50, 0.1); }
+.bet-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.bet-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.bet { display: grid; gap: 2px; padding: 12px 8px; border-radius: 12px; border: 1px solid var(--border); background: var(--panel-2, rgba(255,255,255,0.03)); color: var(--text); font: inherit; cursor: pointer; text-align: center; }
+.bet b { font-size: 15px; }
+.bet span { font-size: 11.5px; color: var(--muted); }
+.bet:disabled { opacity: 0.5; cursor: default; }
+.bet-red { border-color: rgba(229, 56, 59, 0.55); background: rgba(229, 56, 59, 0.12); }
+.bet-black { border-color: rgba(255, 255, 255, 0.2); background: #0c0d11; }
+.bet-seven { border-color: rgba(229, 56, 59, 0.55); background: rgba(229, 56, 59, 0.12); }
+.bet-number { gap: 8px; }
+.bet-number input { width: 64px; flex: none; text-align: center; font-size: 18px; font-weight: 800; }
+.bet-number .btn { flex: 1; }
+.pocket { justify-self: center; width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; font-family: var(--headline); font-size: 40px; color: #fff; border: 4px solid #f4f1ea; box-shadow: 0 10px 24px rgba(0,0,0,0.5); }
+.pocket.red { background: #c8202a; } .pocket.black { background: #15171c; } .pocket.green { background: #12784a; }
+.seven-head { display: flex; align-items: center; gap: 12px; }
+.seven-head img { width: 54px; height: auto; flex: none; }
+.dice-row { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.dice-row b { font-family: var(--headline); font-weight: 400; font-size: 40px; margin-left: 6px; }
+.die { width: 56px; height: 56px; border-radius: 12px; background: #f4f1ea; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); padding: 8px; gap: 2px; box-shadow: 0 8px 18px rgba(0,0,0,0.45); }
+.die i { border-radius: 50%; }
+.die i.on { background: #15171c; }
+.casino-break .row { gap: 8px; }
