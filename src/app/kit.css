@@ -722,3 +722,15 @@ button.style-preview:hover .try-hint, button.style-preview:focus-visible .try-hi
 .dog-list li { display: flex; gap: 12px; align-items: center; }
 .dog-info { display: grid; gap: 2px; flex: 1; min-width: 0; }
 .dog-info .fine { margin: 0; }
+
+/* Quick bar: a slot with nothing in your pockets points to the Shop; several items open a pick list. */
+.qslot.q-empty { opacity: 0.75; }
+.qslot.q-empty small { color: var(--gold); }
+.quickbar { position: fixed; }
+.qpick { position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); width: min(340px, calc(100vw - 24px)); display: grid; gap: 6px; padding: 10px; border-radius: 16px; background: var(--panel); box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.6); z-index: 40; }
+.qpick button { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; border: 0; background: var(--panel-2, #232836); color: var(--text); font: inherit; cursor: pointer; text-align: left; }
+.qpick button small { color: var(--muted); font-weight: 700; }
+.qpick .qpick-shop { justify-content: center; background: none; color: var(--gold); font-weight: 800; }
+
+/* The top bar face: no progress ring (work toward the next rank shows on Jobs). */
+.hud-avatar { background: none !important; padding: 0 !important; }

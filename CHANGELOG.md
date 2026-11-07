@@ -1,5 +1,15 @@
 # Changelog
 
+## 5.8.1: quick buttons use what you carry
+
+- **Eat and Medkit on the quick bar use your own pockets** instead of buying something. With one
+  kind of food on you, a tap eats it; with several, a small list shows each with how many you
+  have and how much energy it gives, so you pick. With nothing on you, the button says "No
+  food" or "No medkit" and a tap takes you to the Shop. Field surgeons still get Field dressing
+  when they carry no medkit.
+- **No progress ring around your face in the top bar.** Work toward your next rank still shows
+  on Jobs.
+
 ## 5.8.0: real faces in fights, the microphone, more dogs
 
 - **Fights show the right faces.** Your side of the fight scene now uses your own photo (or

@@ -2,6 +2,7 @@
 
 import { Briefcase, Dumbbell, HeartPulse, Utensils, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
+import { ITEM_BY_ID } from "@/game/content/items";
 import { fmt, LAST_GYM, LAST_JOB, type GameApi } from "./useGame";
 
 type Stat = "strength" | "toughness" | "agility";
@@ -14,17 +15,22 @@ const readKey = (k: string) => {
   }
 };
 
-type Slot = { key: string; label: string; sub: string; cost?: string; tone: string; Icon: typeof Briefcase; block: string | null; run: () => void };
+type Slot = { key: string; label: string; sub: string; cost?: string; tone: string; Icon: typeof Briefcase; block: string | null; run: () => void; /** Nothing on you: the slot links to the Shop instead. */ shop?: boolean };
+type Pocket = { id: string; name: string; count: number; energy: number };
+
+const goShop = () => window.dispatchEvent(new CustomEvent("injustice:go", { detail: "tab:shop" }));
 
 /**
  * The hotbar: the four things you do most, one tap (or one key) away, from any screen.
- * 1 repeat your last job · 2 the gym · 3 eat · 4 patch yourself up.
+ * 1 repeat your last job · 2 the gym · 3 eat what you carry · 4 patch yourself up with what you carry.
+ * Eating and healing use your own pockets; with nothing on you, the slot points to the Shop.
  */
 export function QuickBar({ game }: { game: GameApi }) {
   const view = game.view!;
   const live = game.live!;
   const [lastJob, setLastJob] = useState<string | null>(null);
   const [lastGym, setLastGym] = useState<Stat>("strength");
+  const [pick, setPick] = useState<"food" | "medical" | null>(null);
   useEffect(() => {
     setLastJob(readKey(LAST_JOB));
     setLastGym((readKey(LAST_GYM) as Stat | null) ?? "strength");
@@ -38,10 +44,17 @@ export function QuickBar({ game }: { game: GameApi }) {
     view.jobs.find((j) => j.id === view.recommendedJobId && ok(j)) ??
     (straight ? [...view.jobs].filter(ok).sort((a, b) => b.pay[1] - a.pay[1])[0] : null) ??
     null;
-  const food = view.shop
-    .filter((i) => i.kind === "food" && i.price <= view.cash)
-    .sort((a, b) => b.price - a.price)[0];
-  const medkit = view.inventory.find((i) => i.id === "medkit");
+  // What you're carrying, best first.
+  const pocket = (kind: "food" | "medical"): Pocket[] =>
+    view.inventory
+      .filter((i) => i.count > 0 && ITEM_BY_ID[i.id]?.kind === kind)
+      .map((i) => ({ id: i.id, name: i.name, count: i.count, energy: ITEM_BY_ID[i.id]?.energy ?? 0 }))
+      .sort((a, b) => b.energy - a.energy);
+  const foods = pocket("food");
+  const meds = pocket("medical");
+  const food = foods[0];
+  const medkit = meds[0];
+  const total = (l: Pocket[]) => l.reduce((s, x) => s + x.count, 0);
   const medic = view.specialties.find((s) => s.id === "combat_medic" && s.tier > 0);
 
   const slots: Slot[] = [
@@ -67,17 +80,19 @@ export function QuickBar({ game }: { game: GameApi }) {
     },
     {
       key: "3",
-      label: food ? food.name : "Eat",
-      sub: food ? `$${food.price}` : "Can't afford food",
+      label: food ? (foods.length > 1 ? "Eat" : food.name) : "No food",
+      sub: food ? (foods.length > 1 ? `${total(foods)} on you` : `${food.count} on you`) : "None on you · Shop",
       tone: "cash",
       Icon: Utensils,
-      block: away && !view.travel ? away : view.fullMs > 0 ? `Still full for ${fmt(view.fullMs)}.` : !food ? "You can't afford anything." : null,
-      run: () => food && act({ type: "buy", itemId: food.id }),
+      shop: !food,
+      block: !food ? null : away && !view.travel ? away : view.fullMs > 0 ? `Still full for ${fmt(view.fullMs)}.` : null,
+      run: () => (!food ? goShop() : foods.length > 1 ? setPick(pick === "food" ? null : "food") : act({ type: "use", itemId: food.id })),
     },
     {
       key: "4",
-      label: !medkit && medic ? "Field dressing" : "Medkit",
-      sub: !medkit && medic ? (medic.ready ? "Field surgeon" : "Restocking") : medkit ? `${medkit.count} left` : "None",
+      label: !medkit && medic ? "Field dressing" : medkit ? (meds.length > 1 ? "Heal" : medkit.name) : "No medkit",
+      sub: !medkit && medic ? (medic.ready ? "Field surgeon" : "Restocking") : medkit ? `${total(meds)} on you` : "None on you · Shop",
+      shop: !medkit && !medic,
       tone: "health",
       Icon: HeartPulse,
       block:
@@ -87,8 +102,8 @@ export function QuickBar({ game }: { game: GameApi }) {
             ? null
             : medic
               ? medic.ready && live.hospital === 0 ? null : "Your kit needs restocking."
-              : "Buy medkits in the Shop.",
-      run: () => act(medkit ? { type: "use", itemId: "medkit" } : { type: "field_dressing" }),
+              : null,
+      run: () => (medkit ? (meds.length > 1 ? setPick(pick === "medical" ? null : "medical") : act({ type: "use", itemId: medkit.id })) : medic ? act({ type: "field_dressing" }) : goShop()),
     },
   ];
 
@@ -101,7 +116,7 @@ export function QuickBar({ game }: { game: GameApi }) {
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const s = slots.find((x) => x.key === e.key);
-      if (s && !s.block && !game.busy) {
+      if (s && (!s.block || s.shop) && !game.busy) {
         e.preventDefault();
         s.run();
       }
@@ -112,8 +127,27 @@ export function QuickBar({ game }: { game: GameApi }) {
 
   return (
     <div className="quickbar" role="toolbar" aria-label="Quick actions">
+      {pick && (
+        <div className="qpick" role="menu" aria-label={pick === "food" ? "Eat something you carry" : "Use something you carry"}>
+          {(pick === "food" ? foods : meds).map((i) => (
+            <button
+              key={i.id}
+              role="menuitem"
+              disabled={game.busy}
+              onClick={() => {
+                setPick(null);
+                act({ type: "use", itemId: i.id });
+              }}
+            >
+              <b>{i.name}</b>
+              <small>×{i.count}{i.energy ? ` · +${i.energy} energy` : ""}</small>
+            </button>
+          ))}
+          <button className="qpick-shop" onClick={() => { setPick(null); goShop(); }}>Get more in the Shop</button>
+        </div>
+      )}
       {slots.map((s) => (
-        <button key={s.key} className={`qslot q-${s.tone}`} disabled={game.busy || !!s.block} title={s.block ?? `${s.label} (key ${s.key})`} onClick={s.run}>
+        <button key={s.key} className={`qslot q-${s.tone}${s.shop ? " q-empty" : ""}`} disabled={game.busy || (!!s.block && !s.shop)} title={s.shop ? "Nothing on you. Tap to go to the Shop." : s.block ?? `${s.label} (key ${s.key})`} onClick={s.run}>
           <span className="qkey">{s.key}</span>
           <s.Icon size={20} className="qicon" />
           <span className="qtext">
