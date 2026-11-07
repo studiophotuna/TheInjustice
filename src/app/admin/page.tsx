@@ -14,8 +14,62 @@ type Data = {
   restricted: { id: string; name: string; bannedUntil: number | null; mutedUntil: number | null; reason: string | null }[];
   people?: { id: string; name: string; favors: number }[];
   uploads?: { id: string; kind: "frame" | "banner"; playerId: string; playerName: string; at: number; cost: number }[];
+  numbers?: import("@/game/numbers").Numbers;
   errors?: { id: number; at: number; source: "client" | "server"; message: string; place: string; stack: string; version: string }[];
 };
+
+const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)}%` : "–");
+
+/** How the game is doing. Worked out from the game's own records, nothing tracked. */
+function GameNumbers({ data }: { data: Data }) {
+  const n = data.numbers;
+  if (!n) return null;
+  const top = Math.max(1, ...n.newPerDay.map((d) => d.count));
+  return (
+    <section className="card numbers">
+      <h3 className="card-title">Players</h3>
+      <div className="num-tiles">
+        <div><b>{n.players}</b><span>characters</span></div>
+        <div><b>{n.accounts}</b><span>saved accounts</span></div>
+        <div><b>{n.activeDay}</b><span>played today</span></div>
+        <div><b>{n.activeWeek}</b><span>played this week</span></div>
+        <div><b>{pct(n.backAfter1.back, n.backAfter1.of)}</b><span>came back next day</span></div>
+        <div><b>{pct(n.backAfter7.back, n.backAfter7.of)}</b><span>still here after a week</span></div>
+      </div>
+      <h4>New characters, last 14 days</h4>
+      <div className="num-bars">
+        {n.newPerDay.map((d) => (
+          <div key={d.day} title={`${d.day}: ${d.count}`}>
+            <span style={{ height: `${(d.count / top) * 100}%` }} />
+            <i>{d.count || ""}</i>
+          </div>
+        ))}
+      </div>
+      <div className="num-cols">
+        <div>
+          <h4>How far people get</h4>
+          <table className="num-table"><tbody>
+            {n.funnel.map((f) => <tr key={f.step}><td>{f.step}</td><td>{f.count}</td><td className="muted">{pct(f.count, n.players)}</td></tr>)}
+          </tbody></table>
+        </div>
+        <div>
+          <h4>Where people who left stopped</h4>
+          <table className="num-table"><tbody>
+            {n.stoppedAt.map((f) => <tr key={f.step}><td>{f.step}</td><td>{f.count}</td></tr>)}
+          </tbody></table>
+        </div>
+        <div>
+          <h4>Careers</h4>
+          <table className="num-table"><tbody>
+            {n.careers.map((c) => <tr key={c.name}><td>{c.name}</td><td>{c.count}</td></tr>)}
+            {n.careers.length === 0 && <tr><td className="muted">None yet</td></tr>}
+          </tbody></table>
+          <p className="fine muted">Deaths so far: {n.deaths}</p>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 /** Crashes, grouped by message so a flood shows as one line with a count. */
 function Crashes({ data }: { data: Data }) {
@@ -148,6 +202,7 @@ export default function AdminPage() {
       {!data && !error && <p className="muted">Loading…</p>}
       {data && (
         <>
+          <GameNumbers data={data} />
           <UploadQueue data={data} busy={busy} act={act} />
           <GrantFavors data={data} busy={busy} act={act} />
           <Crashes data={data} />

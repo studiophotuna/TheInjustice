@@ -2,6 +2,7 @@
 
 import { motionChoice, setMotion } from "./motion";
 import { DeleteAccount, HelpLinks } from "./legal";
+import { AlertsCard } from "./alerts";
 import { StyleShop } from "./style";
 import { StoryLine } from "./storyline";
 import { Hero } from "./homekit";
@@ -427,7 +428,6 @@ const ME_SCENE: Record<string, string> = {
 
 export function ProfileTab({ game }: { game: GameApi }) {
   const view = game.view!;
-  const [perm, setPerm] = useState<string>(typeof Notification === "undefined" ? "unsupported" : Notification.permission);
   const [editing, setEditing] = useState(false);
   const [allLog, setAllLog] = useState(false);
 
@@ -534,17 +534,7 @@ export function ProfileTab({ game }: { game: GameApi }) {
 
       <MotionSetting />
 
-      <section className="card">
-        <h3 className="card-title">Alerts</h3>
-        <p className="muted">When your energy is full or you&apos;re out of the clinic.</p>
-        {perm === "granted" ? (
-          <p className="text-green">Alerts are on.</p>
-        ) : perm === "unsupported" ? (
-          <p className="muted">Not supported here. On iPhone, add the game to your Home Screen first.</p>
-        ) : (
-          <button className="btn btn-ghost btn-sm" onClick={() => Notification.requestPermission().then(setPerm)}>Turn on alerts</button>
-        )}
-      </section>
+      <AlertsCard game={game} />
 
       <section className="card">
         <h3 className="card-title">Account</h3>

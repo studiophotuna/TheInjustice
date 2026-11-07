@@ -2,6 +2,7 @@
 // back, so entries never show names. You only learn your own place.
 
 import { PATHS } from "./content/paths";
+import { addMarks } from "./pass";
 import type { Player } from "./types";
 
 export type SeasonStat = "earned" | "wins" | "arrests" | "reputation";
@@ -38,6 +39,8 @@ export function ensureSeason(p: Player, now: number) {
 export function bumpSeason(p: Player, key: "earned" | "wins" | "arrests", amount: number, now: number) {
   const s = ensureSeason(p, now);
   s[key] += amount;
+  if (key === "wins") addMarks(p, "win", now);
+  if (key === "arrests") addMarks(p, "arrest", now);
 }
 
 function score(p: Player, stat: SeasonStat, now: number): number {

@@ -1,6 +1,6 @@
 {
   "name": "conspira",
-  "version": "6.1.0",
+  "version": "6.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -17,12 +17,14 @@
     "postgres": "^3.4.7",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@types/node": "^22.18.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@types/web-push": "^3.6.4",
     "typescript": "^5.9.3",
     "vitest": "^5.0.5"
   }

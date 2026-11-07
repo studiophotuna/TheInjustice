@@ -2,6 +2,7 @@
 // API route today and a database function (or worker) later without changes.
 
 import { buyCosmetic, equipCosmetic } from "./favors";
+import { addMarks, buyPass, claimReward } from "./pass";
 import { checkText } from "./textfilter";
 import { regularUpkeep } from "./regulars";
 import { journalTick } from "./journal";
@@ -306,6 +307,7 @@ function train(p: Player, stat: "strength" | "toughness" | "agility", rng: Rng, 
   p.cash -= cost;
   const key = `gym:${stat}`;
   p.jobCounts[key] = (p.jobCounts[key] ?? 0) + 1;
+  addMarks(p, "train", now);
   const falloff = practiceFalloff(p, key, now);
   events.push({ tone: "good", text: `${pick(rng, GYM_LINES[stat])} -$${cost}` });
   grantXp(p, { [stat]: BALANCE.gym.xp }, falloff, events);
@@ -812,6 +814,7 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
   if (p.energy < job.energy) throw new GameError("You're too tired. Rest or eat something.");
   p.energy -= job.energy;
   p.jobCounts[job.id] = (p.jobCounts[job.id] ?? 0) + 1;
+  addMarks(p, "job", now);
   // Getting good at something gets you noticed: harder work turns up.
   for (const next of JOBS) {
     if (next.reveal?.after.includes(job.id) && revealCount(p, next) === next.reveal.times && !p.jobCounts[next.id] && !jobLock(p, next)) {
@@ -1211,6 +1214,12 @@ function applyActionInner(p: Player, action: Action, now: number, rng: Rng, ctx:
       break;
     case "buy_cosmetic":
       events.push(...buyCosmetic(p, action.id, now));
+      break;
+    case "pass_buy":
+      events.push(...buyPass(p, now));
+      break;
+    case "pass_claim":
+      events.push(...claimReward(p, action.level, action.track, now));
       break;
     case "equip_cosmetic":
       events.push(...equipCosmetic(p, action.kind, action.id));

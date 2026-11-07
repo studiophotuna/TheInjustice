@@ -814,3 +814,81 @@ button.style-preview:hover .try-hint, button.style-preview:focus-visible .try-hi
 .info-foot { margin-top: 40px; }
 .landing-legal { margin-top: 12px; }
 .landing-legal a { color: inherit; text-decoration: underline; }
+
+/* Alerts card. */
+.alert-kinds { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 8px; }
+.alert-kinds label { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.alert-kinds input { width: 18px; height: 18px; accent-color: var(--gold); }
+
+/* Admin: player numbers. */
+.numbers h4 { margin: 18px 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.num-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+.num-tiles > div { display: grid; gap: 2px; padding: 12px; border-radius: 12px; background: var(--panel-2, rgba(255,255,255,0.03)); border: 1px solid var(--border); }
+.num-tiles b { font-size: 24px; font-variant-numeric: tabular-nums; }
+.num-tiles span { font-size: 12px; color: var(--muted); }
+.num-bars { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; height: 90px; align-items: end; }
+.num-bars > div { position: relative; height: 100%; display: flex; align-items: flex-end; }
+.num-bars span { display: block; width: 100%; min-height: 2px; border-radius: 4px 4px 0 0; background: var(--gold); }
+.num-bars i { position: absolute; top: -2px; left: 0; right: 0; text-align: center; font-style: normal; font-size: 10px; color: var(--muted); }
+.num-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.num-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.num-table td { padding: 5px 0; border-bottom: 1px solid var(--border); }
+.num-table td:nth-child(n+2) { text-align: right; font-variant-numeric: tabular-nums; padding-left: 10px; }
+
+/* Season pass looks. */
+.frame-brass { border-color: #c98f3d !important; box-shadow: 0 0 0 2px #4d3313, inset 0 0 0 2px rgba(255, 214, 150, 0.35) !important; }
+.frame-onyx { border-color: #1b1d22 !important; box-shadow: 0 0 0 2px #8a8f99, 0 0 12px rgba(0, 0, 0, 0.8) !important; }
+.frame-halo { border-color: #fff4cf !important; animation: halo-glow 3.2s ease-in-out infinite; }
+@keyframes halo-glow {
+  0%, 100% { box-shadow: 0 0 0 2px #b38a2e, 0 0 10px rgba(255, 236, 170, 0.45); }
+  50% { box-shadow: 0 0 0 2px #e8c35a, 0 0 22px rgba(255, 236, 170, 0.85); }
+}
+@media (prefers-reduced-motion: reduce) { :root:not(.motion-on) .frame-halo { animation: none; box-shadow: 0 0 0 2px #e8c35a, 0 0 16px rgba(255, 236, 170, 0.7) !important; } }
+.name-ember { color: #ff7a3d !important; } .name-jade { color: #3fd68c !important; } .name-smoke { color: #b9bec8 !important; }
+.name-sunset { background: linear-gradient(90deg, #ff8a3d, #ff3d7f 55%, #9b7bff); -webkit-background-clip: text; background-clip: text; color: transparent !important; }
+.name-ember-title .hero2-title { color: #ff7a3d; } .name-jade-title .hero2-title { color: #3fd68c; } .name-smoke-title .hero2-title { color: #b9bec8; }
+.name-sunset-title .hero2-title { background: linear-gradient(90deg, #ff8a3d, #ff3d7f 55%, #9b7bff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* Season pass card. */
+.season-pass { display: grid; gap: 10px; }
+.pass-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; flex-wrap: wrap; }
+.pass-head .kicker { color: var(--gold); }
+.pass-head h3 { margin: 2px 0; font-family: var(--headline); font-weight: 400; font-size: 26px; text-transform: uppercase; }
+.pass-head p { margin: 0; }
+.pass-owned { padding: 6px 12px; border-radius: 999px; background: rgba(242, 182, 50, 0.14); color: var(--gold); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
+.pass-bar { height: 8px; border-radius: 6px; background: var(--panel-3, #2a2f3b); overflow: hidden; }
+.pass-bar span { display: block; height: 100%; background: linear-gradient(90deg, #c98f3d, var(--gold)); border-radius: 6px; }
+.pass-levels { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.pass-levels li { display: grid; grid-template-columns: 28px 1fr 1fr; gap: 6px; align-items: stretch; opacity: 0.6; }
+.pass-levels li.reached { opacity: 1; }
+.pass-num { display: grid; place-items: center; border-radius: 8px; background: var(--panel-2, rgba(255,255,255,0.04)); font-weight: 800; font-size: 13px; }
+.pass-reward { display: grid; gap: 2px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2, rgba(255,255,255,0.03)); font-size: 13px; min-width: 0; }
+.pass-reward b { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pass-reward .btn { justify-self: start; margin-top: 4px; }
+.pass-reward.locked { border-style: dashed; }
+.pass-reward.got { border-color: rgba(63, 214, 140, 0.4); }
+.pass-kind { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 700; }
+.pass-got { font-size: 11.5px; color: #3fd68c; font-weight: 700; }
+
+/* Favors exchange. */
+.exchange h4 { margin: 16px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.exchange-block { padding: 10px 12px; border-radius: 12px; background: rgba(242, 182, 50, 0.08); border: 1px solid rgba(242, 182, 50, 0.3); font-size: 13.5px; }
+.exchange-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.exchange-list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--panel-2, rgba(255,255,255,0.03)); }
+.exchange-list li > div { display: grid; gap: 2px; min-width: 0; }
+.exchange-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; }
+.exchange-form label { display: grid; gap: 4px; min-width: 0; }
+.exchange-form input { width: 100%; min-width: 0; }
+
+/* Car paint and home decor. */
+.style-car { width: 100%; height: 100%; padding: 14px; }
+.tryon-thing { display: grid; gap: 10px; }
+.tryon-thing img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 14px; }
+.tryon-thing.paint { padding: 18px; border-radius: 14px; background: radial-gradient(circle at 50% 70%, #2a2f3b, #12151c 70%); }
+.tryon-car { width: 100%; max-height: 180px; }
+.home-decor { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius); }
+
+/* The Style shop has six kinds of look: two rows of three on a phone. */
+.segmented.style-kinds { grid-auto-flow: row; grid-template-columns: repeat(6, minmax(0, 1fr)); border-radius: 18px; }
+.segmented.style-kinds button { padding: 8px 4px; font-size: 13px; line-height: 1.15; }
+@media (max-width: 640px) { .segmented.style-kinds { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

@@ -160,7 +160,7 @@ export interface Player {
   /** A vigilante regular is watching your home until then (break-ins are harder). */
   homeWatchUntil?: number;
   /** Looks bought with Favors, and the ones being worn. */
-  cosmetics?: { owned: string[]; frame?: string | null; color?: string | null; banner?: string | null };
+  cosmetics?: { owned: string[]; frame?: string | null; color?: string | null; banner?: string | null; paint?: string | null; decor?: string | null };
   /** Gear in use: only equipped gear counts in a fight. */
   equipped?: { weapon?: string | null; armor?: string | null };
   /** Uses left on each piece of gear (missing = brand new). */
@@ -329,6 +329,16 @@ export interface Player {
   // ── Community ──────────────────────────────────────────────
   /** Messages about things other players did to you. */
   inbox?: Notice[];
+  /** Favors that can be spent but not sold: grants, free rewards, and anything bought in the
+   *  last week (`holds`). */
+  favorsLocked?: number;
+  favorHolds?: { amount: number; until: number }[];
+  /** Favors sold and bought on the exchange, per week (for the weekly caps). */
+  exchangeWeek?: { week: number; sold: number; bought: number };
+  /** This month's season pass. */
+  pass?: { season: number; marks: number; premium: boolean; claimed: string[] };
+  /** Phone alerts: where to send them and what was last sent. */
+  push?: PushState;
   /** Crew the player belongs to. */
   crewId?: string | null;
   /** Vouches from high-ranking players, one per career. */
@@ -488,6 +498,35 @@ export interface Trial {
 }
 
 export type CrewPolicy = "open" | "request" | "invite";
+
+/** Favors listed for in-game cash on the exchange. The Favors are held on the order. */
+export interface FavorOrder {
+  id: string;
+  sellerId: string;
+  sellerName: string;
+  favors: number;
+  /** Cash asked for the whole lot. */
+  price: number;
+  at: number;
+  status: "open" | "filled" | "cancelled";
+  buyerId?: string;
+  buyerName?: string;
+  doneAt?: number;
+}
+
+export interface PushSub {
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+  at: number;
+}
+
+export interface PushState {
+  subs: PushSub[];
+  /** Alerts are worked out for the time after this. */
+  checkedAt: number;
+  /** Which kinds the player turned off. */
+  off?: string[];
+}
 
 export interface Notice {
   id: string;
@@ -782,7 +821,9 @@ export type Action =
   | { type: "hire_bodyguards" }
   | { type: "profile"; bio?: string; photo?: string | null }
   | { type: "buy_cosmetic"; id: string }
-  | { type: "equip_cosmetic"; kind: "frame" | "color" | "banner"; id: string | null }
+  | { type: "pass_buy" }
+  | { type: "pass_claim"; level: number; track: "free" | "paid" }
+  | { type: "equip_cosmetic"; kind: "frame" | "color" | "banner" | "paint" | "decor"; id: string | null }
   | { type: "leave_career" }
   | { type: "start_exit" }
   | { type: "field_dressing" }

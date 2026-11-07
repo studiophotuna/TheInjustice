@@ -5,18 +5,43 @@
 
 import { Mic } from "lucide-react";
 import { useState } from "react";
-import { COSMETICS, CUSTOM, FAVORS, type CosmeticKind, type CustomKind } from "@/game/favors";
+import { COSMETICS, CUSTOM, FAVORS, PAINTS, type CosmeticKind, type CustomKind } from "@/game/favors";
+import { Vehicle } from "./art/Vehicles";
 import { FxName, NAME_FX, type NameFxKind } from "./art/FxRing";
 import { PlayerAvatar } from "./art/Portraits";
+import { SeasonPass } from "./seasonpass";
+import { Exchange } from "./exchange";
 import type { GameApi } from "./useGame";
 
 /** Whether Favors can be bought yet (set once a payment provider is connected). */
 const STORE_OPEN = process.env.NEXT_PUBLIC_FAVORS_STORE === "open";
 
+/** Checkout links per pack, from the payment provider: {"pack_100": "https://…/buy/…", …}. */
+const CHECKOUT: Record<string, string> = (() => {
+  try {
+    return JSON.parse(process.env.NEXT_PUBLIC_FAVORS_CHECKOUT ?? "{}");
+  } catch {
+    return {};
+  }
+})();
+
+/** Opens the provider's checkout for a pack, tagged with who's buying. */
+function checkout(packId: string, playerId: string) {
+  const base = CHECKOUT[packId];
+  if (!base) return false;
+  const u = new URL(base);
+  u.searchParams.set("checkout[custom][player_id]", playerId);
+  u.searchParams.set("checkout[custom][pack]", packId);
+  window.open(u.toString(), "_blank", "noopener");
+  return true;
+}
+
 const KINDS: { id: CosmeticKind; label: string }[] = [
   { id: "frame", label: "Frames" },
   { id: "color", label: "Name colours" },
   { id: "banner", label: "Banners" },
+  { id: "paint", label: "Car paint" },
+  { id: "decor", label: "Your place" },
   { id: "item", label: "Extras" },
 ];
 
@@ -25,6 +50,25 @@ const short = (id: string | null) => (id ? id.split(":")[1] : null);
 type Look = { frame: string | null; color: string | null; banner: string | null };
 /** A look being tried on: what it is, and what pressing the main button does. */
 type TryOn = { kind: CosmeticKind; value: string; title: string; fx?: boolean; label: string; disabled?: string | null; confirm: () => Promise<unknown> };
+
+/** Paint and decor aren't worn on your face: preview them big instead. */
+function ThingPreview({ t }: { t: TryOn }) {
+  if (t.kind === "paint") {
+    return (
+      <div className="tryon-thing paint">
+        <Vehicle mode="car" color={PAINTS[t.value]} className="tryon-car" />
+        <p className="fine muted">Every car you own wears this paint, in your garage and wherever it&apos;s parked.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="tryon-thing">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={`/decor/${t.value}.jpg`} alt="" />
+      <p className="fine muted">Your place looks like this in every city you live in.</p>
+    </div>
+  );
+}
 
 const bannerSrc = (b: string | null) => (!b ? "/scenes/street.jpg" : b.startsWith("data:") ? b : b.startsWith("u-") ? `/api/upload/${b.slice(2)}` : `/scenes/${b}.jpg`);
 
@@ -41,6 +85,8 @@ function TryOnSheet({ game, t, close }: { game: GameApi; t: TryOn; close: () => 
           <span className="kicker">Try it on</span>
           <b>{t.title}{t.fx && <span className="fx-tag">Animated</span>}</b>
         </header>
+        {t.kind === "paint" || t.kind === "decor" ? <ThingPreview t={t} /> : (
+        <>
         <div className="tryon-me">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img className="tryon-banner" src={bannerSrc(look.banner)} alt="" />
@@ -60,6 +106,8 @@ function TryOnSheet({ game, t, close }: { game: GameApi; t: TryOn; close: () => 
           </div>
         </div>
         <p className="fine muted tryon-note">This is how others see you on People, the map and in city chat.</p>
+        </>
+        )}
         {t.disabled && <p className="favors-soon">{t.disabled}</p>}
         <div className="tryon-acts">
           <button className="btn btn-ghost" onClick={close}>Close</button>
@@ -92,7 +140,8 @@ export function StyleShop({ game }: { game: GameApi }) {
   const [tryOn, setTryOn] = useState<TryOn | null>(null);
   const photo = view.profile.photo;
   const need = (price: number) => (f.balance < price ? `You need ${(price - f.balance).toLocaleString()} more Favors.` : null);
-  const list = COSMETICS.filter((c) => c.kind === kind);
+  // Season-pass looks only show once you have them.
+  const list = COSMETICS.filter((c) => c.kind === kind && (!c.pass || f.owned.includes(c.id)));
   return (
     <div className="stack style-shop">
       <section className="favors-head">
@@ -103,9 +152,19 @@ export function StyleShop({ game }: { game: GameApi }) {
         <p className="fine muted">Favors buy looks, never power.</p>
       </section>
 
+      <SeasonPass game={game} />
+
       <section className="favor-packs" aria-label="Get Favors">
         {FAVORS.packs.map((p) => (
-          <button key={p.id} className="favor-pack" onClick={() => setNotice(true)} disabled={!STORE_OPEN && notice}>
+          <button
+            key={p.id}
+            className="favor-pack"
+            onClick={() => {
+              if (STORE_OPEN && game.account && checkout(p.id, view.id)) return;
+              setNotice(true);
+            }}
+            disabled={!STORE_OPEN && notice}
+          >
             <b>{p.favors.toLocaleString()}</b>
             <span>Favors</span>
             {"bonus" in p && p.bonus && <i>{p.bonus}</i>}
@@ -114,6 +173,8 @@ export function StyleShop({ game }: { game: GameApi }) {
         ))}
       </section>
       {notice && !STORE_OPEN && <p className="favors-soon">The Favors store opens soon. Everything here can already be previewed.</p>}
+      {notice && STORE_OPEN && !game.account && <p className="favors-soon">Save your character to an account first, so what you buy can never be lost. Me → Account.</p>}
+      {STORE_OPEN && <p className="fine muted">Payments are handled by Lemon Squeezy. See the <a href="/refunds">refund policy</a>.</p>}
 
       <div className="segmented style-kinds" role="tablist">
         {KINDS.map((k) => (
@@ -147,6 +208,10 @@ export function StyleShop({ game }: { game: GameApi }) {
                   <span className="style-item-icon"><Mic size={40} /></span>
                 ) : c.kind === "banner" ? (
                   <img className="style-banner" src={`/scenes/${name}.jpg`} alt="" loading="lazy" />
+                ) : c.kind === "decor" ? (
+                  <img className="style-banner" src={`/decor/${name}.jpg`} alt="" loading="lazy" />
+                ) : c.kind === "paint" ? (
+                  <Vehicle mode="car" color={PAINTS[name!]} className="style-car" />
                 ) : c.kind === "frame" ? (
                   <PlayerAvatar name={view.name} path={view.path?.id} photo={photo} look={{ frame: name, color: null, banner: null }} className="style-face" />
                 ) : (
@@ -155,7 +220,7 @@ export function StyleShop({ game }: { game: GameApi }) {
                 <span className="try-hint">Try it on</span>
               </button>
               <div className="style-meta">
-                <b>{c.name}{c.fx && <span className="fx-tag">Animated</span>}</b>
+                <b>{c.name}{c.fx && <span className="fx-tag">Animated</span>}{c.pass && <span className="fx-tag">Season pass</span>}</b>
                 {c.kind === "item" && <span className="fine muted">Speak in Global chat. Yours for good.</span>}
                 {c.kind === "item" && owned ? (
                   <span className="owned-tag">Owned</span>
@@ -171,6 +236,8 @@ export function StyleShop({ game }: { game: GameApi }) {
           );
         })}
       </div>
+
+      <Exchange game={game} />
 
       {f.log.length > 0 && (
         <section className="card">

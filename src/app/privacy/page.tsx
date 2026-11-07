@@ -17,6 +17,8 @@ export default function PrivacyPage() {
         <li><b>Your character:</b> everything you do in the game: name, progress, money, items, messages to the game&apos;s systems, and your journal.</li>
         <li><b>What you post:</b> chat messages, your bio and profile photo, uploaded frames and banners, crew notes and forum posts.</li>
         <li><b>Reports:</b> reports you make or that are made about you, and what moderators decided.</li>
+        <li><b>Phone alerts:</b> if you turn them on, the address your browser gives us for sending them, and which alerts you want.</li>
+        <li><b>Purchases:</b> the order number and which pack you bought. Lemon Squeezy, our reseller, handles the payment itself; we never see your card.</li>
         <li><b>Crash reports:</b> when the game breaks, the error message, the page and the game version. Nothing that identifies you.</li>
         <li><b>Fair-play signals:</b> a random device ID stored in a cookie and a scrambled, shortened version of your IP address, used only to spot several characters played by one person.</li>
       </ul>
@@ -32,8 +34,8 @@ export default function PrivacyPage() {
       <h2>Why we use it</h2>
       <p>
         To run the game and save your progress, to show what you post to other players, to keep the game fair and safe (moderation,
-        stopping cheating and abuse), and to fix problems. If we sell Favors, the payment provider handles your payment details; we
-        only receive a confirmation of what you bought.
+        stopping cheating and abuse), and to fix problems. When you buy Favors, Lemon Squeezy handles your payment details as the
+        seller of record; we only receive a confirmation of what you bought.
       </p>
 
       <h2>Who else handles it</h2>

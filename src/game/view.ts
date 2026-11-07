@@ -1,4 +1,5 @@
 import { favorsView, lookOf } from "./favors";
+import { passView } from "./pass";
 import { disposalView, promoProgress } from "./daily_life";
 import { veteranFactor } from "./career";
 import { specialtiesView } from "./specialties";
@@ -173,10 +174,13 @@ export interface PublicView {
   encounter: ReturnType<typeof encounterView>;
   /** Doctors: your surgery fee, if you're operating. */
   surgeryFee: number | null;
+  /** Alert kinds the player turned off. */
+  pushOff: string[];
   /** Your intro and photo. */
   profile: { bio: string | null; photo: string | null };
   /** Favors and the looks bought with them. */
   favors: ReturnType<typeof favorsView>;
+  pass: ReturnType<typeof passView>;
   look: ReturnType<typeof lookOf>;
   /** Someone casing you, your bodyguards, safe house and morgue time (never who). */
   threat: ReturnType<typeof import("./hit").threatView>;
@@ -331,6 +335,7 @@ export function toView(p: Player, now: number): PublicView {
     promoChoice: promoChoiceView(p),
     startedAt: p.createdAt,
     surgeryFee: p.surgeryFee ?? null,
+    pushOff: p.push?.off ?? [],
     hospitalMs: hospital ? p.hospitalUntil - now : 0,
     fullMs: Math.max(0, p.fullUntil - now),
     heatLabel: heatLabel(p.heat),
@@ -354,6 +359,7 @@ export function toView(p: Player, now: number): PublicView {
     threat: threatView(p, null, now),
     profile: publicProfile(p),
     favors: favorsView(p),
+    pass: passView(p, now),
     look: lookOf(p),
     careerRecord: careerRecordView(p, now),
     gunOffers: (p.gunOffers ?? []).map((o) => ({ ...o, itemName: ITEM_BY_ID[o.itemId]?.name ?? o.itemId, icon: ITEM_BY_ID[o.itemId]?.icon ?? "" })),

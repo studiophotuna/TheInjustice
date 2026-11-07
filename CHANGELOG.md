@@ -1,5 +1,28 @@
 # Changelog
 
+## 6.2.0: season pass, Favors exchange, paint and decor, phone alerts
+
+- **Season pass** (Shop → Style). Ten levels a month, climbed by playing: jobs, training, fights
+  won and arrests. Every level has a free reward; the pass (500 Favors, for the month) adds a
+  second one. Rewards are looks only you can get this way (Ember, Jade, Smoke and Sunset name
+  colours; Brass knuckle, Onyx and Halo frames; four new banners) and Favors. Anything earned but
+  not collected is handed over when the month ends.
+- **Favors exchange** (Shop → Style). Sell Favors to other players for bank money, or buy theirs.
+  Favors are held on the order until it sells or you cancel; the exchange keeps 10% of each sale.
+  Saved accounts at least a week old only; up to 3,000 sold and bought a week. Gifted Favors,
+  free rewards and Favors bought in the last week can be spent but not sold.
+- **Car paint** (eight colours) recolours every car you own, in your garage and wherever it's
+  parked. **Your place** (six rooms) changes the photo of your home on the City page.
+- **Phone alerts**: energy full, out of the clinic or jail, arrived, school decisions, and what
+  other players did to you, even with the game closed. Pick which ones you want on the Me page.
+  (Switches on once the alert keys are added.)
+- **Favors packs** can be bought through Lemon Squeezy once the store is opened. Paid packs are
+  credited once and held a week; refunds take them back. New **refund policy** page.
+- **Player numbers** on /admin: characters, saved accounts, who played today and this week, who
+  came back the next day and after a week, new characters per day, how far people get, where
+  people who left stopped, and careers. From the game's own records; nothing tracked.
+- The six QA test characters were deleted.
+
 ## 6.1.0: ready for strangers
 
 - **Specialties show only what you have.** The Me page lists the specialties you've earned,

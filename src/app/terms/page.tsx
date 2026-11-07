@@ -27,14 +27,15 @@ export default function TermsPage() {
       <p>
         The game, its art, text and code belong to {LEGAL.studio}. You get a personal, non-transferable right to play it. Your
         character, in-game money, items, property and Favors have no value outside the game. They are not your property, can&apos;t be
-        sold or traded for real money, and can change when the game is balanced or updated.
+        sold or traded for real money, and can change when the game is balanced or updated. The one way to trade Favors is the
+        in-game exchange, for in-game money only.
       </p>
 
       <h2>4. Favors</h2>
       <p>
         Favors are a virtual currency for looks: frames, name colours, banners, uploads and similar extras. They never buy power. If
         Favors are sold, prices are shown before you pay. Favors are a licence to use them in the game, not money: they can&apos;t be
-        cashed out and aren&apos;t refunded except where the law requires it or our refund policy says so. Favors may be granted for
+        cashed out and aren&apos;t refunded except where the law requires it or our <a href="/refunds">refund policy</a> says so. Favors may be granted for
         free, for example by moderators for support.
       </p>
 

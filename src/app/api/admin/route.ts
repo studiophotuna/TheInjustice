@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { gameNumbers } from "@/game/numbers";
 import { reportError } from "@/server/errors";
 import { linkedGroups } from "@/game/anticheat";
 import { COUNTRIES } from "@/game/content/world";
@@ -57,6 +58,7 @@ export async function GET(req: Request) {
       restricted,
       // Crashes from players' browsers and the server, newest first.
       errors: await store.listErrors(40),
+      numbers: gameNumbers(players, now),
     });
   } catch (e) {
     return failure(e);

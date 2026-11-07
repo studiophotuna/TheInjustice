@@ -113,8 +113,13 @@ export function parseAction(body: unknown): Action {
       };
     case "buy_cosmetic":
       return { type: "buy_cosmetic", id: str(b.id) };
+    case "pass_buy":
+      return { type: "pass_buy" };
+    case "pass_claim":
+      if (typeof b.level !== "number" || (b.track !== "free" && b.track !== "paid")) throw new GameError("Bad request.");
+      return { type: "pass_claim", level: b.level, track: b.track };
     case "equip_cosmetic":
-      if (b.kind !== "frame" && b.kind !== "color" && b.kind !== "banner") throw new GameError("Bad request.");
+      if (b.kind !== "frame" && b.kind !== "color" && b.kind !== "banner" && b.kind !== "paint" && b.kind !== "decor") throw new GameError("Bad request.");
       return { type: "equip_cosmetic", kind: b.kind, id: b.id === null ? null : str(b.id) };
     case "hire_bodyguards":
       return { type: "hire_bodyguards" };

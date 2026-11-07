@@ -4,7 +4,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import postgres from "postgres";
 import { rankTitle } from "@/game/content/paths";
-import type { CaseFile, City, Crew, Player, Report, Upload } from "@/game/types";
+import type { CaseFile, City, Crew, FavorOrder, Player, Report, Upload } from "@/game/types";
 import { LOCKOUT_MS, MAX_FAILED_LOGINS } from "./auth";
 
 export interface LeaderRow {
@@ -44,6 +44,9 @@ export interface Tx {
   /** Locks and returns a city (null if it has never been saved). */
   getCity(country: string): Promise<City | null>;
   putCity(c: City): Promise<void>;
+  /** Locks and returns a Favors exchange order. */
+  getOrder(id: string): Promise<FavorOrder | null>;
+  putOrder(o: FavorOrder): Promise<void>;
 }
 
 /**
@@ -82,6 +85,11 @@ export interface PlayerStore {
   listPlayers(country: string, limit: number): Promise<Player[]>;
   /** The street regulars living in a country (never included in listPlayers). */
   listRegulars(country: string): Promise<Player[]>;
+  /** Players with at least one phone signed up for alerts. */
+  listPushPlayers(limit: number): Promise<Player[]>;
+  /** Open exchange orders, newest first, and a player's own recent ones. */
+  listOrders(limit: number): Promise<FavorOrder[]>;
+  ordersBy(playerId: string, limit: number): Promise<FavorOrder[]>;
   /** Players with a home or a parked car in this city, wherever they are now. */
   listPropertyOwners(country: string, limit: number): Promise<Player[]>;
   listCrews(limit: number): Promise<Crew[]>;
@@ -138,6 +146,7 @@ interface FileData {
   reports: Report[];
   uploads?: Upload[];
   errors?: ErrorLog[];
+  orders?: FavorOrder[];
 }
 
 export class FileStore implements PlayerStore {
@@ -321,6 +330,7 @@ export class FileStore implements PlayerStore {
       const crews = new Map<string, Crew | null>();
       const cases = new Map<string, CaseFile>();
       const cities = new Map<string, City>();
+      const orders = new Map<string, FavorOrder>();
       const tx: Tx = {
         getPlayers: async (ids) => ids.map((id) => (d.players[id] ? structuredClone(d.players[id]) : null)),
         putPlayer: async (p) => void players.set(p.id, structuredClone(p)),
@@ -331,8 +341,14 @@ export class FileStore implements PlayerStore {
         putCase: async (c) => void cases.set(c.id, structuredClone(c)),
         getCity: async (country) => (d.cities[country] ? structuredClone(d.cities[country]) : null),
         putCity: async (c) => void cities.set(c.country, structuredClone(c)),
+        getOrder: async (id) => {
+          const o = (d.orders ?? []).find((x) => x.id === id);
+          return o ? structuredClone(o) : null;
+        },
+        putOrder: async (o) => void orders.set(o.id, structuredClone(o)),
       };
       const result = await fn(tx);
+      for (const [, o] of orders) d.orders = [o, ...(d.orders ?? []).filter((x) => x.id !== o.id)].slice(0, 2000);
       for (const [id, p] of players) d.players[id] = p;
       for (const [id, c] of crews) {
         if (c) d.crews[id] = c;
@@ -357,6 +373,21 @@ export class FileStore implements PlayerStore {
             (p.garage ?? []).some((c) => c.country === country)),
       )
       .sort((a, b) => b.tickAt - a.tickAt)
+      .slice(0, limit)
+      .map((p) => structuredClone(p));
+  }
+
+  async listOrders(limit: number) {
+    return ((await this.load()).orders ?? []).filter((o) => o.status === "open").slice(0, limit).map((o) => structuredClone(o));
+  }
+
+  async ordersBy(playerId: string, limit: number) {
+    return ((await this.load()).orders ?? []).filter((o) => o.sellerId === playerId || o.buyerId === playerId).slice(0, limit).map((o) => structuredClone(o));
+  }
+
+  async listPushPlayers(limit: number) {
+    return Object.values((await this.load()).players)
+      .filter((p) => (p.push?.subs.length ?? 0) > 0)
       .slice(0, limit)
       .map((p) => structuredClone(p));
   }
@@ -641,6 +672,15 @@ class PostgresStore implements PlayerStore {
             insert into injustice.cities (country, data, updated_at) values (${c.country}, ${q.json(c as unknown as postgres.JSONValue)}, now())
             on conflict (country) do update set data = excluded.data, updated_at = now()`;
         },
+        getOrder: async (id) => {
+          const rows = await q<{ data: FavorOrder }[]>`select data from injustice.favor_orders where id = ${id} for update`;
+          return rows[0]?.data ?? null;
+        },
+        putOrder: async (o) => {
+          await q`
+            insert into injustice.favor_orders (id, seller_id, status, data) values (${o.id}, ${o.sellerId}, ${o.status}, ${q.json(o as unknown as postgres.JSONValue)})
+            on conflict (id) do update set status = excluded.status, data = excluded.data`;
+        },
       };
       return fn(tx);
     })) as T;
@@ -664,6 +704,28 @@ class PostgresStore implements PlayerStore {
           or coalesce(data->'garage', '[]'::jsonb) @> ${this.sql.json([{ country }])}
         )
       order by updated_at desc limit ${limit}`;
+    return rows.map((r) => r.data);
+  }
+
+  async listOrders(limit: number) {
+    const rows = await this.sql<{ data: FavorOrder }[]>`
+      select data from injustice.favor_orders where status = 'open' order by created_at desc limit ${limit}`;
+    return rows.map((r) => r.data);
+  }
+
+  async ordersBy(playerId: string, limit: number) {
+    const rows = await this.sql<{ data: FavorOrder }[]>`
+      select data from injustice.favor_orders
+      where seller_id = ${playerId} or data->>'buyerId' = ${playerId}
+      order by created_at desc limit ${limit}`;
+    return rows.map((r) => r.data);
+  }
+
+  async listPushPlayers(limit: number) {
+    const rows = await this.sql<{ data: Player }[]>`
+      select data from injustice.players
+      where jsonb_array_length(coalesce(data->'push'->'subs', '[]'::jsonb)) > 0
+      limit ${limit}`;
     return rows.map((r) => r.data);
   }
 
