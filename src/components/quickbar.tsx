@@ -16,7 +16,7 @@ const readKey = (k: string) => {
   }
 };
 
-type Slot = { key: string; label: string; sub: string; cost?: string; tone: string; Icon: typeof Briefcase; block: string | null; run: () => void; /** Nothing on you: the slot links to the Shop instead. */ shop?: boolean; /** An arrow opens a list to choose from. */ more?: "job" | "gym" };
+type Slot = { key: string; label: string; sub: string; cost?: string; tone: string; Icon: typeof Briefcase; block: string | null; run: () => void; /** Nothing on you: the slot links to the Shop instead. */ shop?: boolean; /** An arrow opens a list to choose from. */ more?: "job" | "gym" | "food" | "medical" };
 type Pocket = { id: string; name: string; count: number; energy: number };
 
 /** The gym's activities by name; the stats they train stay unseen, as on the Fight tab. */
@@ -96,17 +96,18 @@ export function QuickBar({ game }: { game: GameApi }) {
     },
     {
       key: "3",
-      label: food ? (foods.length > 1 ? "Eat" : food.name) : "No food",
-      sub: food ? (foods.length > 1 ? `${total(foods)} on you` : `${food.count} on you`) : "None on you · Shop",
+      label: food ? food.name : "No food",
+      sub: food ? `${total(foods)} on you` : "None on you · Shop",
       tone: "cash",
       Icon: Utensils,
       shop: !food,
       block: !food ? null : away && !view.travel ? away : view.fullMs > 0 ? `Still full for ${fmt(view.fullMs)}.` : null,
-      run: () => (!food ? goShop() : foods.length > 1 ? setPick(pick === "food" ? null : "food") : act({ type: "use", itemId: food.id })),
+      run: () => (!food ? goShop() : act({ type: "use", itemId: food.id })),
+      more: "food",
     },
     {
       key: "4",
-      label: !medkit && medic ? "Field dressing" : medkit ? (meds.length > 1 ? "Heal" : medkit.name) : "No medkit",
+      label: !medkit && medic ? "Field dressing" : medkit ? medkit.name : "No medkit",
       sub: !medkit && medic ? (medic.ready ? "Field surgeon" : "Restocking") : medkit ? `${total(meds)} on you` : "None on you · Shop",
       shop: !medkit && !medic,
       tone: "health",
@@ -119,7 +120,8 @@ export function QuickBar({ game }: { game: GameApi }) {
             : medic
               ? medic.ready && live.hospital === 0 ? null : "Your kit needs restocking."
               : null,
-      run: () => (medkit ? (meds.length > 1 ? setPick(pick === "medical" ? null : "medical") : act({ type: "use", itemId: medkit.id })) : medic ? act({ type: "field_dressing" }) : goShop()),
+      run: () => (medkit ? act({ type: "use", itemId: medkit.id }) : medic ? act({ type: "field_dressing" }) : goShop()),
+      more: "medical",
     },
   ];
 
@@ -198,11 +200,25 @@ export function QuickBar({ game }: { game: GameApi }) {
       )}
       {(pick === "food" || pick === "medical") && (
         <div className="qpick" role="menu" aria-label={pick === "food" ? "Eat something you carry" : "Use something you carry"}>
+          {(pick === "food" ? foods : meds).length === 0 && !(pick === "medical" && medic) && <span className="qpick-head">Nothing on you</span>}
+          {pick === "medical" && medic && (
+            <button
+              role="menuitem"
+              disabled={game.busy || !medic.ready || (view.hp >= view.maxHp && live.hospital === 0)}
+              onClick={() => {
+                setPick(null);
+                act({ type: "field_dressing" });
+              }}
+            >
+              <b>Field dressing</b>
+              <small>{!medic.ready ? "Restocking" : view.hp >= view.maxHp ? "You're not hurt" : "Field surgeon"}</small>
+            </button>
+          )}
           {(pick === "food" ? foods : meds).map((i) => (
             <button
               key={i.id}
               role="menuitem"
-              disabled={game.busy}
+              disabled={game.busy || (pick === "food" ? view.fullMs > 0 : view.hp >= view.maxHp && live.hospital === 0)}
               onClick={() => {
                 setPick(null);
                 act({ type: "use", itemId: i.id });
@@ -212,13 +228,13 @@ export function QuickBar({ game }: { game: GameApi }) {
               <small>×{i.count}{i.energy ? ` · +${i.energy} energy` : ""}</small>
             </button>
           ))}
-          <button className="qpick-shop" onClick={() => { setPick(null); goShop(); }}>Get more in the Shop</button>
+          <button className="qpick-shop" onClick={() => { setPick(null); goShop(); }}>{(pick === "food" ? foods : meds).length ? "Get more in the Shop" : "Go to the Shop"}</button>
         </div>
       )}
       {slots.map((s) => (
         <div key={s.key} className="qwrap">
         {s.more && (
-          <button className={`qmore q-${s.tone}${pick === s.more ? " open" : ""}`} aria-label={s.more === "job" ? "Choose your work" : "Choose what to train"} aria-expanded={pick === s.more} onClick={() => setPick(pick === s.more ? null : s.more!)}>
+          <button className={`qmore q-${s.tone}${pick === s.more ? " open" : ""}`} aria-label={s.more === "job" ? "Choose your work" : s.more === "gym" ? "Choose what to train" : s.more === "food" ? "Choose what to eat" : "Choose what to use"} aria-expanded={pick === s.more} onClick={() => setPick(pick === s.more ? null : s.more!)}>
             <ChevronUp size={12} strokeWidth={3} />
           </button>
         )}

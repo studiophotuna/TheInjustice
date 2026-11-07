@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.8.5: drop-up lists for food and meds
+
+- **Eat and Medkit get the same arrow as Work and Gym.** The button uses the best thing you carry
+  in one tap (it shows its name); the arrow opens a list of everything you carry with how many
+  you have (and the energy food gives), plus Field dressing for field surgeons, and a link to
+  the Shop. With nothing on you, the list says so and points to the Shop.
+
 ## 5.8.4: the gym by name
 
 - **The gym shows its activities, not the stats they train:** the quick bar button reads "Lift
