@@ -5,8 +5,7 @@
 
 import { Mic } from "lucide-react";
 import { useState } from "react";
-import { COSMETICS, CUSTOM, FAVORS, PAINTS, type CosmeticKind, type CustomKind } from "@/game/favors";
-import { Vehicle } from "./art/Vehicles";
+import { COSMETICS, CUSTOM, FAVORS, type CosmeticKind, type CustomKind } from "@/game/favors";
 import { FxName, NAME_FX, type NameFxKind } from "./art/FxRing";
 import { PlayerAvatar } from "./art/Portraits";
 import { SeasonPass } from "./seasonpass";
@@ -40,8 +39,6 @@ const KINDS: { id: CosmeticKind; label: string }[] = [
   { id: "frame", label: "Frames" },
   { id: "color", label: "Name colours" },
   { id: "banner", label: "Banners" },
-  { id: "paint", label: "Car paint" },
-  { id: "decor", label: "Your place" },
   { id: "item", label: "Extras" },
 ];
 
@@ -50,25 +47,6 @@ const short = (id: string | null) => (id ? id.split(":")[1] : null);
 type Look = { frame: string | null; color: string | null; banner: string | null };
 /** A look being tried on: what it is, and what pressing the main button does. */
 type TryOn = { kind: CosmeticKind; value: string; title: string; fx?: boolean; label: string; disabled?: string | null; confirm: () => Promise<unknown> };
-
-/** Paint and decor aren't worn on your face: preview them big instead. */
-function ThingPreview({ t }: { t: TryOn }) {
-  if (t.kind === "paint") {
-    return (
-      <div className="tryon-thing paint">
-        <Vehicle mode="car" color={PAINTS[t.value]} className="tryon-car" />
-        <p className="fine muted">Every car you own wears this paint, in your garage and wherever it&apos;s parked.</p>
-      </div>
-    );
-  }
-  return (
-    <div className="tryon-thing">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={`/decor/${t.value}.jpg`} alt="" />
-      <p className="fine muted">Your place looks like this in every city you live in.</p>
-    </div>
-  );
-}
 
 const bannerSrc = (b: string | null) => (!b ? "/scenes/street.jpg" : b.startsWith("data:") ? b : b.startsWith("u-") ? `/api/upload/${b.slice(2)}` : `/scenes/${b}.jpg`);
 
@@ -85,8 +63,6 @@ function TryOnSheet({ game, t, close }: { game: GameApi; t: TryOn; close: () => 
           <span className="kicker">Try it on</span>
           <b>{t.title}{t.fx && <span className="fx-tag">Animated</span>}</b>
         </header>
-        {t.kind === "paint" || t.kind === "decor" ? <ThingPreview t={t} /> : (
-        <>
         <div className="tryon-me">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img className="tryon-banner" src={bannerSrc(look.banner)} alt="" />
@@ -106,8 +82,6 @@ function TryOnSheet({ game, t, close }: { game: GameApi; t: TryOn; close: () => 
           </div>
         </div>
         <p className="fine muted tryon-note">This is how others see you on People, the map and in city chat.</p>
-        </>
-        )}
         {t.disabled && <p className="favors-soon">{t.disabled}</p>}
         <div className="tryon-acts">
           <button className="btn btn-ghost" onClick={close}>Close</button>
@@ -208,10 +182,7 @@ export function StyleShop({ game }: { game: GameApi }) {
                   <span className="style-item-icon"><Mic size={40} /></span>
                 ) : c.kind === "banner" ? (
                   <img className="style-banner" src={`/scenes/${name}.jpg`} alt="" loading="lazy" />
-                ) : c.kind === "decor" ? (
-                  <img className="style-banner" src={`/decor/${name}.jpg`} alt="" loading="lazy" />
-                ) : c.kind === "paint" ? (
-                  <Vehicle mode="car" color={PAINTS[name!]} className="style-car" />
+
                 ) : c.kind === "frame" ? (
                   <PlayerAvatar name={view.name} path={view.path?.id} photo={photo} look={{ frame: name, color: null, banner: null }} className="style-face" />
                 ) : (

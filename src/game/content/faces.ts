@@ -52,17 +52,31 @@ export const REGULAR_LOOKS: Record<string, { g: Gender; old?: boolean; face?: st
  * street toughs you fight. Contacts are written as: women Reyes, Marsh, Mercy, Quell, Dobrev,
  * Okafor; men Kozak, Silas, Brann, Brennan, Crane, Benny.
  */
-export const NPC_FACES: Record<string, string> = {
-  reyes: "/portraits/police-4.jpg", kozak: "/portraits/enforcer-6.jpg", marsh: "/faces/mk4804.jpg",
-  silas: "/portraits/vigilante-3.jpg", mercy: "/portraits/medicine-8.jpg", quell: "/faces/mk4573.jpg",
-  brann: "/portraits/military-4.jpg", dobrev: "/faces/mk5179.jpg", okafor: "/faces/mk4954.jpg",
-  brennan: "/faces/mk4727.jpg", crane: "/faces/mk33210.jpg", benny: "/faces/mk16107.jpg",
-  alley_rat: "/portraits/vigilante-5.jpg", drunk_sailor: "/faces/mk6341.jpg", dock_brawler: "/faces/mk51755.jpg",
-  southside_bruiser: "/faces/mk49249.jpg", iron_foreman: "/faces/mk41334.jpg", mugger: "/portraits/enforcer-1.jpg",
-  beach_hustler: "/faces/mk35808.jpg", casino_bouncer: "/faces/mk4813.jpg", rail_rat: "/faces/mk13737.jpg",
-  state_enforcer: "/portraits/police-3.jpg", undercity_scav: "/portraits/vigilante-8.jpg", corp_security: "/portraits/police-6.jpg",
-  road_gang: "/faces/mk36445.jpg",
+export const NPC_FACES: Record<string, string> = {};
+
+/** Every NPC is drawn as their career's character. People without a career are the street. */
+export const CAREER_ART = ["police", "enforcer", "courts", "vigilante", "medicine", "banking", "military", "mechanic", "hacker", "fire", "street"] as const;
+/** Careers drawn as a woman too. The rest (soldier, mechanic, hacker, firefighter) are shared. */
+const WOMEN = new Set(["police", "enforcer", "courts", "medicine", "banking", "vigilante", "street"]);
+const artOf = (path: string | null | undefined, g: Gender = "m") => {
+  const career = path && (CAREER_ART as readonly string[]).includes(path) ? path : "street";
+  return g === "f" && WOMEN.has(career) ? `${career}-f` : career;
 };
+export const careerFace = (path: string | null | undefined, g: Gender = "m") => `/careers/${artOf(path, g)}-face.webp`;
+export const careerCutout = (path: string | null | undefined, g: Gender = "m") => `/careers/${artOf(path, g)}.webp`;
+/** The gender a regular is written as. */
+export const regularGender = (key: string): Gender => REGULAR_LOOKS[key]?.g ?? "m";
+
+/** The story's own people and the street toughs, by career. */
+const NPC_WOMEN = new Set(["reyes", "marsh", "mercy", "quell", "dobrev", "okafor"]);
+export const NPC_CAREER: Record<string, string> = {
+  reyes: "police", kozak: "enforcer", marsh: "courts", silas: "vigilante", mercy: "medicine", quell: "banking",
+  brann: "military", dobrev: "mechanic", okafor: "hacker", brennan: "fire", crane: "courts", benny: "street",
+  alley_rat: "street", drunk_sailor: "street", dock_brawler: "street", southside_bruiser: "street", iron_foreman: "mechanic",
+  mugger: "street", beach_hustler: "street", casino_bouncer: "enforcer", rail_rat: "street", state_enforcer: "police",
+  undercity_scav: "street", corp_security: "police", road_gang: "street",
+};
+for (const [id, path] of Object.entries(NPC_CAREER)) NPC_FACES[id] = careerFace(path, NPC_WOMEN.has(id) ? "f" : "m");
 const NPC_SRCS = new Set(Object.values(NPC_FACES));
 
 /** Which regulars share a city (the same order as the roster). */

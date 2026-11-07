@@ -160,7 +160,7 @@ export interface Player {
   /** A vigilante regular is watching your home until then (break-ins are harder). */
   homeWatchUntil?: number;
   /** Looks bought with Favors, and the ones being worn. */
-  cosmetics?: { owned: string[]; frame?: string | null; color?: string | null; banner?: string | null; paint?: string | null; decor?: string | null };
+  cosmetics?: { owned: string[]; frame?: string | null; color?: string | null; banner?: string | null };
   /** Gear in use: only equipped gear counts in a fight. */
   equipped?: { weapon?: string | null; armor?: string | null };
   /** Uses left on each piece of gear (missing = brand new). */
@@ -826,7 +826,7 @@ export type Action =
   | { type: "pass_buy" }
   | { type: "casino"; game: "roulette" | "seven" | "deal" | "hit" | "stand" | "double" | "break"; bet?: string; number?: number; stake?: number; days?: number }
   | { type: "pass_claim"; level: number; track: "free" | "paid" }
-  | { type: "equip_cosmetic"; kind: "frame" | "color" | "banner" | "paint" | "decor"; id: string | null }
+  | { type: "equip_cosmetic"; kind: "frame" | "color" | "banner"; id: string | null }
   | { type: "leave_career" }
   | { type: "start_exit" }
   | { type: "field_dressing" }

@@ -1,5 +1,16 @@
 # Changelog
 
+## 6.5.0: every NPC is their career
+
+- **NPCs are drawn as their career, no more random faces.** Regulars, contacts, suspects, bosses
+  and street toughs all use one cut-out character per career (still, background removed), with a
+  woman's version for Police, Mafia, Courts, Medicine, Banking, Vigilante and the street. The
+  soldier, mechanic, hacker and firefighter are shared (helmet, hood or gear hide the face).
+  Mechanic, Hacker and Fire Department have characters of their own for the first time.
+- The same cut-out breaks out of the frame on boss cards; small round faces use a crop of it.
+- **Cars are real photos** in the garage, the lot, the city lot and on drive routes.
+- **Car paint and Your Place are gone from the Style shop.** The one decor bought was refunded.
+
 ## 6.4.0: The Velvet Ace
 
 - **A casino on the Casino Strip in Port Solace** (City → The Velvet Ace), with three tables:

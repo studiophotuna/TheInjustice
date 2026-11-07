@@ -34,3 +34,17 @@ describe("city groups", () => {
     expect(Object.keys(REGULAR_LOOKS).sort()).toEqual(keys);
   });
 });
+
+describe("NPCs are drawn as their career, as a man or a woman", () => {
+  it("contacts and regulars get their own career's character", async () => {
+    const { NPC_FACES, careerFace } = await import("./content/faces");
+    const { regularPhoto, ROSTER } = await import("./regulars");
+    expect(NPC_FACES.reyes).toBe("/careers/police-f-face.webp");
+    expect(NPC_FACES.kozak).toBe("/careers/enforcer-face.webp");
+    expect(NPC_FACES.mugger).toBe("/careers/street-face.webp");
+    // Careers without a woman's picture share one.
+    expect(careerFace("military", "f")).toBe("/careers/military-face.webp");
+    const lucia = ROSTER.solmarra.find((d) => d.key === "lucia")!;
+    expect(regularPhoto("solmarra", "lucia")).toBe(careerFace(lucia.path, "f"));
+  });
+});

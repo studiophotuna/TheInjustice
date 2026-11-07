@@ -1,4 +1,4 @@
-import { hasMic, lookOf, paintOf } from "@/game/favors";
+import { hasMic, lookOf } from "@/game/favors";
 import { reportError } from "@/server/errors";
 import { servicesOf, useService, type ServiceId } from "@/game/regularwork";
 import { checkText } from "@/game/textfilter";
@@ -382,7 +382,7 @@ export async function GET(req: Request) {
           carId: c.id,
           model: c.model,
           name: CARS[c.model].name,
-          color: paintOf(o) ?? CARS[c.model].color,
+          color: CARS[c.model].color,
           block: carTheftBlock(p, o, c, now),
         }));
       return NextResponse.json({ homes, cars, crewLeader: !!leading });

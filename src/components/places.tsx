@@ -63,8 +63,6 @@ export function CityPlaces({ game, place, setPlace, onRead }: { game: GameApi; p
     );
   }
 
-  const decorId = view.favors.equipped.decor;
-  const decor = decorId ? `/decor/${decorId.split(":")[1]}.jpg` : null;
   const badge = (b: Building) =>
     b === "police" ? view.sightings.length : b === "prison" && view.jail ? "you" : b === "academy" && view.application ? "!" : 0;
 
@@ -79,7 +77,7 @@ export function CityPlaces({ game, place, setPlace, onRead }: { game: GameApi; p
           <motion.button
             key={b.id}
             className="building"
-            style={{ backgroundImage: `url(${b.id === "home" && decor ? decor : `/scenes/${b.poster}.jpg`})` }}
+            style={{ backgroundImage: `url(/scenes/${b.poster}.jpg)` }}
             onClick={() => setPlace(b.id)}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -182,10 +180,6 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
     case "home":
       return (
         <div className="stack">
-          {game.view!.favors.equipped.decor && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img className="home-decor" src={`/decor/${game.view!.favors.equipped.decor.split(":")[1]}.jpg`} alt="" />
-          )}
           <StashCard game={game} />
           <DogCard game={game} />
         </div>

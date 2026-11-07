@@ -1,6 +1,7 @@
 "use client";
 
 import { motionChoice, setMotion } from "./motion";
+import { CarPhoto } from "./art/CarPhoto";
 import { DeleteAccount, HelpLinks } from "./legal";
 import { AlertsCard } from "./alerts";
 import { StyleShop } from "./style";
@@ -840,7 +841,7 @@ export function WorldCard({ game }: { game: GameApi }) {
                     title={r.canDrive ? "Your own car. Highway checkpoints search cars." : "Needs a mechanic first (the Docks)."}
                     onClick={() => game.act({ type: "drive", to: c.id, carId: r.carId })}
                   >
-                    <Vehicle mode="car" />
+                    <CarPhoto model={r.model} className="route-car" />
                     <span className="route-name">Drive · {r.name}</span>
                     <span className="route-meta">${r.fuel} fuel · {r.minutes} min</span>
                     <span className="route-risk">

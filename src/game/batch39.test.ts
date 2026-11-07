@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, createPlayer } from "./engine";
-import { buyCosmetic, creditFavors, decorOf, equipCosmetic, paintOf, PAINTS } from "./favors";
-import { docksView } from "./vehicles";
+import { buyCosmetic, creditFavors } from "./favors";
 import { addMarks, buyPass, claimReward, ensurePass, PASS, passView } from "./pass";
 
 const NOW = Date.UTC(2027, 2, 10, 12);
@@ -56,20 +55,5 @@ describe("season pass", () => {
     const before = p.favors ?? 0;
     claimReward(p, 1, "free", NOW);
     expect(p.favors).toBe(before + PASS.dupeFavors);
-  });
-});
-
-describe("car paint and home decor", () => {
-  it("paint recolours every car you own, decor changes your place", () => {
-    const p = createPlayer("pd1", "Painter", NOW);
-    creditFavors(p, 1000, "test", NOW, "pd");
-    p.garage = [{ id: "c1", model: "sedan", country: "varrow", condition: 100 } as never];
-    buyCosmetic(p, "paint:candy", NOW);
-    expect(paintOf(p)).toBe(PAINTS.candy);
-    expect(docksView(p, "varrow", NOW).garage[0].color).toBe(PAINTS.candy);
-    buyCosmetic(p, "decor:loft", NOW);
-    expect(decorOf(p)).toBe("/decor/loft.jpg");
-    equipCosmetic(p, "paint", null);
-    expect(paintOf(p)).toBeNull();
   });
 });

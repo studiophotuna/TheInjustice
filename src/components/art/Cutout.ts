@@ -38,6 +38,8 @@ export function heavyCutout(path: string | null | undefined): string {
 const FACE_CUTS = new Set(["enforcer-3", "enforcer-8", "mk14090", "mk32642", "mk9248", "mk4634", "mk21449"]);
 /** The cut-out of the same person as a face photo, when there's a clean one. */
 export function faceCutout(photo: string | null | undefined): string | null {
+  const career = photo?.match(/^\/careers\/([\w-]+?)-face\.webp$/)?.[1];
+  if (career) return `/careers/${career}.webp`;
   const base = photo?.match(/\/(?:faces|portraits)\/([\w-]+)\.jpg$/)?.[1];
   return base && FACE_CUTS.has(base) ? `/cutouts/face-${base}.webp` : null;
 }

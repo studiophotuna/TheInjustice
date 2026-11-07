@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CarPhoto } from "./art/CarPhoto";
 import { Car as CarIcon, PackageOpen, Store, TrendingUp } from "lucide-react";
-import { Vehicle } from "./art/Vehicles";
 import type { GameApi } from "./useGame";
 import { ParkedCars } from "./property";
 import { HireMechanic, MyGarage } from "./garage";
@@ -36,7 +36,7 @@ export function Docks({ game, go }: { game: GameApi; go?: (to: string) => void }
           <div className="garage">
             {d.garage.map((c) => (
               <article key={c.id} className={`garage-car ${c.here ? "" : "away"} ${car?.id === c.id ? "on" : ""}`} onClick={() => c.here && setCarId(c.id)}>
-                <Vehicle mode="car" color={c.color} className="garage-art" />
+                <CarPhoto model={c.model} className="garage-art" />
                 <div className="garage-body">
                   <b>{c.name} {c.hot && <span className="chip chip-red hot-chip">Hot</span>}</b>
                   <span className="fine muted">{c.here ? "Parked here" : `Parked in ${c.city}`} · {c.hot ? `stolen from ${c.stolenFrom}` : c.looks}</span>
@@ -164,7 +164,7 @@ export function Docks({ game, go }: { game: GameApi; go?: (to: string) => void }
         <div className="lot">
           {d.lot.map((m) => (
             <article key={m.id} className="lot-car">
-              <Vehicle mode="car" color={m.color} className="garage-art" />
+              <CarPhoto model={m.id} className="garage-art" />
               <div>
                 <b>{m.name}</b>
                 <p className="fine muted">{m.blurb}</p>

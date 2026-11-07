@@ -97,7 +97,7 @@ export default function GuidePage() {
 
       <h2>Favors</h2>
       <p>
-        Favors buy looks: frames, name colours, banners, car paint, home decor, your own uploaded designs, and a microphone for
+        Favors buy looks: frames, name colours, banners, your own uploaded designs, and a microphone for
         Global chat. They never buy strength, money, protection or anything that wins. Each month has a season pass you climb by
         playing, with free rewards for everyone. Players can also sell Favors to each other for in-game money on the exchange.
       </p>

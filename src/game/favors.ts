@@ -5,7 +5,7 @@
 
 import { GameError, type GameEvent, type Player } from "./types";
 
-export type CosmeticKind = "frame" | "color" | "banner" | "paint" | "decor" | "item";
+export type CosmeticKind = "frame" | "color" | "banner" | "item";
 export interface Cosmetic { id: string; kind: CosmeticKind; name: string; price: number; /** Animated, premium. */ fx?: boolean; /** Only the season pass gives it out; never sold. */ pass?: boolean }
 
 export const FAVORS = {
@@ -59,20 +59,6 @@ export const COSMETICS: Cosmetic[] = [
   C("banner", "boardwalk", "The Boardwalk", 150),
   C("banner", "foundry", "The Foundry", 150),
   C("banner", "undercity", "The Undercity", 150),
-  C("paint", "midnight", "Midnight blue", 150),
-  C("paint", "candy", "Candy red", 150),
-  C("paint", "lime", "Acid lime", 150),
-  C("paint", "pearl", "Pearl white", 150),
-  C("paint", "gold", "Gold flake", 250),
-  C("paint", "matte", "Matte black", 200),
-  C("paint", "teal", "Harbor teal", 150),
-  C("paint", "violet", "Violet", 150),
-  C("decor", "loft", "Warm loft", 250),
-  C("decor", "boutique", "White boutique", 250),
-  C("decor", "minimal", "Clean lines", 250),
-  C("decor", "sunroom", "Sunroom", 250),
-  C("decor", "classic", "Old-school classic", 250),
-  C("decor", "marble", "Marble staircase", 400),
   // Season pass only.
   P("color", "ember", "Ember"),
   P("color", "jade", "Jade"),
@@ -175,32 +161,8 @@ export function buyCosmetic(p: Player, id: string, now: number): GameEvent[] {
 export const MIC = "item:mic";
 export const hasMic = (p: Player) => (p.cosmetics?.owned ?? []).includes(MIC);
 
-/** Paint colours for cars. */
-export const PAINTS: Record<string, string> = {
-  midnight: "#22305a",
-  candy: "#d6213b",
-  lime: "#8fd14f",
-  pearl: "#efe9dd",
-  gold: "#cfa12e",
-  matte: "#2e3136",
-  teal: "#1aa596",
-  violet: "#7a43ff",
-};
-
-/** The colour of this player's cars, if they've had them painted. */
-export const paintOf = (p: Player): string | null => {
-  const id = p.cosmetics?.paint;
-  return id ? (PAINTS[id.split(":")[1]] ?? null) : null;
-};
-
-/** The photo of this player's place, if they've decorated it. */
-export const decorOf = (p: Player): string | null => {
-  const id = p.cosmetics?.decor;
-  return id ? `/decor/${id.split(":")[1]}.jpg` : null;
-};
-
 export function equipCosmetic(p: Player, kind: CosmeticKind, id: string | null): GameEvent[] {
-  if (!["frame", "color", "banner", "paint", "decor"].includes(kind)) throw new GameError("Bad request.");
+  if (!["frame", "color", "banner"].includes(kind)) throw new GameError("Bad request.");
   if (id?.startsWith("upload:")) {
     const own = kind === "frame" || kind === "banner" ? p.customLooks?.[kind] : undefined;
     if (!own || own.id !== id.slice(7) || own.status !== "approved") throw new GameError("That isn't approved yet.");
@@ -275,8 +237,6 @@ export function favorsView(p: Player) {
       frame: p.cosmetics?.frame ?? null,
       color: p.cosmetics?.color ?? null,
       banner: p.cosmetics?.banner ?? null,
-      paint: p.cosmetics?.paint ?? null,
-      decor: p.cosmetics?.decor ?? null,
     },
     custom: { frame: p.customLooks?.frame ?? null, banner: p.customLooks?.banner ?? null },
     log: (p.favorLog ?? []).slice(0, 10).map((l) => ({ at: l.at, delta: l.delta, what: l.what })),

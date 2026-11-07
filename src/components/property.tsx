@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { CarPhoto } from "./art/CarPhoto";
 import { CarFront, DoorOpen } from "lucide-react";
-import { Vehicle } from "./art/Vehicles";
 import type { GameApi } from "./useGame";
 
 type HomeRow = { id: string; name: string; photo: string | null; home: string; tier: number; alarm: boolean; dog: boolean; inTown: boolean; block: string | null; crewJob: string | null };
@@ -101,7 +101,7 @@ export function ParkedCars({ game }: { game: GameApi }) {
         <div className="lot">
           {data.cars.map((c) => (
             <article key={c.carId} className="lot-car">
-              <Vehicle mode="car" color={c.color} className="garage-art" />
+              <CarPhoto model={c.model} className="garage-art" />
               <div>
                 <b>{c.name}</b>
                 <p className="fine muted">{c.ownerName}&apos;s</p>

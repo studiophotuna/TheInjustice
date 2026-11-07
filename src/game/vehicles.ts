@@ -3,7 +3,6 @@
 // dear where it's banned, and prices move every hour. Highway checkpoints stand in between.
 
 import { COUNTRY_BY_ID, COUNTRIES, distance } from "./content/world";
-import { paintOf } from "./favors";
 import { canPayIllegal, earnDirty, payIllegal } from "./money";
 import { specTier } from "./specialties";
 import { DRUG_IDS, streetPrice } from "./drugs";
@@ -298,7 +297,7 @@ export function docksView(p: Player, country: CountryId, now: number) {
       id: car.id,
       model: car.model,
       name: def.name,
-      color: paintOf(p) ?? def.color,
+      color: def.color,
       here: car.country === country,
       city: COUNTRY_BY_ID[car.country].capital,
       condition: car.condition,
@@ -340,5 +339,5 @@ export function docksView(p: Player, country: CountryId, now: number) {
 export function driveRoutes(p: Player, from: CountryId, to: CountryId) {
   return (p.garage ?? [])
     .filter((c) => c.country === from)
-    .map((c) => ({ carId: c.id, name: CARS[c.model].name, fuel: fuelCost(from, to), minutes: Math.round(driveMs(from, to, c) / 60_000), canDrive: c.condition >= CAR.minCondition, cargo: cargoUnits(c) }));
+    .map((c) => ({ carId: c.id, model: c.model, name: CARS[c.model].name, fuel: fuelCost(from, to), minutes: Math.round(driveMs(from, to, c) / 60_000), canDrive: c.condition >= CAR.minCondition, cargo: cargoUnits(c) }));
 }

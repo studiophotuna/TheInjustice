@@ -880,18 +880,11 @@ button.style-preview:hover .try-hint, button.style-preview:focus-visible .try-hi
 .exchange-form label { display: grid; gap: 4px; min-width: 0; }
 .exchange-form input { width: 100%; min-width: 0; }
 
-/* Car paint and home decor. */
-.style-car { width: 100%; height: 100%; padding: 14px; }
-.tryon-thing { display: grid; gap: 10px; }
-.tryon-thing img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 14px; }
-.tryon-thing.paint { padding: 18px; border-radius: 14px; background: radial-gradient(circle at 50% 70%, #2a2f3b, #12151c 70%); }
-.tryon-car { width: 100%; max-height: 180px; }
-.home-decor { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius); }
 
-/* The Style shop has six kinds of look: two rows of three on a phone. */
-.segmented.style-kinds { grid-auto-flow: row; grid-template-columns: repeat(6, minmax(0, 1fr)); border-radius: 18px; }
+/* The Style shop tabs. */
+.segmented.style-kinds { grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)); border-radius: 18px; }
 .segmented.style-kinds button { padding: 8px 4px; font-size: 13px; line-height: 1.15; }
-@media (max-width: 640px) { .segmented.style-kinds { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .segmented.style-kinds { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* The official badge. */
 .logo { justify-items: center; text-align: center; }
@@ -950,3 +943,12 @@ button.style-preview:hover .try-hint, button.style-preview:focus-visible .try-hi
 .die i { border-radius: 50%; }
 .die i.on { background: #15171c; }
 .casino-break .row { gap: 8px; }
+
+/* Career characters are cut out: give them a backdrop wherever they sit in a frame. */
+img[src^="/careers/"] { background: radial-gradient(circle at 50% 30%, #3b4150, #171a21 72%); }
+img[src^="/careers/"].hero2-cut, img[src^="/careers/"].boss-cut { background: none; }
+
+/* Car photos. */
+.car-photo { display: block; object-fit: cover; border-radius: 10px; background: #12151c; }
+.car-photo.garage-art { width: 112px; height: 76px; flex: none; }
+.car-photo.route-car { width: 100%; height: 64px; }
