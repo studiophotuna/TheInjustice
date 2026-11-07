@@ -1,5 +1,13 @@
 # Changelog
 
+## 6.3.0: the official logo
+
+- **The Conspira badge is in the game**: on the start screen, the loading splash, the desktop
+  sidebar and the moderator page.
+- **App icons and the favicon** use it too: the full badge for the home-screen icon, and the
+  flaming die from its top for the tiny browser-tab icon, where the full badge can't be read.
+  Phone alerts show the badge.
+
 ## 6.2.0: season pass, Favors exchange, paint and decor, phone alerts
 
 - **Season pass** (Shop → Style). Ten levels a month, climbed by playing: jobs, training, fights

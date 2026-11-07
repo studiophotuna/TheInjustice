@@ -892,3 +892,10 @@ button.style-preview:hover .try-hint, button.style-preview:focus-visible .try-hi
 .segmented.style-kinds { grid-auto-flow: row; grid-template-columns: repeat(6, minmax(0, 1fr)); border-radius: 18px; }
 .segmented.style-kinds button { padding: 8px 4px; font-size: 13px; line-height: 1.15; }
 @media (max-width: 640px) { .segmented.style-kinds { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* The official badge. */
+.logo { justify-items: center; text-align: center; }
+.logo-emblem { display: block; width: 240px; height: auto; max-width: 70vw; filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.55)); }
+.logo-sm .logo-emblem { width: 132px; }
+.sidenav .logo { justify-items: center; }
+.logo-mark { height: auto; }

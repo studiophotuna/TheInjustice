@@ -31,8 +31,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || "",
-      icon: "/icon.svg",
-      badge: "/icon.svg",
+      icon: "/brand/icon-192.png",
+      badge: "/brand/favicon-32.png",
       tag: data.tag || title,
       data: { url: data.url || "/" },
     }),

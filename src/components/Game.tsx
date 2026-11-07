@@ -126,7 +126,7 @@ function Splash() {
   return (
     <div className="splash">
       <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }}>
-        <Logo small />
+        <Logo />
       </motion.div>
       <div className="loader" />
     </div>

@@ -74,3 +74,13 @@ the fix is mostly **composition and system**, not a theme.
   map with photo pins, player grid with role badges).
 - "Oasis Bet" casino lobby (characters breaking out of banners, cover-art tiles, chat rail,
   balance pill with a "+"). Take the composition, not the casino styling.
+
+## The brand (November 2026)
+
+- The official logo is the Conspira badge (`public/brand/logo-original.webp`): the all-seeing eye
+  over a burning die, playing cards, crossed guns, a skull chip and chrome lettering on red and
+  black. Use it whole wherever there's room (start screen, splash, sidebar, app icons at 128px
+  and up). Below that it turns to mush: use the flaming die (`mark.webp`, `favicon-32.png`).
+- Never redraw, recolour or crop the lettering. Put it on dark backgrounds only.
+- The badge carries the casino side of the game (cards, dice, chips). The screens don't: keep
+  the rule against casino styling in the UI itself.

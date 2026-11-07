@@ -13,8 +13,8 @@ async function notify(title: string, body: string, url: string) {
   if (typeof Notification === "undefined" || Notification.permission !== "granted" || !document.hidden) return;
   try {
     const reg = await navigator.serviceWorker?.getRegistration();
-    if (reg) await reg.showNotification(title, { body, icon: "/icon.svg", data: { url }, tag: title });
-    else new Notification(title, { body, icon: "/icon.svg" });
+    if (reg) await reg.showNotification(title, { body, icon: "/brand/icon-192.png", data: { url }, tag: title });
+    else new Notification(title, { body, icon: "/brand/icon-192.png" });
   } catch {
     /* best effort */
   }

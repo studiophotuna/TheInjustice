@@ -16,7 +16,13 @@ export const metadata: Metadata = {
   title: "Conspira · Every move has an agenda",
   description: "Every move has an agenda. Framed, jailed and released with nothing: climb from the Gutter to power, and decide whose side you're on.",
   manifest: "/manifest.webmanifest",
-  icons: { icon: "/icon.svg", apple: "/icon.svg" },
+  icons: {
+    icon: [
+      { url: "/brand/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/brand/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: "/brand/apple-touch-icon.png",
+  },
   appleWebApp: { capable: true, title: "Conspira", statusBarStyle: "black-translucent" },
 };
 
