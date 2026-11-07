@@ -1,6 +1,6 @@
 "use client";
 
-import { Briefcase, Dumbbell, HeartPulse, Utensils, Zap } from "lucide-react";
+import { Briefcase, ChevronUp, Dumbbell, HeartPulse, Utensils, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ITEM_BY_ID } from "@/game/content/items";
 import { PATHS } from "@/game/content/paths";
@@ -16,7 +16,7 @@ const readKey = (k: string) => {
   }
 };
 
-type Slot = { key: string; label: string; sub: string; cost?: string; tone: string; Icon: typeof Briefcase; block: string | null; run: () => void; /** Nothing on you: the slot links to the Shop instead. */ shop?: boolean };
+type Slot = { key: string; label: string; sub: string; cost?: string; tone: string; Icon: typeof Briefcase; block: string | null; run: () => void; /** Nothing on you: the slot links to the Shop instead. */ shop?: boolean; /** An arrow opens a list to choose from. */ more?: "job" | "gym" };
 type Pocket = { id: string; name: string; count: number; energy: number };
 
 const goShop = () => window.dispatchEvent(new CustomEvent("injustice:go", { detail: "tab:shop" }));
@@ -31,7 +31,7 @@ export function QuickBar({ game }: { game: GameApi }) {
   const live = game.live!;
   const [lastJob, setLastJob] = useState<string | null>(null);
   const [lastGym, setLastGym] = useState<Stat>("strength");
-  const [pick, setPick] = useState<"food" | "medical" | null>(null);
+  const [pick, setPick] = useState<"food" | "medical" | "job" | "gym" | null>(null);
   useEffect(() => {
     setLastJob(readKey(LAST_JOB));
     setLastGym((readKey(LAST_GYM) as Stat | null) ?? "strength");
@@ -78,6 +78,7 @@ export function QuickBar({ game }: { game: GameApi }) {
       Icon: Briefcase,
       block: away ?? (!job ? "No job you can do here." : live.energy < job.energy ? `Not enough energy. Full in ${fmt(live.fullIn)}.` : null),
       run: () => job && act({ type: "job", jobId: job.id }),
+      more: "job",
     },
     {
       key: "2",
@@ -88,6 +89,7 @@ export function QuickBar({ game }: { game: GameApi }) {
       Icon: Dumbbell,
       block: away ?? (live.energy < view.gym.energy ? "Not enough energy." : view.cash < view.gym.fee ? `The gym costs $${view.gym.fee}.` : null),
       run: () => act({ type: "train", stat: gymStat }),
+      more: "gym",
     },
     {
       key: "3",
@@ -136,9 +138,66 @@ export function QuickBar({ game }: { game: GameApi }) {
     return () => window.removeEventListener("keydown", onKey);
   });
 
+  const rate = (j: (typeof view.jobs)[number]) => (j.pay[0] + j.pay[1]) / j.energy;
+  const otherJobs = view.jobs
+    .filter((j) => !j.pathJob && ok(j))
+    .sort((a, b) => Number(b.id === view.recommendedJobId) - Number(a.id === view.recommendedJobId) || rate(b) - rate(a))
+    .slice(0, 5);
+  const jobRow = (j: (typeof view.jobs)[number]) => {
+    const short = away ?? (live.energy < j.energy ? "Not enough energy" : null);
+    return (
+      <button
+        key={j.id}
+        role="menuitem"
+        className={j.id === job?.id ? "on" : ""}
+        disabled={game.busy || !!short}
+        onClick={() => {
+          setPick(null);
+          act({ type: "job", jobId: j.id });
+        }}
+      >
+        <b>{j.name}</b>
+        <small>{short ?? `$${j.pay[0]}–${j.pay[1]} · ${j.energy} energy`}</small>
+      </button>
+    );
+  };
+  const GYM: { id: Stat; note: string }[] = [
+    { id: "strength", note: "Hit harder" },
+    { id: "toughness", note: "Take more hits" },
+    { id: "agility", note: "Dodge and strike first" },
+  ];
+
   return (
     <div className="quickbar" role="toolbar" aria-label="Quick actions">
-      {pick && (
+      {pick === "job" && (
+        <div className="qpick" role="menu" aria-label="Choose your work">
+          {careerJobs.length > 0 && <span className="qpick-head">Your career</span>}
+          {[...careerJobs].sort((a, b) => rate(b) - rate(a)).map(jobRow)}
+          {otherJobs.length > 0 && <span className="qpick-head">Other work</span>}
+          {otherJobs.map(jobRow)}
+          <button className="qpick-shop" onClick={() => { setPick(null); window.dispatchEvent(new CustomEvent("injustice:go", { detail: "tab:jobs" })); }}>All jobs</button>
+        </div>
+      )}
+      {pick === "gym" && (
+        <div className="qpick" role="menu" aria-label="Choose what to train">
+          {GYM.map((s) => (
+            <button
+              key={s.id}
+              role="menuitem"
+              className={s.id === gymStat ? "on" : ""}
+              disabled={game.busy || !!away || live.energy < view.gym.energy || view.cash < view.gym.fee}
+              onClick={() => {
+                setPick(null);
+                act({ type: "train", stat: s.id });
+              }}
+            >
+              <b>{s.id[0].toUpperCase() + s.id.slice(1)}</b>
+              <small>{keyGym.includes(s.id) ? "Your career · " : ""}{s.note} · ${view.gym.fee}</small>
+            </button>
+          ))}
+        </div>
+      )}
+      {(pick === "food" || pick === "medical") && (
         <div className="qpick" role="menu" aria-label={pick === "food" ? "Eat something you carry" : "Use something you carry"}>
           {(pick === "food" ? foods : meds).map((i) => (
             <button
@@ -158,7 +217,13 @@ export function QuickBar({ game }: { game: GameApi }) {
         </div>
       )}
       {slots.map((s) => (
-        <button key={s.key} className={`qslot q-${s.tone}${s.shop ? " q-empty" : ""}`} disabled={game.busy || (!!s.block && !s.shop)} title={s.shop ? "Nothing on you. Tap to go to the Shop." : s.block ?? `${s.label} (key ${s.key})`} onClick={s.run}>
+        <div key={s.key} className="qwrap">
+        {s.more && (
+          <button className={`qmore q-${s.tone}${pick === s.more ? " open" : ""}`} aria-label={s.more === "job" ? "Choose your work" : "Choose what to train"} aria-expanded={pick === s.more} onClick={() => setPick(pick === s.more ? null : s.more!)}>
+            <ChevronUp size={12} strokeWidth={3} />
+          </button>
+        )}
+        <button className={`qslot q-${s.tone}${s.shop ? " q-empty" : ""}`} disabled={game.busy || (!!s.block && !s.shop)} title={s.shop ? "Nothing on you. Tap to go to the Shop." : s.block ?? `${s.label} (key ${s.key})`} onClick={s.run}>
           <span className="qkey">{s.key}</span>
           <s.Icon size={20} className="qicon" />
           <span className="qtext">
@@ -167,6 +232,7 @@ export function QuickBar({ game }: { game: GameApi }) {
           </span>
           {s.cost && <span className="qcost"><Zap size={10} strokeWidth={3} />{s.cost}</span>}
         </button>
+        </div>
       ))}
     </div>
   );

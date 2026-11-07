@@ -734,3 +734,12 @@ button.style-preview:hover .try-hint, button.style-preview:focus-visible .try-hi
 
 /* The top bar face: no progress ring (work toward the next rank shows on Jobs). */
 .hud-avatar { background: none !important; padding: 0 !important; }
+
+/* Quick bar: Work and Gym open a drop-up list from a small arrow. */
+.qwrap { position: relative; display: grid; min-width: 0; }
+.qmore { position: absolute; z-index: 2; top: -8px; left: 4px; width: 22px; height: 18px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 6px; background: var(--q); color: #111; cursor: pointer; }
+.qmore.open svg { transform: rotate(180deg); }
+.qpick { max-height: 60vh; overflow-y: auto; }
+.qpick-head { font-size: 10.5px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: 4px 4px 0; }
+.qpick button.on { box-shadow: inset 3px 0 0 var(--gold); }
+.qpick button:disabled { opacity: 0.5; cursor: default; }

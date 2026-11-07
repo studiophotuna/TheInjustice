@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.8.3: choose from the quick bar
+
+- **Work and Gym open a list upward.** A small arrow on each button opens a list: your career's
+  jobs first (best pay for the energy at the top), then other work, each with its pay and energy
+  cost, plus a link to all jobs; or the three exercises, with the ones your career uses marked.
+  Pick one and it's done, and it becomes the button's default. The button itself still does the
+  default in one tap.
+
 ## 5.8.2: quick bar follows your career
 
 - **Work puts your career first:** the quick bar's job button now offers your career's work (a
