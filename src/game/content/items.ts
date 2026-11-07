@@ -41,10 +41,17 @@ export const ITEMS: ItemDef[] = [
   { id: "townhouse", name: "Townhouse", kind: "housing", price: 38000, housing: 4, icon: "🏡", description: "Three floors and a garden. People start asking what you do for a living." },
   { id: "penthouse", name: "Penthouse", kind: "housing", price: 160000, housing: 5, icon: "🌆", description: "The whole city under your windows. Nobody rings this doorbell by accident." },
   // ── Weapons (wear out with use; repair at the shop) ──
+  // Two at each price: a quick one (speed) and a strong one (power). Same overall worth; the
+  // quick one does a little better against fast fighters, the strong one against slow brutes.
+  { id: "bike_chain", name: "Bike chain", kind: "weapon", price: 160, power: 3, agility: 4, durability: 30, icon: "⛓️", description: "Wrapped around a fist or swung wide. Fast, and it keeps them guessing." },
   { id: "pipe", name: "Lead pipe", kind: "weapon", price: 150, power: 6, durability: 30, icon: "🔧", description: "Crude, heavy, convincing." },
   { id: "knuckles", name: "Brass knuckles", kind: "weapon", price: 700, power: 11, agility: 2, durability: 45, icon: "👊", description: "Every punch counts double. Almost." },
+  { id: "baseball_bat", name: "Baseball bat", kind: "weapon", price: 750, power: 13, durability: 50, icon: "🏏", description: "Nobody plays ball with it any more. One good swing ends most talks." },
   { id: "switchblade", name: "Switchblade", kind: "weapon", price: 3200, power: 15, agility: 2, durability: 60, icon: "🔪", description: "Quick to open, quicker to end an argument." },
+  { id: "hatchet", name: "Hatchet", kind: "weapon", price: 3300, power: 18, agility: -1, durability: 60, icon: "🪓", description: "Bought for firewood. Never used for firewood." },
+  { id: "snub_pistol", name: "Snub-nose pistol", kind: "weapon", price: 14500, power: 17, agility: 3, durability: 75, icon: "🔫", description: "Small enough for a pocket, quick enough to draw first." },
   { id: "revolver", name: "Old revolver", kind: "weapon", price: 14000, power: 21, durability: 80, icon: "🔫", description: "Six rounds and a long history. Don't ask whose." },
+  { id: "machine_pistol", name: "Machine pistol", kind: "weapon", price: 46000, power: 22, agility: 4, durability: 90, icon: "🔫", description: "Light, fast and loud. Empties before the other side can aim." },
   { id: "shotgun", name: "Sawed-off shotgun", kind: "weapon", price: 45000, power: 28, agility: -1, durability: 100, icon: "💣", description: "Loud, ugly and final. Nobody argues twice." },
   // ── Armor ──
   { id: "jacket", name: "Padded jacket", kind: "armor", price: 200, power: 6, durability: 35, icon: "🧥", description: "Takes the edge off a punch." },

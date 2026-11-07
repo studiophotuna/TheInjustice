@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.8.0: two weapons at every price
+
+- **Five new weapons**, so every price has a choice between a quick weapon (speed: you strike
+  first and land more) and a strong one (power: every hit lands harder):
+  - about $150: Bike chain (quick) or Lead pipe
+  - about $700: Brass knuckles (quick) or Baseball bat
+  - about $3,300: Switchblade (quick) or Hatchet (heavy)
+  - about $14,000: Snub-nose pistol (quick) or Old revolver
+  - about $45,000: Machine pistol (quick) or Sawed-off shotgun (heavy)
+- Each pair is balanced to be worth the same: the quick one does a little better against fast
+  fighters, the strong one against slow brutes. A test keeps every pair even.
+
 ## 6.7.0: armor that works, quick and heavy gear, and an age check
 
 - **Armor now soaks a share of every hit** instead of a tiny flat amount. Before, the $40,000

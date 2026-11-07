@@ -41,3 +41,8 @@ Video Free License (see /public/scenes/CREDITS.md), cropped square.
 | server_rack | 23219 long hallway in data center |
 | nightclub | 9586 aerial view of a nightclub crowd |
 | steel_mill | 47293 welder welding construction steel frames |
+| bike_chain | 47640 long metal chain on white surface |
+| baseball_bat | 17677 menacing man with a baseball bat at night |
+| snub_pistol | 33600 robber holding a gun portrait |
+| machine_pistol | 41792 mercenary pointing his gun |
+| hatchet | 13280 chopping wood with an axe |
