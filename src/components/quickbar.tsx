@@ -3,6 +3,7 @@
 import { Briefcase, Dumbbell, HeartPulse, Utensils, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ITEM_BY_ID } from "@/game/content/items";
+import { PATHS } from "@/game/content/paths";
 import { fmt, LAST_GYM, LAST_JOB, type GameApi } from "./useGame";
 
 type Stat = "strength" | "toughness" | "agility";
@@ -39,11 +40,21 @@ export function QuickBar({ game }: { game: GameApi }) {
   const away = view.jail ? "You're in a cell." : view.travel ? "You're on the road." : live.hospital > 0 ? `In the clinic for ${fmt(live.hospital)}.` : null;
   const straight = !!view.careerRecord.exit?.started;
   const ok = (j: (typeof view.jobs)[number]) => !j.locked && (!straight || !j.crime);
+  // Your career's work comes first: the career job you did last, else the best-paying career job
+  // you can do now. Without a career (or none open here), the job you did last or the suggested one.
+  const careerJobs = view.jobs.filter((j) => j.pathJob && ok(j));
+  const affordable = careerJobs.filter((j) => j.energy <= live.energy);
+  const bestCareer = [...(affordable.length ? affordable : careerJobs)].sort((a, b) => (b.pay[0] + b.pay[1]) / b.energy - (a.pay[0] + a.pay[1]) / a.energy)[0];
   const job =
+    careerJobs.find((j) => j.id === lastJob) ??
+    bestCareer ??
     view.jobs.find((j) => j.id === lastJob && ok(j)) ??
     view.jobs.find((j) => j.id === view.recommendedJobId && ok(j)) ??
     (straight ? [...view.jobs].filter(ok).sort((a, b) => b.pay[1] - a.pay[1])[0] : null) ??
     null;
+  // The gym trains what your career leans on; careers that don't lean on the body keep your last choice.
+  const keyGym = view.path ? (PATHS[view.path.id as keyof typeof PATHS]?.keyStats ?? []).filter((s): s is Stat => s === "strength" || s === "toughness" || s === "agility") : [];
+  const gymStat: Stat = keyGym.includes(lastGym) ? lastGym : keyGym[0] ?? lastGym;
   // What you're carrying, best first.
   const pocket = (kind: "food" | "medical"): Pocket[] =>
     view.inventory
@@ -70,13 +81,13 @@ export function QuickBar({ game }: { game: GameApi }) {
     },
     {
       key: "2",
-      label: `Gym · ${lastGym}`,
+      label: `Gym · ${gymStat}`,
       sub: `$${view.gym.fee}`,
       cost: String(view.gym.energy),
       tone: "rep",
       Icon: Dumbbell,
       block: away ?? (live.energy < view.gym.energy ? "Not enough energy." : view.cash < view.gym.fee ? `The gym costs $${view.gym.fee}.` : null),
-      run: () => act({ type: "train", stat: lastGym }),
+      run: () => act({ type: "train", stat: gymStat }),
     },
     {
       key: "3",

@@ -1,5 +1,15 @@
 # Changelog
 
+## 5.8.2: quick bar follows your career
+
+- **Work puts your career first:** the quick bar's job button now offers your career's work (a
+  doctor gets doctor's jobs): the career job you did last if it's open, otherwise the
+  best-paying career job you can do right now. Without a career, or with none of its jobs open
+  in this city, it falls back to the job you did last or the suggested one.
+- **Gym trains what your career leans on:** for example strength for the Mafia, toughness for
+  Police, agility for Vigilantes. If you last trained one of your career's stats, it keeps that
+  one. Courts and Banking don't rely on the body, so they keep your last choice.
+
 ## 5.8.1: quick buttons use what you carry
 
 - **Eat and Medkit on the quick bar use your own pockets** instead of buying something. With one
