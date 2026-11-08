@@ -650,6 +650,10 @@ export function addMerit(p: Player, path: PathId, amount: number): GameEvent[] {
   if (p.path !== path || amount <= 0) return [];
   p.jobsSinceRank += amount;
   const events: GameEvent[] = [];
+  // The work itself teaches you: experience in the career's key stats, like a career job.
+  const keys = PATHS[path].keyStats;
+  const each = (amount * BALANCE.progress.meritXpEnergy * BALANCE.progress.careerXpPerEnergy) / keys.length;
+  grantXp(p, Object.fromEntries(keys.map((k) => [k, each])), 1, events);
   checkCareer(p, events);
   for (const e of events) p.log.unshift({ at: Date.now(), text: e.text, tone: e.tone });
   p.log = p.log.slice(0, BALANCE.logSize);

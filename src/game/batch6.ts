@@ -57,6 +57,7 @@ export function launderWithBanker(client: Player, banker: Player, amount: number
   banker.cash += fee;
   shiftIntegrity(banker, -2);
   banker.launderLog = [...(banker.launderLog ?? []), { at: now, amount: a }].slice(-50);
+  addMerit(banker, "banking", 1);
   notify(banker, `A client ran $${a} through your books. Your fee: $${fee}.`, "info", undefined, now);
   return { events: [{ tone: "good", text: `${banker.name} cleans $${a}. You get $${a - fee} back clean (fee $${fee}).` }], flag: a >= I.threshold };
 }

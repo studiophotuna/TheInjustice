@@ -114,6 +114,8 @@ export interface Player {
   /** Fractional; regenerates over time. */
   hp: number;
   hospitalUntil: number;
+  /** A doctor already treated this stay (the hospitalUntil it was cut to). */
+  treatedStay?: number;
   /** Can't eat again until this time (prevents food → energy exploits). */
   fullUntil: number;
 
@@ -940,6 +942,10 @@ export interface FireRecord {
 export interface City {
   /** Recent arsons, for fire investigators. */
   fires?: FireRecord[];
+  /** When the city's own people last had an incident (muggings, fires, wrecks among regulars). */
+  incidentAt?: number;
+  /** Jobs waiting at the garage after a wreck in the street. */
+  walkIns?: { id: string; kind: "repair"; npcId: string; npcName: string; what: string; at: number; fee: number; doneBy?: string }[];
   /** The Fire Chief's fire watch: nothing can be torched until then. */
   fireWatchUntil?: number;
   /** Officers on customs duty. */

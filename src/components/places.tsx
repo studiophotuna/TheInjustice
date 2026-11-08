@@ -191,7 +191,12 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
     case "pound":
       return <Pound game={game} />;
     case "docks":
-      return <Docks game={game} go={(to) => window.dispatchEvent(new CustomEvent("injustice:go", { detail: to }))} />;
+      return (
+        <div className="stack">
+          <Docks game={game} go={(to) => window.dispatchEvent(new CustomEvent("injustice:go", { detail: to }))} />
+          {view.path?.id === "mechanic" && <CasesPanel game={game} hub={hub} place="docks" />}
+        </div>
+      );
   }
 }
 

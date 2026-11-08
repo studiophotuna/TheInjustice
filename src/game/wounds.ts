@@ -4,6 +4,7 @@
 
 import { BALANCE } from "./balance";
 import { GameError, type GameEvent, type Player } from "./types";
+import { addMerit } from "./engine";
 
 export const WOUNDS = {
   hpPerWound: 4,
@@ -80,5 +81,6 @@ export function surgery(patient: Player, doctor: Player, now: number): GameEvent
   doctor.reputation += 1;
   const fixed = Math.min(WOUNDS.surgeryRemoves, woundsOf(patient));
   patient.wounds = { count: woundsOf(patient) - fixed, at: now };
+  addMerit(doctor, "medicine", 2);
   return [{ tone: "good", text: `Dr. ${doctor.name} operates. ${fixed === 1 ? "An old wound" : "Two old wounds"} fixed. You breathe easier. -$${fee}` }];
 }

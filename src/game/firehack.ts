@@ -56,7 +56,7 @@ export function investigateFire(p: Player, c: City, fireId: string, arsonist: Pl
   fire!.investigated.push(p.id);
   p.stats.perception += 0.5;
   if (rng() >= investigateOdds(p)) {
-    return [{ tone: "info", text: "The ash tells you it was set, and not much else. Someone else may read it better." }];
+    return [{ tone: "info", text: "The ash tells you it was set, and not much else. Someone else may read it better." }, ...addMerit(p, "fire", 1)];
   }
   fire!.solved = { arsonistName: fire!.arsonistName, by: p.name, at: now };
   const reward = Math.min(c.treasury, FIRE.reward);

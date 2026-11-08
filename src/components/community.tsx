@@ -128,8 +128,11 @@ type JusticeData = {
   lawyer: boolean;
   judge: boolean;
   canProtect: boolean;
-  roles: { medic: boolean; banker: boolean; vigilante: boolean };
+  roles: { medic: boolean; banker: boolean; vigilante: boolean; mechanic?: boolean; hacker?: boolean };
   patients: Patient[];
+  ward?: { id: string; name: string; until: number; fee: number; block: string | null }[];
+  walkIns?: { id: string; npcName: string; what: string; at: number; fee: number; block: string | null }[];
+  npcClients?: { id: string; name: string; fee: number; block: string | null }[];
   deposits: Deposit[];
   coldCases: ColdCase[];
   racket: {
@@ -1310,7 +1313,7 @@ const SOURCE_LABEL: Record<CaseCard["tips"][number]["source"], string> = {
   bank: "Bank",
 };
 
-export type PlaceId = "police" | "court" | "hospital" | "bank" | "street";
+export type PlaceId = "police" | "court" | "hospital" | "bank" | "street" | "docks";
 
 /** Everything about crime and justice, filtered to one building of the city. */
 export function CasesPanel({ game, hub, place }: { game: GameApi; hub: Hub | null; place: PlaceId }) {
@@ -1448,6 +1451,68 @@ export function CasesPanel({ game, hub, place }: { game: GameApi; hub: Hub | nul
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {at("hospital") && data?.roles.medic && (
+        <section className="card">
+          <h3 className="card-title">The ward</h3>
+          {!data.ward?.length && <p className="muted">Nobody in the ward right now.</p>}
+          <div className="case-list">
+            {(data.ward ?? []).map((x) => (
+              <article key={x.id} className="case">
+                <header>
+                  <b>{x.name}</b>
+                </header>
+                <p className="muted">Out {new Date(x.until).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} without help · the city pays ${x.fee}</p>
+                <button className="btn btn-primary btn-sm" disabled={game.busy || !!x.block} title={x.block ?? ""} onClick={() => act({ op: "treat", targetId: x.id })}>
+                  Treat
+                </button>
+                {x.block && <p className="job-lock"><Lock size={11} /> {x.block}</p>}
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {at("docks") && data?.roles.mechanic && (
+        <section className="card">
+          <h3 className="card-title">Wrecks at the garage</h3>
+          {!data.walkIns?.length && <p className="muted">No wrecks waiting. Somebody will hit a lamppost soon.</p>}
+          <div className="case-list">
+            {(data.walkIns ?? []).map((x) => (
+              <article key={x.id} className="case">
+                <header>
+                  <b>{x.npcName}</b>
+                </header>
+                <p className="muted">A smashed {x.what} · {ago(x.at)} · pays ${x.fee}</p>
+                <button className="btn btn-primary btn-sm" disabled={game.busy || !!x.block} title={x.block ?? ""} onClick={() => act({ op: "walkin_repair", id: x.id })}>
+                  Fix it
+                </button>
+                {x.block && <p className="job-lock"><Lock size={11} /> {x.block}</p>}
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {at("street") && data?.roles.hacker && (data.npcClients?.length ?? 0) > 0 && (
+        <section className="card">
+          <h3 className="card-title">People who want their record gone</h3>
+          <div className="case-list">
+            {(data.npcClients ?? []).map((x) => (
+              <article key={x.id} className="case">
+                <header>
+                  <b>{x.name}</b>
+                </header>
+                <p className="muted">Pays ${x.fee}, dirty</p>
+                <button className="btn btn-primary btn-sm" disabled={game.busy || !!x.block} title={x.block ?? ""} onClick={() => act({ op: "npc_scrub", targetId: x.id })}>
+                  Scrub their record
+                </button>
+                {x.block && <p className="job-lock"><Lock size={11} /> {x.block}</p>}
+              </article>
+            ))}
+          </div>
         </section>
       )}
 

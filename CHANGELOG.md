@@ -1,5 +1,30 @@
 # Changelog
 
+## 6.11.0: the city keeps every career busy
+
+- **The city's own people get into trouble.** About every 75 minutes, each city has an incident
+  among its regulars: a mugging, a snatched bag, a lifted wallet, a fire or a car wreck. Only the
+  street's muscle and drifters commit them, never the law or the big bosses.
+- **Each incident is real work:**
+  - **Police:** muggings and snatches open real case files. Work the scene, then arrest the
+    culprit. Regulars can now be suspects, arrested, searched and hunted.
+  - **Courts:** arrests go to trial.
+  - **Medicine:** anyone in the city's hospital, player or regular, now shows up in **The ward**.
+    Doctors (Intern and up) can treat each patient once. The patient's remaining stay is halved
+    and the city pays the doctor. Examining crime victims still adds a clue to the case.
+  - **Banking:** some thieves bank the money, which lands on the compliance desk.
+  - **Vigilantes:** cases that go cold can be hunted.
+  - **Fire Department:** fires go on the fire log to investigate.
+  - **Mechanics:** wrecks wait at the garage (in the Docks) for a mechanic to fix, and the
+    driver pays.
+  - **Hackers:** thieves pick up a record. Hackers can scrub it for dirty money (on The Street).
+- **Every career activity now gives experience.** Arrests, exams, treatments, verdicts, hunts,
+  guard shifts, repairs, scrubs and the rest count toward promotion. They now also improve the
+  career's key qualities, like a career job does.
+  - Activities that gave nothing before now count too: surgery, back-door treatment, house
+    searches, laundering for a client, lawyer retainers, guard duty, peacekeeping, and a fire
+    investigation that comes up empty.
+
 ## 6.10.0: the pound
 
 - **The Pound** is a new building in every city. Dogs now come from there instead of Your Place.

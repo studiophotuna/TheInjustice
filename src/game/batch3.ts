@@ -3,7 +3,7 @@
 import { assertNotAlt } from "./anticheat";
 import { BALANCE } from "./balance";
 import { CRIMES, caseCold, suspectsFor, type SuspectMatch } from "./crime";
-import { countryOf, inHospital, inJail, shiftIntegrity } from "./engine";
+import { addMerit, countryOf, inHospital, inJail, shiftIntegrity } from "./engine";
 import { notify } from "./social";
 import { canPayIllegal, earnDirty, payIllegal } from "./money";
 import { sv } from "./stats";
@@ -48,6 +48,7 @@ export function searchHome(
   const hidden = Math.min(0.5, (sv(suspect, "wits") - 10) / 120);
   const found = suspect.id === c.culpritId && rng() >= S.missChance + hidden;
   c.searches = [...(c.searches ?? []), { searcherId: o.id, suspectId: suspect.id, suspectName: suspect.name, found, at: now }];
+  addMerit(o, "police", found ? 2 : 1);
   const what = CRIMES[c.kind].name.toLowerCase();
   if (found) {
     const seized = seizeStash(suspect, c.country);
@@ -88,6 +89,7 @@ export function hireLawyer(client: Player, lawyer: Player, now: number, lawyerPo
   client.bank -= fee;
   lawyer.cash += fee;
   client.retainer = { lawyerId: lawyer.id, name: lawyer.name, power: lawyerPower, until: now + R.weekMs };
+  addMerit(lawyer, "courts", 1.5);
   notify(lawyer, `${client.name} put you on retainer for a week: $${fee}. If they're arrested, you defend them.`, "good", client, now);
   return [{ tone: "good", text: `${lawyer.name} is your lawyer for the next week. If you're arrested, they're already on it.` }];
 }
@@ -124,6 +126,7 @@ export function backAlleyTreat(patient: Player, doctor: Player, now: number): Ga
   patient.hp = Math.max(patient.hp, 60);
   shiftIntegrity(doctor, -3);
   doctor.offBooks = [...(doctor.offBooks ?? []), { at: now, amount: fee }];
+  addMerit(doctor, "medicine", 1);
   notify(doctor, `A patient slipped out the back door: $${fee}, cash.`, "info", undefined, now);
   return [{ tone: "good", text: `A doctor stitches you up in a back room. $${fee}, no paperwork, and you're back on your feet.` }];
 }

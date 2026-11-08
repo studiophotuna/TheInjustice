@@ -23,6 +23,9 @@ import { hireScrub, scrubBlock, SCRUB } from "@/game/firehack";
 import { hireMechanic, isMechService, mechanicCard } from "@/game/mechanic";
 import { SHOP, SHOP_KINDS } from "@/game/shops";
 import { buyFront, collectFront, crewCap, frontView, isFrontKind, launderAtFront, rebuildFront, rivalFronts, torchFront } from "@/game/fronts";
+import { npcClientsView, npcScrub, patientsView, repairWalkIn, treat, walkInsView } from "@/game/incidents";
+import { cityIncident } from "@/server/incidents";
+import { withCity } from "@/server/city";
 import { ambientLines, chatLine, defFor, isHeavy, isRegularId, REGULAR_OPS, REGULARS } from "@/game/regulars";
 
 const HEAVY_WIN_REP = 8;
@@ -194,6 +197,7 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     if (url.searchParams.get("cases")) {
       const country = countryOf(p);
+      await cityIncident(store, country, now).catch((e) => console.error("incident", e));
       let cases = await store.listCases(country, 100);
       // Trials nobody ruled on in time are closed by the court clerk.
       const overdue = cases.filter((c) => c.trial && !c.trial.verdict && now >= c.trial.deadline).slice(0, 3);
@@ -217,7 +221,7 @@ export async function GET(req: Request) {
       const ia = isInternalAffairs(p);
       const city = ia ? cityHall : null;
       let people: Player[] = [];
-      if (detective || vigilante || mafia || ia) people = await store.listPlayers(country, 200);
+      if (detective || vigilante || mafia || ia) people = detective || vigilante ? await withRegulars(store, country) : await store.listPlayers(country, 200);
       if (detective || vigilante) {
         const crews = await store.listCrews(200);
         const tags = new Map(crews.map((c) => [c.id, c.tag]));
@@ -248,7 +252,13 @@ export async function GET(req: Request) {
         court: cases.filter((c) => c.trial).slice(0, 20).map((c) => trialView(c, p, now)),
         labTips: detective ? labTips(await store.listCrews(200), country, now) : [],
         launderFlags: detective && cityHall ? flagsView(cityHall, p, now) : [],
-        roles: { medic, banker, vigilante },
+        roles: { medic, banker, vigilante, mechanic: p.path === "mechanic", hacker: p.path === "hacker" },
+        // Anyone lying in this city's hospital, players and regulars: doctors can treat them.
+        ward: medic ? patientsView(await withRegulars(store, country), p, now) : [],
+        // Wrecks from the street waiting at the garage.
+        walkIns: p.path === "mechanic" ? walkInsView(cityHall, p, now) : [],
+        // The street's own records, for hackers.
+        npcClients: p.path === "hacker" ? npcClientsView(await store.listRegulars(country), p, now) : [],
         patients: medic
           ? cases.filter((c) => c.kind !== "pickpocket" && !c.examinedBy && !c.trial?.verdict && !c.hunt && !caseCold(c, now)).slice(0, 10).map((c) => patientView(c, p, now))
           : [],
@@ -676,6 +686,12 @@ async function regularChat(store: ReturnType<typeof getStore>, country: CountryI
   if (posted) await store.postMessage({ channel: `country:${country}`, authorId: line.who.id, authorName: `${line.who.name} · regular`, body: line.text });
 }
 
+/** Everyone in the city a case could point at: players and the city's own regulars. */
+async function withRegulars(store: ReturnType<typeof getStore>, country: string): Promise<Player[]> {
+  const [real, regs] = await Promise.all([store.listPlayers(country, 200), store.listRegulars(country)]);
+  return [...real, ...regs];
+}
+
 async function withPair<T>(tx: Tx, myId: string, otherId: string, now: number, fn: (a: Player, b: Player) => T): Promise<T> {
   const [a, b] = await tx.getPlayers([myId, otherId]);
   if (!a) throw new GameError("Create a character first.");
@@ -912,7 +928,7 @@ export async function POST(req: Request) {
         const suspectId = str(b.suspectId);
         const self = await store.get(playerId);
         if (!self) throw new GameError("Create a character first.");
-        const [people, crews] = await Promise.all([store.listPlayers(countryOf(self), 200), store.listCrews(200)]);
+        const [people, crews] = await Promise.all([withRegulars(store, countryOf(self)), store.listCrews(200)]);
         const tags = new Map(crews.map((c) => [c.id, c.tag]));
         const tagOf = (o: Player) => (o.crewId ? tags.get(o.crewId) ?? null : null);
         events = await store.transaction(async (tx) => {
@@ -1195,7 +1211,7 @@ export async function POST(req: Request) {
         const self = await store.get(playerId);
         if (!self) throw new GameError("Create a character first.");
         // Who the detective could have picked: everyone in the country who fits.
-        const [people, crews] = await Promise.all([store.listPlayers(countryOf(self), 200), store.listCrews(200)]);
+        const [people, crews] = await Promise.all([withRegulars(store, countryOf(self)), store.listCrews(200)]);
         const tags = new Map(crews.map((c) => [c.id, c.tag]));
         const tagOf = (o: Player) => (o.crewId ? tags.get(o.crewId) ?? null : null);
         events = await store.transaction(async (tx) => {
@@ -1290,6 +1306,30 @@ export async function POST(req: Request) {
         events = await settleTrial(store, caseId, now, { judgeId: playerId, verdict, takeBribe });
         break;
       }
+      case "treat": {
+        const target = str(b.targetId);
+        events = await store.transaction((tx) => withPair(tx, playerId, target, now, (d, x) => treat(d, x, now)));
+        break;
+      }
+      case "npc_scrub": {
+        const target = str(b.targetId);
+        events = await store.transaction((tx) => withPair(tx, playerId, target, now, (h, x) => npcScrub(h, x, now)));
+        break;
+      }
+      case "walkin_repair": {
+        const id = str(b.id);
+        const self = await store.get(playerId);
+        if (!self) throw new GameError("Create a character first.");
+        events = await withCity(store, countryOf(self), now, async (c, tx) => {
+          const [m] = await tx.getPlayers([playerId]);
+          if (!m) throw new GameError("Create a character first.");
+          tick(m, now);
+          const out = repairWalkIn(m, c, id, now);
+          await tx.putPlayer(m);
+          return out;
+        });
+        break;
+      }
       case "examine": {
         const caseId = str(b.caseId);
         events = await store.transaction(async (tx) => {
@@ -1331,7 +1371,7 @@ export async function POST(req: Request) {
         const suspectId = str(b.suspectId);
         const self = await store.get(playerId);
         if (!self) throw new GameError("Create a character first.");
-        const [people, crews] = await Promise.all([store.listPlayers(countryOf(self), 200), store.listCrews(200)]);
+        const [people, crews] = await Promise.all([withRegulars(store, countryOf(self)), store.listCrews(200)]);
         const tags = new Map(crews.map((c) => [c.id, c.tag]));
         const tagOf = (o: Player) => (o.crewId ? tags.get(o.crewId) ?? null : null);
         events = await store.transaction(async (tx) => {

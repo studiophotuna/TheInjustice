@@ -49,6 +49,7 @@ export function standGuard(c: City, p: Player, now: number): GameEvent[] {
   p.cash += pay;
   p.reputation += 1;
   const n = Math.min(GUARD.maxGuards, activeGuards(c, now).length);
+  addMerit(p, "military", 1.5);
   return [{ tone: "good", text: `You take your post outside the bank for an hour.${pay ? ` The city pays $${pay}.` : ""} ${n} soldier${n === 1 ? "" : "s"} on guard now.` }];
 }
 
@@ -95,6 +96,7 @@ export function joinPeacekeepers(c: City, p: Player, d: DistrictId, now: number)
   const war = c.turf![d]!.war!;
   p.energy -= MARTIAL.energy;
   war.peacekeepers = [...(war.peacekeepers ?? []), { id: p.id, name: p.name }];
+  addMerit(p, "military", 1);
   return [{ tone: "good", text: "You move in with your squad. When the fighting's settled, the army will have its say." }];
 }
 

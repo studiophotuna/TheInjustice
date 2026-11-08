@@ -247,6 +247,8 @@ export const BALANCE = {
   progress: {
     xpPerEnergy: 0.2,
     careerXpPerEnergy: 0.26,
+    /** Casework earns experience like a career job of this much energy per point of merit. */
+    meritXpEnergy: 5,
     meritGrowth: 2.2,
     meritScale: 8,
     /** The first promotion comes quicker, so the first day feels like progress. */

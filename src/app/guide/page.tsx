@@ -37,6 +37,13 @@ export default function GuidePage() {
         career has eight ranks. Work your career&apos;s jobs and grow the right qualities to get promoted, and each rank opens new work,
         new pay and new powers over other players. Specialties come with time, from everything you&apos;ve done.
       </p>
+      <p>
+        Careers also have city work, and the city keeps it coming. The city&apos;s own people get mugged, robbed, burned out and
+        wrecked now and then, the same as players do. Detectives work those scenes and make arrests, the courts try the cases,
+        doctors treat whoever is in the ward, bankers review the stolen money that gets banked, vigilantes chase the cases that go
+        cold, firefighters walk the burn scenes, mechanics fix the wrecks and hackers clean the records. All of that work counts
+        toward your next promotion and makes you better at the job, the same as your career jobs.
+      </p>
       <p>Leaving a career takes a while and costs you. Choose with care.</p>
 
       <h2>Money</h2>
