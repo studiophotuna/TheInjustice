@@ -1,9 +1,8 @@
 // How fast one person can send actions. Generous for a human tapping quickly, tight enough that
 // a script can't hammer the server or farm faster than people play.
 //
-// Kept in memory on each server instance: a burst from one client lands on the same warm
-// instance, which is what this guards against. Energy and timers already cap what anyone can
-// earn; this caps the load and the spam.
+// Production game actions are counted by PlayerStore so limits are shared across serverless
+// instances. The process-local helper below remains only for isolated unit tests and local tools.
 import { GameError } from "@/game/types";
 
 export const RATE = {
