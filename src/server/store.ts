@@ -155,6 +155,7 @@ export class FileStore implements PlayerStore {
   private data: FileData | null = null;
   private queue: Promise<unknown> = Promise.resolve();
   private actionHits = new Map<string, number[]>();
+  private actionHitsSweptAt = 0;
 
   constructor(private file: string) {}
 
@@ -217,6 +218,12 @@ export class FileStore implements PlayerStore {
 
   throttleAction(key: string, now: number, burst: number, burstMs: number, perMinute: number) {
     return this.serial(() => {
+      if (now - this.actionHitsSweptAt > 60_000) {
+        for (const [requestKey, timestamps] of this.actionHits) {
+          if (!timestamps.some((at) => now - at < 60_000)) this.actionHits.delete(requestKey);
+        }
+        this.actionHitsSweptAt = now;
+      }
       const hits = (this.actionHits.get(key) ?? []).filter((at) => now - at < 60_000);
       const recent = hits.filter((at) => now - at < burstMs).length;
       if (recent >= burst || hits.length >= perMinute) {
