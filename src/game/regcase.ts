@@ -63,7 +63,7 @@ export function pickTask(p: Player, w: CityWork, now: number): Task | null {
       return scene ? { kind: "investigate", caseId: scene.id } : null;
     }
     case "courts": {
-      const t = cases.find((c) => c.trial && !c.trial.verdict && !c.trial.prosecutor && !joinBlock(p, c, "prosecutor"));
+      const t = cases.find((c) => c.trial && aged(c.at, now) && !c.trial.verdict && !c.trial.prosecutor && !joinBlock(p, c, "prosecutor"));
       return t ? { kind: "prosecute", caseId: t.id } : null;
     }
     case "medicine": {
