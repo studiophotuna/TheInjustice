@@ -24,6 +24,7 @@ import { creditSeizure, searchingOfficers } from "@/game/customs";
 import { notify } from "@/game/social";
 import type { ShopKind } from "@/game/types";
 import { getStore, StoreConfigError } from "@/server/store";
+import { RATE, requester } from "@/server/ratelimit";
 
 export const dynamic = "force-dynamic";
 
@@ -105,6 +106,7 @@ export async function POST(req: Request) {
     const { deviceId, ipHash } = await deviceInfo();
     const now = Date.now();
     const store = getStore();
+    await store.throttleAction(requester(req), now, RATE.burst, RATE.burstMs, RATE.perMinute);
     let flag: { caseId: string; amount: number; at: number } | null = null;
     let owed: { country: import("@/game/types").CountryId; amount: number } | null = null;
     const rates = action.type === "job" || action.type === "collect_property" ? await taxRates(store) : {};
