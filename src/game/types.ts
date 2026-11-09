@@ -256,7 +256,8 @@ export interface Player {
   encounter?: { id: string; key: string; country: CountryId; name: string; district: string; at: number; expiresAt: number } | null;
   encounterAt?: number;
   /** Set on street regulars (characters the game runs). See regulars.ts. */
-  regular?: { country: CountryId; key: string; slot: number; v?: number };
+  /** A street regular: workAt is their last job, jobs counts work toward their next promotion. */
+  regular?: { country: CountryId; key: string; slot: number; v?: number; workAt?: number; jobs?: number };
   /** Recent repetitions of each job or exercise (fades over time), for diminishing returns. */
   practice?: Record<string, { n: number; at: number }>;
   /**
@@ -942,6 +943,8 @@ export interface FireRecord {
 export interface City {
   /** Recent arsons, for fire investigators. */
   fires?: FireRecord[];
+  /** What the regulars have been up to (jobs, purchases), for the street feed. */
+  street?: { at: number; text: string }[];
   /** When the city's own people last had an incident (muggings, fires, wrecks among regulars). */
   incidentAt?: number;
   /** Jobs waiting at the garage after a wreck in the street. */

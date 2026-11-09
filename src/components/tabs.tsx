@@ -2,6 +2,7 @@
 
 import { motionChoice, setMotion } from "./motion";
 import { GEAR_HOME, soldIn } from "@/game/stock";
+import { GEAR } from "@/game/gear";
 import { CarPhoto } from "./art/CarPhoto";
 import { DeleteAccount, HelpLinks } from "./legal";
 import { AlertsCard } from "./alerts";
@@ -324,6 +325,7 @@ export function ShopTab({ game }: { game: GameApi }) {
             <h3>{i.name}</h3>
             <p className="muted">{i.description}</p>
             {left !== null && <p className={`fine stock-note ${soldOut ? "out" : ""}`}>In stock: {left}{soldOut ? " · next shipment soon" : ""}</p>}
+            {i.have > 0 && <p className="fine muted">You own {i.have} of {GEAR.maxOwned}</p>}
           </div>
           <motion.button
             whileTap={{ scale: 0.94 }}
@@ -331,7 +333,7 @@ export function ShopTab({ game }: { game: GameApi }) {
             disabled={game.busy || i.owned || view.cash < price || !!away || soldOut}
             onClick={() => game.act({ type: "buy", itemId: i.id, maxPrice: price }).then(() => shops.load())}
           >
-            {i.owned ? "Owned" : away ? "Elsewhere" : soldOut ? "Sold out" : view.gear.some((g) => g.id === i.id && g.broken) ? `Replace $${price.toLocaleString()}` : `$${price.toLocaleString()}`}
+            {i.owned ? (i.have ? "Full" : "Owned") : away ? "Elsewhere" : soldOut ? "Sold out" : view.gear.some((g) => g.id === i.id && g.broken) ? `Replace $${price.toLocaleString()}` : `$${price.toLocaleString()}`}
           </motion.button>
         </motion.article>
         );
@@ -362,7 +364,7 @@ export function GearCard({ game }: { game: GameApi }) {
                 <>
                   <b className="gear-name"><ItemArt id={g.id} icon={g.icon} name={g.name} className="art-sm" /> {g.name}</b>
                   <div className="wear-bar" title={`${g.condition}% condition`}><span style={{ width: `${g.condition}%` }} className={g.condition <= 25 ? "low" : ""} /></div>
-                  <span className="fine">{g.broken ? "Broken: useless until repaired" : `${g.condition}% condition`}</span>
+                  <span className="fine">{g.broken ? "Broken: useless now" : `${g.condition}% condition`}{g.spares ? ` · ${g.spares} spare${g.spares === 1 ? "" : "s"}` : ""}</span>
                 </>
               ) : (
                 <span className="muted">Nothing. Fists{s === "armor" ? " and luck" : ""}.</span>
@@ -378,7 +380,7 @@ export function GearCard({ game }: { game: GameApi }) {
           {gear.map((g) => (
             <li key={g.id}>
               <span>
-                <ItemArt id={g.id} icon={g.icon} name={g.name} className="art-xs" /> {g.name} <span className="muted">· {g.broken ? "broken" : `${g.condition}%`}{g.issued ? " · issued" : ""}</span>
+                <ItemArt id={g.id} icon={g.icon} name={g.name} className="art-xs" /> {g.name} <span className="muted">· {g.broken ? "broken" : `${g.condition}%`}{g.spares ? ` · +${g.spares}` : ""}{g.issued ? " · issued" : ""}</span>
               </span>
               <span className="row">
                 {!g.equipped && (

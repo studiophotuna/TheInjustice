@@ -1,5 +1,25 @@
 # Changelog
 
+## 6.12.0: regulars live in the city; spare gear
+
+- **Regulars work their careers.** While they're out on the street, each regular does a job from
+  their own career about once an hour. They get paid and gain a little experience. Their work
+  shows up in the street feed ("Rosa Vint · Work an ER night shift").
+- **They rise slowly, to a cap.** A regular can climb at most two ranks above where they started.
+  Promotions take a long time. The city's big bosses don't climb.
+- **Regulars shop.** They keep what they earn, then buy what they need:
+  - a medkit when hurt, food when worn out;
+  - a weapon or armor from their own city's shop when they have none that works.
+
+  They pay the owner's price, so player-run shops earn from them. They never take the last piece
+  off a shelf, so a player is never shut out.
+- **Up to 3 of each weapon or armor.** You can now own the one in use plus two spares. The shop
+  shows "You own 2 of 3". When the piece you're using breaks, a spare takes over by itself.
+- **Fixes:**
+  - Regulars no longer lose their record and cash every few hours. The hacker's walk-in clients
+    from 6.11.0 now actually appear, and stolen money is fenced a little at a time.
+  - The purchase message no longer puts an emoji in the text.
+
 ## 6.11.0: the city keeps every career busy
 
 - **The city's own people get into trouble.** About every 75 minutes, each city has an incident

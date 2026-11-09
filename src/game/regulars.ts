@@ -163,7 +163,7 @@ export function regularUpkeep(p: Player, now: number) {
   if ((p.regular.v ?? 1) < REGULAR_VERSION) {
     const def = defFor(p);
     if (def) {
-      p.stats = { ...p.stats, ...regularStats(def) };
+      p.stats = { ...p.stats, ...regularStats(def, Math.max(def.rank, p.rank)) };
       p.reputation = def.heavy?.rep ?? 5 + def.rank * 8;
     }
     p.regular.v = REGULAR_VERSION;
@@ -173,13 +173,20 @@ export function regularUpkeep(p: Player, now: number) {
   const slot = Math.floor(now / REGULARS.refillMs);
   if (p.regular.slot !== slot) {
     p.regular.slot = slot;
+    // Regulars keep what they earn and steal. A broke one gets by on odd jobs (a small floor);
+    // a heavy always has real money on them.
     const [lo, hi] = defFor(p)?.heavy?.cash ?? [REGULARS.cashMin, REGULARS.cashMax];
-    p.cash = Math.round(lo + hash(p.id + slot) * (hi - lo));
-    p.dirty = 0;
+    const roll = Math.round(lo + hash(p.id + slot) * (hi - lo));
+    p.cash = Math.max(p.cash, defFor(p)?.heavy ? roll : lo);
+    // Stolen money gets fenced bit by bit.
+    if ((p.dirty ?? 0) > 0) {
+      const fenced = Math.ceil((p.dirty ?? 0) / 2);
+      p.dirty = (p.dirty ?? 0) - fenced;
+      p.cash += Math.floor(fenced * 0.7);
+    }
     p.bank = 0;
   }
-  p.heat = 0;
-  p.energy = Math.max(p.energy, 50);
+  p.energy = Math.max(p.energy, 30);
   p.sightings = [];
 }
 
@@ -189,8 +196,8 @@ export function regularUpkeep(p: Player, now: number) {
  * about as strong as a player who reached rank N, in the stats their career uses. Heavies are a
  * step above, a target for top players and crews.
  */
-export function regularStats(def: RegularDef): Record<StatKey, number> {
-  const base = 6 * def.rank ** 2 + 4;
+export function regularStats(def: RegularDef, rank = def.rank): Record<StatKey, number> {
+  const base = 6 * rank ** 2 + 4;
   return Object.fromEntries(
     STAT_KEYS.map((k) => [k, Math.round(base * (0.8 + hash(def.key + k) * 0.4) * (def.leans.includes(k) ? (def.heavy ? 1.3 : 1.6) : 0.6))]),
   ) as Record<StatKey, number>;

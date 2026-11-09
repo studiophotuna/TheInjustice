@@ -16,7 +16,7 @@ import { argueSentence, clinicFactor, fieldDressing, specialtyUps, travelFactor 
 import { communityService, recordMoney } from "./daily_life";
 import { updateProfile } from "./profile";
 import { hireBodyguards, lieLow } from "./hit";
-import { ensureEquipped, equip, equippedId, reissue, unequip, usesLeft, wearGear } from "./gear";
+import { GEAR, ensureEquipped, equip, equippedId, reissue, unequip, usesLeft, wearGear } from "./gear";
 import { BALANCE, maxEnergy, regenMs } from "./balance";
 import { gutRead, npcFighter, playerFighter, power, resolveFight } from "./combat";
 import { DISTRICT_BY_ID, totalJobs } from "./content/districts";
@@ -921,10 +921,16 @@ function buy(p: Player, itemId: string, events: GameEvent[], ctx: ActionContext 
     p.housing = item.housing!;
     p.homes = { ...(p.homes ?? {}), [countryOf(p)]: p.housing };
   } else if (item.kind === "weapon" || item.kind === "armor") {
-    // A broken one can be replaced; nothing gets repaired.
-    if (p.inventory[item.id] && usesLeft(p, item.id) > 0) throw new GameError("You already have a working one.");
-    p.inventory[item.id] = 1;
-    if (p.wear) delete p.wear[item.id];
+    // Up to three of a piece: the one in use plus spares. Nothing gets repaired; a broken one
+    // with no spare is simply replaced.
+    const have = p.inventory[item.id] ?? 0;
+    if (have === 1 && usesLeft(p, item.id) <= 0) {
+      if (p.wear) delete p.wear[item.id];
+    } else {
+      if (have >= GEAR.maxOwned) throw new GameError(`You can own up to ${GEAR.maxOwned} of those.`);
+      p.inventory[item.id] = have + 1;
+      if (!have && p.wear) delete p.wear[item.id];
+    }
     ensureEquipped(p);
     if (!equippedId(p, item.kind)) p.equipped = { ...p.equipped, [item.kind]: item.id };
   } else {
@@ -932,7 +938,7 @@ function buy(p: Player, itemId: string, events: GameEvent[], ctx: ActionContext 
   }
   p.cash -= price;
   if (run && !own) p.shopSale = { country: countryOf(p), kind, amount: ownerCut(local, price) };
-  events.push({ tone: "good", text: `Bought ${item.icon} ${item.name}.` });
+  events.push({ tone: "good", text: `Bought: ${item.name}.` });
 }
 
 function useItem(p: Player, itemId: string, now: number, events: GameEvent[]) {

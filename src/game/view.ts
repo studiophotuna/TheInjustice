@@ -10,7 +10,7 @@ import { playerMaxHp, woundHint } from "./wounds";
 import { careerGapBlock, careerRecordView } from "./career";
 import { publicProfile } from "./profile";
 import { threatView } from "./hit";
-import { gearView, usesLeft } from "./gear";
+import { GEAR, gearView, usesLeft } from "./gear";
 import { marketView } from "./drugs";
 import { tutorialView } from "./tutorial";
 import { launderOptions } from "./money";
@@ -99,7 +99,7 @@ export interface PublicView {
   districts: { id: DistrictId; name: string; tagline: string; locked: string | null }[];
   jobs: JobView[];
   recommendedJobId: string | null;
-  shop: { id: string; name: string; icon: string; price: number; description: string; kind: string; owned: boolean }[];
+  shop: { id: string; name: string; icon: string; price: number; description: string; kind: string; owned: boolean; have: number }[];
   fights: {
     id: string;
     name: string;
@@ -457,7 +457,9 @@ export function toView(p: Player, now: number): PublicView {
       owned:
         i.kind === "housing"
           ? p.housing >= (i.housing ?? 0)
-          : (i.kind === "weapon" || i.kind === "armor") && !!p.inventory[i.id] && usesLeft(p, i.id) > 0,
+          : (i.kind === "weapon" || i.kind === "armor") && (p.inventory[i.id] ?? 0) >= GEAR.maxOwned,
+      /** Weapons and armor: how many the player owns (the one in use plus spares). */
+      have: i.kind === "weapon" || i.kind === "armor" ? (p.inventory[i.id] ?? 0) : 0,
     })),
     fights: NPCS.filter((n) => localDistrict(n.district)).map((n) => ({
       id: n.id,

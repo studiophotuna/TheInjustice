@@ -428,7 +428,7 @@ export async function GET(req: Request) {
           hours: defFor(o)?.hours ?? null, reputation: o.reputation, tie: o.regular ? tieView(p, o.regular.country, o.regular.key) : null,
         };
       });
-      const feed = [...(city?.log ?? []).slice(0, 10).map((l) => ({ at: l.at, text: l.text, kind: "city" as const })), ...ambientLines(out, districts, now).map((l) => ({ ...l, kind: "street" as const }))]
+      const feed = [...(city?.log ?? []).slice(0, 10).map((l) => ({ at: l.at, text: l.text, kind: "city" as const })), ...(city?.street ?? []).map((l) => ({ at: l.at, text: l.text, kind: "street" as const })), ...ambientLines(out, districts, now).map((l) => ({ ...l, kind: "street" as const }))]
         .filter((l) => now - l.at < 24 * 60 * 60_000)
         .sort((x, y) => y.at - x.at)
         .slice(0, 12);

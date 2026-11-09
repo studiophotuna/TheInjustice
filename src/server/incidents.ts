@@ -6,6 +6,9 @@ import { incidentDue, planIncident, runIncident } from "@/game/incidents";
 import type { CountryId } from "@/game/types";
 import { withCity } from "./city";
 import { cityRegulars } from "./regulars";
+import { regularShop, regularWork } from "@/game/reglife";
+import { defFor, scheduledOut } from "@/game/regulars";
+import { tick } from "@/game/engine";
 import type { getStore } from "./store";
 
 type Store = ReturnType<typeof getStore>;
@@ -37,9 +40,39 @@ export async function cityIncident(store: Store, country: CountryId, now: number
   });
 }
 
+/**
+ * The regulars' day: those out on the street do a job when it's time and buy what they need.
+ * One city transaction, so shelves and shop tills stay consistent.
+ */
+export async function cityLife(store: Store, country: CountryId, now: number): Promise<number> {
+  const regs = await cityRegulars(store, country, now);
+  const due = regs.filter((r) => {
+    const def = defFor(r);
+    return def && scheduledOut(def, now) && now - (r.regular?.workAt ?? 0) >= 60 * 60_000;
+  });
+  if (!due.length) return 0;
+  return withCity(store, country, now, async (c, tx) => {
+    const lines: string[] = [];
+    const locked = await tx.getPlayers(due.map((r) => r.id));
+    for (const p of locked) {
+      if (!p) continue;
+      tick(p, now);
+      const worked = regularWork(p, now, Math.random);
+      const bought = regularShop(p, c, now, Math.random);
+      for (const l of [worked, bought]) if (l) lines.push(l);
+      await tx.putPlayer(p);
+    }
+    if (lines.length) c.street = [...lines.map((text, i) => ({ at: now - i * 1000, text })), ...(c.street ?? [])].slice(0, 15);
+    return lines.length;
+  });
+}
+
 /** Every city, for the timer. One city failing never stops the others. */
 export async function allCityIncidents(store: Store, now: number) {
   const out: Partial<Record<CountryId, string | null>> = {};
-  for (const { id } of COUNTRIES) out[id] = await cityIncident(store, id, now).catch((e) => (console.error(`incident ${id}`, e), null));
+  for (const { id } of COUNTRIES) {
+    out[id] = await cityIncident(store, id, now).catch((e) => (console.error(`incident ${id}`, e), null));
+    await cityLife(store, id, now).catch((e) => console.error(`city life ${id}`, e));
+  }
   return out;
 }

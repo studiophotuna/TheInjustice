@@ -50,7 +50,19 @@ describe("equipment", () => {
     p.cash = 1000;
     applyAction(p, { type: "buy", itemId: "pipe" }, LATER, always(0.5));
     expect(usesLeft(p, "pipe")).toBe(ITEM_BY_ID.pipe.durability);
-    expect(() => applyAction(p, { type: "buy", itemId: "pipe" }, LATER, always(0.5))).toThrow(/working one/);
+    // Spares: up to three of a piece, no more.
+    p.cash += 10_000;
+    applyAction(p, { type: "buy", itemId: "pipe" }, LATER, always(0.5));
+    applyAction(p, { type: "buy", itemId: "pipe" }, LATER, always(0.5));
+    expect(p.inventory.pipe).toBe(3);
+    expect(() => applyAction(p, { type: "buy", itemId: "pipe" }, LATER, always(0.5))).toThrow(/up to 3/);
+    // When the one in use breaks, a spare takes over.
+    p.equipped = { ...p.equipped, weapon: "pipe" };
+    p.wear = { ...(p.wear ?? {}), pipe: 1 };
+    wearGear(p, ["weapon"]);
+    expect(p.inventory.pipe).toBe(2);
+    expect(usesLeft(p, "pipe")).toBe(ITEM_BY_ID.pipe.durability);
+    p.inventory.pipe = 1;
   });
 
   it("nothing is repaired: broken gear is replaced; the armory swaps broken issued gear once a day", () => {

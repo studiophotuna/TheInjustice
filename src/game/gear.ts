@@ -13,7 +13,12 @@ export const GEAR = {
   armoryCooldownMs: 24 * 60 * 60_000,
   /** Armor power at which it soaks half of every hit. */
   blockHalf: 28,
+  /** Most copies of one weapon or armor a person can own (the one in use plus spares). */
+  maxOwned: 3,
 };
+
+/** How many of this piece the player owns, the one in use included. */
+export const ownedCount = (p: Player, id: string) => p.inventory[id] ?? 0;
 
 const isGear = (d: ItemDef | undefined): d is ItemDef => !!d && (d.kind === "weapon" || d.kind === "armor");
 
@@ -98,7 +103,12 @@ export function wearGear(p: Player, slots: Slot[], uses = 1): GameEvent[] {
     const after = Math.max(0, before - uses);
     p.wear = { ...(p.wear ?? {}), [id]: after };
     const def = ITEM_BY_ID[id];
-    if (after === 0) out.push({ tone: "bad", text: `Your ${def.name.toLowerCase()} is broken. It's useless now: time for a new one.` });
+    if (after === 0 && ownedCount(p, id) > 1) {
+      // A spare takes over: the broken one is thrown away.
+      p.inventory[id] -= 1;
+      p.wear = { ...p.wear, [id]: maxUses(def) };
+      out.push({ tone: "info", text: `Your ${def.name.toLowerCase()} breaks. You switch to your spare.` });
+    } else if (after === 0) out.push({ tone: "bad", text: `Your ${def.name.toLowerCase()} is broken. It's useless now: time for a new one.` });
     else if (before / maxUses(def) > 0.25 && after / maxUses(def) <= 0.25) out.push({ tone: "info", text: `Your ${def.name.toLowerCase()} is badly worn. It won't last much longer.` });
   }
   return out;
@@ -151,6 +161,8 @@ export function gearView(p: Player, now: number) {
         broken: condition(p, id) <= 0,
         issued: !!def.issued,
         canReissue: canReissue(p, id, now),
+        /** Spare copies, besides the one in use. */
+        spares: Math.max(0, ownedCount(p, id) - 1),
       };
     })
     .sort((a, b) => (a.slot === b.slot ? Number(b.equipped) - Number(a.equipped) : a.slot === "weapon" ? -1 : 1));
