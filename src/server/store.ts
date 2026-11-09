@@ -561,7 +561,7 @@ class PostgresStore implements PlayerStore {
       await tx`select pg_advisory_xact_lock(hashtextextended(${key}, 0))`;
       await tx`delete from injustice.action_rate_hits
         where request_key = ${key} and hit_at <= to_timestamp(${(now - 60_000) / 1000})`;
-      const rows = await tx<{ burst_count: number; minute_count: number }[]>\`
+      const rows = await tx<{ burst_count: number; minute_count: number }[]>`
         select
           count(*) filter (where hit_at > to_timestamp(${(now - burstMs) / 1000}))::int as burst_count,
           count(*)::int as minute_count
