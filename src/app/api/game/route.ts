@@ -179,10 +179,7 @@ export async function POST(req: Request) {
         owed = p.taxOwed;
         p.taxOwed = null;
       }
-      if (p.pendingDeposit) {
-        flag = p.pendingDeposit;
-        p.pendingDeposit = null;
-      }
+      if (p.pendingDeposit) flag = p.pendingDeposit;
       return { player: p, result: { view: toView(p, now), events } };
     }).catch(async (e) => {
       // The sale fell through: the piece goes back on the shelf.
@@ -223,12 +220,28 @@ export async function POST(req: Request) {
     // A suspicious deposit lands on the compliance desk: file it on the case it followed.
     const f = flag as { caseId: string; amount: number; at: number } | null;
     if (f) {
-      await store
-        .transaction(async (tx) => {
+      try {
+        // Keep the pending marker on the player until the case write is durable. If this
+        // transaction fails, the next action retries instead of silently losing the flag.
+        const filed = await store.transaction(async (tx) => {
           const c = await tx.getCase(f.caseId);
-          if (c && fileDeposit(c, { id: playerId! }, f)) await tx.putCase(c);
-        })
-        .catch((e) => console.error(e));
+          if (!c) return false;
+          if (fileDeposit(c, { id: playerId! }, f)) {
+            await tx.putCase(c);
+            return true;
+          }
+          // An existing deposit or a closed case means this flag has already been handled.
+          return !!c.deposit || !!c.trial?.verdict || !!c.hunt;
+        });
+        if (filed) {
+          await store.update(playerId!, (p) => {
+            if (p?.pendingDeposit?.caseId === f.caseId && p.pendingDeposit.at === f.at) p.pendingDeposit = null;
+            return { player: p, result: null };
+          });
+        }
+      } catch (e) {
+        console.error(e);
+      }
     }
     return NextResponse.json(out);
   } catch (e) {
