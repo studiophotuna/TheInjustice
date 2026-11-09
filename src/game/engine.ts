@@ -648,6 +648,11 @@ export function jobXp(job: JobDef): Partial<Record<StatKey, number>> {
 /** Casework (arrests, exams, verdicts, hunts…) also earns merit in the player's own career. */
 export function addMerit(p: Player, path: PathId, amount: number): GameEvent[] {
   if (p.path !== path || amount <= 0) return [];
+  // Regulars climb by their own slower rules (see reglife.ts).
+  if (p.regular) {
+    p.regular.jobs = (p.regular.jobs ?? 0) + amount;
+    return [];
+  }
   p.jobsSinceRank += amount;
   const events: GameEvent[] = [];
   // The work itself teaches you: experience in the career's key stats, like a career job.

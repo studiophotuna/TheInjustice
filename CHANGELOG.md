@@ -1,5 +1,28 @@
 # Changelog
 
+## 6.13.0: regulars do their careers' city work
+
+- **Regulars work the city's cases, not only their career jobs.** When there's city work for their
+  career, a regular out on the street does it, by the same rules as players:
+  - **Police:** work crime scenes, and arrest when the clues point clearly at one person (players
+    included).
+  - **Attorneys:** take up prosecutions nobody has taken.
+  - **Doctors:** treat whoever is in the ward and examine crime victims.
+  - **Bankers:** review flagged deposits.
+  - **Firefighters:** walk burn scenes and sometimes name the arsonist.
+  - **Mechanics:** fix the wrecks waiting at the garage.
+  - **Hackers:** quietly clean other regulars' records.
+  - **Soldiers:** stand guard at the bank, one at a time.
+
+  Players get the first 20 minutes on any fresh case, fire or wreck. Regulars only step in after
+  that. Their work shows up in the street feed.
+- **New regulars.** Every city now has a firefighter, a mechanic and a hacker (15 regulars per
+  city), so fires, wrecks and records always have someone to see to them.
+- **Fixes:**
+  - When an attorney joined a trial, the work wasn't saved to their record. It now counts toward
+    promotion.
+  - Regulars' casework counts toward their own slow promotions, never the player promotion path.
+
 ## 6.12.0: regulars live in the city; spare gear
 
 - **Regulars work their careers.** While they're out on the street, each regular does a job from

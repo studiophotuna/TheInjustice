@@ -3,10 +3,17 @@
 import { randomUUID } from "node:crypto";
 import { COUNTRIES } from "@/game/content/world";
 import { incidentDue, planIncident, runIncident } from "@/game/incidents";
-import type { CountryId } from "@/game/types";
+import { GameError, type CountryId, type Player } from "@/game/types";
 import { withCity } from "./city";
 import { cityRegulars } from "./regulars";
-import { regularShop, regularWork } from "@/game/reglife";
+import { LIFE, regularShop, regularWork } from "@/game/reglife";
+import { pickTask, type CityWork, type Task } from "@/game/regcase";
+import { arrest, joinTrial } from "@/game/justice";
+import { investigate } from "@/game/crime";
+import { examine, reviewDeposit } from "@/game/casework";
+import { investigateFire } from "@/game/firehack";
+import { npcScrub, repairWalkIn, treat } from "@/game/incidents";
+import { standGuard } from "@/game/military";
 import { defFor, scheduledOut } from "@/game/regulars";
 import { tick } from "@/game/engine";
 import type { getStore } from "./store";
@@ -40,31 +47,143 @@ export async function cityIncident(store: Store, country: CountryId, now: number
   });
 }
 
+/** One piece of a regular's city work, in its own transaction. Returns a street-feed line. */
+async function doTask(store: Store, country: CountryId, regId: string, task: Task, w: CityWork, now: number): Promise<string | null> {
+  const rng = Math.random;
+  const mark = (p: Player) => {
+    if (p.regular) p.regular.workAt = now;
+  };
+  switch (task.kind) {
+    case "arrest":
+    case "investigate":
+    case "prosecute":
+    case "examine":
+    case "review":
+      return store.transaction(async (tx) => {
+        const c = await tx.getCase(task.caseId);
+        if (!c) return null;
+        const otherId =
+          task.kind === "arrest" ? task.suspectId : task.kind === "examine" ? c.victimId : task.kind === "review" ? c.culpritId : null;
+        const [p, other] = await tx.getPlayers(otherId && otherId !== regId ? [regId, otherId] : [regId]);
+        if (!p) return null;
+        tick(p, now);
+        if (other) tick(other, now);
+        let line: string;
+        if (task.kind === "arrest") {
+          if (!other) return null;
+          const pool = w.people.filter((x) => x.id !== p.id).map((player) => ({ player, crewTag: w.tags.get(player.id) ?? null }));
+          arrest(p, other, c, pool, w.tags.get(other.id) ?? null, now);
+          line = `${p.name} arrested ${other.name} for the ${c.kind === "mug" ? "mugging" : c.kind === "snatch" ? "snatching" : "theft"} in ${c.district}.`;
+        } else if (task.kind === "investigate") {
+          investigate(p, c, now, rng);
+          line = `${p.name} worked the scene in ${c.district} (case #${c.id}).`;
+        } else if (task.kind === "prosecute") {
+          joinTrial(p, c, "prosecutor", null, now);
+          line = `${p.name} is prosecuting ${c.trial!.suspectName}.`;
+        } else if (task.kind === "examine") {
+          examine(p, c, other, now, rng);
+          line = `${p.name} examined ${c.victimName}'s injuries for case #${c.id}.`;
+        } else {
+          reviewDeposit(p, c, other, "report", now, rng);
+          line = `${p.name} flagged a suspicious deposit to the police.`;
+        }
+        mark(p);
+        await tx.putPlayer(p);
+        if (other) await tx.putPlayer(other);
+        await tx.putCase(c);
+        return line;
+      });
+    case "treat":
+    case "scrub":
+      return store.transaction(async (tx) => {
+        const otherId = task.kind === "treat" ? task.patientId : task.clientId;
+        const [p, other] = await tx.getPlayers([regId, otherId]);
+        if (!p || !other) return null;
+        tick(p, now);
+        tick(other, now);
+        if (task.kind === "treat") treat(p, other, now);
+        else npcScrub(p, other, now);
+        mark(p);
+        await tx.putPlayer(p);
+        await tx.putPlayer(other);
+        // Record scrubs stay secret.
+        return task.kind === "treat" ? `${p.name} treated ${other.name} in the ward.` : null;
+      });
+    case "fire":
+    case "repair":
+    case "guard":
+      return withCity(store, country, now, async (c, tx) => {
+        const fire = task.kind === "fire" ? (c.fires ?? []).find((f) => f.id === task.fireId) : null;
+        const ids = fire && fire.arsonistId !== regId ? [regId, fire.arsonistId] : [regId];
+        const [p, other] = await tx.getPlayers(ids);
+        if (!p) return null;
+        tick(p, now);
+        if (other) tick(other, now);
+        let line: string;
+        if (task.kind === "fire") {
+          if (!fire) return null;
+          investigateFire(p, c, task.fireId, other ?? null, now, rng);
+          line = fire.solved ? `${p.name} traced the ${fire.what} fire to ${fire.solved.arsonistName}.` : `${p.name} walked the burn scene at ${fire.what}.`;
+        } else if (task.kind === "repair") {
+          const job = (c.walkIns ?? []).find((x) => x.id === task.id);
+          repairWalkIn(p, c, task.id, now);
+          line = `${p.name} got ${job?.npcName ?? "a"}'s ${job?.what ?? "car"} back on the road.`;
+        } else {
+          standGuard(c, p, now);
+          line = `${p.name} is standing guard at the bank.`;
+        }
+        mark(p);
+        await tx.putPlayer(p);
+        if (other) await tx.putPlayer(other);
+        return line;
+      });
+  }
+}
+
 /**
- * The regulars' day: those out on the street do a job when it's time and buy what they need.
- * One city transaction, so shelves and shop tills stay consistent.
+ * The regulars' day. Those out on the street do their career's city work when there is some
+ * (the same rules as players), otherwise a career job, and then buy what they need.
  */
 export async function cityLife(store: Store, country: CountryId, now: number): Promise<number> {
   const regs = await cityRegulars(store, country, now);
   const due = regs.filter((r) => {
     const def = defFor(r);
-    return def && scheduledOut(def, now) && now - (r.regular?.workAt ?? 0) >= 60 * 60_000;
+    return def && scheduledOut(def, now) && now - (r.regular?.workAt ?? 0) >= LIFE.jobEveryMs;
   });
   if (!due.length) return 0;
-  return withCity(store, country, now, async (c, tx) => {
-    const lines: string[] = [];
+  const [real, cases, crews, city] = await Promise.all([store.listPlayers(country, 200), store.listCases(country, 100), store.listCrews(200), store.getCity(country)]);
+  const crewTag = new Map(crews.map((c) => [c.id, c.tag]));
+  const people = [...real, ...regs];
+  const w: CityWork = { city, cases, people, tags: new Map(people.map((x) => [x.id, x.crewId ? crewTag.get(x.crewId) ?? null : null])) };
+  const lines: string[] = [];
+  const worked = new Set<string>();
+  for (const r of due) {
+    const task = pickTask(r, w, now);
+    if (!task) continue;
+    const line = await doTask(store, country, r.id, task, w, now).catch((e) => {
+      // Someone got there first, or the case moved on: they'll do a job instead.
+      if (!(e instanceof GameError)) console.error(`casework ${r.id}`, e);
+      return null;
+    });
+    if (line !== null || task.kind === "scrub") worked.add(r.id);
+    // Keep this run's picture of the city current, so two regulars don't take the same post.
+    if (line && task.kind === "guard" && w.city) w.city.guards = [...(w.city.guards ?? []), { id: r.id, name: r.name, until: now + 60 * 60_000 }];
+    if (line) lines.push(line);
+  }
+  // Everyone else works a career job; everyone shops.
+  await withCity(store, country, now, async (c, tx) => {
     const locked = await tx.getPlayers(due.map((r) => r.id));
     for (const p of locked) {
       if (!p) continue;
       tick(p, now);
-      const worked = regularWork(p, now, Math.random);
+      const job = worked.has(p.id) ? null : regularWork(p, now, Math.random);
       const bought = regularShop(p, c, now, Math.random);
-      for (const l of [worked, bought]) if (l) lines.push(l);
+      for (const l of [job, bought]) if (l) lines.push(l);
       await tx.putPlayer(p);
     }
     if (lines.length) c.street = [...lines.map((text, i) => ({ at: now - i * 1000, text })), ...(c.street ?? [])].slice(0, 15);
-    return lines.length;
   });
+  return lines.length;
 }
 
 /** Every city, for the timer. One city failing never stops the others. */

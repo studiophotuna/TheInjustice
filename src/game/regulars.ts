@@ -50,6 +50,9 @@ const R = (key: string, name: string, path: PathId | null, rank: number, hours: 
 
 export const ROSTER: Record<CountryId, RegularDef[]> = {
   varrow: [
+    R("hank", "Hank Doyle", "fire", 3, [7, 10], ["toughness", "perception"], "Engine Company 9. Has carried more people out of the Gutter than the buses have.", ["Smell that? Somebody's cooking with gasoline again.", "Check your smoke alarms. Nobody does.", "Third fire on Iron Row this month. Not an accident."]),
+    R("otto", "Otto Brenner", "mechanic", 2, [8, 10], ["wits", "strength"], "Runs a two-bay garage under the rail bridge. Cash, no paperwork.", ["Bring it in, I'll tell you what's wrong. Then I'll tell you the price.", "That knocking? That's your engine asking for help.", "Somebody keeps stripping cars on Ninth."]),
+    R("pix", "Felix Varga", "hacker", 3, [22, 9], ["wits", "perception"], "Works from a basement full of screens. Goes by Pix online.", ["Your password is your dog's name. Everyone's is.", "City hall still runs on software older than me.", "Records are just numbers. Numbers change."]),
     R("gus", "Gus Marlowe", null, 0, [6, 10], ["toughness"], "Sells umbrellas when it rains and lighters when it doesn't.", ["Rain's coming. Rain's always coming.", "Anybody need a lighter? Two bucks.", "Saw the Iron Row boys down by the docks again."]),
     R("rosa", "Rosa Vint", "medicine", 2, [9, 9], ["perception", "wits"], "Night nurse at St. Brigid's. Has seen everything twice.", ["If you're bleeding, come in the front door, not the back.", "Third stabbing this week. Slow week.", "Eat something before you start a fight, people."]),
     R("dutch", "Dutch Kessler", "enforcer", 3, [18, 9], ["strength", "toughness"], "Collects for someone he won't name. Polite about it.", ["Nice shop. Shame if the rent went up.", "Mr. Kozak says hello. That's all. Hello.", "Pay what you owe and nobody gets a story."]),
@@ -64,6 +67,9 @@ export const ROSTER: Record<CountryId, RegularDef[]> = {
     HEAVY(R("webb", "Captain Harlan Webb", "police", 6, [13, 10], ["perception", "toughness", "wits"], "Precinct Square's night captain. Half the city fears him; the other half pays him.", ["Nothing happens in this city I don't hear about.", "Clean records are just records nobody's read yet.", "Move along. Unless you want to talk."]), 150, [200, 500]),
   ],
   solmarra: [
+    R("sal", "Salvo Greco", "fire", 3, [6, 10], ["toughness", "perception"], "Harbor fireboat captain. Knows which warehouse fires were insured last week.", ["Fire on the water is the worst kind.", "Funny how the empty warehouses burn first.", "Keep the docks clear, people."]),
+    R("nino", "Nino Barca", "mechanic", 3, [9, 10], ["wits", "agility"], "Tunes engines for the casino crowd and the smugglers alike.", ["Fast boat, fast car, same fix.", "Somebody wants a hidden tank. I didn't hear that.", "Pay in cash, drive away happy."]),
+    R("luca", "Luca Sarti", "hacker", 3, [20, 9], ["wits", "charisma"], "Runs the casino's cameras, and sometimes turns them off.", ["The cameras see everything. Unless they don't.", "Customs databases are a joke.", "I can make a bad night disappear. For a price."]),
     R("lucia", "Lucia Ferro", "banking", 3, [7, 10], ["wits", "charisma"], "Port Solace exchange broker. Every handshake is a contract.", ["The harbor money moves before sunrise.", "Never trust a man who pays in coins.", "Rates are good today. For me."]),
     R("dario", "Dario Vela", null, 0, [10, 10], ["agility"], "Runs a fish stall and three side hustles.", ["Fresh fish! Fresher secrets!", "Customs are checking the north pier today.", "My cousin knows a guy. My cousin always knows a guy."]),
     R("marisol", "Marisol Cruz", "medicine", 3, [13, 9], ["perception"], "Harbor clinic doctor. Stitches sailors and asks nothing.", ["The clinic doesn't take names after dark.", "Salt water's good for cuts. Not for bullets.", "Somebody came in with a hook wound. Don't ask."]),
@@ -78,6 +84,9 @@ export const ROSTER: Record<CountryId, RegularDef[]> = {
     HEAVY(R("vargas", "Commodore Vargas", "military", 6, [6, 10], ["toughness", "strength", "perception"], "Runs the naval yard like a fortress and the smuggling routes like a business.", ["Nothing leaves this harbor without my say.", "Discipline is cheaper than bribes.", "Stand straight when you talk to me."]), 160, [250, 600]),
   ],
   kestrova: [
+    R("ivan", "Ivan Brodsky", "fire", 4, [6, 10], ["toughness", "strength"], "Foundry fire brigade chief. Burns on both arms, none on his record.", ["Foundry fires don't start themselves.", "Sand, not water. Never water.", "Somebody wanted that building gone."]),
+    R("milan", "Milan Horak", "mechanic", 2, [7, 10], ["strength", "wits"], "Fixes army trucks by day and everybody else's by night.", ["Army parts fit everything. Don't ask.", "Cold kills batteries. Bring me yours.", "I can make it start. Can't make it legal."]),
+    R("lev", "Lev Antonov", "hacker", 3, [21, 9], ["wits", "perception"], "Ex-state telecoms engineer. Still has the keys.", ["The state listens to everything. So do I.", "Phone records? Give me an hour.", "Ironmoor's firewall is a screen door."]),
     R("anya", "Anya Volkova", "military", 4, [5, 10], ["strength", "toughness"], "Garrison sergeant. Ironmoor's walls know her boots.", ["Curfew is not a suggestion.", "Stand up straight when you rob someone.", "The colonel is watching the rail yard."]),
     R("pavel", "Pavel Dragan", null, 0, [8, 10], ["toughness"], "Foundry worker with burned hands and a short fuse.", ["Shift's twelve hours. Pay's for six.", "The foundry boss drives a new car. Funny.", "Don't push me today."]),
     R("irina", "Irina Kostic", "police", 4, [13, 9], ["perception", "wits"], "Inspector. Smiles once a year, on purpose.", ["I already know. I'm waiting for you to tell me.", "Somebody's selling army rifles. I'll find them.", "Papers, please. Yes, you."]),
@@ -92,6 +101,9 @@ export const ROSTER: Record<CountryId, RegularDef[]> = {
     HEAVY(R("sorokina", "Mila Sorokina", "enforcer", 6, [20, 9], ["agility", "wits", "nerve"], "Runs the foundry rackets. Nobody has seen her lose a fight.", ["Everyone in Ironmoor works for me. Some just don't know it.", "Pay on Friday. Always Friday.", "I remember every face."]), 155, [250, 650]),
   ],
   meridian: [
+    R("cole", "Cole Harper", "fire", 3, [8, 10], ["toughness", "perception"], "Fire inspector for the towers. Signs off on things he probably shouldn't.", ["Sprinklers in the penthouse don't work. Nobody fixes them.", "Glass towers burn faster than you'd think.", "That fire on the strip was set."]),
+    R("ray", "Ray Okafor", "mechanic", 3, [10, 10], ["wits", "agility"], "Restores supercars for people who never ask the price.", ["Carbon fiber doesn't dent. It shatters.", "I can make it quieter. Or louder.", "Rich people crash a lot."]),
+    R("theo", "Theo Lin", "hacker", 4, [23, 8], ["wits", "perception"], "Former bank security consultant. Now consults for the other side.", ["The Exchange patches on Mondays. Do it Sunday.", "Every system has a back door. I built some.", "Your file? Already gone. You're welcome."]),
     R("sloane", "Sloane Avery", "banking", 4, [13, 10], ["wits", "charisma"], "Halcyon hedge fund partner. Owns three penthouses and no conscience.", ["Markets are just crime with better lighting.", "Lunch is at the club. Members only.", "I don't launder money. I diversify it."]),
     R("jules", "Jules Moreau", null, 0, [16, 10], ["charisma", "agility"], "Valet at the Meridian Grand. Knows whose car went where.", ["Keys, please. Tip, please.", "A senator left with someone who wasn't his wife.", "Nice car. Shame about the dent."]),
     R("kai", "Kai Nakamura", "police", 3, [10, 10], ["perception", "agility"], "Financial crimes detective. Follows money, not people.", ["Money always leaves a trail.", "Somebody in this city is very rich and very nervous.", "Receipts. I love receipts."]),
@@ -227,6 +239,9 @@ const DOING: Record<string, string[]> = {
   medicine: ["is on a smoke break in", "is heading to a house call in", "is patching someone up in"],
   banking: ["is counting money in", "is lunching with a client in", "is closing a deal in"],
   military: ["is on patrol in", "is off duty in", "is running drills near"],
+  fire: ["is inspecting a building in", "is on a call in", "is checking hydrants in"],
+  mechanic: ["is towing a car out of", "is under a car in", "is test-driving through"],
+  hacker: ["is on a laptop in a café in", "is buying burner phones in", "is reading over shoulders in"],
   vigilante: ["is watching the rooftops over", "is following someone in", "was spotted in"],
   none: ["is hustling in", "is killing time in", "is selling something in"],
 };

@@ -18,10 +18,10 @@ const mk = (id: string, name: string) => {
 const allRegulars = (now: number) => ROSTER.varrow.filter((d) => !d.heavy).map((d) => makeRegular("varrow", d.key, now));
 
 describe("street regulars", () => {
-  it("every city has ten, with unique ids, and they're never protected newcomers", () => {
+  it("every city has fifteen, with unique ids, and they're never protected newcomers", () => {
     for (const list of Object.values(ROSTER)) {
-      expect(list).toHaveLength(12);
-      expect(new Set(list.map((d) => d.key)).size).toBe(12);
+      expect(list).toHaveLength(15);
+      expect(new Set(list.map((d) => d.key)).size).toBe(15);
       expect(list.filter((d) => d.heavy)).toHaveLength(2);
     }
     const r = makeRegular("varrow", "dutch", LATER);

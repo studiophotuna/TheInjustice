@@ -29,6 +29,9 @@ export const FACE_SRCS = new Set(Object.values(FACES).map((f) => f.src));
 
 /** How each street regular is written: gender, and the older ones. */
 export const REGULAR_LOOKS: Record<string, { g: Gender; old?: boolean; face?: string }> = {
+  // Fire, garages and keyboards (every city)
+  hank: { g: "m" }, otto: { g: "m" }, pix: { g: "m" }, sal: { g: "m" }, nino: { g: "m" }, luca: { g: "m" },
+  ivan: { g: "m" }, milan: { g: "m" }, lev: { g: "m" }, cole: { g: "m" }, ray: { g: "m" }, theo: { g: "m" },
   // Varrow
   gus: { g: "m", old: true }, rosa: { g: "f" }, dutch: { g: "m" }, ivy: { g: "f" }, teo: { g: "m" }, mags: { g: "f" },
   lenny: { g: "m" }, bea: { g: "f" }, sully: { g: "m" }, nico: { g: "m" },
@@ -87,10 +90,10 @@ const NPC_SRCS = new Set(Object.values(NPC_FACES));
 
 /** Which regulars share a city (the same order as the roster). */
 const CITIES: string[][] = [
-  ["gus", "rosa", "dutch", "ivy", "teo", "mags", "lenny", "bea", "sully", "nico", "crowe", "webb"],
-  ["lucia", "dario", "marisol", "beppe", "ana", "tomas", "pia", "rico", "elena", "matteo", "bruni", "vargas"],
-  ["anya", "pavel", "irina", "bogdan", "vera", "oleg", "katya", "stefan", "dusan", "yuri", "hraba", "sorokina"],
-  ["sloane", "jules", "kai", "dex", "noor", "finn", "zara", "milo2", "reed", "tess", "vale", "thorne"],
+  ["gus", "rosa", "dutch", "ivy", "teo", "mags", "lenny", "bea", "sully", "nico", "crowe", "webb", "hank", "otto", "pix"],
+  ["lucia", "dario", "marisol", "beppe", "ana", "tomas", "pia", "rico", "elena", "matteo", "bruni", "vargas", "sal", "nino", "luca"],
+  ["anya", "pavel", "irina", "bogdan", "vera", "oleg", "katya", "stefan", "dusan", "yuri", "hraba", "sorokina", "ivan", "milan", "lev"],
+  ["sloane", "jules", "kai", "dex", "noor", "finn", "zara", "milo2", "reed", "tess", "vale", "thorne", "cole", "ray", "theo"],
 ];
 
 function hash(s: string) {

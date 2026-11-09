@@ -1241,6 +1241,7 @@ export async function POST(req: Request) {
           const [l, suspect] = await tx.getPlayers([playerId, c.trial.suspectId]);
           if (!l) throw new GameError("Create a character first.");
           const out = joinTrial(l, c, side, suspect && suspect.id !== l.id ? suspect : null, now);
+          await tx.putPlayer(l);
           if (suspect && suspect.id !== l.id) await tx.putPlayer(suspect);
           await tx.putCase(c);
           return out;
