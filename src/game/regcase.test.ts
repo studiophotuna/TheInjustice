@@ -10,7 +10,7 @@ function trialCase(at: number): CaseFile {
     id: "case-1",
     country: "varrow",
     district: "Old Town",
-    kind: "mugging",
+    kind: "mug",
     at,
     victimId: "victim",
     victimName: "Victim",
@@ -29,7 +29,7 @@ function trialCase(at: number): CaseFile {
       deadline: now + 60_000,
       evidence: 0.8,
     },
-  } as CaseFile;
+  } as unknown as CaseFile;
 }
 
 describe("attorney regular player-first window", () => {
