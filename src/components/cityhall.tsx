@@ -173,6 +173,7 @@ export function CityHall({ game }: { game: GameApi }) {
             <p className="muted">
               {c.mayor ? "The ballot is open." : "City hall is empty: special election."} Votes are counted in {until(c.termEnds)}. {c.turnout} vote{c.turnout === 1 ? "" : "s"} cast so far.
             </p>
+            <p className="fine muted">The city&apos;s regulars vote too. Their votes only count when players&apos; votes are tied, or when no player votes.</p>
             {c.candidates.length === 0 && <p className="muted">Nobody is running yet.</p>}
             <ul className="ballot">
               {c.candidates.map((x) => (

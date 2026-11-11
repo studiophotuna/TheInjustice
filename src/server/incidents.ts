@@ -14,6 +14,8 @@ import { examine, reviewDeposit } from "@/game/casework";
 import { investigateFire } from "@/game/firehack";
 import { npcScrub, repairWalkIn, treat } from "@/game/incidents";
 import { standGuard } from "@/game/military";
+import { fileRegular, regularCandidate, regularMayorDay, regularsVote } from "@/game/regcivic";
+import { BALANCE } from "@/game/balance";
 import { defFor, scheduledOut } from "@/game/regulars";
 import { tick } from "@/game/engine";
 import type { getStore } from "./store";
@@ -186,12 +188,39 @@ export async function cityLife(store: Store, country: CountryId, now: number): P
   return lines.length;
 }
 
+/** City hall: a regular may file for mayor, regulars vote, and a regular mayor governs. */
+export async function cityCivic(store: Store, country: CountryId, now: number): Promise<void> {
+  const regs = await cityRegulars(store, country, now);
+  const real = await store.listPlayers(country, 200);
+  await withCity(store, country, now, async (c, tx) => {
+    const cand = regularCandidate(c, regs, now);
+    if (cand) {
+      const [r] = await tx.getPlayers([cand.id]);
+      if (r && r.cash >= BALANCE.city.runFee) {
+        tick(r, now);
+        fileRegular(c, r, now, Math.random);
+        await tx.putPlayer(r);
+      }
+    }
+    regularsVote(c, regs, [...real, ...regs], now, Math.random);
+    if (c.mayor?.id.startsWith("reg-")) {
+      const [m] = await tx.getPlayers([c.mayor.id]);
+      if (m) {
+        tick(m, now);
+        regularMayorDay(c, m, [...real, ...regs], now, Math.random);
+        await tx.putPlayer(m);
+      }
+    }
+  });
+}
+
 /** Every city, for the timer. One city failing never stops the others. */
 export async function allCityIncidents(store: Store, now: number) {
   const out: Partial<Record<CountryId, string | null>> = {};
   for (const { id } of COUNTRIES) {
     out[id] = await cityIncident(store, id, now).catch((e) => (console.error(`incident ${id}`, e), null));
     await cityLife(store, id, now).catch((e) => console.error(`city life ${id}`, e));
+    await cityCivic(store, id, now).catch((e) => console.error(`city hall ${id}`, e));
   }
   return out;
 }

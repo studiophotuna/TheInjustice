@@ -979,6 +979,10 @@ export interface City {
   pardonTerm: number;
   lastSalaryAt: number;
   candidates: { id: string; name: string; title: string; reputation: number; pitch: string; at: number; spent?: number }[];
+  /** Regulars' votes this term, counted apart: they only decide when players' votes don't. */
+  regularVotes?: Record<string, string>;
+  /** The term a regular mayor last set the city's policy. */
+  policyTerm?: number;
   /** Server-only: candidates paying residents for their votes. */
   voteBuys?: { candidateId: string; voterId: string; amount: number; at: number; exposed?: boolean }[];
   /** Server-only: devices that already voted this term (one vote per device). */

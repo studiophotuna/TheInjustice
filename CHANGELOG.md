@@ -1,5 +1,23 @@
 # Changelog
 
+## 6.14.0: regulars at city hall
+
+- **Regulars can run for mayor.** When the ballot is open, the regular with the best standing who
+  can pay the $500 filing fee may file, with their own pitch. If a mayor is in office, players
+  get the first 12 hours of the ballot to themselves.
+- **Regulars vote.** Each regular votes once per term, mostly for candidates on their own side of
+  the law.
+- **A regular who wins governs.** They draw the salary, set taxes and the police bounty once a
+  term, appoint a police chief, and sometimes order a crackdown or pay for soup kitchen meals.
+  A crooked one sometimes skims the treasury, which internal affairs can catch.
+- **Limiters, so the city stays the players' to run:**
+  - At most one regular on the ballot per city per term.
+  - Players' votes decide. Regulars' votes only count when players' votes are tied or there are
+    none.
+  - A regular mayor keeps taxes moderate (1% to 5%), never pardons anyone and doesn't touch
+    witness protection.
+  - Regulars never sign recall petitions. Players can recall a regular mayor as usual.
+
 ## 6.13.0: regulars do their careers' city work
 
 - **Regulars work the city's cases, not only their career jobs.** When there's city work for their

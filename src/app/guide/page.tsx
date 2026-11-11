@@ -101,7 +101,9 @@ export default function GuidePage() {
       <p>
         Each city has a mayor (elected by players), a newspaper, a chat, player-run shops and businesses, and events like blackouts
         or heat waves that change the day for everyone. The regulars you meet on the street are the city&apos;s own people: some will
-        work for you, some will remember what you did to them.
+        work for you, some will remember what you did to them. Regulars
+        live here like you do: they work, shop, vote, and one of them may run for mayor. Players&apos; votes always come first. The
+        regulars&apos; votes only decide an election when players&apos; votes are tied or there are none.
       </p>
 
       <h2>The casino</h2>

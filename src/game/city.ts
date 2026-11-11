@@ -70,14 +70,29 @@ export function advanceCity(c: City, now: number): boolean {
     const ended = termEnds(c.term);
     const counts = tally(c);
     const turnout = Object.keys(c.votes).length;
+    // Players' votes decide. The regulars' votes only count when players' don't: a tie, or none.
+    const street = new Map<string, number>(c.candidates.map((x) => [x.id, 0]));
+    for (const id of Object.values(c.regularVotes ?? {})) if (street.has(id)) street.set(id, street.get(id)! + 1);
     const ranked = [...c.candidates].sort(
-      (a, b) => (counts.get(b.id) ?? 0) - (counts.get(a.id) ?? 0) || (b.spent ?? 0) - (a.spent ?? 0) || b.reputation - a.reputation,
+      (a, b) =>
+        (counts.get(b.id) ?? 0) - (counts.get(a.id) ?? 0) ||
+        (street.get(b.id) ?? 0) - (street.get(a.id) ?? 0) ||
+        (b.spent ?? 0) - (a.spent ?? 0) ||
+        b.reputation - a.reputation,
     );
-    const winner = ranked[0] && (counts.get(ranked[0].id) ?? 0) > 0 ? ranked[0] : null;
+    const backing = (id: string) => (counts.get(id) ?? 0) + (street.get(id) ?? 0);
+    const winner = ranked[0] && backing(ranked[0].id) > 0 ? ranked[0] : null;
     if (winner) {
       const reelected = c.mayor?.id === winner.id;
       c.mayor = { id: winner.id, name: winner.name, since: reelected ? c.mayor!.since : ended };
-      announce(c, `${winner.name} ${reelected ? "is re-elected" : "wins the election"} with ${counts.get(winner.id)} of ${turnout} votes.`, ended);
+      const real = counts.get(winner.id) ?? 0;
+      announce(
+        c,
+        real
+          ? `${winner.name} ${reelected ? "is re-elected" : "wins the election"} with ${real} of ${turnout} votes.`
+          : `${winner.name} ${reelected ? "is re-elected" : "wins the election"} on the street's vote.`,
+        ended,
+      );
     } else if (c.mayor) {
       announce(c, `Nobody won any votes. ${c.mayor.name} stays on as mayor.`, ended);
     } else {
@@ -86,6 +101,7 @@ export function advanceCity(c: City, now: number): boolean {
     c.history = [{ term: c.term, name: winner?.name ?? null, votes: winner ? counts.get(winner.id)! : 0, turnout, at: ended }, ...c.history].slice(0, 10);
     c.candidates = [];
     c.votes = {};
+    c.regularVotes = {};
     c.voteDevices = {};
     c.recall = [];
     c.voteBuys = (c.voteBuys ?? []).filter((v) => !v.exposed).slice(-50);
@@ -247,6 +263,7 @@ export function signRecall(c: City, p: Player, now: number): GameEvent[] {
     c.chief = null;
     c.candidates = [];
     c.votes = {};
+    c.regularVotes = {};
     c.voteDevices = {};
     c.recall = [];
     return [{ tone: "good", text: `Your signature was the last one needed. ${name} is out.` }];
