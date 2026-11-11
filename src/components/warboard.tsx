@@ -33,7 +33,7 @@ export type WarDistrict = {
 };
 
 /** District photos whose file name differs from the district id. */
-const SCENE: Record<string, string> = { precinct_square: "precinct", casino_strip: "casino", checkpoint_row: "checkpoint", glass_quarter: "halcyon" };
+const SCENE: Record<string, string> = { precinct_square: "precinct", casino_strip: "casino", checkpoint_row: "checkpoint", glass_quarter: "highrise" };
 const sceneOf = (id: string) => `/scenes/${SCENE[id] ?? id.replace(/_/g, "")}.jpg`;
 const first = (n: string) => n.split(" ")[0];
 

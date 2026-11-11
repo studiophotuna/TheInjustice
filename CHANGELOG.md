@@ -1,5 +1,32 @@
 # Changelog
 
+## 7.2.0: art that matches what it shows (batch 1 of the redesign)
+
+From the art audit. Every change below fixes a picture that showed the wrong thing.
+
+- **The Fire Department has its own building.** The fire log moved out of the Police Station into
+  a new **Fire Station** in every city.
+  - The Fire! story on Home and the Fires tile now open the Fire Station.
+  - The Fire! story shows firefighters, not police tape.
+  - The Fire career's banner shows fire too.
+- **Story characters have their own faces.** None of them share a face with a rank photo, a fight
+  NPC or a street regular any more:
+  - Judge Crane had no face at all (a gavel) and now has one;
+  - Benny Marlowe no longer shares a face with a street brawler;
+  - Mr. Kozak and Doc Mercy no longer share a face with players' rank photos;
+  - Doc Mercy now looks as she's written: older, with glasses.
+- **Other pictures that showed the wrong thing:**
+  - The heatwave event showed rain; it now shows heat.
+  - Turf wars showed a sunny yacht harbour; they now show a night street.
+  - City Hall was a purple fountain; it is now a civic building.
+  - The Police Station was an unreadable black frame; it now shows police.
+  - The hospital district was a parking lot; it now shows the hospital.
+  - Your Place was a rain puddle; it now shows apartments at night.
+  - The daily reward and messages got fitting pictures.
+  - The city of Halcyon no longer uses a real-world landmark skyline.
+- **Search** finds the Fire Station, the Pound and the black market.
+- Removed 49 unused old images.
+
 ## 7.1.0: the syndicate look, part 2 (Me and Home)
 
 The Me and Home screens rebuilt to match the approved mockup.

@@ -32,3 +32,28 @@ Video Free License (see /public/scenes/CREDITS.md), cropped square.
 | street-m4 | 6484 poor man carrying trash bags |
 | street-f1 | 33486 old woman with umbrella while it rains at a funeral |
 | street-f2 | 47498 urban girl with a grey hoodie |
+
+## Story characters (public/portraits/story)
+
+Each story character has a photo nobody else in the game uses: not a rank photo, not a fight
+NPC, not a street regular (their source faces are reserved in `STORY_SOURCE_FACES`). They are
+stand-ins from the Mixkit face library (same licence) until commissioned portraits replace the
+files in place. Brann is a still from Mixkit clip 23245.
+
+| Character | File | Source |
+|---|---|---|
+| Judge Aldous Crane | story/crane.jpg | faces/mk9248 |
+| Benny Marlowe | story/benny.jpg | faces/mk13737 |
+| Mr. Kozak | story/kozak.jpg | faces/mk4813 |
+| Doc Mercy | story/mercy.jpg | faces/mk5777 |
+| Isadora Quell | story/quell.jpg | faces/mk4804 |
+| Reyes | story/reyes.jpg | faces/mk49439 |
+| Marsh | story/marsh.jpg | faces/mk4954 |
+| Silas | story/silas.jpg | faces/mk6341 |
+| Brann | story/brann.jpg | Mixkit 23245 |
+| Dobrev | story/dobrev.jpg | faces/mk25005 |
+| Okafor | story/okafor.jpg | faces/mk44544 |
+| Brennan | story/brennan.jpg | faces/mk33210 |
+
+Still to commission: rank 8 for Mechanic, Hacker and Fire (they show the rank-7 photo; no stock
+still was credible as a career leader).

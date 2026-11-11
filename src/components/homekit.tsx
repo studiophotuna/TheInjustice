@@ -15,7 +15,7 @@ import { SkelCard, SkelTiles } from "./skeleton";
 // ── Stories ────────────────────────────────────────────────────────────────
 
 /** A photo for each city event. */
-const EVENT_SCENE: Record<string, string> = { heatwave: "southside", festival: "boardwalk", blackout: "undercity", storm: "street", payday: "exchange" };
+const EVENT_SCENE: Record<string, string> = { heatwave: "foundry", festival: "boardwalk", blackout: "undercity", storm: "street", payday: "exchange" };
 
 /** What a city event is and what it changes, with a clock until it ends. */
 function EventSheet({ game, go, close }: { game: GameApi; go: (t: string) => void; close: () => void }) {
@@ -55,7 +55,7 @@ function EventSheet({ game, go, close }: { game: GameApi; go: (t: string) => voi
 
 type Story = { key: string; label: string; img: string; fresh: boolean; sub?: string; run: () => unknown };
 
-const NEED_ART: Record<string, string> = { ambush: "street", heist: "bank", breakout: "prison", war: "marina" };
+const NEED_ART: Record<string, string> = { ambush: "street", heist: "bank", breakout: "prison", war: "street" };
 
 /** Everything worth a tap right now, as a row of circles. Gold rings are new or ready. */
 export function Stories({ game, go, needs, onRead, war, heavies, fires, election }: { game: GameApi; go: (t: string) => void; needs: CrewNeed[]; onRead: (id: string) => void; war?: string | null; heavies?: Heavy[]; fires?: number; election?: boolean }) {
@@ -69,17 +69,17 @@ export function Stories({ game, go, needs, onRead, war, heavies, fires, election
   if (chapter) s.push({ key: "chapter", label: chapter.title.split(" · ")[0], img: scene("interrogation"), fresh: true, run: () => onRead(chapter.id) });
   const boss = heavies?.find((h) => h.out && h.status !== "hospital");
   if (boss?.photo) s.push({ key: "boss", label: "Big fish", img: boss.photo, fresh: true, run: () => go(`person:${boss.id}`) });
-  if (fires) s.push({ key: "fire", label: "Fire!", img: scene("crimescene"), fresh: true, run: () => go("place:police") });
+  if (fires) s.push({ key: "fire", label: "Fire!", img: "/portraits/fire-7.jpg", fresh: true, run: () => go("place:firehouse") });
   if (election) s.push({ key: "election", label: "Election", img: scene("cityhall"), fresh: false, run: () => go("place:cityhall") });
-  if (war) s.push({ key: "war", label: "Turf war", img: scene("marina"), fresh: true, run: () => go("place:cityhall") });
+  if (war) s.push({ key: "war", label: "Turf war", img: scene("street"), fresh: true, run: () => go("place:cityhall") });
   for (const n of needs) s.push({ key: `need-${n.kind}`, label: n.cta, img: scene(NEED_ART[n.kind] ?? "street"), fresh: true, run: () => go(n.go) });
-  if (view.daily.canClaim) s.push({ key: "daily", label: "Daily reward", img: scene("exchange"), fresh: true, run: () => game.act({ type: "claim_daily" }) });
+  if (view.daily.canClaim) s.push({ key: "daily", label: "Daily reward", img: scene("bank"), fresh: true, run: () => game.act({ type: "claim_daily" }) });
   const unread = view.inbox.items.filter((i) => !i.read).length;
-  if (unread) s.push({ key: "inbox", label: `${unread} message${unread > 1 ? "s" : ""}`, img: scene("police"), fresh: true, run: () => go("people:inbox") });
+  if (unread) s.push({ key: "inbox", label: `${unread} message${unread > 1 ? "s" : ""}`, img: scene("city"), fresh: true, run: () => go("people:inbox") });
   const risky = view.dirty > 0 || view.stash.drugs.some((d) => d.onYou > 0);
-  if (risky && view.stash.spot && !view.travel && !view.jail) s.push({ key: "stash", label: "Hide it", img: scene("southside"), fresh: true, run: () => game.act({ type: "stash", op: "put_all" }) });
+  if (risky && view.stash.spot && !view.travel && !view.jail) s.push({ key: "stash", label: "Hide it", img: scene("highrise"), fresh: true, run: () => game.act({ type: "stash", op: "put_all" }) });
   const dog = view.dog.dog;
-  if (dog && dog.state === "hungry" && !view.travel) s.push({ key: "dog", label: `Feed ${dog.name}`, img: scene("southside"), fresh: true, run: () => game.act({ type: "dog_feed" }) });
+  if (dog && dog.state === "hungry" && !view.travel) s.push({ key: "dog", label: `Feed ${dog.name}`, img: scene("highrise"), fresh: true, run: () => game.act({ type: "dog_feed" }) });
   const medic = view.specialties.find((x) => x.id === "combat_medic" && x.tier > 0);
   if (medic?.ready && view.hp < view.maxHp) s.push({ key: "dressing", label: "Patch up", img: scene("hospital"), fresh: true, run: () => game.act({ type: "field_dressing" }) });
   if (live.full === 0 && live.energy < view.maxEnergy) s.push({ key: "food", label: "Eat", img: scene("oldmarket"), fresh: true, run: () => go("tab:shop") });
@@ -140,7 +140,7 @@ export function CityTiles({ stats, city, go }: { stats: CityStats | undefined; c
     { n: stats.out, label: "Out on the street", tone: "teal", to: "tab:people" },
     { n: stats.crews, label: stats.crews === 1 ? "Crew" : "Crews", tone: "violet", to: "people:crew" },
     { n: stats.wanted, label: "Wanted", tone: "red", to: "place:police" },
-    { n: stats.fires, label: stats.fires === 1 ? "Fire" : "Fires", tone: "orange", to: "place:police" },
+    { n: stats.fires, label: stats.fires === 1 ? "Fire" : "Fires", tone: "orange", to: "place:firehouse" },
   ];
   return (
     <section>

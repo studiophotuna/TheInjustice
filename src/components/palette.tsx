@@ -11,14 +11,16 @@ type Cmd = { id: string; group: string; label: string; hint?: string; keywords?:
 type Online = { id: string; name: string; canAttack: string | null; canCrime: Record<string, string | null>; regular?: boolean };
 
 const PLACES: [string, string, string][] = [
-  ["police", "Police station", "cops report case files arrest fire log arson wanted fugitives"],
+  ["police", "Police station", "cops report case files arrest wanted fugitives"],
+  ["firehouse", "Fire Station", "fire log arson fires investigate burn"],
+  ["pound", "The Pound", "dog breed adopt guard dog kennel"],
   ["court", "Courthouse", "trial bail lawyer judge"],
   ["hospital", "Hospital", "doctor heal surgery clinic"],
   ["bank", "Bank", "deposit withdraw loan launder money"],
   ["academy", "Academy", "school career apply enroll"],
   ["cityhall", "City Hall", "mayor vote election seats newspaper"],
   ["prison", "Prison", "jail cell yard breakout"],
-  ["street", "The Street", "dealers rackets contracts cold cases drugs"],
+  ["street", "The Street", "dealers rackets contracts cold cases drugs black market fence gear"],
   ["station", "Station", "travel bus train plane country drive"],
   ["directory", "The Directory", "services banker lawyer doctor mechanic shop find hire"],
   ["home", "Your Place", "home stash hide dirty money drugs safe"],

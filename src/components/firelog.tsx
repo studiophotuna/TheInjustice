@@ -6,7 +6,7 @@ import { fmt, type GameApi } from "./useGame";
 
 type Fire = { id: string; what: string; victim: string; at: number; solved: string | null; solvedBy: string | null; block: string | null };
 
-/** The Police Station: the city's recent arsons. Firefighters (Engineer and up) investigate here. */
+/** The Fire Station: the city's recent arsons. Firefighters (Engineer and up) investigate here. */
 export function FireLog({ game }: { game: GameApi }) {
   const [data, setData] = useState<{ fires: Fire[]; fireWatch: number | null } | null>(null);
   const load = useCallback(async () => {
@@ -25,8 +25,16 @@ export function FireLog({ game }: { game: GameApi }) {
     window.addEventListener("conspira:changed", load);
     return () => window.removeEventListener("conspira:changed", load);
   }, [load]);
-  if (!data || (!data.fires.length && !data.fireWatch)) return null;
+  if (!data) return null;
   const firefighter = game.view!.path?.id === "fire";
+  if (!data.fires.length && !data.fireWatch) {
+    return (
+      <section className="card fire-log">
+        <h3 className="card-title">Fire log</h3>
+        <p className="muted">No fires in the last two days. {firefighter ? "When something burns, the scene is yours to walk." : "When something burns, it shows up here."}</p>
+      </section>
+    );
+  }
   return (
     <section className="card fire-log">
       <h3 className="card-title"><Flame size={16} /> Fire log</h3>

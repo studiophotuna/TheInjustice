@@ -39,7 +39,7 @@ export const REGULAR_LOOKS: Record<string, { g: Gender; old?: boolean; face?: st
   // Solmarra
   lucia: { g: "f" }, dario: { g: "m" }, marisol: { g: "f" }, beppe: { g: "m" }, ana: { g: "f" }, tomas: { g: "m" },
   pia: { g: "f" }, rico: { g: "m" }, elena: { g: "f" }, matteo: { g: "m" },
-  bruni: { g: "m", old: true, face: "enforcer-8" }, vargas: { g: "m", old: true, face: "mk9248" },
+  bruni: { g: "m", old: true, face: "enforcer-8" }, vargas: { g: "m", old: true, face: "mk4764" },
   // Kestrova
   anya: { g: "f" }, pavel: { g: "m" }, irina: { g: "f" }, bogdan: { g: "m" }, vera: { g: "f" }, oleg: { g: "m", old: true },
   katya: { g: "f" }, stefan: { g: "m" }, dusan: { g: "m" }, yuri: { g: "m" },
@@ -79,14 +79,18 @@ export const regularGender = (key: string): Gender => REGULAR_LOOKS[key]?.g ?? "
 
 /** The story's own people and the street toughs: career and rank (or a fixed photo). */
 const NPC_PHOTO: Record<string, string> = {
-  reyes: "police-4", kozak: "enforcer-6", marsh: "courts-4", silas: "vigilante-3", mercy: "medicine-8", quell: "banking-2",
-  brann: "military-4", dobrev: "mechanic-6", okafor: "hacker-6", brennan: "fire-6", crane: "courts-7", benny: "street-m2",
+  // The story's people each have their own photo (public/portraits/story), never a rank photo,
+  // a fight NPC's or a regular's. Commissioned portraits replace these files in place.
+  reyes: "story/reyes", kozak: "story/kozak", marsh: "story/marsh", silas: "story/silas", mercy: "story/mercy", quell: "story/quell",
+  brann: "story/brann", dobrev: "story/dobrev", okafor: "story/okafor", brennan: "story/brennan", crane: "story/crane", benny: "story/benny",
   alley_rat: "vigilante-5", drunk_sailor: "street-m4", dock_brawler: "street-m3", southside_bruiser: "street-m2", iron_foreman: "mechanic-6",
   mugger: "enforcer-1", beach_hustler: "street-m1", casino_bouncer: "enforcer-2", rail_rat: "street", state_enforcer: "police-3",
   undercity_scav: "vigilante-8", corp_security: "police-6", road_gang: "enforcer-1",
 };
 for (const [id, file] of Object.entries(NPC_PHOTO)) NPC_FACES[id] = `/portraits/${file}.jpg`;
-const NPC_SRCS = new Set(Object.values(NPC_FACES));
+/** Faces the story portraits were taken from: no regular wears them, so nobody shares a face with the story. */
+export const STORY_SOURCE_FACES = new Set(["9248", "13737", "4813", "5777", "4804", "49439", "4954", "6341", "25005", "44544", "33210"].map((id) => `/faces/mk${id}.jpg`));
+const NPC_SRCS = new Set([...Object.values(NPC_FACES), ...STORY_SOURCE_FACES]);
 
 /** Which regulars share a city (the same order as the roster). */
 const CITIES: string[][] = [

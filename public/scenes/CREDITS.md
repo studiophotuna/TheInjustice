@@ -56,3 +56,19 @@ eight ranks of every career (Mixkit, same license):
 | military | 49229, 5987, 24021, 23053, 47859, 23157, 28904, 47862 |
 | vigilante | 41439, 36446, 39531, 2118, 46483, 21756, 2098, 46711 |
 | street (no career) | 6675 |
+
+## Stand-ins (November 2026)
+
+Three scenes were misleading (a purple fountain for City Hall, a dark street for the Police
+Station, an aerial parking lot for St. Brigid's hospital district). Until commissioned art arrives,
+those files are copies of fitting scenes already credited above, kept at the same paths so the new
+art drops in place:
+
+| File | Copy of |
+|---|---|
+| cityhall.* | courthousehill (14051 list above: civic statue) |
+| police.* | precinct |
+| stbrigids.* | hospital |
+
+`halcyon.*` (a recognisable real skyline) is no longer used for the city of Halcyon; it stays only
+as the "Halcyon" cosmetic banner that players may own.

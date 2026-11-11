@@ -48,7 +48,21 @@ describe("NPCs are drawn as their career and rank", () => {
       const all = new Set(Array.from({ length: 8 }, (_, i) => rankPortrait(p, i + 1)));
       expect(all.size, p).toBeGreaterThanOrEqual(7);
     }
-    expect(NPC_FACES.reyes).toBe("/portraits/police-4.jpg");
+    // The story's people have their own photos: never a rank photo, never a regular's face.
+    const STORY = ["reyes", "kozak", "marsh", "silas", "mercy", "quell", "brann", "dobrev", "okafor", "brennan", "crane", "benny"];
+    const { existsSync } = await import("node:fs");
+    const { REGULAR_LOOKS, regularFace, STORY_SOURCE_FACES } = await import("./content/faces");
+    const ranks = new Set(["police", "enforcer", "courts", "vigilante", "medicine", "banking", "military", "mechanic", "hacker", "fire"].flatMap((p) => Array.from({ length: 8 }, (_, i) => rankPortrait(p, i + 1))));
+    const regularFaces = new Set(Object.keys(REGULAR_LOOKS).map((k) => regularFace(k)?.src));
+    const otherNpcs = Object.entries(NPC_FACES).filter(([id]) => !STORY.includes(id)).map(([, src]) => src);
+    for (const id of STORY) {
+      const src = NPC_FACES[id];
+      expect(src, id).toBe(`/portraits/story/${id}.jpg`);
+      expect(existsSync(`public${src}`), id).toBe(true);
+      expect(ranks.has(src), id).toBe(false);
+      expect(otherNpcs.includes(src), id).toBe(false);
+    }
+    for (const src of STORY_SOURCE_FACES) expect(regularFaces.has(src), src).toBe(false);
     expect(regularPhoto("solmarra", "lucia")).toMatch(/^\/portraits\/[a-z0-9-]+\.jpg$/);
   });
 });

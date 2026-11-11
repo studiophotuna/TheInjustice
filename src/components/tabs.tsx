@@ -162,7 +162,7 @@ export function JobsTab({ game, highlight }: { game: GameApi; highlight: string 
 }
 
 /** District photo behind each job, where the file name differs from the district id. */
-const DISTRICT_SCENE: Record<string, string> = { precinct_square: "precinct", casino_strip: "casino", checkpoint_row: "checkpoint", glass_quarter: "halcyon" };
+const DISTRICT_SCENE: Record<string, string> = { precinct_square: "precinct", casino_strip: "casino", checkpoint_row: "checkpoint", glass_quarter: "highrise" };
 
 function JobCard({ job, energy, blocked, best, flash, onWork }: {
   job: JobView; energy: number; blocked: boolean; best: boolean; flash: boolean; onWork: () => void;
@@ -468,7 +468,7 @@ function MotionSetting() {
 /** The photo behind the Me hero: where each career works. */
 const ME_SCENE: Record<string, string> = {
   police: "police", enforcer: "ironrow", courts: "court", vigilante: "undercity", medicine: "hospital",
-  banking: "bank", military: "checkpoint", mechanic: "foundry", hacker: "techpark", fire: "crimescene",
+  banking: "bank", military: "checkpoint", mechanic: "foundry", hacker: "techpark", fire: "foundry",
 };
 
 export function ProfileTab({ game }: { game: GameApi }) {

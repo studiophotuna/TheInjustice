@@ -38,7 +38,7 @@ const SCENE_FOR: Record<CountryId, SceneKind> = {
   varrow: "city",
   solmarra: "solace",
   kestrova: "ironmoor",
-  meridian: "halcyon",
+  meridian: "highrise",
 };
 
 function greeting() {

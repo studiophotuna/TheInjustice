@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Anchor, ArrowLeft, BedDouble, BookUser, Building2, Dices, GraduationCap, HeartPulse, Landmark, Lock, PawPrint, Scale, Shield, Siren, Train } from "lucide-react";
+import { Anchor, ArrowLeft, BedDouble, BookUser, Building2, Dices, GraduationCap, HeartPulse, Landmark, Flame, Lock, PawPrint, Scale, Shield, Siren, Train } from "lucide-react";
 import { Casino } from "./casino";
 import { Docks } from "./docks";
 import { Pound } from "./pound";
@@ -23,11 +23,11 @@ import { ItemArt } from "./art/ItemArt";
 import { LaunderCard, StreetMarket } from "./underworld";
 import type { GameApi } from "./useGame";
 
-export type Building = "police" | "court" | "hospital" | "bank" | "academy" | "cityhall" | "prison" | "street" | "station" | "docks" | "home" | "directory" | "casino" | "pound";
+export type Building = "police" | "court" | "hospital" | "bank" | "academy" | "cityhall" | "prison" | "street" | "station" | "docks" | "home" | "directory" | "casino" | "pound" | "firehouse";
 
 const BUILDINGS: { id: Building; name: string; scene: SceneKind; poster: string; Icon: ComponentType<{ size?: number }>; short: string; tagline: string }[] = [
   { id: "directory", name: "The Directory", scene: "city", poster: "city", Icon: BookUser, short: "Who does what", tagline: "Who in town launders, defends, patches up, repairs or sells, and for how much." },
-  { id: "home", name: "Your Place", scene: "southside", poster: "southside", Icon: BedDouble, short: "Sleep, stash, guard dog", tagline: "Where you sleep, and where you hide what can't go in a bank." },
+  { id: "home", name: "Your Place", scene: "highrise", poster: "highrise", Icon: BedDouble, short: "Sleep, stash, guard dog", tagline: "Where you sleep, and where you hide what can't go in a bank." },
   { id: "police", name: "Police Station", scene: "police", poster: "police", Icon: Siren, short: "Reports and arrests", tagline: "Report what you saw. Case files, arrests, internal affairs." },
   { id: "court", name: "Courthouse", scene: "court", poster: "court", Icon: Scale, short: "Trials, bail, lawyers", tagline: "Trials, bail, lawyers, the court record." },
   { id: "hospital", name: "Hospital", scene: "hospital", poster: "hospital", Icon: HeartPulse, short: "Patients and a back door", tagline: "Patients, check-ups, and a quiet back door." },
@@ -38,6 +38,7 @@ const BUILDINGS: { id: Building; name: string; scene: SceneKind; poster: string;
   { id: "street", name: "The Street", scene: "street", poster: "street", Icon: Shield, short: "Rackets and the black market", tagline: "Dealers, the black market, rackets, contracts, break-ins." },
   { id: "station", name: "Station", scene: "station", poster: "station", Icon: Train, short: "Travel to other cities", tagline: "Bus, train or plane to another country. Or drive." },
   { id: "casino", name: "The Velvet Ace", scene: "casino", poster: "casino", Icon: Dices, short: "Cards, dice and the wheel", tagline: "Twenty-One, roulette and the burning seven. Cash on the table." },
+  { id: "firehouse", name: "Fire Station", scene: "foundry", poster: "foundry", Icon: Flame, short: "Fires and investigations", tagline: "The fire log: every fire in the last two days, and who walked the scene." },
   { id: "pound", name: "The Pound", scene: "pound", poster: "pound", Icon: PawPrint, short: "Dogs for the door", tagline: "City-run kennels. Different breeds in every city, new arrivals every few hours." },
   { id: "docks", name: "The Docks", scene: "marina", poster: "marina", Icon: Anchor, short: "Cars and cargo", tagline: "Your cars, the lot, and fences who move cargo between cities." },
 ];
@@ -106,7 +107,6 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
       return (
         <div className="stack">
           <FugitivesCard game={game} />
-          <FireLog game={game} />
           <ThreatReports game={game} />
           <CasesPanel game={game} hub={hub} place="police" />
         </div>
@@ -192,6 +192,12 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
       return <Casino game={game} />;
     case "pound":
       return <Pound game={game} />;
+    case "firehouse":
+      return (
+        <div className="stack">
+          <FireLog game={game} />
+        </div>
+      );
     case "docks":
       return (
         <div className="stack">
