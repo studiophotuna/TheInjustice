@@ -426,6 +426,9 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
 }
 
 /** The game HUD: who you are, and every resource in its own colour, always in the same place. */
+/** $6,300 -> $6.3k, for tight spots. */
+const shortMoney = (n: number) => (n >= 1_000_000 ? `$${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1)}m` : n >= 1_000 ? `$${(n / 1_000).toFixed(n >= 10_000 ? 0 : 1)}k` : `$${n}`);
+
 function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonNullable<GameApi["live"]>; onProfile: () => void; onSearch: () => void }) {
   const heatTone = { Clean: "ok", Noticed: "warn", Wanted: "hot", "Most wanted": "hot" }[view.heatLabel];
   const ladder = view.ladder;
@@ -469,35 +472,36 @@ function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonN
           <b className={`hud-name ${nameClass(view.look?.color)}`}>{view.name}<NameFx color={view.look?.color} /></b>
           <span className="hud-title">{view.path ? `${view.path.rank} · ${view.path.name}` : `Nobody · ${view.location.city}`}</span>
         </div>
-        <div className="hud-pills">
-          <span className="hud-pill cash" title={`Cash on you. In the bank: $${view.bank.toLocaleString()}.`} role="button" tabIndex={0} onClick={tap(`Cash on you. In the bank: $${view.bank.toLocaleString()}.`)}>
-            <span className="coin" aria-hidden />
-            <Delta value={view.cash} prefix="$" />
-            <Counter value={view.cash} className="cash" prefix="" />
-            <button className="pill-plus" aria-label="Open the bank" title={`Bank: $${view.bank.toLocaleString()}`} onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent("injustice:go", { detail: "place:bank" })); }}>+</button>
-          </span>
-          {view.dirty > 0 && (
-            <span className="hud-pill dirty" title="Dirty money: clean it before the bank or shops will take it" role="button" tabIndex={0} onClick={tap("Dirty money: clean it before the bank or shops will take it")}>
-              <span className="bill" aria-hidden />{view.dirty.toLocaleString()}
-            </span>
-          )}
-          <span className={`hud-pill meter energy ${live.energy >= view.maxEnergy ? "full" : ""}`} title={energyTip} role="button" tabIndex={0} onClick={tap(energyTip)}>
-            <Zap size={14} /> {live.energy}<i style={{ ["--v" as string]: `${Math.round((live.energy / view.maxEnergy) * 100)}%` }} />
-            <small className="pill-timer">{live.energy >= view.maxEnergy ? "full" : `+1 ${fmt(live.nextIn)}`}</small>
-          </span>
-          <span className={`hud-pill meter health ${hurt ? "hurt" : ""}`} title={healthTip} role="button" tabIndex={0} onClick={tap(healthTip)}>
-            <Heart size={14} /> {hurt ? fmt(live.hospital) : view.hp}<i style={{ ["--v" as string]: `${hurt ? 0 : Math.round((view.hp / view.maxHp) * 100)}%` }} />
-            {hurt && <small className="pill-timer">clinic</small>}
-          </span>
-        </div>
         <button className="hud-search" onClick={onSearch} aria-label="Search and do anything (Ctrl+K)" title="Do anything (Ctrl+K)">
           <Search size={18} />
         </button>
         <SoundToggle />
       </div>
+      {/* Vitals: four tiles, each with its own color everywhere. The record is a word, never a number. */}
+      <div className="hud-vitals">
+        <button className={`vital vital-hp ${hurt ? "hurt" : ""}`} title={healthTip} onClick={tap(healthTip)}>
+          <span className="vital-k">{hurt ? "Clinic" : "Health"}</span>
+          <span className="vital-v">{hurt ? fmt(live.hospital) : `${view.hp}/${view.maxHp}`}</span>
+          <i className="vital-bar"><span style={{ width: `${hurt ? 0 : Math.round((view.hp / view.maxHp) * 100)}%` }} /></i>
+        </button>
+        <button className={`vital vital-en ${live.energy >= view.maxEnergy ? "full" : ""}`} title={energyTip} onClick={tap(energyTip)}>
+          <span className="vital-k">Energy</span>
+          <span className="vital-v">{live.energy}<small>{live.energy >= view.maxEnergy ? " full" : ` +1 ${fmt(live.nextIn)}`}</small></span>
+          <i className="vital-bar"><span style={{ width: `${Math.round((live.energy / view.maxEnergy) * 100)}%` }} /></i>
+        </button>
+        <span className="vital vital-cash" role="button" tabIndex={0} title={`Cash on you. In the bank: $${view.bank.toLocaleString()}.`} onClick={tap(`Cash on you. In the bank: $${view.bank.toLocaleString()}.${view.dirty > 0 ? ` Dirty money: $${view.dirty.toLocaleString()}. Clean it before the bank or shops will take it.` : ""}`)}>
+          <span className="vital-k">Cash</span>
+          <span className="vital-v"><Delta value={view.cash} prefix="$" />$<Counter value={view.cash} className="cash" prefix="" /></span>
+          {view.dirty > 0 ? <small className="vital-sub">+{shortMoney(view.dirty)} dirty</small> : null}
+          <button className="pill-plus" aria-label="Open the bank" title={`Bank: $${view.bank.toLocaleString()}`} onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent("injustice:go", { detail: "place:bank" })); }}>+</button>
+        </span>
+        <button className={`vital vital-rec heat-${heatTone}`} title="Your record with the police." onClick={tap(`Your record: ${view.heatLabel}. ${view.heatLabel === "Clean" ? "The police have nothing on you." : "Lie low, or get it scrubbed."}`)}>
+          <span className="vital-k">Record</span>
+          <span className="vital-v">{view.heatLabel}</span>
+        </button>
+      </div>
       {tip && <p className="hud-tip" role="status" onClick={() => setTip(null)}>{tip}</p>}
       <div className="hud-tags">
-        {view.heatLabel !== "Clean" && <span className={`tag tag-heat heat-${heatTone}`}><Flame size={12} /> {view.heatLabel}</span>}
         {view.immuneUntil > Date.now() && (
           <span className="tag tag-good" title="You survived a fight. Nobody can attack or mug you for a while. Attacking someone ends it.">
             <ShieldCheck size={12} /> Safe {fmt(view.immuneUntil - Date.now())}

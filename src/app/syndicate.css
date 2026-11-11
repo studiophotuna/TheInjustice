@@ -1,0 +1,241 @@
+/* ─── The syndicate kit (November 2026) ──────────────────────────────────────
+   Loaded last: it sets the look every screen shares. Glass panels over a dark canvas with soft
+   colored glows; Outfit for headlines, names and numbers, Plus Jakarta Sans for reading text.
+   Color means the same thing everywhere:
+     crimson  = action, danger, the active tab
+     amber    = money in play, rank, prestige, energy
+     emerald  = safe, live, healthy, positive
+   Approved mockup: Novak's Me and Home screens. See docs/DESIGN_LESSONS.md. */
+
+:root {
+  --canvas: #0a0e14;
+  --bg: #10141a;
+  --bg-2: #0a0e14;
+  --panel: rgba(22, 27, 34, 0.78);
+  --panel-solid: #161b22;
+  --panel-2: #1c2026;
+  --panel-3: #262a31;
+  --panel-4: #31353c;
+  --surface: rgba(22, 27, 34, 0.78);
+  --surface-solid: #161b22;
+  --surface-2: rgba(255, 255, 255, 0.05);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --warm-line: rgba(91, 64, 62, 0.28);
+  --text: #dfe2eb;
+  --muted: #9aa1ad;
+  --dim: #646b78;
+
+  --crimson: #ff5451;
+  --crimson-soft: #ffb3ad;
+  --amber-hi: #ffb95f;
+  --amber-deep: #ee9800;
+  --emerald: #4edea3;
+  --emerald-deep: #00a572;
+
+  --red: var(--crimson);
+  --gold: var(--amber-hi);
+  --money: var(--emerald);
+  --green: var(--emerald);
+  --teal: #5ad1c4;
+  --cyan: var(--teal);
+  --violet: #a78bfa;
+  --orange: var(--amber-deep);
+  --amber: var(--amber-deep);
+  --cash: var(--emerald);
+  --energy: var(--amber-hi);
+  --health: var(--crimson);
+  --heat: var(--crimson-soft);
+  --rep: var(--amber-hi);
+  --info: var(--teal);
+
+  --radius: 18px;
+  --radius-sm: 14px;
+  --shadow: 0 16px 36px -14px rgba(0, 0, 0, 0.65);
+  --glow-crimson: 0 8px 24px -4px rgba(255, 84, 81, 0.45);
+  --glow-amber: 0 8px 22px -6px rgba(238, 152, 0, 0.5);
+
+  /* One display face for everything big or numeric; the comic and mono faces are retired. */
+  --display: var(--font-display), "Outfit", system-ui, sans-serif;
+  --headline: var(--font-display), "Outfit", system-ui, sans-serif;
+  --sfx: var(--font-display), "Outfit", system-ui, sans-serif;
+  --font-sfx: var(--font-display);
+  --font-mono: var(--font-display);
+  --mono: var(--font-display), "Outfit", system-ui, sans-serif;
+}
+
+/* ── Canvas: soft glows and a faint dot grid behind everything ─────────────── */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body), "Plus Jakarta Sans", system-ui, sans-serif;
+  font-size: 14.5px;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(420px 420px at -6% -4%, rgba(255, 84, 81, 0.13), transparent 70%),
+    radial-gradient(420px 420px at 108% 40%, rgba(238, 152, 0, 0.09), transparent 70%),
+    radial-gradient(380px 380px at 30% 108%, rgba(0, 165, 114, 0.08), transparent 70%),
+    radial-gradient(#31353c 1px, transparent 1px) 0 0 / 24px 24px;
+  opacity: 0.9;
+}
+::selection { background: rgba(255, 84, 81, 0.35); }
+
+/* ── Type ──────────────────────────────────────────────────────────────────── */
+h1, h2, h3, h4 { font-family: var(--display); letter-spacing: -0.01em; }
+h2 { font-weight: 800; letter-spacing: -0.02em; }
+.card-title {
+  font-family: var(--display); font-weight: 700; font-size: 16px; line-height: 1.15;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding-bottom: 10px; margin-bottom: 4px; border-bottom: 1px solid var(--warm-line);
+}
+.eyebrow, .label, .chip, .tag, .sidenav button, .bottomnav button { font-family: var(--display); }
+.eyebrow { font-weight: 700; letter-spacing: 0.12em; }
+.home-title, .place-title, .city-title, .hero2-title, .file-name { font-weight: 800; letter-spacing: -0.03em; text-transform: uppercase; line-height: 0.96; }
+.cash, .big-number, .tile b, .counter { font-family: var(--display); font-weight: 800; font-variant-numeric: tabular-nums; }
+.fight-result, .vs, .floater { font-family: var(--display); font-weight: 900; letter-spacing: -0.02em; }
+
+/* ── Panels: glass, hairline rim, deep soft shadow ─────────────────────────── */
+.card {
+  background: var(--panel);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border-radius: var(--radius);
+  box-shadow: inset 0 0 0 1px var(--border), var(--shadow);
+}
+.card .card { background: rgba(24, 28, 34, 0.85); box-shadow: inset 0 0 0 1px var(--warm-line); backdrop-filter: none; }
+
+/* ── Buttons: pills. Crimson for action, frosted for secondary, amber for money ── */
+.btn { font-family: var(--display); font-weight: 700; letter-spacing: 0.02em; border-radius: 999px; }
+.btn-primary, .btn-red { background: var(--crimson); color: #fff; box-shadow: var(--glow-crimson); }
+.btn-primary:hover:not(:disabled), .btn-red:hover:not(:disabled) { background: #ff6866; box-shadow: 0 10px 28px -4px rgba(255, 84, 81, 0.55); }
+.btn-ghost { background: rgba(255, 255, 255, 0.07); color: var(--text); box-shadow: inset 0 0 0 1px var(--border); }
+.btn-gold, .btn-amber, .btn-money { background: var(--amber-deep); color: #2a1700; box-shadow: var(--glow-amber); }
+.btn:disabled { box-shadow: none; }
+
+/* Chips and tags: quiet pills */
+.chip, .tag { border-radius: 999px; font-weight: 700; letter-spacing: 0.04em; }
+
+/* Inputs: dark translucent, amber focus */
+input, select, textarea { background: rgba(13, 17, 23, 0.8); border-radius: 14px; }
+input:focus, select:focus, textarea:focus { border-color: var(--amber-hi); box-shadow: 0 0 0 3px rgba(255, 185, 95, 0.18); }
+
+/* ── The top bar: identity row, then four vitals tiles ─────────────────────── */
+.hud {
+  background: rgba(14, 18, 24, 0.9) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  backdrop-filter: blur(18px) !important;
+  border-bottom: 1px solid var(--warm-line);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+  border-radius: 0 0 22px 22px;
+  gap: 10px;
+}
+.hud-top { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.hud-who { display: grid !important; gap: 2px; flex: 1; min-width: 0; }
+.hud-name { font-family: var(--display) !important; font-weight: 700 !important; font-size: 16px !important; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hud-title { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hud-avatar:not(.framed) { background: conic-gradient(from 200deg, var(--crimson), var(--amber-hi), var(--crimson)) !important; padding: 2px !important; }
+.hud-vitals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding-top: 10px; border-top: 1px solid var(--warm-line); }
+.vital {
+  position: relative; display: grid; align-content: start; gap: 3px; min-width: 0; text-align: left;
+  padding: 6px 8px 7px; border-radius: 12px; border: 1px solid var(--warm-line);
+  background: rgba(24, 28, 34, 0.9); color: var(--text); cursor: pointer; font: inherit;
+}
+.vital-k { font: 700 9.5px/1.2 var(--display); letter-spacing: 0.1em; text-transform: uppercase; }
+.vital-v { font: 700 13px/1.15 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.vital-v small { font-size: 10px; font-weight: 600; opacity: 0.8; }
+.vital-v .cash { font: inherit; color: inherit; text-shadow: none; }
+.vital-sub { font: 600 10px/1.1 var(--display); color: var(--crimson-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vital-bar { display: block; height: 3px; border-radius: 3px; background: var(--panel-4); overflow: hidden; }
+.vital-bar span { display: block; height: 100%; border-radius: 3px; background: currentColor; transition: width 0.4s; }
+.vital-hp { color: var(--emerald); }
+.vital-hp.hurt { color: var(--crimson); }
+.vital-en { color: var(--amber-hi); }
+.vital-cash { color: var(--emerald); }
+.vital-cash .pill-plus {
+  position: absolute; top: 4px; right: 4px;
+  width: 17px; height: 17px; border-radius: 50%; border: 0; display: grid; place-items: center;
+  background: var(--amber-deep); color: #2a1700; font: 800 12px/1 var(--display); cursor: pointer;
+}
+.vital-rec { color: var(--emerald); }
+.vital-rec.heat-warn { color: var(--amber-hi); }
+.vital-rec.heat-hot { color: var(--crimson-soft); border-color: rgba(255, 84, 81, 0.35); }
+.vital .delta { position: absolute; top: -8px; right: 8px; font-size: 11px; }
+.hud.compact .hud-vitals { padding-top: 8px; }
+@media (min-width: 960px) {
+  .hud { grid-template-columns: minmax(260px, 1fr) minmax(360px, 1.4fr) !important; grid-template-areas: "top vitals" "tags tags" !important; column-gap: 20px; align-items: center; }
+  .hud-top { grid-area: top; }
+  .hud-vitals { grid-area: vitals; border-top: 0; padding-top: 0; }
+}
+@media (max-width: 360px) { .vital-v { font-size: 12px; } .vital-k { font-size: 9px; } }
+
+/* ── Navigation: the active tab is a filled crimson pill ───────────────────── */
+.bottomnav {
+  background: rgba(14, 18, 24, 0.95) !important;
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.6);
+}
+.bottomnav button { color: #8b93a5; font-weight: 600; letter-spacing: 0.03em; }
+.bottomnav button.on { color: #fff; }
+.bottom-pill { inset: 6px 8% !important; border-radius: 999px !important; background: var(--crimson) !important; box-shadow: 0 0 14px rgba(255, 84, 81, 0.45); }
+.sidenav { background: rgba(14, 18, 24, 0.92) !important; border-right: 1px solid var(--border); }
+.sidenav button { font-family: var(--display) !important; font-weight: 600 !important; }
+.sidenav button.on { color: #fff; }
+.nav-pill { border-radius: 999px !important; background: var(--crimson) !important; border: 0 !important; box-shadow: 0 0 14px rgba(255, 84, 81, 0.4) !important; }
+
+/* ── State tiles: tinted by meaning, one big number ────────────────────────── */
+.tile { border-radius: 14px; }
+.tile b { font-weight: 800; letter-spacing: -0.02em; }
+.tone-teal, .tone-green { background: rgba(0, 165, 114, 0.12) !important; box-shadow: inset 0 0 0 1px rgba(78, 222, 163, 0.3) !important; color: var(--emerald) !important; }
+.tone-violet { background: rgba(167, 139, 250, 0.12) !important; box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.3) !important; color: var(--violet) !important; }
+.tone-red { background: rgba(255, 84, 81, 0.12) !important; box-shadow: inset 0 0 0 1px rgba(255, 84, 81, 0.3) !important; color: var(--crimson-soft) !important; }
+.tone-orange, .tone-gold { background: rgba(238, 152, 0, 0.12) !important; box-shadow: inset 0 0 0 1px rgba(255, 185, 95, 0.3) !important; color: var(--amber-hi) !important; }
+
+/* ── Rarity tags follow the palette ────────────────────────────────────────── */
+.rarity { font-family: var(--display); }
+.rarity-rare { color: var(--amber-hi); }
+
+/* ── Live markers ──────────────────────────────────────────────────────────── */
+.live-dot, .dot-live { background: var(--emerald); box-shadow: 0 0 8px var(--emerald); }
+
+/* ── Home hero: Outfit runs wider than the old condensed face, so the headline keeps clear of
+   the portrait; the portrait gets the crimson rim and glow from the approved mockup. ── */
+.hero2 { background: var(--panel); box-shadow: inset 0 0 0 1px var(--border), var(--shadow); }
+.hero2-copy { max-width: calc(100% - 128px); padding-right: 6px; }
+.hero2-frame { width: 100px !important; height: 124px !important; }
+.hero2-title { font-size: clamp(25px, 7vw, 46px); letter-spacing: -0.03em; }
+@media (min-width: 700px) { .hero2-frame { width: 112px !important; height: 140px !important; } }
+.hero2-frame { box-shadow: 0 0 0 2px rgba(255, 84, 81, 0.75), 0 0 30px -4px rgba(255, 84, 81, 0.55) !important; }
+.hero2-quote { color: var(--amber-hi); }
+@media (min-width: 700px) { .hero2-copy { max-width: 64%; } }
+
+/* ── Big headlines, resized for Outfit. It is about half again as wide as the old condensed face,
+   so each big title steps down a size and tightens its tracking, to keep clear of the photos
+   and art beside it. ── */
+h2 { font-size: 24px; letter-spacing: -0.02em; }
+.home-title { font-size: clamp(24px, 6.4vw, 40px); letter-spacing: -0.03em; }
+.district-title h2 { font-size: 28px; }
+.arrival-title h2 { font-size: 32px; }
+.city-title { font-size: 32px; letter-spacing: -0.03em; }
+.place-title { font-size: 34px; letter-spacing: -0.03em; }
+.away-recap h2 { font-size: 28px; }
+.cold-panel figcaption { font-size: clamp(24px, 6vw, 38px); letter-spacing: -0.02em; }
+.boss-who h3 { letter-spacing: -0.02em; }
+/* The Big Fish card can be a full row (phone) or half of one (desktop): size the name by the card. */
+.boss { container-type: inline-size; }
+.boss-who h3, .boss-one .boss-who h3 { font-size: clamp(20px, 8cqi, 32px); }
+.wb-district { font-size: clamp(22px, 6vw, 30px); letter-spacing: -0.02em; }
+.wb-nums { letter-spacing: -0.02em; }
+.event-hero b { font-size: 26px; letter-spacing: -0.02em; }
+.tryon-name { font-size: 24px; letter-spacing: -0.02em; }
+.age-gate h2 { font-size: 26px; }
+.info-body h1 { font-family: var(--display); font-weight: 800; font-size: clamp(30px, 7vw, 48px); letter-spacing: -0.03em; }
+.tile b { font-size: 26px; }
+.fight-result { letter-spacing: -0.03em; }

@@ -1,5 +1,22 @@
 # Changelog
 
+## 7.0.0: the syndicate look, part 1 (the shared kit)
+
+The approved redesign, from the owner's design system. This release changes the parts every
+screen shares; the next one reworks the Me and Home screens to match the approved mockup.
+
+- **Type:** Outfit for headlines, names and numbers everywhere; Plus Jakarta Sans for reading
+  text. The comic and mono faces are retired. Big headlines were resized, since Outfit is wider.
+- **Color means one thing everywhere:** crimson for actions, danger and the active tab; amber for
+  money in play, rank and energy; green for safe, live, healthy and positive.
+- **Glass panels** over a dark canvas with soft colored glows and a faint dot grid.
+- **Pill buttons:** crimson for action, frosted for secondary, amber for money.
+- **New top bar:** your name and rank beside your photo, then four tiles: Health, Energy, Cash
+  (with dirty money under it and the bank button) and Record.
+  - Your record is a word (Clean, Noticed, Wanted, Most wanted), never a number, and it's
+    always visible now.
+- **Navigation:** the active tab is a filled crimson pill, on phone and desktop.
+
 ## 6.15.0: the black market, item rarity, and businesses that earn
 
 - **Item rarity.** Every weapon and armor is Common, Uncommon or Rare, shown in the shop. Rarity

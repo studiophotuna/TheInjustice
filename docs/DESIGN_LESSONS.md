@@ -92,3 +92,20 @@ the fix is mostly **composition and system**, not a theme.
   for their career and rank; people without a career use one of the street photos.
 - Photos stay whole, with their own background, in a frame. No background-removed cut-outs: the
   removal is never clean enough.
+
+## The syndicate kit (approved November 2026)
+
+The owner supplied a design system ("Underworld Syndicate") and approved a mockup of Novak's Me
+and Home screens in it. It lives in `src/app/syndicate.css`, loaded last.
+
+- **Type:** Outfit for headlines, names and numbers (weights 700 to 900, tight tracking); Plus
+  Jakarta Sans for reading text. Outfit is wider than the old condensed face: size big titles
+  by their container, and check them beside photos.
+- **Color by meaning:** crimson #ff5451 for action, danger and the active tab; amber #ffb95f
+  (deep #ee9800) for money in play, rank and energy; green #4edea3 for safe, live and healthy.
+  Violet stays for crews.
+- **Surfaces:** glass panels (rgba(22, 27, 34, 0.78), blur 20px, hairline rim) on #10141a with
+  soft crimson, amber and green glows and a faint dot grid.
+- **Shapes:** 18px cards, 14px tiles, pills for every button, chip and tab.
+- **Taken from the design system but adapted:** no number for heat, integrity or level (heat is
+  the Record word); no icon before every title; no "verified" ticks; no repair button.
