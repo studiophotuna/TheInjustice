@@ -1,4 +1,5 @@
 import { favorsView, lookOf } from "./favors";
+import { leadsView } from "./leads";
 import { casinoView } from "./casino";
 import { passView } from "./pass";
 import { disposalView, promoProgress } from "./daily_life";
@@ -55,6 +56,8 @@ export interface JobView {
   crime: boolean;
   locked: string | null;
   pathJob: boolean;
+  /** The rank a career job belongs to (cover art shows that level of the career). */
+  level: number;
   /** How hard a hidden job is, in words. */
   grade?: string;
   /** Turned up recently and not tried yet. */
@@ -115,6 +118,8 @@ export interface PublicView {
   dead: { at: number; cause: string } | null;
   deaths: number;
   chapters: { id: string; title: string; teaser: string; unlocked: boolean; read: boolean }[];
+  /** Leads: optional missions that add evidence to the board. */
+  leads: ReturnType<typeof leadsView>;
   /** First unlocked chapter the player hasn't read yet. */
   unreadChapter: string | null;
   schools: {
@@ -300,6 +305,7 @@ export function toView(p: Player, now: number): PublicView {
     crime: (j.integrity ?? 0) < 0 || (j.heat ?? 0) > 0,
     locked: jobLock(p, j),
     pathJob: !!j.path,
+    level: j.minRank ?? 1,
     ...(j.grade ? { grade: GRADE_WORDS[j.grade] } : {}),
     ...(j.reveal && !p.jobCounts[j.id] ? { fresh: true } : {}),
   }));
@@ -482,6 +488,7 @@ export function toView(p: Player, now: number): PublicView {
     log: p.log,
     dead: p.dead ?? null,
     deaths: p.deaths ?? 0,
+    leads: leadsView(p),
     chapters: CHAPTERS.map((c) => ({
       id: c.id,
       title: c.title,

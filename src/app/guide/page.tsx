@@ -30,6 +30,13 @@ export default function GuidePage() {
         so size people up by who they are and what they do.
       </p>
 
+      <h2>Your case</h2>
+      <p>
+        Someone framed you. Home always opens on your case: the people behind it, how much you can prove, and your next lead.
+        Leads are short missions built from things you already do (work, fights, your standing, travel, paying the right
+        person). Only what you do after you start following a lead counts. Close a lead and its evidence goes on the board.
+      </p>
+
       <h2>Careers</h2>
       <p>
         Pick a career to get off the street: Police, Courts, Medicine, Banking, Military, Mechanic, Hacker, Fire Department, or the

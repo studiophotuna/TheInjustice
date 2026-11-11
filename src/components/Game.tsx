@@ -213,6 +213,18 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
       setTab("city");
       setPlace(null);
     }
+    if (target === "board") {
+      setTab("city");
+      setPlace(null);
+      // The City tab may still be mounting: try until the board is there.
+      let tries = 0;
+      const seek = () => {
+        const el = document.getElementById("the-board");
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        else if (++tries < 20) setTimeout(seek, 100);
+      };
+      setTimeout(seek, 150);
+    }
     if (kind === "job") {
       setTab("jobs");
       setHighlight(id);

@@ -8,6 +8,7 @@ import type { CountryId, PathId } from "@/game/types";
 import { PATH_LOOKS } from "./art/Portraits";
 import { Scene, type CharacterKind, type SceneKind } from "./art/Scenes";
 import { BackAlleyCard, JailCard, Sightings } from "./community";
+import { CaseHero, WorkStrip } from "./casehero";
 import { DisposalCard, RightNow, StreetCard, usePulse } from "./pulse";
 import { BigFish2, CityTiles, Hero, Stories } from "./homekit";
 import { CityMap } from "./citymap";
@@ -73,21 +74,9 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
 
   return (
     <div className="stack home">
+      <CaseHero game={game} go={go} />
+      <WorkStrip game={game} sub={sub} />
       <Stories game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} war={pulse?.stats?.war} heavies={pulse?.heavies} fires={pulse?.stats?.fires} election={pulse?.stats?.election} />
-      <Hero
-        game={game}
-        scene={sceneFile(scene)}
-        title={`${greeting()}, ${view.name.split(" ")[0]}`}
-        sub={sub}
-        quote={view.streetTitle}
-        action={
-          !busyElsewhere && best ? (
-            <button className="btn btn-red" disabled={game.busy || !!best.locked} onClick={() => game.act({ type: "job", jobId: best.id })}>
-              {best.name.split(/ for | at | in /)[0]} <small>${best.pay[0]}–{best.pay[1]}</small>
-            </button>
-          ) : null
-        }
-      />
 
       <DisposalCard game={game} />
       <OnTheRun game={game} />

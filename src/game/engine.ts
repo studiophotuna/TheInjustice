@@ -2,6 +2,7 @@
 // API route today and a database function (or worker) later without changes.
 
 import { buyCosmetic, equipCosmetic } from "./favors";
+import { closeLead, payLead, startLead } from "./leads";
 import { GEAR_HOME, soldIn } from "./stock";
 import { oldEnough, parseBirthDate } from "./age";
 import { CASINO, doubleDown, hit, playRoulette, playSeven, stand, startTwentyOne, takeBreak, type RouletteBet, type SevenBet } from "./casino";
@@ -1190,7 +1191,7 @@ function applyActionInner(p: Player, action: Action, now: number, rng: Rng, ctx:
   }
   const blockedInHospital = action.type === "job" || action.type === "fight" || action.type === "bank" || action.type === "travel" || action.type === "drive";
   if (blockedInHospital && inHospital(p, now)) throw new GameError("You're in the hospital. Rest up.");
-  const blockedOnTheRoad = ["job", "fight", "bank", "buy", "apply", "travel", "enroll", "train", "launder", "drug_buy", "drug_sell", "buy_supplies", "cook", "drive", "car_buy", "car_sell", "car_repair", "car_compartment", "cargo_buy", "cargo_sell", "stash", "car_chop", "car_plates", "fit_alarm", "dog_buy", "dog_feed", "dog_give_away"].includes(action.type);
+  const blockedOnTheRoad = ["job", "fight", "bank", "buy", "apply", "travel", "enroll", "train", "launder", "drug_buy", "drug_sell", "buy_supplies", "cook", "drive", "car_buy", "car_sell", "car_repair", "car_compartment", "cargo_buy", "cargo_sell", "stash", "car_chop", "car_plates", "fit_alarm", "dog_buy", "dog_feed", "dog_give_away", "lead_pay", "lead_close"].includes(action.type);
   if (action.type === "train" && inHospital(p, now)) throw new GameError("You're in the hospital. Rest up.");
   if (blockedOnTheRoad && traveling(p)) throw new GameError("You're still on the road. Wait until you arrive.");
   if (blockedOnTheRoad && inJail(p, now)) throw new GameError(p.custodyCase ? "You're held for trial. Wait for the verdict." : "You're in a cell. Serve your time.");
@@ -1343,6 +1344,15 @@ function applyActionInner(p: Player, action: Action, now: number, rng: Rng, ctx:
       break;
     case "dog_feed":
       events.push(...feedDog(p, now));
+      break;
+    case "lead_start":
+      events.push(...startLead(p, action.id, now));
+      break;
+    case "lead_pay":
+      events.push(...payLead(p, action.id, now));
+      break;
+    case "lead_close":
+      events.push(...closeLead(p, action.id, now));
       break;
     case "dog_give_away":
       events.push(...giveAwayDog(p));

@@ -114,6 +114,8 @@ export interface Player {
   /** Fractional; regenerates over time. */
   hp: number;
   hospitalUntil: number;
+  /** Leads you're following or have closed: when you started, your counts then, which payments are made. */
+  leads?: Record<string, { startedAt: number; base: { jobs: number; careerJobs: number; fights: number }; paid?: number[]; closedAt?: number }>;
   /** A doctor already treated this stay (the hospitalUntil it was cut to). */
   treatedStay?: number;
   /** Can't eat again until this time (prevents food → energy exploits). */
@@ -859,6 +861,7 @@ export type Action =
   | { type: "fit_alarm" }
   | { type: "dog_buy"; breed: DogBreed; name: string }
   | { type: "dog_feed" | "dog_give_away" }
+  | { type: "lead_start" | "lead_pay" | "lead_close"; id: string }
   | { type: "garage_set"; open: boolean; rate: number }
   | { type: "tunnel_dig" | "make_shank" | "parole_hearing" }
   | { type: "scrub_set"; open: boolean; fee: number }

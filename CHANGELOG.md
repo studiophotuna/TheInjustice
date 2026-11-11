@@ -1,5 +1,35 @@
 # Changelog
 
+## 7.3.0: your case comes first; leads; jobs as a career track
+
+The approved redesign directions: A for Home, B for Jobs, plus leads.
+
+- **Leads: story missions that build your case.** Nine leads in four chains:
+  - Benny Marlowe;
+  - Kozak;
+  - C&P Holdings;
+  - Judge Crane, who opens up once the others are cracked.
+
+  Each lead is a short objective using things you already do: jobs, work in your career, street
+  fights, your standing, going to a city, paying an informant or a clerk. Only what you do after you
+  start following a lead counts. Closing one pins a new piece of evidence to the board, with a
+  little cash and reputation. Never gear, power or odds. You can't work a lead from a cell, the
+  clinic or the road.
+- **Home opens on your case.** "Who framed you": the four suspects, how many pieces of evidence you
+  have, and the next lead with one clear thing to do (follow it, pay, go to work, find a fight,
+  travel, or close it). "The board" takes you straight to the board on the City page.
+- **Your work, under the case.** Your rank photo, the best career job you can do now (it counts
+  toward your next rank), and one tap to do it. Without a career, the game's own pick.
+- **The board** now counts evidence from leads too, tied to the suspects each lead points at.
+- **Jobs became a career track:**
+  - your rank photo, the road from your first rank to the top, and what your boss thinks of your
+    work;
+  - every job is its own cover card: the best one large, the rest in a grid;
+  - career work shows that career at the job's rank level, and street work shows a scene for the
+    kind of work;
+  - no two neighbouring cards share a picture;
+  - risk stays in words.
+
 ## 7.2.0: art that matches what it shows (batch 1 of the redesign)
 
 From the art audit. Every change below fixes a picture that showed the wrong thing.

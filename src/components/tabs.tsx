@@ -4,6 +4,7 @@ import { motionChoice, setMotion } from "./motion";
 import { GEAR_HOME, rarityOf, soldIn } from "@/game/stock";
 import { RarityTag } from "./blackmarket";
 import { GEAR } from "@/game/gear";
+import { careerStill } from "./art/Cutout";
 import { CarPhoto } from "./art/CarPhoto";
 import { DeleteAccount, HelpLinks } from "./legal";
 import { AlertsCard } from "./alerts";
@@ -105,26 +106,18 @@ export function JobsTab({ game, highlight }: { game: GameApi; highlight: string 
     const target = highlight ? view.jobs.find((j) => j.id === highlight) : null;
     if (target && !target.pathJob) setDistrict(target.district);
   }, [highlight, view.jobs]);
-  const card = (j: JobView) => (
-    <JobCard key={j.id} job={j} energy={energy} blocked={blocked} best={j.id === view.recommendedJobId} flash={j.id === highlight} onWork={() => game.act({ type: "job", jobId: j.id })} />
-  );
 
   return (
     <div className="stack">
       {view.path && careerJobs.length > 0 && (
-        <section className="district career-jobs" style={{ ["--path" as string]: PATH_LOOKS[view.path.id].rim }}>
-          <div className="career-head">
-            <NpcPortrait id={view.path.contactId} className="avatar-sm" />
-            <div>
-              <h2>{view.path.rank}</h2>
-              <p className="muted">{view.path.name} · your career goes with you, wherever you live</p>
-            </div>
-          </div>
-          <PromoBar game={game} />
-          <motion.div className="job-grid" variants={list} initial="hidden" animate="show">
-            {careerJobs.sort((a, b) => Number(!!a.locked) - Number(!!b.locked)).map(card)}
+        <>
+          <CareerTrack game={game} />
+          <motion.div className="cover-grid" variants={list} initial="hidden" animate="show">
+            {withCovers(careerJobs.sort((a, b) => Number(!!a.locked) - Number(!!b.locked) || b.pay[1] - a.pay[1]), view.path?.id).map(([j, cover], i) => (
+              <JobCard key={j.id} job={j} cover={cover} big={i === 0 && !j.locked} energy={energy} blocked={blocked} best={j.id === view.recommendedJobId} flash={j.id === highlight} onWork={() => game.act({ type: "job", jobId: j.id })} />
+            ))}
           </motion.div>
-        </section>
+        </>
       )}
       <ServiceCard game={game} />
       <div className="district-chips" role="tablist">
@@ -150,8 +143,10 @@ export function JobsTab({ game, highlight }: { game: GameApi; highlight: string 
               </div>
             </div>
             {jobs.length > 0 && (
-              <motion.div className="job-grid" variants={list} initial="hidden" animate="show">
-                {jobs.map(card)}
+              <motion.div className="cover-grid" variants={list} initial="hidden" animate="show">
+                {withCovers(jobs, view.path?.id).map(([j, cover]) => (
+                  <JobCard key={j.id} job={j} cover={cover} big={false} energy={energy} blocked={blocked} best={j.id === view.recommendedJobId} flash={j.id === highlight} onWork={() => game.act({ type: "job", jobId: j.id })} />
+                ))}
               </motion.div>
             )}
           </section>
@@ -164,33 +159,100 @@ export function JobsTab({ game, highlight }: { game: GameApi; highlight: string 
 /** District photo behind each job, where the file name differs from the district id. */
 const DISTRICT_SCENE: Record<string, string> = { precinct_square: "precinct", casino_strip: "casino", checkpoint_row: "checkpoint", glass_quarter: "highrise" };
 
-function JobCard({ job, energy, blocked, best, flash, onWork }: {
-  job: JobView; energy: number; blocked: boolean; best: boolean; flash: boolean; onWork: () => void;
+/**
+ * Cover art for a job, until each job has its own. Career work shows that career at the job's
+ * rank (so the picture also says how senior the work is); street work shows a scene for the kind
+ * of work. Stand-ins from the existing licensed library, see docs and the art matrix.
+ */
+const TAG_SCENES: Record<string, string[]> = {
+  Crime: ["gutter", "ironrow", "street"], Corrupt: ["exchange", "casino", "court"], Hustle: ["oldmarket", "casino", "street"],
+  Muscle: ["street", "undercity", "railyards"], Action: ["street", "undercity", "railyards"], Pressure: ["ironrow", "gutter", "casino"],
+  Study: ["academy", "techpark", "court"], Training: ["academy", "checkpoint", "foundry"], Watch: ["city", "station", "highrise"],
+  Legwork: ["city", "station", "oldmarket"], Patrol: ["precinct", "city", "street"], Investigation: ["crimescene", "precinct", "interrogation"],
+  Work: ["oldmarket", "foundry", "railyards"], Labor: ["foundry", "railyards", "marina"], Scavenging: ["gutter", "railyards", "undercity"],
+  Talk: ["oldmarket", "exchange", "casino"], Errand: ["exchange", "city", "oldmarket"], Care: ["hospital", "stbrigids"], Medicine: ["hospital", "stbrigids"],
+  Finance: ["exchange", "bank"], Tech: ["techpark"], Garage: ["foundry", "marina"], Security: ["checkpoint", "bank"], Rescue: ["foundry"],
+  Command: ["checkpoint", "highrise"], Lead: ["highrise", "exchange"], Operations: ["checkpoint"], Law: ["court", "courthousehill"], "Street justice": ["undercity", "gutter"],
+};
+const hashOf = (s: string) => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
+
+function coverOptions(j: JobView, path: string | null | undefined): string[] {
+  if (j.pathJob && path) {
+    const own = careerStill(path, j.level);
+    const next = careerStill(path, Math.min(8, j.level + 1));
+    const prev = careerStill(path, Math.max(1, j.level - 1));
+    return [own, next, prev].filter((x): x is string => !!x);
+  }
+  const district = `/scenes/${DISTRICT_SCENE[j.district] ?? j.district.replace(/_/g, "")}.jpg`;
+  const pool = (TAG_SCENES[j.tag.split(" · ")[0]] ?? []).map((s) => `/scenes/${s}.jpg`);
+  const start = hashOf(j.id) % Math.max(1, pool.length);
+  return [...pool.slice(start), ...pool.slice(0, start), district];
+}
+
+/** Each job with its cover, never the same picture as the card before it. */
+function withCovers(jobs: JobView[], path: string | null | undefined): [JobView, string][] {
+  const out: [JobView, string][] = [];
+  for (const j of jobs) {
+    const opts = coverOptions(j, path);
+    const prev = out.length ? out[out.length - 1][1] : null;
+    out.push([j, opts.find((o) => o !== prev) ?? opts[0]]);
+  }
+  return out;
+}
+
+/** The career track: where you stand, your rank photo, and the road to the top. (Direction B.) */
+function CareerTrack({ game }: { game: GameApi }) {
+  const view = game.view!;
+  const path = view.path!;
+  const ladder = view.ladder;
+  const photo = view.profile.photo ?? careerStill(path.id, ladder?.current);
+  return (
+    <section className="card track" style={{ ["--path" as string]: PATH_LOOKS[path.id].rim }}>
+      <div className="track-art" style={{ backgroundImage: `url(/scenes/${ME_SCENE[path.id] ?? "street"}.jpg)` }}>
+        <div className="track-rank">
+          <span className="label tone-amber-t">{path.name}{ladder ? ` · rank ${ladder.current} of ${ladder.ranks.length}` : ""}</span>
+          <h2>{path.rank}</h2>
+        </div>
+        {photo && <div className="track-photo"><img src={photo} alt="" /></div>}
+      </div>
+      <div className="track-body">
+        {ladder && (
+          <div className="track-steps">
+            {ladder.ranks.map((r, i) => (
+              <span key={r} className={i + 1 < ladder.current ? "done" : i + 1 === ladder.current ? "now" : ""}>{r}</span>
+            ))}
+          </div>
+        )}
+        {path.promotion && <p className="track-note">{path.promotion}</p>}
+        <PromoBar game={game} />
+      </div>
+    </section>
+  );
+}
+
+function JobCard({ job, cover, big, energy, blocked, best, flash, onWork }: {
+  job: JobView; cover: string; big: boolean; energy: number; blocked: boolean; best: boolean; flash: boolean; onWork: () => void;
 }) {
   const tired = energy < job.energy;
+  const marks = [job.grade, job.risky && !job.grade ? "Risky" : null, job.crime ? "Shady" : null].filter(Boolean).join(" · ");
   return (
-    <motion.article id={`job-${job.id}`} variants={item} className={`job ${job.pathJob ? "job-path" : ""} ${flash ? "flash" : ""} ${job.locked ? "job-locked" : ""}`}>
-      <div className="job-cover"><img src={`/scenes/${DISTRICT_SCENE[job.district] ?? job.district.replace(/_/g, "")}.jpg`} alt="" loading="lazy" /></div>
-      <div className="job-body">
-        <div className="job-head">
-          <h3>{job.name}</h3>
-          {best && <span className="best-now">Best now</span>}
-          {job.fresh && <span className="job-new">New</span>}
+    <motion.article id={`job-${job.id}`} variants={item} className={`jcard ${big ? "big" : ""} ${job.pathJob ? "job-path" : ""} ${flash ? "flash" : ""} ${job.locked ? "job-locked" : ""}`}>
+      <div className="jcard-art" style={{ backgroundImage: `url(${cover})` }}>
+        <div className="jcard-tags">
+          {marks && <span className={`jcard-tag ${job.crime ? "shady" : "risky"}`}>{marks}</span>}
+          {best && <span className="jcard-tag best">Best now</span>}
+          {job.fresh && <span className="jcard-tag new">New</span>}
         </div>
-        <p className="job-line">
-          {job.tag}
-          {job.grade && <i className="mk grade">{job.grade}</i>}
-          {job.risky && !job.grade && <i className="mk risky">risky</i>}
-          {job.crime && <i className="mk shady">shady</i>}
-        </p>
-        {job.locked && <p className="job-lock"><Lock size={12} /> {job.locked}</p>}
+        <h3>{job.name}</h3>
       </div>
-      <div className="job-side">
+      <div className="jcard-foot">
+        {big && <span className="jcard-kind">{job.tag}</span>}
         <span className="job-pay">${job.pay[0]}–{job.pay[1]}</span>
-        <motion.button whileTap={{ scale: 0.92 }} className="btn btn-primary btn-sm" disabled={blocked || tired || !!job.locked} onClick={onWork}>
-          <Zap size={14} /> {job.energy}
+        <motion.button whileTap={{ scale: 0.92 }} className="btn btn-primary btn-sm jcard-go" disabled={blocked || tired || !!job.locked} onClick={onWork} aria-label={`${job.name}: ${job.energy} energy`}>
+          <Zap size={13} /> {job.energy}
         </motion.button>
       </div>
+      {job.locked && <p className="job-lock jcard-lock"><Lock size={12} /> {job.locked}</p>}
     </motion.article>
   );
 }
