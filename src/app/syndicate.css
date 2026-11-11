@@ -239,3 +239,67 @@ h2 { font-size: 24px; letter-spacing: -0.02em; }
 .info-body h1 { font-family: var(--display); font-weight: 800; font-size: clamp(30px, 7vw, 48px); letter-spacing: -0.03em; }
 .tile b { font-size: 26px; }
 .fight-result { letter-spacing: -0.03em; }
+
+/* ── Shared small parts from the approved mockup ───────────────────────────── */
+.label { display: block; font: 700 10px/1.25 var(--display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.card-title { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.title-aside { font: 600 10.5px/1.2 var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tone-amber-t { color: var(--amber-hi) !important; }
+.tone-green-t { color: var(--emerald) !important; }
+.tone-red-t { color: var(--crimson-soft) !important; }
+
+/* ── Me: the dossier ───────────────────────────────────────────────────────── */
+.dossier { display: grid; gap: 10px; padding: 14px; }
+.dossier-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.dossier-tile { background: rgba(24, 28, 34, 0.85); border: 1px solid var(--warm-line); border-radius: 14px; padding: 10px 12px; }
+.dossier-tile b { display: block; margin-top: 6px; font: 800 24px/1 var(--display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.dossier-money { background: rgba(10, 14, 20, 0.8); border: 1px solid var(--warm-line); border-radius: 14px; padding: 12px; }
+.money-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 8px; text-align: center; }
+.money-cols > div + div { border-left: 1px solid var(--warm-line); }
+.money-cols b { display: block; margin-top: 3px; font: 700 16px/1.2 var(--display); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px; }
+.me-top { display: grid; gap: 12px; }
+
+.gut { display: grid; gap: 10px; }
+.gut-groups { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.gut-group { background: rgba(24, 28, 34, 0.85); border: 1px solid var(--warm-line); border-radius: 14px; padding: 10px 12px; display: grid; gap: 2px; }
+.gut-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 0; padding: 4px 0; font-size: 12.5px; color: var(--muted); }
+.gut-row b { font: 700 11.5px/1.2 var(--display); color: var(--text); background: var(--panel-3); padding: 5px 9px; border-radius: 999px; text-align: right; }
+@media (max-width: 380px) { .gut-groups { grid-template-columns: 1fr; } }
+
+/* Career: a rank bar */
+.rankbar { display: grid; gap: 8px; margin: 4px 0; }
+.rankbar-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.rankbar-row b { font: 700 16px/1.2 var(--display); }
+.rankbar-track { display: flex; gap: 4px; }
+.rankbar-track i { flex: 1; height: 6px; border-radius: 6px; background: var(--panel-4); }
+.rankbar-track i.on { background: linear-gradient(90deg, var(--crimson), var(--amber-hi)); }
+.rankbar-track i.now { background: var(--amber-hi); box-shadow: 0 0 10px rgba(255, 185, 95, 0.7); }
+
+/* Loadout */
+.slot-list { display: grid; gap: 10px; }
+.slot-tile { display: flex; align-items: center; gap: 12px; padding: 10px; background: rgba(24, 28, 34, 0.85); border: 1px solid var(--warm-line); border-radius: 14px; }
+.slot-tile.broken { opacity: 0.6; }
+.slot-art { width: 54px !important; height: 54px !important; border-radius: 12px; flex: none; overflow: hidden; }
+img.slot-art { object-fit: cover; }
+.slot-art.emoji { display: grid; place-items: center; font-size: 26px; background: var(--panel-3); }
+.slot-body { flex: 1; min-width: 0; display: grid; gap: 6px; }
+.slot-body b { font: 700 14px/1.2 var(--display); }
+.slot-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 11px; color: var(--muted); white-space: nowrap; }
+.slot-bar { display: block; width: 64px; height: 3px; border-radius: 3px; background: var(--panel-4); overflow: hidden; }
+.slot-bar span { display: block; height: 100%; background: var(--emerald); }
+.slot-bar span.low { background: var(--crimson); }
+.slot-state { flex: none; border: 0; cursor: pointer; padding: 6px 10px; border-radius: 999px; background: var(--panel-4); color: var(--text); font: 700 10px/1 var(--display); letter-spacing: 0.08em; text-transform: uppercase; }
+.loadout-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.loadout-acts .bm-link { color: var(--crimson-soft); }
+
+/* ── The street feed with faces: a card on phones, the side panel on desktop ── */
+.street-card ul, .rail-feed ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.street-card li, .rail-feed li { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: #c9ccd4; line-height: 1.35; border-left: 0 !important; padding: 0 !important; }
+.street-card li > span:not(.feed-face), .rail-feed li > span:not(.feed-face) { flex: 1; min-width: 0; }
+.street-card li i, .rail-feed li i { flex: none; font-style: normal; font-size: 11px; color: var(--muted); }
+.street-card li.city > span:not(.feed-face), .rail-feed li.city > span:not(.feed-face) { color: var(--text); }
+.feed-face { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; flex: none; box-shadow: 0 0 0 1.5px var(--panel-4); }
+.feed-face.none { display: inline-block; background: var(--panel-3); }
+.live-word { color: var(--emerald); }
+.phone-only { display: block; }
+@media (min-width: 1280px) { .phone-only { display: none; } }

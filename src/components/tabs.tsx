@@ -350,57 +350,91 @@ export function ShopTab({ game }: { game: GameApi }) {
 /** Weapon and armor slots: only what's equipped counts, and it wears out with every fight. */
 export function GearCard({ game }: { game: GameApi }) {
   const view = game.view!;
-  const gear = view.gear;
-  const slot = (s: "weapon" | "armor") => gear.find((g) => g.slot === s && g.equipped) ?? null;
+  const go = (to: string) => window.dispatchEvent(new CustomEvent("injustice:go", { detail: to }));
+  // What's carried and worn first, then the rest.
+  const gear = [...view.gear].sort((a, b) => Number(b.equipped) - Number(a.equipped));
   return (
-    <section className="card gear">
-      <h3 className="card-title">Gear</h3>
-      <div className="gear-slots">
-        {(["weapon", "armor"] as const).map((s) => {
-          const g = slot(s);
-          return (
-            <div key={s} className={`gear-slot ${g?.broken ? "broken" : ""}`}>
-              <span className="crime-label">{s === "weapon" ? "Weapon" : "Armor"}</span>
-              {g ? (
-                <>
-                  <b className="gear-name"><ItemArt id={g.id} icon={g.icon} name={g.name} className="art-sm" /> {g.name}</b>
-                  <div className="wear-bar" title={`${g.condition}% condition`}><span style={{ width: `${g.condition}%` }} className={g.condition <= 25 ? "low" : ""} /></div>
-                  <span className="fine">{g.broken ? "Broken: useless now" : `${g.condition}% condition`}{g.spares ? ` · ${g.spares} spare${g.spares === 1 ? "" : "s"}` : ""}</span>
-                </>
+    <section className="card gear loadout">
+      <h3 className="card-title">Loadout<span className="title-aside">What counts in a fight</span></h3>
+      {gear.length === 0 ? (
+        <p className="muted fine">Nothing yet. Fists and luck. Only what you carry and wear counts in a fight, and nothing gets repaired.</p>
+      ) : (
+        <div className="slot-list">
+          {gear.map((g) => (
+            <div key={g.id} className={`slot-tile ${g.broken ? "broken" : ""}`}>
+              <ItemArt id={g.id} icon={g.icon} name={g.name} className="slot-art" />
+              <div className="slot-body">
+                <b>{g.name}</b>
+                <div className="slot-meta">
+                  {!g.issued && GEAR_HOME[g.id] && <RarityTag rarity={rarityOf(g.id)} />}
+                  {g.equipped && !g.broken && <i className="slot-bar"><span style={{ width: `${g.condition}%` }} className={g.condition <= 25 ? "low" : ""} /></i>}
+                  <span>{g.broken ? "Broken" : `${g.condition}% condition`}{g.spares ? ` · ${g.spares} spare${g.spares === 1 ? "" : "s"}` : ""}{g.issued ? " · issued" : ""}</span>
+                </div>
+              </div>
+              {g.issued && g.broken ? (
+                <button className="btn btn-primary btn-xs" disabled={game.busy || !g.canReissue} onClick={() => game.act({ type: "reissue", itemId: g.id })}>
+                  {g.canReissue ? "Armory: new one" : "Armory: tomorrow"}
+                </button>
+              ) : g.equipped ? (
+                <button className="slot-state" disabled={game.busy} title="Take it off" onClick={() => game.act({ type: "unequip", slot: g.slot })}>{g.slot === "weapon" ? "Carried" : "Worn"}</button>
               ) : (
-                <span className="muted">Nothing. Fists{s === "armor" ? " and luck" : ""}.</span>
+                <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => game.act({ type: "equip", itemId: g.id })}>Equip</button>
               )}
             </div>
-          );
-        })}
-      </div>
-      {gear.length === 0 ? (
-        <p className="muted fine">Buy weapons and armor in the Shop. Only what you equip counts in a fight. Everything wears out, and nothing gets repaired.</p>
-      ) : (
-        <ul className="officials gear-list">
-          {gear.map((g) => (
-            <li key={g.id}>
-              <span>
-                <ItemArt id={g.id} icon={g.icon} name={g.name} className="art-xs" /> {g.name} <span className="muted">· {g.broken ? "broken" : `${g.condition}%`}{g.spares ? ` · +${g.spares}` : ""}{g.issued ? " · issued" : ""}</span>
-              </span>
-              <span className="row">
-                {!g.equipped && (
-                  <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => game.act({ type: "equip", itemId: g.id })}>Equip</button>
-                )}
-                {g.equipped && (
-                  <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => game.act({ type: "unequip", slot: g.slot })}>Take off</button>
-                )}
-                {g.issued && g.broken && (
-                  <button className="btn btn-primary btn-xs" disabled={game.busy || !g.canReissue} onClick={() => game.act({ type: "reissue", itemId: g.id })}>
-                    {g.canReissue ? "Armory: new one" : "Armory: tomorrow"}
-                  </button>
-                )}
-              </span>
-            </li>
           ))}
-        </ul>
+        </div>
       )}
+      <div className="loadout-acts">
+        <button className="btn btn-ghost btn-sm" onClick={() => go("tab:shop")}>Gun shop</button>
+        <button className="btn btn-ghost btn-sm bm-link" onClick={() => go("place:street")}>Black market</button>
+      </div>
     </section>
+  );
+}
+
+/** Reputation and record side by side, then where the money is: bank, cash and dirty. */
+function Dossier({ game }: { game: GameApi }) {
+  const view = game.view!;
+  const tone = { Clean: "green", Noticed: "amber", Wanted: "red", "Most wanted": "red" }[view.heatLabel] ?? "green";
+  return (
+    <section className="card dossier">
+      <div className="dossier-duo">
+        <div className="dossier-tile">
+          <span className="label">Reputation</span>
+          <b className="tone-amber-t">{view.reputation.toLocaleString()}</b>
+        </div>
+        <div className="dossier-tile">
+          <span className="label">Record</span>
+          <b className={`tone-${tone}-t`}>{view.heatLabel}</b>
+        </div>
+      </div>
+      <div className="dossier-money">
+        <span className="label">Where the money is</span>
+        <div className="money-cols">
+          <div><span className="label">Bank</span><b>{view.hasBankAccount ? `$${view.bank.toLocaleString()}` : "No account"}</b></div>
+          <div><span className="label tone-green-t">Cash</span><b className="tone-green-t">${view.cash.toLocaleString()}</b></div>
+          <div><span className="label tone-red-t">Dirty</span><b className="tone-red-t">${view.dirty.toLocaleString()}</b></div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** The career as a bar: one segment per rank, the current one lit. */
+function RankBar({ ranks, current }: { ranks: string[]; current: number }) {
+  const next = ranks[current] ?? null;
+  return (
+    <div className="rankbar">
+      <div className="rankbar-row">
+        <b>{ranks[current - 1]}</b>
+        {next && <span className="muted fine">Next: {next}</span>}
+      </div>
+      <div className="rankbar-track" aria-label={`Rank ${current} of ${ranks.length}`}>
+        {ranks.map((r, i) => (
+          <i key={r} title={r} className={i + 1 < current ? "on" : i + 1 === current ? "now" : ""} />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -455,15 +489,23 @@ export function ProfileTab({ game }: { game: GameApi }) {
           quote={view.profile.bio || view.feel.conscience}
           action={<button className="btn btn-ghost btn-sm" onClick={() => setEditing(true)}>{view.profile.bio ? "Edit profile" : "Add an introduction"}</button>}
         />
-        <div className="me-stats">
-          {([["Body", view.feel.body, "gold"], ["Reflexes", view.feel.reflexes, "teal"], ["Street smarts", view.feel.smarts, "violet"], ["Presence", view.feel.presence, "orange"]] as const).map(([k, v, tone]) => (
-            <div key={k} className={`me-stat tone-${tone}`}>
-              <b>{v}</b>
-              <span>{k}</span>
+        <Dossier game={game} />
+        <section className="card gut">
+          <h3 className="card-title">Gut read<span className="title-aside">How people see you</span></h3>
+          <div className="gut-groups">
+            <div className="gut-group">
+              <span className="label">Body</span>
+              <p className="gut-row">Build <b className="tone-amber-t">{view.feel.body}</b></p>
+              <p className="gut-row">Reflexes <b>{view.feel.reflexes}</b></p>
             </div>
-          ))}
-        </div>
-        {view.woundHint && <p className="fine wound-hint">{view.woundHint}</p>}
+            <div className="gut-group">
+              <span className="label">Mind</span>
+              <p className="gut-row">Street smarts <b>{view.feel.smarts}</b></p>
+              <p className="gut-row">Presence <b className="tone-green-t">{view.feel.presence}</b></p>
+            </div>
+          </div>
+          {view.woundHint && <p className="fine wound-hint">{view.woundHint}</p>}
+        </section>
       </div>
       {editing && <ProfileEditor game={game} onClose={() => setEditing(false)} />}
 
@@ -472,12 +514,12 @@ export function ProfileTab({ game }: { game: GameApi }) {
 
       {view.path && view.ladder && (
         <section className="card">
-          <h3 className="card-title">Career</h3>
+          <h3 className="card-title">Career<span className="title-aside">{view.path.name} · rank {view.ladder.current} of {view.ladder.ranks.length}</span></h3>
           <div className="row">
             <NpcPortrait id={view.path.contactId} className="avatar-sm" />
             <p>{view.path.name} · answers to {view.path.contact}</p>
           </div>
-          <CareerLadder ranks={view.ladder.ranks} current={view.ladder.current} graduation={view.ladder.graduationRank} color={PATH_LOOKS[view.path.id].rim} />
+          <RankBar ranks={view.ladder.ranks} current={view.ladder.current} />
           {view.path.promotion && <p className="muted">{view.path.promotion}</p>}
           {view.path.id === "medicine" && (
             <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => game.social({ op: "back_alley_toggle", open: !view.backAlley })}>

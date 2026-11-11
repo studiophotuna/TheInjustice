@@ -8,7 +8,7 @@ import type { CountryId, PathId } from "@/game/types";
 import { PATH_LOOKS } from "./art/Portraits";
 import { Scene, type CharacterKind, type SceneKind } from "./art/Scenes";
 import { BackAlleyCard, JailCard, Sightings } from "./community";
-import { DisposalCard, RightNow, usePulse } from "./pulse";
+import { DisposalCard, RightNow, StreetCard, usePulse } from "./pulse";
 import { BigFish2, CityTiles, Hero, Stories } from "./homekit";
 import { CityMap } from "./citymap";
 import { TutorialCard } from "./underworld";
@@ -99,6 +99,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
 
       <CityTiles stats={pulse?.stats} city={view.location.city} go={go} />
       <div className="home-pair">
+        <StreetCard feed={pulse?.feed} />
         <BigFish2 game={game} heavies={pulse?.heavies} go={go} />
         <CityMap game={game} go={go} feed={pulse?.feed} />
       </div>

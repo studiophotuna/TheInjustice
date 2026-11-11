@@ -1,5 +1,19 @@
 # Changelog
 
+## 7.1.0: the syndicate look, part 2 (Me and Home)
+
+The Me and Home screens rebuilt to match the approved mockup.
+
+- **Me, the dossier:**
+  - Reputation and your record side by side, then where the money is: bank, cash and dirty.
+  - **Gut read:** your qualities in words, grouped as Body (build, reflexes) and Mind (street
+    smarts, presence).
+  - **Career:** a rank bar (rank 5 of 8, next: Underboss) instead of the long list.
+  - **Loadout:** one tile per weapon and armor, with its photo, rarity, condition and spares,
+    and whether you carry or wear it. Gun shop and Black market buttons underneath.
+- **Home:** the street feed is now a card on phones too ("On the street"), and every line shows
+  the face of the person it's about, on phone and in the desktop side panel.
+
 ## 7.0.0: the syndicate look, part 1 (the shared kit)
 
 The approved redesign, from the owner's design system. This release changes the parts every

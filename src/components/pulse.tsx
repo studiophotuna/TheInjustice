@@ -7,7 +7,7 @@ import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { fmt, type GameApi } from "./useGame";
 
-export type FeedItem = { at: number; text: string; kind: "city" | "street" };
+export type FeedItem = { at: number; text: string; kind: "city" | "street"; photo?: string | null };
 export type CrewNeed = { kind: string; text: string; cta: string; go: string; until: number | null };
 export type Heavy = {
   id: string; name: string; photo: string | null; title: string; path: string | null; out: boolean; status: string;
@@ -364,6 +364,7 @@ export function LiveRail({ game, go, onRead }: { game: GameApi; go: (t: string) 
           <ul>
             {pulse.feed.slice(0, 8).map((f, i) => (
               <li key={i} className={f.kind}>
+                {f.photo ? <img className="feed-face" src={f.photo} alt="" loading="lazy" /> : <span className="feed-face none" aria-hidden />}
                 <span>{f.text}</span>
                 <i>{ago(f.at)}</i>
               </li>
@@ -372,6 +373,25 @@ export function LiveRail({ game, go, onRead }: { game: GameApi; go: (t: string) 
         </section>
       )}
     </div>
+  );
+}
+
+/** Phones: what's happening on the street, with faces (desktop has it in the side panel). */
+export function StreetCard({ feed }: { feed: FeedItem[] | undefined }) {
+  if (!feed?.length) return null;
+  return (
+    <section className="card street-card phone-only">
+      <h3 className="card-title">On the street<span className="title-aside live-word">Live</span></h3>
+      <ul>
+        {feed.slice(0, 5).map((f, i) => (
+          <li key={i} className={f.kind}>
+            {f.photo ? <img className="feed-face" src={f.photo} alt="" loading="lazy" /> : <span className="feed-face none" aria-hidden />}
+            <span>{f.text}</span>
+            <i>{ago(f.at)}</i>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
