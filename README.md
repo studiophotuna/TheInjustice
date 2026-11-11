@@ -11,7 +11,7 @@ grow hidden stats that decide whether you survive.
 **Play online:** https://injustice-booking-cms.vercel.app
 
 **Current version:** 7.7.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
-[latest changes](#where-the-game-is-now-v76) are summed up at the end of this page.
+[latest changes](#where-the-game-is-now) are summed up at the end of this page.
 
 ## Play it locally
 
@@ -380,7 +380,7 @@ murder case and a three-day vendetta. Full rules in `WHACK.md`.
   as players with ids starting `reg-`. `listPlayers` never returns them; `listRegulars` does.
 - `/api/community?pulse=1` returns the street feed and what your crew needs from you.
 
-## Where the game is now (v7.6)
+## Where the game is now
 
 Everything since 1.8, in short. The details are in [CHANGELOG.md](CHANGELOG.md).
 
