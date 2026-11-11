@@ -7,6 +7,7 @@ import type { GameApi } from "./useGame";
 import { ParkedCars } from "./property";
 import { HireMechanic, MyGarage } from "./garage";
 import { CustomsLine } from "./customs";
+import { askThen } from "./ask";
 
 const money = (n: number) => `$${n.toLocaleString()}`;
 
@@ -67,7 +68,7 @@ export function Docks({ game, go }: { game: GameApi; go?: (to: string) => void }
                           className="btn btn-ghost btn-xs"
                           disabled={game.busy || c.used > 0}
                           title={c.used ? "Empty the trunk first." : "Dirty money, no questions."}
-                          onClick={() => confirm(`Let the chop shop strip the ${c.name.toLowerCase()} for ${money(c.chop ?? 0)} dirty?`) && game.act({ type: "car_chop", carId: c.id })}
+                          onClick={() => askThen({ title: `Let the chop shop strip the ${c.name.toLowerCase()} for ${money(c.chop ?? 0)} dirty?`, tone: "danger" }, () => game.act({ type: "car_chop", carId: c.id }))}
                         >
                           Chop shop {money(c.chop ?? 0)}
                         </button>
@@ -77,7 +78,7 @@ export function Docks({ game, go }: { game: GameApi; go?: (to: string) => void }
                         className="btn btn-ghost btn-xs"
                         disabled={game.busy || c.used > 0}
                         title={c.used ? "Empty the trunk first." : ""}
-                        onClick={() => confirm(`Sell the ${c.name.toLowerCase()} for ${money(c.resale)}?`) && game.act({ type: "car_sell", carId: c.id })}
+                        onClick={() => askThen({ title: `Sell the ${c.name.toLowerCase()} for ${money(c.resale)}?`, tone: "danger" }, () => game.act({ type: "car_sell", carId: c.id }))}
                       >
                         Sell {money(c.resale)}
                       </button>

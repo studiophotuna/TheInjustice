@@ -179,7 +179,7 @@ export async function cityLife(store: Store, country: CountryId, now: number): P
     for (const p of locked) {
       if (!p) continue;
       tick(p, now);
-      const job = worked.has(p.id) ? null : regularWork(p, now, Math.random);
+      const job = worked.has(p.id) ? null : regularWork(p, now, Math.random, c);
       const bought = regularShop(p, c, now, Math.random);
       for (const l of [job, bought]) if (l) lines.push(l);
       // The black market: a regular buys a piece a player put up, and the seller gets paid.

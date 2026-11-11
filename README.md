@@ -10,7 +10,7 @@ grow hidden stats that decide whether you survive.
 
 **Play online:** https://injustice-booking-cms.vercel.app
 
-**Current version:** 7.6.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
+**Current version:** 7.7.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
 [latest changes](#where-the-game-is-now-v76) are summed up at the end of this page.
 
 ## Play it locally
@@ -399,7 +399,8 @@ every job.
 they work their careers, shop, eat, get treated, own spare gear, run for mayor and vote. The
 city runs on a timer (`/api/push/tick`): fires, incidents, restocks, the dog pound and elections.
 
-**The economy.** Shops sell what each city stocks, and gear is limited to three of a kind. The
+**The economy.** Player-run shops set their own price level, which is what customers see and pay
+(the owner sees it on their own shelf too). Shops sell what each city stocks, and gear is limited to three of a kind. The
 black market trades items by rarity. Player-run businesses earn from real customers. There are
 also cars and smuggling, a home stash, break-ins, customs and the Velvet Ace casino in Port
 Solace.
@@ -417,7 +418,8 @@ by meaning, glass panels and pills. One sheet of colours and sizes (`src/app/tok
   inside City. The top bar and quick bar fold away as you scroll.
 - **Desktop:** a side menu and a live rail.
 - **Fights:** every fight ends on a result plate.
-- **Confirmations:** the game asks its own questions instead of browser pop-ups.
+- **Confirmations and amounts:** the game asks its own questions, including amounts, instead of
+  browser pop-ups.
 - **New players:** the first-day checklist is pinned to the top of Home, and coach marks give
   them a first look around.
 

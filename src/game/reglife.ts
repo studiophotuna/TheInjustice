@@ -8,9 +8,10 @@
 
 import { ITEM_BY_ID, ITEMS } from "./content/items";
 import { JOBS, type JobDef } from "./content/jobs";
-import { applyAction, inHospital, inJail } from "./engine";
+import { applyAction, countryOf, inHospital, inJail } from "./engine";
 import { equippedId, usesLeft } from "./gear";
 import { creditSale, shopMarkups } from "./shops";
+import { taxOn } from "./city";
 import { carried } from "./stock";
 import { defFor, regularStats } from "./regulars";
 import { playerMaxHp } from "./wounds";
@@ -55,7 +56,7 @@ export function regularJobs(p: Player): JobDef[] {
 const busy = (p: Player, now: number) => p.dead || inJail(p, now) || inHospital(p, now);
 
 /** One job, if it's time. Returns a line for the street feed. */
-export function regularWork(p: Player, now: number, rng: Rng): string | null {
+export function regularWork(p: Player, now: number, rng: Rng, city?: City | null): string | null {
   if (!p.regular || busy(p, now)) return null;
   if (now - (p.regular.workAt ?? 0) < LIFE.jobEveryMs) return null;
   const jobs = regularJobs(p).filter((j) => j.energy <= p.energy);
@@ -65,7 +66,11 @@ export function regularWork(p: Player, now: number, rng: Rng): string | null {
   const job = rng() < 0.7 ? pick(best, rng) : pick(jobs, rng);
   p.regular.workAt = now;
   p.energy -= job.energy;
-  p.cash += Math.round(job.pay[0] + rng() * (job.pay[1] - job.pay[0]));
+  // Paid like anyone else: city tax comes out of the pay and goes to the treasury.
+  const gross = Math.round(job.pay[0] + rng() * (job.pay[1] - job.pay[0]));
+  const tax = city && city.country === countryOf(p) ? taxOn(gross, city.taxRate) : 0;
+  if (city && tax > 0) city.treasury += tax;
+  p.cash += gross - tax;
   for (const k of STAT_KEYS) p.stats[k] += (job.xp[k] ?? 0) * LIFE.xpShare;
   p.regular.jobs = (p.regular.jobs ?? 0) + 1;
   const line = `${p.name} · ${job.name}`;

@@ -11,7 +11,7 @@ import { useScrollLock } from "./scrollLock";
 import { Scene } from "./art/Scenes";
 import type { GameApi } from "./useGame";
 import { SkelLineup, SkelRows } from "./skeleton";
-import { askThen } from "./ask";
+import { askNumber, askNumberThen, askThen } from "./ask";
 
 type Profile = {
   id: string;
@@ -365,8 +365,10 @@ function personActions(game: GameApi, hub: Hub, p: Profile, social: (b: Record<s
       key: "bounty",
       label: <>$ Put a bounty</>,
       run: () => {
-        const v = window.prompt(`Put a price on ${p.name}'s head. Whoever beats them in a fight collects. Amount from your bank ($100 or more):`, "100");
-        if (v) social({ op: "post_bounty", targetId: p.id, amount: Number(v) });
+        askNumberThen(
+          { title: `Put a price on ${p.name}'s head?`, body: "Whoever beats them in a fight collects. It comes out of your bank.", yes: "Post the bounty", tone: "danger", input: { value: 100, min: 100, unit: "$", label: "Bounty" } },
+          (amount) => social({ op: "post_bounty", targetId: p.id, amount }),
+        );
       },
     });
   }
@@ -395,8 +397,11 @@ function personActions(game: GameApi, hub: Hub, p: Profile, social: (b: Record<s
       note: s.block ?? s.note,
       run: () => {
         if (s.amount) {
-          const v = window.prompt(`How much dirty money should ${p.name} clean? They keep ${s.fee}%.`, String(Math.floor(game.view!.dirty)));
-          return v ? social({ op: "regular_service", regularId: p.id, service: s.id, amount: Number(v) }) : undefined;
+          const dirty = Math.floor(game.view!.dirty);
+          return askNumberThen(
+            { title: `How much should ${p.name} clean?`, body: `They keep ${s.fee}%.`, yes: "Hand it over", input: { value: dirty, min: 1, max: Math.max(1, dirty), unit: "$", label: "Dirty money" } },
+            (amount) => social({ op: "regular_service", regularId: p.id, service: s.id, amount }),
+          );
         }
         return social({ op: "regular_service", regularId: p.id, service: s.id });
       },
@@ -408,11 +413,13 @@ function personActions(game: GameApi, hub: Hub, p: Profile, social: (b: Record<s
       key: "loan",
       label: <>{hub.lender === "bank" ? "Offer a loan" : "Offer a loan (shark)"}</>,
       run: () => {
-        const amount = window.prompt(`Lend ${p.name} how much? (from your bank)`, "100");
-        if (!amount) return;
         const max = hub.lender === "bank" ? 20 : 100;
-        const rate = window.prompt(`Interest in % (0–${max}). They have three days to pay.`, hub.lender === "bank" ? "10" : "50");
-        if (rate) social({ op: "loan_offer", borrowerId: p.id, amount: Number(amount), rate: Number(rate) / 100 });
+        void (async () => {
+          const amount = await askNumber({ title: `Lend ${p.name} how much?`, body: "It comes out of your bank.", yes: "Next", input: { value: 100, min: 1, unit: "$", label: "Loan" } });
+          if (amount === null) return;
+          const rate = await askNumber({ title: "What interest?", body: "They have three days to pay it back.", yes: "Offer the loan", input: { value: hub.lender === "bank" ? 10 : 50, min: 0, max, unit: "%", label: "Interest" } });
+          if (rate !== null) social({ op: "loan_offer", borrowerId: p.id, amount, rate: rate / 100 });
+        })();
       },
     });
   }
@@ -424,8 +431,10 @@ function personActions(game: GameApi, hub: Hub, p: Profile, social: (b: Record<s
       label: <>Sell army gear</>,
       run: () => {
         const item = view.sellableGear[view.sellableGear.length - 1];
-        const price = prompt(`Sell ${p.name} a ${item.name.toLowerCase()} from the armory. Your price ($100–$5000):`, "800");
-        if (price) social({ op: "gun_offer", targetId: p.id, itemId: item.id, price: Number(price) });
+        askNumberThen(
+          { title: `Sell ${p.name} a ${item.name.toLowerCase()}?`, body: "From the armory. Name your price.", yes: "Make the offer", tone: "danger", input: { value: 800, min: 100, max: 5000, unit: "$", label: "Price" } },
+          (price) => social({ op: "gun_offer", targetId: p.id, itemId: item.id, price }),
+        );
       },
     });
   }
@@ -1426,8 +1435,10 @@ export function CasesPanel({ game, hub, place }: { game: GameApi; hub: Hub | nul
                   <span className="muted fine">{r.contract.done ? "Contract done" : `$${r.contract.reward} contract out`}</span>
                 ) : (
                   <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => {
-                    const v = window.prompt("Offer how much to whoever gets your money back? (from your bank)", "100");
-                    if (v) act({ op: "post_contract", caseId: r.caseId, reward: Number(v) });
+                    askNumberThen(
+                      { title: "Hire someone to get it back?", body: "Whoever gets your money back collects this, from your bank.", yes: "Post it", input: { value: 100, min: 1, unit: "$", label: "Reward" } },
+                      (reward) => act({ op: "post_contract", caseId: r.caseId, reward }),
+                    );
                   }}>Hire someone to get it back</button>
                 )}
               </li>

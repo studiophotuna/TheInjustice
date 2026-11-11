@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { EyeOff, Home } from "lucide-react";
 import type { GameApi } from "./useGame";
+import { askThen } from "./ask";
 
 const money = (n: number) => `$${n.toLocaleString()}`;
 
@@ -130,7 +131,7 @@ export function DogCard({ game }: { game: GameApi }) {
           <button className={`btn btn-sm ${hungry ? "btn-primary" : "btn-ghost"}`} disabled={game.busy || !dog.canFeed} title={dog.canFeed ? "" : `${dog.name} is still full.`} onClick={() => game.act({ type: "dog_feed" })}>
             Feed {dog.name} · ${dog.foodCost}
           </button>
-          <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => confirm(`Give ${dog.name} away to a good home?`) && game.act({ type: "dog_give_away" })}>
+          <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => askThen({ title: `Give ${dog.name} away to a good home?`, tone: "danger" }, () => game.act({ type: "dog_give_away" }))}>
             Give away
           </button>
         </div>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Store } from "lucide-react";
 import type { GameApi } from "./useGame";
 import { SkelRows } from "./skeleton";
+import { askThen } from "./ask";
 
 export interface ShopRow {
   kind: "guns" | "armor" | "diner" | "pharmacy" | "realty";
@@ -39,7 +40,7 @@ export interface ShopsData {
 }
 
 /** The city's storefronts. Reloads whenever anything changes in the game. */
-export function useShops() {
+export function useShops(enabled = true) {
   const [data, setData] = useState<ShopsData | null>(null);
   const load = useCallback(async () => {
     try {
@@ -50,10 +51,11 @@ export function useShops() {
     }
   }, []);
   useEffect(() => {
+    if (!enabled) return;
     load();
     window.addEventListener("conspira:changed", load);
     return () => window.removeEventListener("conspira:changed", load);
-  }, [load]);
+  }, [load, enabled]);
   return { data, load };
 }
 
@@ -88,7 +90,7 @@ export function ShopOwnerStrip({ row, onManage }: { row: ShopRow; onManage: () =
       <span className="shop-strip-text">
         <b>{row.name}</b>
         {row.mine ? (
-          <> · <span className="text-green">yours</span>{row.till ? <> · {money(row.till)} in the till</> : null}</>
+          <> · <span className="text-green">yours</span> · <PriceTag m={row.markup} />{row.till ? <> · {money(row.till)} in the till</> : null}</>
         ) : row.owner ? (
           <> · run by {row.owner.name} · <PriceTag m={row.markup} /></>
         ) : (
@@ -226,7 +228,7 @@ function ShopCard({
                 <li key={o.fromId}>
                   <span><b>{o.fromName}</b> offers {money(o.amount)}</span>
                   <span className="row">
-                    <button className="btn btn-primary btn-xs" disabled={busy} onClick={() => confirm(`Sell the ${s.name.toLowerCase()} to ${o.fromName} for ${money(o.amount)}?`) && call({ op: "accept", kind, playerId: o.fromId })}>
+                    <button className="btn btn-primary btn-xs" disabled={busy} onClick={() => askThen({ title: `Sell the ${s.name.toLowerCase()} to ${o.fromName} for ${money(o.amount)}?`, tone: "danger" }, () => call({ op: "accept", kind, playerId: o.fromId }))}>
                       Sell
                     </button>
                     <button className="btn btn-ghost btn-xs" disabled={busy} onClick={() => call({ op: "decline", kind, playerId: o.fromId })}>
@@ -240,7 +242,7 @@ function ShopCard({
           <button
             className="btn btn-ghost btn-xs city-shop-sell"
             disabled={busy}
-            onClick={() => confirm(`Hand the licence back to city hall for ${money(s.buyback)}? Anyone can take it after.`) && call({ op: "sell", kind })}
+            onClick={() => askThen({ title: `Hand the licence back to city hall for ${money(s.buyback)}? Anyone can take it after.`, tone: "danger" }, () => call({ op: "sell", kind }))}
           >
             Sell back to city hall · {money(s.buyback)}
           </button>

@@ -82,6 +82,7 @@ const CAREER_HINTS = [
 import { AuthForm } from "./screens";
 import { fmt, type GameApi } from "./useGame";
 import { SkelCard } from "./skeleton";
+import { askNumberThen, askThen } from "./ask";
 
 const list = { hidden: {}, show: { transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } };
@@ -374,7 +375,10 @@ export function ShopTab({ game }: { game: GameApi }) {
       {cat !== "business" && (
     <motion.div key={cat} className="shop-grid" variants={list} initial="hidden" animate="show">
       {view.shop.filter((i) => kinds.includes(i.kind) && (!GEAR_HOME[i.id] || GEAR_HOME[i.id] === view.location.country)).map((i) => {
-        const price = shelfPrice(i.price, shopFor(shops.data, i.kind));
+        const row = shopFor(shops.data, i.kind);
+        const price = shelfPrice(i.price, row);
+        // In your own shop you pay the usual price; your customers pay yours.
+        const theirs = row?.mine && row.markup !== 1 ? Math.round(i.price * row.markup) : null;
         // Weapons and armor: each city sells its own, in limited stock.
         const home = GEAR_HOME[i.id];
         const away = home && home !== view.location.country ? soldIn(i.id) : null;
@@ -389,6 +393,7 @@ export function ShopTab({ game }: { game: GameApi }) {
             <p className="muted">{i.description}</p>
             {left !== null && <p className={`fine stock-note ${soldOut ? "out" : ""}`}>In stock: {left}{soldOut ? " · next shipment soon" : ""}</p>}
             {i.have > 0 && <p className="fine muted">You own {i.have} of {GEAR.maxOwned}</p>}
+            {theirs !== null && <p className="fine shop-theirs">Your customers pay ${theirs.toLocaleString()}</p>}
           </div>
           <motion.button
             whileTap={{ scale: 0.94 }}
@@ -595,8 +600,10 @@ export function ProfileTab({ game }: { game: GameApi }) {
                 className="btn btn-ghost btn-sm"
                 disabled={game.busy}
                 onClick={() => {
-                  const fee = prompt("Your fee to operate on a patient's old wounds ($50–$5000):", String(view.surgeryFee ?? 400));
-                  if (fee) game.social({ op: "surgery_fee", fee: Number(fee) });
+                  askNumberThen(
+                    { title: "Your fee for surgery", body: "What a patient pays you to operate on their old wounds.", yes: view.surgeryFee ? "Change fee" : "Start operating", input: { value: view.surgeryFee ?? 400, min: 50, max: 5000, unit: "$", label: "Fee" } },
+                    (fee) => game.social({ op: "surgery_fee", fee }),
+                  );
                 }}
               >
                 {view.surgeryFee ? "Change fee" : "Offer surgery"}
@@ -1228,9 +1235,7 @@ function CareerRecord({ game }: { game: GameApi }) {
             disabled={game.busy || !!r.canLeave}
             title={r.canLeave ?? ""}
             onClick={() =>
-              confirm(
-                `Leave the ${view.path!.name}? You keep everything you've learned (your hidden strengths), but you lose your rank, your issued gear${view.path!.id === "enforcer" ? ", and your made status" : ""}. Coming back later is faster for veterans.`,
-              ) && game.act({ type: "leave_career" })
+              askThen({ title: `Leave the ${view.path!.name}? You keep everything you've learned (your hidden strengths), but you lose your rank, your issued gear${view.path!.id === "enforcer" ? ", and your made status" : ""}. Coming back later is faster for veterans.`, tone: "danger" }, () => game.act({ type: "leave_career" }))
             }
           >
             Leave this career

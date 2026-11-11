@@ -6,6 +6,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { setSound, soundOn } from "./sfx";
 import { useScrollLock } from "./scrollLock";
 import { fmt, type GameApi } from "./useGame";
+import { shelfPrice, shopFor, useShops } from "./shops";
+import { GEAR_HOME } from "@/game/stock";
 
 type Cmd = { id: string; group: string; label: string; hint?: string; keywords?: string; run: () => unknown; block?: string | null };
 type Online = { id: string; name: string; canAttack: string | null; canCrime: Record<string, string | null>; regular?: boolean };
@@ -48,6 +50,8 @@ export function CommandPalette({ game, go, open, setOpen }: { game: GameApi; go:
   const [q, setQ] = useState("");
   const [i, setI] = useState(0);
   const [online, setOnline] = useState<Online[]>([]);
+  // The shelves (owners' prices, stock) are loaded only while the palette is open.
+  const shops = useShops(open);
   const input = useRef<HTMLInputElement>(null);
   useScrollLock(open);
 
@@ -96,11 +100,18 @@ export function CommandPalette({ game, go, open, setOpen }: { game: GameApi; go:
         block: away ?? (view.energy < view.gym.energy ? "Not enough energy." : null),
         run: () => game.act({ type: "train", stat }),
       })),
-      ...view.shop.filter((s) => !s.owned).map((s) => ({
-        id: `buy-${s.id}`, group: "Shop", label: `Buy ${s.name}`, hint: `$${s.price}`, keywords: `${s.kind} buy`,
-        block: view.cash < s.price ? "Not enough cash." : null,
-        run: () => game.act({ type: "buy", itemId: s.id }),
-      })),
+      // The same shelf as the Shop page: what this city sells, at the owner's price, while in stock.
+      ...(shops.data ? view.shop : [])
+        .filter((s) => !s.owned && (!GEAR_HOME[s.id] || GEAR_HOME[s.id] === view.location.country))
+        .map((s) => {
+          const price = shelfPrice(s.price, shopFor(shops.data, s.kind));
+          const out = GEAR_HOME[s.id] ? shops.data?.stock?.[s.id] === 0 : false;
+          return {
+            id: `buy-${s.id}`, group: "Shop", label: `Buy ${s.name}`, hint: `$${price.toLocaleString()}`, keywords: `${s.kind} buy`,
+            block: out ? "Sold out here." : view.cash < price ? "Not enough cash." : null,
+            run: () => game.act({ type: "buy", itemId: s.id, maxPrice: price }),
+          };
+        }),
       { id: "daily", group: "Quick", label: "Collect daily reward", block: view.daily.canClaim ? null : "Already collected today.", run: () => game.act({ type: "claim_daily" }) },
       { id: "sound", group: "Settings", label: soundOn() ? "Turn sound off" : "Turn sound on", keywords: "mute audio volume sfx", run: () => setSound(!soundOn()) },
       { id: "medkit", group: "Quick", label: "Use a medkit", block: view.inventory.some((x) => x.id === "medkit") ? null : "You have no medkits.", run: () => game.act({ type: "use", itemId: "medkit" }) },
@@ -113,7 +124,7 @@ export function CommandPalette({ game, go, open, setOpen }: { game: GameApi; go:
       ]),
     ];
     return list;
-  }, [view, online, go, game]);
+  }, [view, online, go, game, shops.data]);
 
   const shown = useMemo(() => {
     if (!q.trim()) return cmds.filter((c) => c.group !== "People out now" && c.group !== "Shop").slice(0, 40);

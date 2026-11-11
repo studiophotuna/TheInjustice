@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ShieldCheck, Zap } from "lucide-react";
 import type { GameApi } from "./useGame";
+import { askThen } from "./ask";
 
 type CustomsData = {
   onDuty: number;
@@ -68,7 +69,7 @@ export function CustomsLine({ game }: { game: GameApi }) {
                   className="btn btn-ghost btn-xs"
                   disabled={game.busy || game.view!.dirty + game.view!.cash < o.price}
                   title="Dirty money first, then cash. Good for the rest of their shift."
-                  onClick={() => confirm(`Slip ${o.name} $${o.price.toLocaleString()} to look the other way?`) && game.social({ op: "customs_bribe", playerId: o.id }, "/api/city")}
+                  onClick={() => askThen({ title: `Slip ${o.name} $${o.price.toLocaleString()} to look the other way?`, tone: "danger" }, () => game.social({ op: "customs_bribe", playerId: o.id }, "/api/city"))}
                 >
                   Slip an envelope
                 </button>

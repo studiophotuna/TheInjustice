@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Scene } from "./art/Scenes";
 import type { GameApi } from "./useGame";
 import { SkelCard } from "./skeleton";
+import { askNumberThen, askThen } from "./ask";
 
 type CityData = {
   city: {
@@ -202,8 +203,10 @@ export function CityHall({ game }: { game: GameApi }) {
                       {data.residents.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
                     </select>
                     <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => {
-                      const v = window.prompt("How much cash for their vote? Nobody sees it but internal affairs.", "50");
-                      if (v) act({ op: "buy_vote", playerId: voter || data.residents[0].id, amount: Number(v) });
+                      askNumberThen(
+                        { title: "How much for their vote?", body: "Cash. Nobody sees it but internal affairs.", yes: "Slip it to them", tone: "danger", input: { value: 50, min: 1, unit: "$", label: "Cash" } },
+                        (amount) => act({ op: "buy_vote", playerId: voter || data.residents[0].id, amount }),
+                      );
                     }}>Slip them some cash</button>
                   </div>
                 )}
@@ -263,7 +266,7 @@ export function CityHall({ game }: { game: GameApi }) {
             </div>
           ) : null}
           <div className="row wrap">
-            <button className="btn btn-danger btn-sm" disabled={game.busy || !!c.canMartial} title={c.canMartial ?? ""} onClick={() => confirm("Call in the army for two hours? $300 from the treasury.") && act({ op: "martial_law" })}>
+            <button className="btn btn-danger btn-sm" disabled={game.busy || !!c.canMartial} title={c.canMartial ?? ""} onClick={() => askThen({ title: "Call in the army for two hours? $300 from the treasury.", tone: "danger" }, () => act({ op: "martial_law" }))}>
                Declare martial law ($300)
             </button>
           </div>
@@ -331,7 +334,7 @@ function Paper({ paper, city, game, act }: { paper: CityData["paper"]; city: Cit
         className="btn btn-ghost btn-xs bury-btn"
         disabled={game.busy}
         title="Pay the editor to make this story disappear"
-        onClick={() => confirm(`Pay the editor $${paper.editor!.price} to bury this story?`) && act({ op: "bury_story", storyId: s.id })}
+        onClick={() => askThen({ title: `Pay the editor $${paper.editor!.price} to bury this story?`, tone: "danger" }, () => act({ op: "bury_story", storyId: s.id }))}
       >
         Bury · ${paper.editor.price}
       </button>
@@ -493,14 +496,14 @@ function Leadership({
                   {s.power.name}
                 </button>
                 <button className="btn btn-ghost btn-xs" disabled={game.busy || !!s.canStipend} title={s.canStipend ?? ""} onClick={() => act({ op: "seat_stipend" })}>Stipend</button>
-                <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => confirm("Step down? The seat goes to whoever claims it next.") && act({ op: "seat_step_down" })}>Step down</button>
+                <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => askThen({ title: "Step down? The seat goes to whoever claims it next.", tone: "danger" }, () => act({ op: "seat_step_down" }))}>Step down</button>
               </div>
             ) : (
               !s.canClaim && (
                 <button
                   className={`btn btn-xs ${s.challenge ? "btn-danger" : "btn-primary"}`}
                   disabled={game.busy}
-                  onClick={() => (!s.challenge || confirm(`Challenge ${s.holder!.name} for the seat? If you lose, you lose reputation.`)) && act({ op: "seat_claim" })}
+                  onClick={() => (s.challenge ? askThen({ title: `Challenge ${s.holder!.name} for the seat?`, body: "If you lose, you lose reputation.", yes: "Challenge", tone: "danger" }, () => act({ op: "seat_claim" })) : act({ op: "seat_claim" }))}
                 >
                   {s.challenge ? "Challenge" : "Take the seat"}
                 </button>

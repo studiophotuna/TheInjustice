@@ -1,5 +1,33 @@
 # Changelog
 
+## 7.7.0: settings that reach where they're used
+
+A review of everything a player sets (prices, rates, fees) to check it shows up where it's used.
+
+- **Your shop's price level now shows on your own shelf.** You buy from your own shop at the usual
+  price, so raising prices used to change nothing you could see. Now each item in your shop says
+  "Your customers pay $X", and your shop's strip shows its price level ("prices +50%"), the same as
+  other players see it. Checked end to end: the owner sets +50%, another player sees $15 for a $10
+  sandwich, pays $15, and the owner's till goes up by the sale minus the stock cost.
+- **The command palette (Ctrl+K) charges what the shelf says.** "Buy ..." showed the plain price
+  and ignored the owner's price, stock and which city sells the gear. It now uses the same shelf
+  as the Shop page.
+- **Regulars pay city tax.** Their job pay was never taxed, so the mayor's tax rate collected
+  nothing from them. It's now withheld at the city's rate and goes to the treasury, like everyone
+  else's.
+- **No more browser pop-ups anywhere in the game.** 7.5 missed some. The game's own card now
+  handles all of these:
+  - selling or handing back a shop, selling a car, the chop shop;
+  - customs bribes;
+  - martial law, burying a story, stepping down or challenging for a seat;
+  - leaving a career, giving away a dog.
+
+  The card can also ask for an amount, with the allowed range shown and checked before you
+  confirm. That covers bounties, loans and interest, surgery fees, laundering, army gear prices,
+  recovery rewards and buying votes.
+- Checked and already connected: garage rates, surgery fees, hacker and laundering fees, customs
+  prices, and sales from the shop to its owner's till (players and regulars).
+
 ## 7.6.0: your first day comes first; a first look around; one style sheet
 
 - **Your first day is pinned to the top of Home.** A slim strip shows how far along you are, the
