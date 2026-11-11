@@ -11,6 +11,7 @@ import { REGULAR_LOOKS } from "@/game/content/faces";
 import { nextOut, type CrewNeed, type Heavy } from "./pulse";
 import { fmt, type GameApi } from "./useGame";
 import { SkelCard, SkelTiles } from "./skeleton";
+import { askThen } from "./ask";
 
 // ── Stories ────────────────────────────────────────────────────────────────
 
@@ -181,7 +182,7 @@ export function BigFish2({ game, heavies, go }: { game: GameApi; heavies: Heavy[
       </div>
       <div className="boss-acts">
         {h.out && !h.canAttack && (
-          <button className="btn btn-red" disabled={game.busy} onClick={() => confirm(`Take on ${h.name} alone? Heavies don't go down easy.`) && game.social({ op: "attack", targetId: h.id })}>
+          <button className="btn btn-red" disabled={game.busy} onClick={() => askThen({ title: `Take on ${h.name} alone?`, note: h.title, body: "Heavies don't go down easy. If it goes wrong you wake up in the clinic, lighter in the pocket. A crew splits the risk.", photo: h.photo, yes: `Take ${them} on`, no: "Back off", tone: "danger" }, () => game.social({ op: "attack", targetId: h.id }))}>
             Take {them} on
           </button>
         )}

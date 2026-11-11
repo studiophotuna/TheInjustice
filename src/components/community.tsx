@@ -11,6 +11,7 @@ import { useScrollLock } from "./scrollLock";
 import { Scene } from "./art/Scenes";
 import type { GameApi } from "./useGame";
 import { SkelLineup, SkelRows } from "./skeleton";
+import { askThen } from "./ask";
 
 type Profile = {
   id: string;
@@ -373,13 +374,13 @@ function personActions(game: GameApi, hub: Hub, p: Profile, social: (b: Record<s
   if (p.canInvite) crew.push({ key: "invite", label: <><Shield size={14} /> Invite to crew</>, run: () => social({ op: "crew_invite", playerId: p.id }) });
   if (p.canForum) crew.push({ key: "forum", label: <><MessagesSquare size={14} /> Invite to forum</>, run: () => social({ op: "forum_invite", playerId: p.id }) });
   if (p.ambush !== undefined && p.ambush !== "n/a" && !p.ambush && !hub.ambush) {
-    crew.push({ key: "ambush", label: <>Plan an ambush</>, danger: true, run: () => confirm(`Plan an ambush on ${p.name}? Your crew gets two hours to take their places.`) && social({ op: "ambush_plan", targetId: p.id }) });
+    crew.push({ key: "ambush", label: <>Plan an ambush</>, danger: true, run: () => askThen({ title: `Plan an ambush on ${p.name}? Your crew gets two hours to take their places.`, tone: "danger" }, () => social({ op: "ambush_plan", targetId: p.id })) });
   }
   for (const role of p.hire ?? []) {
     crew.push({ key: `hire-${role}`, label: <>Hire as {role === "attacker" ? "an attacker" : `the ${role}`}</>, title: "They take an equal cut.", run: () => social({ op: "ambush_hire", regularId: p.id, role }) });
   }
   for (const t of p.torch ?? []) {
-    if (!t.block) crew.push({ key: `torch-${t.id}`, label: <>Torch {t.name}</>, danger: true, run: () => confirm(`Torch ${p.name}'s ${t.name}? If you're caught, you go to a cell.`) && social({ op: "torch", targetId: p.id, propertyId: t.id }) });
+    if (!t.block) crew.push({ key: `torch-${t.id}`, label: <>Torch {t.name}</>, danger: true, run: () => askThen({ title: `Torch ${p.name}'s ${t.name}? If you're caught, you go to a cell.`, tone: "danger" }, () => social({ op: "torch", targetId: p.id, propertyId: t.id })) });
   }
 
   // A regular with a career does their job for you, while they're out.
@@ -416,7 +417,7 @@ function personActions(game: GameApi, hub: Hub, p: Profile, social: (b: Record<s
     });
   }
   if (p.lawyerFee !== null && p.lawyerFee !== undefined) business.push({ key: "lawyer", label: <>Hire as lawyer (${p.lawyerFee}/wk)</>, title: "A week on retainer: if you're arrested, they defend you automatically", run: () => social({ op: "hire_lawyer", lawyerId: p.id }) });
-  if (p.surgery && !p.surgery.block) business.push({ key: "surgery", label: <>Surgery (${p.surgery.fee})</>, title: "Fixes up to two old wounds.", run: () => confirm(`Pay Dr. ${p.name} $${p.surgery!.fee} to operate on your old wounds?`) && social({ op: "surgery", doctorId: p.id }) });
+  if (p.surgery && !p.surgery.block) business.push({ key: "surgery", label: <>Surgery (${p.surgery.fee})</>, title: "Fixes up to two old wounds.", run: () => askThen({ title: `Pay Dr. ${p.name} $${p.surgery!.fee} to operate on your old wounds?`, tone: "danger" }, () => social({ op: "surgery", doctorId: p.id })) });
   if (p.canSellGun && view.sellableGear.length > 0) {
     business.push({
       key: "gun",
@@ -431,7 +432,7 @@ function personActions(game: GameApi, hub: Hub, p: Profile, social: (b: Record<s
 
   if (p.canFrisk !== undefined && p.canFrisk !== "n/a" && !p.canFrisk) law.push({ key: "frisk", label: <><Search size={13} /> Frisk</>, title: "Stop and search them for drugs", run: () => social({ op: "frisk", targetId: p.id }) });
   if (p.canCourtMartial !== undefined && p.canCourtMartial !== "n/a" && !p.canCourtMartial) {
-    law.push({ key: "cm", label: <><Gavel size={14} /> Court-martial</>, run: () => confirm(`Bring charges against ${p.name}? If their record is clean, it costs you reputation.`) && social({ op: "court_martial", targetId: p.id }) });
+    law.push({ key: "cm", label: <><Gavel size={14} /> Court-martial</>, run: () => askThen({ title: `Bring charges against ${p.name}? If their record is clean, it costs you reputation.`, tone: "danger" }, () => social({ op: "court_martial", targetId: p.id })) });
   }
 
   if (!p.regular) {
@@ -700,7 +701,7 @@ function ContractButton({ game, target, hitmen, social }: { game: GameApi; targe
       <button
         className="btn btn-danger btn-sm"
         disabled={game.busy}
-        onClick={() => confirm(`Put out a contract on ${target.name}? $${c.cost.toLocaleString("en")} from the vault goes into escrow.`) && social({ op: "hit_order", targetId: target.id, hitmanId: hitman })}
+        onClick={() => askThen({ title: `Put out a contract on ${target.name}? $${c.cost.toLocaleString("en")} from the vault goes into escrow.`, tone: "danger" }, () => social({ op: "hit_order", targetId: target.id, hitmanId: hitman }))}
       >
         Sign off · ${c.cost.toLocaleString("en")}
       </button>
@@ -776,12 +777,12 @@ function HitCard({ game, hit, social }: { game: GameApi; hit: NonNullable<Hub["h
           </button>
         )}
         {hit.isHitman && (
-          <button className="btn btn-danger btn-sm" disabled={game.busy || !hit.ready} onClick={() => confirm(`Go through with the hit on ${hit.targetName}?`) && social({ op: "hit_execute" })}>
+          <button className="btn btn-danger btn-sm" disabled={game.busy || !hit.ready} onClick={() => askThen({ title: `Go through with the hit on ${hit.targetName}?`, tone: "danger" }, () => social({ op: "hit_execute" }))}>
             Do it (30 energy)
           </button>
         )}
         {hit.isLeader && (
-          <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => confirm("Call it off? Half the escrow is lost.") && social({ op: "hit_cancel" })}>
+          <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => askThen({ title: "Call it off? Half the escrow is lost.", tone: "danger" }, () => social({ op: "hit_cancel" }))}>
             Call it off
           </button>
         )}
@@ -869,11 +870,11 @@ function ForumBoard({ game, forum, social }: { game: GameApi; forum: Hub["forums
                 ))}
               </div>
               <p className="fine muted">Invite guests from the People list. Anyone can be a guest, whatever their career.</p>
-              <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => confirm("Shut the forum down? Guests lose access.") && social({ op: "forum_close" })}>Shut it down</button>
+              <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => askThen({ title: "Shut the forum down? Guests lose access.", tone: "danger" }, () => social({ op: "forum_close" }))}>Shut it down</button>
             </div>
           )}
           {!forum.own && (
-            <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => confirm("Leave this forum?") && social({ op: "forum_leave", crewId: forum.crewId })}>Leave forum</button>
+            <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => askThen({ title: "Leave this forum?", tone: "danger" }, () => social({ op: "forum_leave", crewId: forum.crewId }))}>Leave forum</button>
           )}
         </>
       )}
@@ -897,7 +898,7 @@ function AlliancesCard({ game, crew, crews, social }: { game: GameApi; crew: Cre
           <span className="crew-badge sm">{a.tag}</span>
           <div className="crew-row-body"><b>{a.name}</b><span className="muted">Allied</span></div>
           {crew.isLeader && (
-            <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => confirm(`Break the alliance with ${a.name}?`) && social({ op: "crew_ally", what: "break", crewId: a.id })}>
+            <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => askThen({ title: `Break the alliance with ${a.name}?`, tone: "danger" }, () => social({ op: "crew_ally", what: "break", crewId: a.id }))}>
               Break
             </button>
           )}
@@ -1149,7 +1150,7 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
               <li key={i}>{l.text} <span className="muted">· {ago(l.at)}</span></li>
             ))}
           </ul>
-          <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => confirm("Leave the crew?") && social({ op: "crew_leave" })}>
+          <button className="btn btn-ghost btn-sm" disabled={game.busy} onClick={() => askThen({ title: "Leave the crew?", tone: "danger" }, () => social({ op: "crew_leave" }))}>
             Leave crew
           </button>
         </section>
@@ -2118,7 +2119,7 @@ function RivalFronts({ game, rivals, social }: { game: GameApi; rivals: NonNulla
               <b>[{r.tag}]</b> {r.front} <span className="muted fine">{r.closed ? "· already burned out" : `· ${r.crew}`}</span>
             </span>
             {!r.closed && (
-              <button className="btn btn-danger btn-xs" disabled={game.busy || !!r.block} title={r.block ?? ""} onClick={() => confirm(`Send yourself with a gas can to [${r.tag}]'s ${r.front.toLowerCase()}?`) && social({ op: "front_torch", crewId: r.crewId })}>
+              <button className="btn btn-danger btn-xs" disabled={game.busy || !!r.block} title={r.block ?? ""} onClick={() => askThen({ title: `Send yourself with a gas can to [${r.tag}]'s ${r.front.toLowerCase()}?`, tone: "danger" }, () => social({ op: "front_torch", crewId: r.crewId }))}>
                 Torch it
               </button>
             )}

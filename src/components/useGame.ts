@@ -7,6 +7,14 @@ import type { PublicView } from "@/game/view";
 
 export type Leader = { name: string; reputation: number; title: string };
 export type Toast = GameEvent & { id: number };
+/** A fight to play out, with what you had going in and what came of it (the result plate). */
+export type FightShow = FightSummary & {
+  before?: { cash: number; hp: number; reputation: number; energy: number };
+  /** The results in words, shown on the plate instead of as toasts. */
+  notes?: { tone: GameEvent["tone"]; text: string }[];
+  /** The same fight again (street fights only). */
+  again?: Record<string, unknown>;
+};
 export type Floater = { id: number; text: string; tone: "good" | "bad"; x: number; y: number };
 
 async function notify(title: string, body: string, url: string) {
@@ -64,6 +72,22 @@ function rememberAction(body: Record<string, unknown>) {
   }
 }
 
+const snap = (v: PublicView | null) => (v ? { cash: v.cash, hp: v.hp, reputation: v.reputation, energy: v.energy } : undefined);
+
+/** A fight's results: plain outcomes go on the plate, calls to action stay toasts. */
+function splitFight(events: GameEvent[]) {
+  const notes: { tone: GameEvent["tone"]; text: string }[] = [];
+  const rest: GameEvent[] = [];
+  for (const e of events) {
+    if (e.fight) continue;
+    // The win or loss line itself: the stamp and the cash row already say it.
+    if (/^You beat the |got the better of you\.$/.test(e.text)) continue;
+    if (!e.action && notes.length < 4) notes.push({ tone: e.tone, text: e.text });
+    else rest.push(e);
+  }
+  return { notes, rest };
+}
+
 export function useGame() {
   const [view, setView] = useState<PublicView | null>(null);
   const [account, setAccount] = useState<{ username: string } | null>(null);
@@ -72,7 +96,7 @@ export function useGame() {
   const [fatal, setFatal] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [fight, setFight] = useState<FightSummary | null>(null);
+  const [fight, setFight] = useState<FightShow | null>(null);
   const [floaters, setFloaters] = useState<Floater[]>([]);
   const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
   const [receivedAt, setReceivedAt] = useState(0);
@@ -155,9 +179,10 @@ export function useGame() {
         const events = (data.events ?? []) as GameEvent[];
         const fightEvent = events.find((e) => e.fight);
         if (fightEvent?.fight) {
-          setFight(fightEvent.fight);
-          // Hold the other results until the fight scene has played.
-          setTimeout(() => pushToasts(events), 2600);
+          // The results go on the fight's plate; only calls to action wait as toasts.
+          const plate = splitFight(events);
+          setFight({ ...fightEvent.fight, before: snap(view), notes: plate.notes, again: body.type === "fight" ? body : undefined });
+          if (plate.rest.length) setTimeout(() => pushToasts(plate.rest), 2600);
         } else {
           pushToasts(events);
         }
@@ -177,7 +202,7 @@ export function useGame() {
         setBusy(false);
       }
     },
-    [busy, view?.cash, accept, pushToasts, floatText],
+    [busy, view, accept, pushToasts, floatText],
   );
 
   /** Actions that involve other players (attacks, chat, crews). */
@@ -200,12 +225,14 @@ export function useGame() {
           vibrate(60);
           return null;
         }
+        const before = snap(view);
         accept(data.view);
         const events = (data.events ?? []) as GameEvent[];
         const fightEvent = events.find((e) => e.fight);
         if (fightEvent?.fight) {
-          setFight(fightEvent.fight);
-          setTimeout(() => pushToasts(events), 2600);
+          const plate = splitFight(events);
+          setFight({ ...fightEvent.fight, before, notes: plate.notes });
+          if (plate.rest.length) setTimeout(() => pushToasts(plate.rest), 2600);
         } else pushToasts(events);
         soundFor(body, events, 0);
         changed();
@@ -217,7 +244,7 @@ export function useGame() {
         setBusy(false);
       }
     },
-    [busy, accept, pushToasts],
+    [view, busy, accept, pushToasts],
   );
 
   const auth = useCallback(

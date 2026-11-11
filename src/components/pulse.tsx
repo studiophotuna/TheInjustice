@@ -6,6 +6,7 @@ import { useScrollLock } from "./scrollLock";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { fmt, type GameApi } from "./useGame";
+import { askThen } from "./ask";
 
 export type FeedItem = { at: number; text: string; kind: "city" | "street"; photo?: string | null };
 export type CrewNeed = { kind: string; text: string; cta: string; go: string; until: number | null };
@@ -437,7 +438,7 @@ export function BigFish({ game, heavies, go }: { game: GameApi; heavies: Heavy[]
             </div>
             <div className="bf-actions">
               {h.out && !h.canAttack && (
-                <button className="btn btn-danger btn-sm" disabled={game.busy} onClick={() => confirm(`Take on ${h.name} alone? Heavies don't go down easy.`) && game.social({ op: "attack", targetId: h.id })}>
+                <button className="btn btn-danger btn-sm" disabled={game.busy} onClick={() => askThen({ title: `Take on ${h.name} alone?`, body: "Heavies don't go down easy. If it goes wrong you wake up in the clinic, lighter in the pocket. A crew splits the risk.", photo: h.photo, yes: "Take them on", no: "Back off", tone: "danger" }, () => game.social({ op: "attack", targetId: h.id }))}>
                   Take them on
                 </button>
               )}

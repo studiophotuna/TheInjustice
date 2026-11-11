@@ -1,5 +1,21 @@
 # Changelog
 
+## 7.5.0: fight results; the game asks its own questions
+
+- **Every fight ends on a result plate.** After the win or loss stamp you see what changed:
+  - cash and reputation won or lost;
+  - your health, or how long you're in the clinic;
+  - the energy it took;
+  - anything else that happened, such as a mugger taking your wallet.
+
+  Street fights get "Fight again" next to "Continue". The round-by-round lines fold down to the
+  last one so the plate fits on a phone. Never any odds.
+- **Big Fish asks properly.** Taking on a heavy alone opens the game's own card with their face,
+  what they run, and the risk in words ("Back off" or "Take him on"), instead of the browser's
+  plain pop-up.
+- The same card now replaces every other browser pop-up: ambushes, torching, surgery,
+  court-martial, contracts, forums and alliances. Escape or tapping outside backs off.
+
 ## 7.4.0: five tabs on phones
 
 - **Phones get five tabs: Home, Work, City, People, Me**, with bigger labels on a 60px bar.

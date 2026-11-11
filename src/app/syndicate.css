@@ -396,3 +396,33 @@ img.slot-art { object-fit: cover; }
   .quickbar { transition: transform 0.22s ease, opacity 0.22s ease; }
   body.scroll-down .quickbar { transform: translateY(calc(100% + 12px)); opacity: 0; pointer-events: none; }
 }
+
+/* ── Fight result plate ─────────────────────────────────────────────────────── */
+.fight-plate { width: min(420px, 100%); display: grid; gap: 12px; padding: 16px; border-radius: var(--radius); background: rgba(18, 22, 28, 0.94); box-shadow: inset 0 0 0 1px var(--border), var(--shadow); }
+.fight-plate.win { box-shadow: inset 0 0 0 1px rgba(255, 185, 95, 0.45), var(--shadow); }
+.plate-rows { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.plate-rows > div { padding: 9px 11px; border-radius: 12px; background: var(--panel-3); min-width: 0; }
+.plate-rows dt { font: 800 10px/1 var(--display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.plate-rows dd { margin: 5px 0 0; font: 800 17px/1.1 var(--display); color: #fff; overflow-wrap: anywhere; }
+.plate-rows .t-good dd { color: var(--emerald); }
+.plate-rows .t-bad dd { color: var(--crimson-soft); }
+.plate-notes { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; text-align: left; font-size: 13.5px; color: #c9ccd4; }
+.plate-notes li { padding-left: 12px; border-left: 2px solid var(--border); }
+.plate-notes li.t-good { border-color: var(--emerald); }
+.plate-notes li.t-bad { border-color: var(--crimson); }
+.plate-acts { display: flex; gap: 8px; justify-content: flex-end; }
+.plate-acts .btn { flex: 1; }
+
+/* ── The game's own questions (instead of the browser's confirm) ────────────── */
+.ask-veil { position: fixed; inset: 0; z-index: 200; display: grid; place-items: end center; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); background: rgba(6, 8, 12, 0.72); backdrop-filter: blur(6px); }
+@media (min-width: 700px) { .ask-veil { place-items: center; } }
+.ask { position: relative; width: min(440px, 100%); display: grid; gap: 10px; padding: 20px; border-radius: var(--radius); background: var(--panel); box-shadow: inset 0 0 0 1px var(--border), 0 30px 60px -20px #000; }
+.ask.danger { box-shadow: inset 0 0 0 1px rgba(255, 90, 90, 0.35), 0 30px 60px -20px #000; }
+.ask-face { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; margin-top: -58px; box-shadow: 0 0 0 3px var(--panel), 0 0 0 5px var(--crimson); }
+.ask h2 { margin: 0; font: 800 21px/1.15 var(--display); letter-spacing: -0.01em; }
+.ask-note { font: 800 10.5px/1 var(--display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--amber-hi); }
+.ask p { margin: 0; color: #c9ccd4; font-size: 14px; line-height: 1.45; }
+.ask-acts { display: flex; gap: 8px; margin-top: 6px; }
+.ask-acts .btn { flex: 1; min-height: 46px; }
+.fight-scene { overflow-y: auto; align-content: safe center; }
+.fight-lines.over { min-height: 0; }

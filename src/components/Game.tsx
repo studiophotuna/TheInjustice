@@ -48,7 +48,8 @@ import { useScrollLock } from "./scrollLock";
 import { CommandPalette } from "./palette";
 import { EncounterDock, openEncounter } from "./encounter";
 import { play, preloadSounds, setSound, soundOn } from "./sfx";
-import { fmt, useGame, type GameApi } from "./useGame";
+import { AskHost } from "./ask";
+import { type FightShow, fmt, useGame, type GameApi } from "./useGame";
 import { SkelShell } from "./skeleton";
 
 type Tab = "home" | "jobs" | "fight" | "shop" | "people" | "city" | "profile";
@@ -142,7 +143,19 @@ export default function Game() {
       {view.ageBlocked ? <AgeBlocked game={game} /> : view.needsBirthDate ? <AgeGate game={game} /> : view.dead ? <DeathScreen game={game} view={view} /> : <Shell game={game} view={view} />}
       <Toasts game={game} />
       <AnimatePresence>{game.recoveryCode && <RecoveryCodeModal game={game} />}</AnimatePresence>
-      <AnimatePresence>{game.fight && <FightScene fight={game.fight} view={view} onClose={game.closeFight} />}</AnimatePresence>
+      <AnimatePresence>
+        {game.fight && (
+          <FightScene
+            key={`${game.fight.opponent}-${game.fight.lines.join("|").length}-${view.energy}`}
+            fight={game.fight}
+            view={view}
+            busy={game.busy}
+            onClose={game.closeFight}
+            onAgain={game.fight.again ? () => { const again = game.fight!.again!; game.closeFight(); void game.act(again); } : undefined}
+          />
+        )}
+      </AnimatePresence>
+      <AskHost />
       <Floaters game={game} />
     </>
   );
@@ -714,7 +727,23 @@ function ArrivalCard({ view, onDone }: { view: PublicView; onDone: () => void })
   );
 }
 
-function FightScene({ fight, view, onClose }: { fight: FightSummary; view: PublicView; onClose: () => void }) {
+/** What changed in a fight, in plain words and amounts (never odds). */
+function plateRows(fight: FightShow, view: PublicView): { label: string; value: string; tone: "good" | "bad" | "" }[] {
+  const b = fight.before;
+  if (!b) return [];
+  const rows: { label: string; value: string; tone: "good" | "bad" | "" }[] = [];
+  const cash = view.cash - b.cash;
+  if (cash) rows.push({ label: "Cash", value: `${cash > 0 ? "+" : "−"}$${Math.abs(cash).toLocaleString("en")}`, tone: cash > 0 ? "good" : "bad" });
+  const rep = view.reputation - b.reputation;
+  if (rep) rows.push({ label: "Reputation", value: `${rep > 0 ? "+" : "−"}${Math.abs(rep)}`, tone: rep > 0 ? "good" : "bad" });
+  if (view.hospitalMs > 0) rows.push({ label: "Health", value: `In the clinic · ${fmt(view.hospitalMs)}`, tone: "bad" });
+  else if (view.hp !== b.hp) rows.push({ label: "Health", value: `${view.hp}/${view.maxHp}`, tone: view.hp < b.hp ? "bad" : "good" });
+  const en = view.energy - b.energy;
+  if (en < 0) rows.push({ label: "Energy", value: `−${-en}`, tone: "" });
+  return rows;
+}
+
+function FightScene({ fight, view, onClose, onAgain, busy }: { fight: FightShow | FightSummary; view: PublicView; onClose: () => void; onAgain?: () => void; busy?: boolean }) {
   const [shown, setShown] = useState(0);
   const lines = fight.lines.slice(0, 7);
   const done = shown >= lines.length;
@@ -744,8 +773,9 @@ function FightScene({ fight, view, onClose }: { fight: FightSummary; view: Publi
           <p>{fight.opponent}</p>
         </motion.div>
       </div>
-      <ul className="fight-lines">
-        {lines.slice(0, shown).map((l, i) => (
+      <ul className={`fight-lines ${done ? "over" : ""}`}>
+        {/* Once it's over, the last line is enough: the plate needs the room. */}
+        {(done ? lines.slice(-1) : lines.slice(0, shown)).map((l, i) => (
           <motion.li key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>{l}</motion.li>
         ))}
       </ul>
@@ -756,7 +786,39 @@ function FightScene({ fight, view, onClose }: { fight: FightSummary; view: Publi
           </motion.div>
         )}
       </AnimatePresence>
-      {done && <button className="btn btn-ghost" onClick={onClose}>Continue</button>}
+      {done && (
+        <motion.div className={`fight-plate ${o.cls}`} initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.25, type: "spring", stiffness: 260, damping: 26 }} onClick={(e) => e.stopPropagation()}>
+          {(() => {
+            const show = fight as FightShow;
+            const rows = plateRows(show, view);
+            return (
+              <>
+                {rows.length > 0 && (
+                  <dl className="plate-rows">
+                    {rows.map((r) => (
+                      <div key={r.label} className={r.tone ? `t-${r.tone}` : ""}>
+                        <dt>{r.label}</dt>
+                        <dd>{r.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+                {show.notes?.length ? (
+                  <ul className="plate-notes">
+                    {show.notes.map((n, i) => <li key={i} className={`t-${n.tone}`}>{n.text}</li>)}
+                  </ul>
+                ) : null}
+                <div className="plate-acts">
+                  {onAgain && fight.outcome !== "death" && view.hospitalMs <= 0 && (
+                    <button className="btn btn-ghost" disabled={busy} onClick={onAgain}>Fight again</button>
+                  )}
+                  <button className="btn btn-primary" onClick={onClose}>Continue</button>
+                </div>
+              </>
+            );
+          })()}
+        </motion.div>
+      )}
     </motion.div>
   );
 }
