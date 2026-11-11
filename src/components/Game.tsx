@@ -63,8 +63,51 @@ const TABS: { id: Tab; label: string; Icon: typeof Briefcase }[] = [
 ];
 /** The desktop sidebar also lists your profile; on phones it opens from the avatar. */
 const SIDE_TABS = [...TABS, { id: "profile" as Tab, label: "Me", Icon: UserRound }];
+/**
+ * Phones get five tabs. Fight sits inside Work and the Shop inside City, each behind a two-way
+ * switch at the top of the screen; every link to them still works and lights the right tab.
+ */
+const PHONE_TABS: { id: Tab; label: string; Icon: typeof Briefcase }[] = [
+  { id: "home", label: "Home", Icon: House },
+  { id: "jobs", label: "Work", Icon: Briefcase },
+  { id: "city", label: "City", Icon: MapIcon },
+  { id: "people", label: "People", Icon: Users },
+  { id: "profile", label: "Me", Icon: UserRound },
+];
+const PHONE_HOME: Partial<Record<Tab, Tab>> = { fight: "jobs", shop: "city" };
+
+/** Phones: the two halves of Work (jobs, fights) and of City (places, the shop). */
+function SubSwitch({ tab, go }: { tab: Tab; go: (to: string) => void }) {
+  const pair: [Tab, string][] = tab === "jobs" || tab === "fight" ? [["jobs", "Jobs"], ["fight", "Fight and gym"]] : [["city", "Places"], ["shop", "Shop"]];
+  return (
+    <div className="subswitch" role="tablist">
+      {pair.map(([id, label]) => (
+        <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? "on" : ""} onClick={() => go(`tab:${id}`)}>{label}</button>
+      ))}
+    </div>
+  );
+}
+
+/** Phones: scrolling down folds the name row and the quick bar away; scrolling up brings them back. */
+function useScrollFold() {
+  useEffect(() => {
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y > last + 8 && y > 140) document.body.classList.add("scroll-down");
+      else if (y < last - 8 || y < 60) document.body.classList.remove("scroll-down");
+      last = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      document.body.classList.remove("scroll-down");
+    };
+  }, []);
+}
 
 export default function Game() {
+  useScrollFold();
   const game = useGame();
   const { view, loaded, fatal } = game;
   // The server can't see browser storage, so it always sends the skeleton; first-time visitors
@@ -337,6 +380,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
         <AnimatePresence mode="wait">
           <motion.main key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.22 }}>
             {tab === "home" && <HomeTab game={game} go={go} onRead={setReading} />}
+            {(tab === "jobs" || tab === "fight" || tab === "shop" || (tab === "city" && !place)) && <SubSwitch tab={tab} go={go} />}
             {tab === "jobs" && <JobsTab game={game} highlight={highlight} />}
             {tab === "fight" && <FightTab game={game} />}
             {tab === "shop" && <ShopTab game={game} />}
@@ -361,9 +405,9 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
       <AwayRecap game={game} />
 
       <nav className="bottomnav glass" aria-label="Main">
-        {SIDE_TABS.map(({ id, label, Icon }) => (
-          <button key={id} className={tab === id ? "on" : ""} onClick={() => go(`tab:${id}`)}>
-            {tab === id && <motion.span layoutId="bottom-pill" className="bottom-pill" />}
+        {PHONE_TABS.map(({ id, label, Icon }) => (
+          <button key={id} className={tab === id || PHONE_HOME[tab] === id ? "on" : ""} aria-current={tab === id || PHONE_HOME[tab] === id ? "page" : undefined} onClick={() => go(`tab:${id}`)}>
+            {(tab === id || PHONE_HOME[tab] === id) && <motion.span layoutId="bottom-pill" className="bottom-pill" />}
             <Icon size={22} />
             <span>{label}</span>
             {id === "people" && view.inbox.unread + view.sightings.length > 0 && <span className="badge-dot nav-dot">{view.inbox.unread + view.sightings.length}</span>}
@@ -465,6 +509,9 @@ function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonN
     const el = ref.current;
     if (!el) return;
     const measure = () => {
+      // While scrolled down the name row is folded away: keep the space it had, so the page
+      // under your finger doesn't jump.
+      if (document.body.classList.contains("scroll-down")) return;
       setFull(el.offsetHeight);
     };
     measure();

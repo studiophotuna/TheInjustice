@@ -378,3 +378,21 @@ img.slot-art { object-fit: cover; }
 .jcard-lock { margin: 0; padding: 0 10px 10px; font-size: 11px; }
 .jcard.flash { box-shadow: inset 0 0 0 2px var(--amber-hi), var(--shadow); }
 @media (min-width: 700px) { .cover-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .jcard.big { grid-column: span 2; } .jcard-art { height: 130px; } }
+
+/* ── Phone navigation: five tabs; Work and City each hold two halves ───────── */
+:root { --nav-h: 60px; }
+.bottomnav { grid-template-columns: repeat(5, 1fr) !important; }
+.bottomnav button { font-size: 12px !important; letter-spacing: 0.03em; gap: 3px; }
+.bottomnav button svg { width: 22px; height: 22px; }
+.subswitch { display: none; }
+@media (max-width: 959px) {
+  .subswitch { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(24, 28, 34, 0.9); box-shadow: inset 0 0 0 1px var(--border); }
+  .subswitch button { border: 0; border-radius: 999px; padding: 10px 12px; min-height: 40px; background: none; color: var(--muted); font: 700 13.5px/1 var(--display); letter-spacing: 0.02em; cursor: pointer; }
+  .subswitch button.on { background: var(--panel-4); color: #fff; box-shadow: inset 0 -2px 0 var(--crimson); }
+  /* Scrolling down: fold away the name row and the quick bar. */
+  .hud .hud-top, .hud .hud-tags { transition: opacity 0.18s; }
+  body.scroll-down .hud .hud-top, body.scroll-down .hud .hud-tags, body.scroll-down .hud .hud-tip { display: none; }
+  body.scroll-down .hud .hud-vitals { border-top: 0; padding-top: 0; }
+  .quickbar { transition: transform 0.22s ease, opacity 0.22s ease; }
+  body.scroll-down .quickbar { transform: translateY(calc(100% + 12px)); opacity: 0; pointer-events: none; }
+}

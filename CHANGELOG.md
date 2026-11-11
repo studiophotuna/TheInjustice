@@ -1,5 +1,16 @@
 # Changelog
 
+## 7.4.0: five tabs on phones
+
+- **Phones get five tabs: Home, Work, City, People, Me**, with bigger labels on a 60px bar.
+  - Fight and the gym now sit inside Work, and the Shop inside City, behind a switch at the top
+    of the screen ("Jobs | Fight and gym", "Places | Shop").
+  - Every link to Fight or the Shop still works and lights the right tab.
+- **More room to play while scrolling.** Scroll down and your name row and the quick bar fold
+  away. Scroll up and they come back. While scrolling, fixed bars take about a fifth of a phone
+  screen instead of two fifths.
+- Desktop keeps its full side menu.
+
 ## 7.3.0: your case comes first; leads; jobs as a career track
 
 The approved redesign directions: A for Home, B for Jobs, plus leads.
