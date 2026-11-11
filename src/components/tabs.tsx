@@ -1,7 +1,8 @@
 "use client";
 
 import { motionChoice, setMotion } from "./motion";
-import { GEAR_HOME, soldIn } from "@/game/stock";
+import { GEAR_HOME, rarityOf, soldIn } from "@/game/stock";
+import { RarityTag } from "./blackmarket";
 import { GEAR } from "@/game/gear";
 import { CarPhoto } from "./art/CarPhoto";
 import { DeleteAccount, HelpLinks } from "./legal";
@@ -321,7 +322,7 @@ export function ShopTab({ game }: { game: GameApi }) {
         <motion.article key={i.id} variants={item} className={`shop-item ${i.owned ? "owned" : ""}`}>
           <ItemArt id={i.id} icon={i.icon} name={i.name} price={price} className="shop-art" />
           <div className="shop-body">
-            <span className="chip">{KIND_LABEL[i.kind]}</span>
+            {home ? <RarityTag rarity={rarityOf(i.id)} /> : <span className="chip">{KIND_LABEL[i.kind]}</span>}
             <h3>{i.name}</h3>
             <p className="muted">{i.description}</p>
             {left !== null && <p className={`fine stock-note ${soldOut ? "out" : ""}`}>In stock: {left}{soldOut ? " · next shipment soon" : ""}</p>}

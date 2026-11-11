@@ -257,7 +257,7 @@ export interface Player {
   encounterAt?: number;
   /** Set on street regulars (characters the game runs). See regulars.ts. */
   /** A street regular: workAt is their last job, jobs counts work toward their next promotion. */
-  regular?: { country: CountryId; key: string; slot: number; v?: number; workAt?: number; jobs?: number };
+  regular?: { country: CountryId; key: string; slot: number; v?: number; workAt?: number; jobs?: number; ateAt?: number; medStay?: number; marketAt?: number };
   /** Recent repetitions of each job or exercise (fades over time), for diminishing returns. */
   practice?: Record<string, { n: number; at: number }>;
   /**
@@ -940,7 +940,22 @@ export interface FireRecord {
   solved?: { arsonistName: string; by: string; at: number };
 }
 
+/** A piece of gear on offer on the black market. */
+export interface MarketListing {
+  id: string;
+  itemId: string;
+  price: number;
+  sellerId: string;
+  sellerName: string;
+  at: number;
+  /** The fence's own stock (no seller to pay). */
+  fence?: boolean;
+}
+
 export interface City {
+  /** The black market: gear on offer in this city's back room, and when the fence last restocked. */
+  market?: MarketListing[];
+  fenceAt?: number;
   /** Recent arsons, for fire investigators. */
   fires?: FireRecord[];
   /** What the regulars have been up to (jobs, purchases), for the street feed. */

@@ -5,6 +5,7 @@ import { Anchor, ArrowLeft, BedDouble, BookUser, Building2, Dices, GraduationCap
 import { Casino } from "./casino";
 import { Docks } from "./docks";
 import { Pound } from "./pound";
+import { BlackMarket } from "./blackmarket";
 import { DogCard, StashCard } from "./stash";
 import { BreakIns } from "./property";
 import { Directory } from "./directory";
@@ -34,7 +35,7 @@ const BUILDINGS: { id: Building; name: string; scene: SceneKind; poster: string;
   { id: "academy", name: "Academy", scene: "academy", poster: "academy", Icon: GraduationCap, short: "Degrees for careers", tagline: "Enroll to earn the degree a career needs." },
   { id: "cityhall", name: "City Hall", scene: "cityhall", poster: "cityhall", Icon: Building2, short: "Mayor, votes, turf", tagline: "The mayor, the vote, the paper, the turf." },
   { id: "prison", name: "Prison", scene: "prison", poster: "prison", Icon: Lock, short: "The yard", tagline: "The yard, and anyone doing time." },
-  { id: "street", name: "The Street", scene: "street", poster: "street", Icon: Shield, short: "Rackets and contracts", tagline: "Dealers, rackets, contracts, break-ins, cold cases." },
+  { id: "street", name: "The Street", scene: "street", poster: "street", Icon: Shield, short: "Rackets and the black market", tagline: "Dealers, the black market, rackets, contracts, break-ins." },
   { id: "station", name: "Station", scene: "station", poster: "station", Icon: Train, short: "Travel to other cities", tagline: "Bus, train or plane to another country. Or drive." },
   { id: "casino", name: "The Velvet Ace", scene: "casino", poster: "casino", Icon: Dices, short: "Cards, dice and the wheel", tagline: "Twenty-One, roulette and the burning seven. Cash on the table." },
   { id: "pound", name: "The Pound", scene: "pound", poster: "pound", Icon: PawPrint, short: "Dogs for the door", tagline: "City-run kennels. Different breeds in every city, new arrivals every few hours." },
@@ -165,6 +166,7 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
         <div className="stack">
           <GunOffers game={game} />
           <StreetMarket game={game} />
+          <BlackMarket game={game} />
           <BreakIns game={game} />
           <CasesPanel game={game} hub={hub} place="street" />
           <Sightings game={game} compact />

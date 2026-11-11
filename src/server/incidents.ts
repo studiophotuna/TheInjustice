@@ -16,6 +16,7 @@ import { npcScrub, repairWalkIn, treat } from "@/game/incidents";
 import { standGuard } from "@/game/military";
 import { fileRegular, regularCandidate, regularMayorDay, regularsVote } from "@/game/regcivic";
 import { BALANCE } from "@/game/balance";
+import { buyListing, regularPick } from "@/game/market";
 import { defFor, scheduledOut } from "@/game/regulars";
 import { tick } from "@/game/engine";
 import type { getStore } from "./store";
@@ -181,6 +182,19 @@ export async function cityLife(store: Store, country: CountryId, now: number): P
       const job = worked.has(p.id) ? null : regularWork(p, now, Math.random);
       const bought = regularShop(p, c, now, Math.random);
       for (const l of [job, bought]) if (l) lines.push(l);
+      // The black market: a regular buys a piece a player put up, and the seller gets paid.
+      const wanted = regularPick(c, p, now);
+      if (wanted) {
+        const [seller] = await tx.getPlayers([wanted.sellerId]);
+        try {
+          if (seller) tick(seller, now);
+          buyListing(c, p, seller ?? null, wanted.id, now);
+          p.regular!.marketAt = now;
+          if (seller) await tx.putPlayer(seller);
+        } catch (e) {
+          if (!(e instanceof GameError)) throw e;
+        }
+      }
       await tx.putPlayer(p);
     }
     if (lines.length) c.street = [...lines.map((text, i) => ({ at: now - i * 1000, text })), ...(c.street ?? [])].slice(0, 15);

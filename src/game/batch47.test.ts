@@ -14,9 +14,11 @@ const reg = (key: string): Player => {
   const p = createPlayer(`reg-solmarra-${key}`, def.name, NOW - 90 * 86_400_000, "solmarra");
   p.path = def.path;
   p.rank = def.path ? def.rank : 0;
-  p.regular = { country: "solmarra", key, slot: -1 };
+  // Fed and housed, so the shopping tests below are about what they set up.
+  p.regular = { country: "solmarra", key, slot: -1, ateAt: NOW };
   tick(p, NOW);
   p.energy = 100;
+  p.housing = 3;
   return p;
 };
 
@@ -88,5 +90,45 @@ describe("regulars shop", () => {
     p.cash = 500;
     p.hp = 20;
     expect(ITEM_BY_ID[regularWant(p, null, NOW)!].kind).toBe("medical");
+  });
+
+  it("they eat a bought meal every few hours, and the diner's owner earns from it", () => {
+    const c = newCity("solmarra", NOW);
+    c.shops = { diner: { ownerId: "acct_o", ownerName: "Owner", markup: 1.2, since: NOW, till: 0, sales: 0, earned: 0, offers: [] } };
+    const p = reg("pia");
+    p.cash = 300;
+    p.regular!.ateAt = 0;
+    expect(ITEM_BY_ID[regularWant(p, c, NOW)!].kind).toBe("food");
+    regularShop(p, c, NOW, always(0.5));
+    expect(c.shops.diner!.sales).toBe(1);
+    expect(c.shops.diner!.till).toBeGreaterThan(0);
+    expect(p.regular!.ateAt).toBe(NOW);
+    // Not again until the next meal time.
+    expect(regularWant(p, c, NOW + 60_000)).toBeNull();
+  });
+
+  it("laid up in hospital they buy one medkit per stay, and the pharmacy earns", () => {
+    const c = newCity("solmarra", NOW);
+    c.shops = { pharmacy: { ownerId: "acct_o", ownerName: "Owner", markup: 1, since: NOW, till: 0, sales: 0, earned: 0, offers: [] } };
+    const p = reg("pia");
+    p.cash = 500;
+    p.hospitalUntil = NOW + 100 * 60_000;
+    regularShop(p, c, NOW, always(0.5));
+    expect(c.shops.pharmacy!.sales).toBe(1);
+    expect(p.hospitalUntil).toBe(NOW + 50 * 60_000);
+    expect(regularWant(p, c, NOW)).toBeNull();
+  });
+
+  it("they move up a home when they can comfortably afford it, and the real estate office earns", () => {
+    const c = newCity("solmarra", NOW);
+    c.shops = { realty: { ownerId: "acct_o", ownerName: "Owner", markup: 1, since: NOW, till: 0, sales: 0, earned: 0, offers: [] } };
+    const p = reg("pia");
+    p.housing = 1;
+    p.equipped = { weapon: "baseball_bat", armor: "vest" };
+    p.inventory = { baseball_bat: 1, vest: 1 };
+    p.cash = 5000;
+    expect(regularShop(p, c, NOW, always(0.5))).toMatch(/moved into/);
+    expect(p.housing).toBe(2);
+    expect(c.shops.realty!.sales).toBe(1);
   });
 });

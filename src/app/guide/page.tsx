@@ -76,6 +76,12 @@ export default function GuidePage() {
         gets repaired, so plan to buy again. At every price there&apos;s more than one choice, and they don&apos;t fight the same way.
         Finding out which suits you is part of the game.
       </p>
+      <p>
+        Every piece is Common, Uncommon or Rare. Rarity is only about how hard it is to find: rarer pieces sit in smaller numbers
+        on the shelf and miss more shipments. You can own up to three of a piece. Spares and unused pieces can be sold on the
+        black market, on The Street in every city, for dirty money. The fence keeps a cut. Gear carried in from another city
+        sells well there, because the local shop can&apos;t stock it.
+      </p>
 
       <h2>Crews</h2>
       <p>

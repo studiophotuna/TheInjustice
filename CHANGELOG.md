@@ -1,5 +1,27 @@
 # Changelog
 
+## 6.15.0: the black market, item rarity, and businesses that earn
+
+- **Item rarity.** Every weapon and armor is Common, Uncommon or Rare, shown in the shop. Rarity
+  never changes what a piece does. It sets how many a shop holds (6, 4 or 2) and how often a
+  shipment brings it: rare pieces miss more shipments.
+- **The black market**, on The Street in every city:
+  - Sell your spares, or an unused piece, at your own price (half to three times the shop price).
+  - Buyers pay cash or dirty money. Sellers are paid in dirty money, and the fence keeps 10%.
+  - Buying puts a little heat on your record.
+  - Gear from any city can be sold anywhere, so carrying pieces between cities pays.
+  - The fence keeps a couple of out-of-town pieces of its own on offer, at a premium.
+  - Regulars shop there too, at most once a day each, only for a piece they need and only at a
+    fair price, so sellers have real customers.
+- **Fix: player-run shops now earn from the city's regulars.** A Port Solace diner had made
+  nothing since it opened, because regulars only ate when nearly out of energy, which never
+  happened. Now:
+  - regulars buy a meal every few hours at the diner;
+  - when laid up in hospital they buy a medkit at the pharmacy;
+  - they move to a better place through the real estate office when they can comfortably
+    afford it.
+  - Every sale goes to the owner's till, and the city tax is taken when the owner collects.
+
 ## 6.14.0: regulars at city hall
 
 - **Regulars can run for mayor.** When the ballot is open, the regular with the best standing who

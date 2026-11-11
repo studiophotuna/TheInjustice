@@ -38,10 +38,26 @@ const shopOf = (id: string): GearShop | null => {
   return k === "weapon" ? "guns" : k === "armor" ? "armor" : null;
 };
 
-/** The most of one piece a shop will hold: plenty of cheap gear, a couple of the expensive. */
-export function stockCap(id: string): number {
+export type Rarity = "common" | "uncommon" | "rare";
+
+/**
+ * How hard a piece is to find. It never changes what the piece does in a fight: only how many a
+ * shop holds, how often a shipment brings it, and what it fetches on the black market.
+ */
+export const RARITY: Record<Rarity, { name: string; cap: number; arrives: number }> = {
+  common: { name: "Common", cap: 6, arrives: 1 },
+  uncommon: { name: "Uncommon", cap: 4, arrives: 0.7 },
+  rare: { name: "Rare", cap: 2, arrives: 0.4 },
+};
+
+export function rarityOf(id: string): Rarity {
   const price = ITEM_BY_ID[id]?.price ?? 0;
-  return price < 1_000 ? 6 : price < 10_000 ? 4 : 2;
+  return price < 1_000 ? "common" : price < 10_000 ? "uncommon" : "rare";
+}
+
+/** The most of one piece a shop will hold: plenty of common gear, a couple of the rare. */
+export function stockCap(id: string): number {
+  return RARITY[rarityOf(id)].cap;
 }
 
 /** What this city's shop of this kind carries. */
@@ -65,6 +81,8 @@ export function rollShipment(c: City, shop: GearShop, rng: Rng): { id: string; a
   const out: { id: string; added: number }[] = [];
   for (let k = 0; k < kinds; k++) {
     const id = pool.splice(Math.floor(rng() * pool.length), 1)[0];
+    // Rarer pieces miss more shipments.
+    if (rng() >= RARITY[rarityOf(id)].arrives) continue;
     const cap = stockCap(id);
     const have = c.stock[id] ?? 0;
     const added = Math.min(cap - have, 1 + Math.floor(rng() * cap));

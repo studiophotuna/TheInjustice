@@ -29,6 +29,13 @@ export const LIFE = {
   reserve: 40,
   /** Never take a shelf below this. */
   shelfFloor: 1,
+  /** A regular eats a bought meal about this often. */
+  mealEveryMs: 6 * 60 * 60_000,
+  /** A meal costing up to this share of their cash is small change (they'll pick the best such). */
+  mealShare: 0.12,
+  /** They move up a home when they hold this many times its price, and never past this level. */
+  homeCushion: 1.5,
+  maxHousing: 3,
 };
 
 const pick = <T,>(xs: readonly T[], rng: Rng): T => xs[Math.floor(rng() * xs.length)];
@@ -82,20 +89,28 @@ const sellable = (id: string) => {
 };
 
 /**
- * What the regular would buy right now, if anything: food when worn out, a medkit when hurt,
- * gear when they have none that works. Gear only if the shelf keeps one for players.
+ * What the regular would buy right now, if anything, in the order a person would:
+ *  - a medkit when they're laid up in hospital (once per stay) or badly hurt;
+ *  - a meal every few hours;
+ *  - a weapon or armor when they have none that works (only if the shelf keeps one for players);
+ *  - a better place to live when they can comfortably afford the next step up.
  */
 export function regularWant(p: Player, c: City | null, now: number): string | null {
-  if (!p.regular || busy(p, now)) return null;
+  if (!p.regular || p.dead || inJail(p, now)) return null;
   const spend = p.cash - LIFE.reserve;
-  const cheapest = (kind: string) => ITEMS.filter((i) => i.kind === kind && i.price <= spend).sort((a, b) => a.price - b.price)[0]?.id ?? null;
-  if (p.hp < playerMaxHp(p) * 0.5 && !p.inventory.medkit) {
-    const med = cheapest("medical");
-    if (med) return med;
+  const affordable = (kind: string) => ITEMS.filter((i) => i.kind === kind && i.price <= spend).sort((a, b) => a.price - b.price);
+  const laidUp = inHospital(p, now);
+  if ((laidUp ? p.regular.medStay !== p.hospitalUntil : p.hp < playerMaxHp(p) * 0.5) && !p.inventory.medkit) {
+    const med = affordable("medical")[0];
+    if (med) return med.id;
   }
-  if (p.energy < 20 && p.fullUntil <= now) {
-    const food = cheapest("food");
-    if (food) return food;
+  if (laidUp) return null;
+  if (now - (p.regular.ateAt ?? 0) >= LIFE.mealEveryMs && p.fullUntil <= now) {
+    // The best meal that's still small change to them; the cheapest if money is tight.
+    const meals = affordable("food");
+    const treat = meals.filter((m) => m.price <= p.cash * LIFE.mealShare).pop();
+    const meal = treat ?? meals[0];
+    if (meal) return meal.id;
   }
   if (!c) return null;
   for (const slot of ["weapon", "armor"] as const) {
@@ -108,6 +123,8 @@ export function regularWant(p: Player, c: City | null, now: number): string | nu
       .sort((a, b) => ITEM_BY_ID[b].price - ITEM_BY_ID[a].price);
     if (options[0]) return options[0];
   }
+  const home = ITEMS.filter((i) => i.kind === "housing" && (i.housing ?? 0) === p.housing + 1)[0];
+  if (home && p.housing < LIFE.maxHousing && p.cash >= home.price * LIFE.homeCushion) return home.id;
   return null;
 }
 
@@ -140,7 +157,10 @@ export function regularShop(p: Player, c: City | null, now: number, rng: Rng): s
     } catch {
       /* keeps it for later */
     }
+    if (item.kind === "food") p.regular!.ateAt = now;
+    else if (inHospital(p, now)) p.regular!.medStay = p.hospitalUntil;
     return null;
   }
+  if (item.kind === "housing") return `${p.name} moved into a ${item.name.toLowerCase()}.`;
   return `${p.name} bought a ${item.name.toLowerCase()}.`;
 }

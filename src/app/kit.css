@@ -961,3 +961,18 @@ input[type="date"] { color-scheme: dark; }
 .stock-note { margin: 4px 0 0; color: var(--gold); font-weight: 700; }
 .stock-note.out { color: #ff6b6e; }
 .shipment { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+
+/* Rarity: how hard a piece is to find (never how strong it is). */
+.rarity { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; border: 1px solid currentColor; }
+.rarity-common { color: #9aa4b5; }
+.rarity-uncommon { color: #4fc3f7; }
+.rarity-rare { color: var(--gold); }
+
+/* Black market */
+.bm-list { display: grid; gap: 10px; margin-top: 10px; }
+.bm-row { display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid var(--line, rgba(255, 255, 255, 0.08)); border-radius: 14px; }
+.bm-info { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.bm-sub { margin: 16px 0 8px; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted, #9aa4b5); }
+.bm-sell { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bm-sell select, .bm-sell input { flex: 1 1 140px; min-width: 0; padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); color: inherit; font: inherit; }
+.bm-range { flex-basis: 100%; margin: 0; }
