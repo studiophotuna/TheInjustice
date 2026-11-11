@@ -5,45 +5,6 @@
  * See docs/DESIGN_LESSONS.md before changing anything here.
  */
 
-:root {
-  --bg: #0e1015;
-  --bg-2: #14171e;
-  --panel: #1a1e27;
-  --panel-2: #222733;
-  --panel-3: #2a303d;
-  --surface: #1a1e27;
-  --surface-solid: #1a1e27;
-  --surface-2: #222733;
-  --border: rgba(255, 255, 255, 0.07);
-  --border-strong: rgba(255, 255, 255, 0.13);
-  --text: #eef0f4;
-  --muted: #8b93a5;
-  --dim: #5d6577;
-
-  --red: #e5383b;
-  --gold: #f2b632;
-  --teal: #2ec4b6;
-  --violet: #8b6cf6;
-  --orange: #ff7a2f;
-  --money: #4ade80;
-
-  --cash: var(--gold);
-  --energy: var(--gold);
-  --health: #ff5a5f;
-  --heat: var(--orange);
-  --rep: var(--violet);
-  --info: var(--teal);
-  --green: var(--money);
-  --cyan: var(--teal);
-  --amber: var(--orange);
-
-  --radius: 18px;
-  --radius-sm: 12px;
-  --shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
-  /* The UI face everywhere; the condensed headline face only on big titles and names. */
-  --display: var(--font-body), "Manrope", system-ui, sans-serif;
-  --headline: var(--font-display), "Anton", Impact, sans-serif;
-}
 
 /* Big titles and names get the headline face. Weight 400: Anton has one weight. */
 h2, .home-title, .place-title, .city-title, .away-recap h2, .cold-panel figcaption, .file-name, .crew-badge, .country h4,
@@ -289,7 +250,7 @@ h2, .sec-head h2 { font-family: var(--headline); font-weight: 800; letter-spacin
 .spec-count { font-size: 11px; font-weight: 700; color: var(--muted); }
 .spec-more { padding: 0 4px; display: grid; gap: 4px; }
 .spec-more p { margin: 0; }
-.log li { display: block; padding: 0 0 0 12px; border: 0; border-left: 2px solid var(--border); border-radius: 0; background: none; color: #c9cfdb; font-size: 13.5px; }
+.log li { display: block; padding: 0 0 0 12px; border: 0; border-left: 2px solid var(--border); border-radius: 0; background: none; color: var(--text-2); font-size: 13.5px; }
 .log li.log-good { border-left-color: var(--money); }
 .log li.log-bad { border-left-color: var(--red); }
 .log li.log-story { border-left-color: var(--violet); color: var(--text); }

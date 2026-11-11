@@ -49,6 +49,7 @@ import { CommandPalette } from "./palette";
 import { EncounterDock, openEncounter } from "./encounter";
 import { play, preloadSounds, setSound, soundOn } from "./sfx";
 import { AskHost } from "./ask";
+import { CoachMarks } from "./coach";
 import { type FightShow, fmt, useGame, type GameApi } from "./useGame";
 import { SkelShell } from "./skeleton";
 
@@ -353,7 +354,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
       <nav className="sidenav glass" aria-label="Main">
         <Logo small />
         {SIDE_TABS.map(({ id, label, Icon }) => (
-          <button key={id} className={tab === id ? "on" : ""} onClick={() => go(`tab:${id}`)}>
+          <button key={id} data-tab={id} className={tab === id ? "on" : ""} onClick={() => go(`tab:${id}`)}>
             <Icon size={20} /> <span>{label}</span>
             {id === "people" && view.inbox.unread + view.sightings.length > 0 && <span className="badge-dot">{view.inbox.unread + view.sightings.length}</span>}
             {tab === id && <motion.span layoutId="nav-pill" className="nav-pill" />}
@@ -416,10 +417,18 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
       <CommandPalette game={game} go={go} open={paletteOpen} setOpen={setPaletteOpen} />
 
       <AwayRecap game={game} />
+      <CoachMarks
+        ready={
+          tab === "home" && !offer && !arrival && !reading && !game.fight && !saveOpen && !paletteOpen &&
+          !(letterKey && letterSeen !== letterKey) &&
+          // New players only: no career rank yet, barely into the first day.
+          (view.ladder?.current ?? 0) < 2 && !!view.tutorial && view.tutorial.filter((s) => s.claimed).length <= 2
+        }
+      />
 
       <nav className="bottomnav glass" aria-label="Main">
         {PHONE_TABS.map(({ id, label, Icon }) => (
-          <button key={id} className={tab === id || PHONE_HOME[tab] === id ? "on" : ""} aria-current={tab === id || PHONE_HOME[tab] === id ? "page" : undefined} onClick={() => go(`tab:${id}`)}>
+          <button key={id} data-tab={id} className={tab === id || PHONE_HOME[tab] === id ? "on" : ""} aria-current={tab === id || PHONE_HOME[tab] === id ? "page" : undefined} onClick={() => go(`tab:${id}`)}>
             {(tab === id || PHONE_HOME[tab] === id) && <motion.span layoutId="bottom-pill" className="bottom-pill" />}
             <Icon size={22} />
             <span>{label}</span>

@@ -12,7 +12,7 @@ import { CaseHero, WorkStrip } from "./casehero";
 import { DisposalCard, RightNow, StreetCard, usePulse } from "./pulse";
 import { BigFish2, CityTiles, Hero, Stories } from "./homekit";
 import { CityMap } from "./citymap";
-import { TutorialCard } from "./underworld";
+import { DayOne } from "./dayone";
 import { DailyCard } from "./tabs";
 import { fmt, type GameApi } from "./useGame";
 import { OnTheRun } from "./fugitives";
@@ -74,6 +74,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
 
   return (
     <div className="stack home">
+      <DayOne game={game} go={go} />
       <CaseHero game={game} go={go} />
       <WorkStrip game={game} sub={sub} />
       <Stories game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} war={pulse?.stats?.war} heavies={pulse?.heavies} fires={pulse?.stats?.fires} election={pulse?.stats?.election} />
@@ -95,7 +96,6 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
 
       <div className="home-later">
         <RightNow game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} />
-        <TutorialCard game={game} go={go} />
       </div>
 
       <DailyCard game={game} />

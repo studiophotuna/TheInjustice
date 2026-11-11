@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
+import "./tokens.css";
 import "./globals.css";
 import "./game.css";
 import "./kit.css";

@@ -10,44 +10,6 @@
  * Loaded after globals.css.
  */
 
-:root {
-  --bg: #0a0c11;
-  --bg-2: #0e1117;
-  --panel: #12151c;
-  --panel-2: #181c25;
-  --panel-3: #1f2430;
-  --surface: #12151c;
-  --surface-solid: #12151c;
-  --surface-2: #181c25;
-  --border: rgba(255, 255, 255, 0.07);
-  --border-strong: rgba(255, 255, 255, 0.13);
-  --text: #e9ecf2;
-  --muted: #8a93a6;
-  --dim: #5d6576;
-
-  --cash: #3ddc84;
-  --energy: #ffcc33;
-  --health: #ff4d5e;
-  --heat: #ff8a3d;
-  --rep: #a78bfa;
-  --info: #4cc9f0;
-
-  --gold: #ffcc33;
-  --red: #ff4d5e;
-  --green: #3ddc84;
-  --cyan: #4cc9f0;
-  --violet: #a78bfa;
-  --amber: #ff8a3d;
-
-  --radius: 12px;
-  --radius-sm: 8px;
-  --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 8px 24px -12px rgba(0, 0, 0, 0.8);
-  --display: var(--font-display), "Arial Narrow", sans-serif;
-  --mono: var(--font-mono), ui-monospace, monospace;
-  --nav-h: 64px;
-  --qb-h: 58px;
-  --rail-w: 330px;
-}
 
 body {
   background: var(--bg);
@@ -547,7 +509,7 @@ input:focus { border-color: var(--info) !important; box-shadow: 0 0 0 3px rgba(7
 .file-name { font-family: var(--display); font-weight: 800; font-size: 26px; line-height: 1; text-transform: uppercase; }
 .file-title { font-size: 14px; color: var(--muted); }
 .file-tags { gap: 6px; }
-.file-bio { margin: 0; font-size: 15px; color: #d5dae3; line-height: 1.5; }
+.file-bio { margin: 0; font-size: 15px; color: var(--text-2); line-height: 1.5; }
 .file-primary { width: 100%; }
 .file-foot { display: flex; justify-content: flex-end; padding-top: 4px; border-top: 1px solid var(--border); }
 

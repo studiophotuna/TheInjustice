@@ -1,0 +1,97 @@
+/*
+ * Conspira's one sheet of colours and sizes. Every other stylesheet uses these names and does not
+ * define its own. To change a colour or a size across the game, change it here.
+ * Rules: docs/DESIGN_LESSONS.md (the syndicate kit).
+ */
+:root {
+  /* Surfaces */
+  --canvas: #0a0e14;
+  --bg: #10141a;
+  --bg-2: #0a0e14;
+  --panel: rgba(22, 27, 34, 0.78);
+  --panel-solid: #161b22;
+  --panel-2: #1c2026;
+  --panel-3: #262a31;
+  --panel-4: #31353c;
+  --surface: rgba(22, 27, 34, 0.78);
+  --surface-solid: #161b22;
+  --surface-2: rgba(255, 255, 255, 0.05);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --warm-line: rgba(91, 64, 62, 0.28);
+
+  /* Text */
+  --text: #dfe2eb;
+  --muted: #9aa1ad;
+  --dim: #646b78;
+
+  /* The kit colours */
+  --crimson: #ff5451;
+  --crimson-soft: #ffb3ad;
+  --amber-hi: #ffb95f;
+  --amber-deep: #ee9800;
+  --emerald: #4edea3;
+  --emerald-deep: #00a572;
+  --teal: #5ad1c4;
+  --violet: #a78bfa;
+
+  /* Older names, kept as aliases of the kit colours */
+  --red: var(--crimson);
+  --gold: var(--amber-hi);
+  --money: var(--emerald);
+  --green: var(--emerald);
+  --cyan: var(--teal);
+  --orange: var(--amber-deep);
+  --amber: var(--amber-deep);
+
+  /* What each resource is drawn in */
+  --cash: var(--emerald);
+  --energy: var(--amber-hi);
+  --health: var(--crimson);
+  --heat: var(--crimson-soft);
+  --rep: var(--amber-hi);
+  --info: var(--teal);
+
+  /* Shape and depth */
+  --radius: 18px;
+  --radius-sm: 14px;
+  --shadow: 0 16px 36px -14px rgba(0, 0, 0, 0.65);
+  --glow-crimson: 0 8px 24px -4px rgba(255, 84, 81, 0.45);
+  --glow-amber: 0 8px 22px -6px rgba(238, 152, 0, 0.5);
+
+  /* Type faces */
+  --display: var(--font-display), "Outfit", system-ui, sans-serif;
+  --headline: var(--font-display), "Outfit", system-ui, sans-serif;
+  --sfx: var(--font-display), "Outfit", system-ui, sans-serif;
+  --font-sfx: var(--font-display);
+  --font-mono: var(--font-display);
+  --mono: var(--font-display), "Outfit", system-ui, sans-serif;
+
+  /* Layout */
+  --nav-h: 60px;
+  --qb-h: 58px;
+  --rail-w: 330px;
+
+  /* Secondary text: captions, notes, card body copy. */
+  --text-2: #c9ccd4;
+
+  /* Type sizes: use these instead of new pixel values. */
+  --fs-label: 10.5px;  /* uppercase labels and kickers */
+  --fs-xs: 11.5px;
+  --fs-sm: 12.5px;
+  --fs-md: 14px;       /* reading text */
+  --fs-lg: 17px;       /* numbers in tiles, small titles */
+  --fs-xl: 21px;       /* card and dialog titles */
+  --fs-2xl: 28px;
+
+  /* Spacing steps. */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+
+  /* The smallest thing you can tap on a phone. */
+  --tap: 44px;
+}

@@ -1,5 +1,25 @@
 # Changelog
 
+## 7.6.0: your first day comes first; a first look around; one style sheet
+
+- **Your first day is pinned to the top of Home.** A slim strip shows how far along you are, the
+  one next thing to do, and a single button to do it or claim it. "All ten" opens the whole list;
+  "Hide for good" puts it away. After your first rank it only shows up as a single line when
+  rewards are waiting.
+- **A first look around for new players.** Five short pointers, once:
+  - health, energy and cash;
+  - your case;
+  - your first day;
+  - Work (Jobs on desktop);
+  - the quick bar.
+
+  Each one lights up the thing it's about. They wait until any recap, letter or fight is out of
+  the way, never show for a player who already has a rank, and can be skipped.
+- **One sheet of colours and sizes.** The game had four sets of colour and size definitions that
+  disagreed; they're now one file. The game looks exactly the same: every element was checked on
+  phone and desktop before and after. Three near-identical greys for secondary text became one.
+  The sheet adds a scale of type sizes, spacing steps and a minimum tap size for new work to use.
+
 ## 7.5.0: fight results; the game asks its own questions
 
 - **Every fight ends on a result plate.** After the win or loss stamp you see what changed:

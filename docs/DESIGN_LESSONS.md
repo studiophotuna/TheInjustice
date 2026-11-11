@@ -109,3 +109,27 @@ and Home screens in it. It lives in `src/app/syndicate.css`, loaded last.
 - **Shapes:** 18px cards, 14px tiles, pills for every button, chip and tab.
 - **Taken from the design system but adapted:** no number for heat, integrity or level (heat is
   the Record word); no icon before every title; no "verified" ticks; no repair button.
+
+### One sheet of colours and sizes
+
+Every colour, radius, shadow, type face and layout height is defined once, in
+`src/app/tokens.css`. The other stylesheets only use those names; none of them defines its own
+`:root` values any more (they used to, four times over, and disagreed). To change a colour or a
+size across the game, change it there.
+
+- **Text:** `--text` for main copy, `--text-2` for captions and card body, `--muted` for labels,
+  `--dim` for the faintest. Don't add new greys.
+- **Type sizes:** `--fs-label` (uppercase kickers), `--fs-xs`, `--fs-sm`, `--fs-md` (reading),
+  `--fs-lg` (tile numbers, small titles), `--fs-xl` (card and dialog titles), `--fs-2xl`.
+- **Spacing:** `--sp-1` to `--sp-6` (4px steps up to 24px). Nothing tappable is smaller than
+  `--tap` (44px) on a phone.
+- Older colour names (`--gold`, `--red`, `--green`, `--cyan`, `--amber`) are aliases of the kit
+  colours, kept so old rules still work. New code uses the kit names.
+- Never put a pop-up from the browser in front of a player: ask with the game's own card
+  (`ask()` in `src/components/ask.tsx`).
+
+### New players
+
+The first-day checklist is pinned to the top of Home, showing one next step at a time. A new
+player (no rank yet, barely into the first day) gets five coach marks once, after any recap or
+letter has been closed. They can be skipped, and each says what a thing is only once.

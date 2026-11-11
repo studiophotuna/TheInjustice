@@ -1,6 +1,6 @@
 "use client";
 
-import { FlaskConical, Pill, ShieldAlert, WashingMachine } from "lucide-react";
+import { FlaskConical, Pill, WashingMachine } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Scene } from "./art/Scenes";
 import type { GameApi } from "./useGame";
@@ -146,49 +146,3 @@ export function StreetMarket({ game }: { game: GameApi }) {
   );
 }
 
-/** Your first day: a checklist with small rewards. */
-export function TutorialCard({ game, go }: { game: GameApi; go: (t: string) => void }) {
-  const steps = game.view!.tutorial;
-  if (!steps) return null;
-  const done = steps.filter((s) => s.claimed).length;
-  const ready = steps.filter((s) => s.done && !s.claimed).length;
-  const veteran = (game.view!.ladder?.current ?? 0) >= 2;
-  if (veteran) {
-    return (
-      <section className="card tutorial compact">
-        <div className="row between">
-          <span>{ready} first-day reward{ready === 1 ? "" : "s"} waiting</span>
-          <button className="btn btn-primary btn-xs" disabled={game.busy} onClick={() => game.act({ type: "tutorial", step: "all" })}>Claim all ${ready * 15}</button>
-        </div>
-      </section>
-    );
-  }
-  return (
-    <section className="card tutorial">
-      <div className="row between">
-        <h3 className="card-title"><ShieldAlert size={16} /> Your first day · {done}/{steps.length}</h3>
-        <span className="row">
-          {ready > 1 && <button className="btn btn-primary btn-xs" disabled={game.busy} onClick={() => game.act({ type: "tutorial", step: "all" })}>Claim all ${ready * 15}</button>}
-          <button className="btn btn-ghost btn-xs" onClick={() => game.act({ type: "flag", flag: "tut:hidden" })}>Hide</button>
-        </span>
-      </div>
-      <div className="tut-bar"><span style={{ width: `${(done / steps.length) * 100}%` }} /></div>
-      <ul className="tut-steps">
-        {steps.map((s) => (
-          <li key={s.id} className={s.claimed ? "claimed" : s.done ? "ready" : ""}>
-            <span className="tut-check">{s.claimed ? "✓" : s.done ? "!" : "·"}</span>
-            <span className="tut-text">
-              <b>{s.title}</b>
-              {!s.claimed && <span className="muted fine"> {s.hint}</span>}
-            </span>
-            {s.done && !s.claimed ? (
-              <button className="btn btn-primary btn-xs" disabled={game.busy} onClick={() => game.act({ type: "tutorial", step: s.id })}>Claim $15</button>
-            ) : !s.claimed ? (
-              <button className="btn btn-ghost btn-xs" onClick={() => go(s.go)}>Show me</button>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
