@@ -10,6 +10,9 @@ grow hidden stats that decide whether you survive.
 
 **Play online:** https://injustice-booking-cms.vercel.app
 
+**Current version:** 7.6.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
+[latest changes](#where-the-game-is-now-v76) are summed up at the end of this page.
+
 ## Play it locally
 
 Needs Node.js 20 or newer.
@@ -242,7 +245,9 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
 | `src/game/balance.ts` | All tunable numbers (timers are shortened for testing) |
 | `src/server/` | Storage and request validation |
 | `src/app/api/game/` | The single game API (`GET` state, `POST` action) |
-| `src/components/` | The comic-style UI |
+| `src/components/` | The UI (React). `Game.tsx` is the shell: top bar, navigation, quick bar, overlays |
+| `src/app/tokens.css` | The one sheet of colours, sizes and spacing every stylesheet uses |
+| `src/app/syndicate.css` | The look (the syndicate kit), loaded last |
 
 All rules run on the server, so the game is ready for multiplayer. Storage sits behind a
 small `PlayerStore` interface (`src/server/store.ts`) with a Postgres version for Supabase and a JSON file version
@@ -254,6 +259,8 @@ for local development.
 - [Law path](docs/LAW_PATH.md)
 - [World: countries & cities](docs/WORLD.md)
 - [Timers, pop-ups & monetization](docs/TIMERS_AND_MONETIZATION.md)
+- [Design lessons and the syndicate kit](docs/DESIGN_LESSONS.md) (read before changing how anything looks)
+- [Monetization rules](docs/MONETIZATION.md) (Favors buy looks, never power)
 
 ## The City: buildings
 
@@ -372,3 +379,55 @@ murder case and a three-day vendetta. Full rules in `WHACK.md`.
 - Street regulars (`src/game/regulars.ts`, `src/server/regulars.ts`): game-run characters stored
   as players with ids starting `reg-`. `listPlayers` never returns them; `listRegulars` does.
 - `/api/community?pulse=1` returns the street feed and what your crew needs from you.
+
+## Where the game is now (v7.6)
+
+Everything since 1.8, in short. The details are in [CHANGELOG.md](CHANGELOG.md).
+
+**Your story.** Home opens on your case: who framed you, what you can prove, and your next lead.
+Leads (`src/game/leads.ts`) are short missions built from things you already do (work, fights,
+standing, travel, paying the right person). Closing one pins evidence to the board on the City
+page. Chapters of your story unlock as you go.
+
+**Careers.** Ten careers on the law and street sides: police, courts, medicine, banking,
+vigilante, enforcer (the family), military, mechanic, hacker and fire. Each has eight ranks, nearly all
+with their own photo, its own city work (the hospital ward, the fire log, the garage and so
+on), and experience for every job done. The Jobs page is a career track with a cover card for
+every job.
+
+**A living city.** Street regulars (`src/game/regulars.ts`) live like players, with limits:
+they work their careers, shop, eat, get treated, own spare gear, run for mayor and vote. The
+city runs on a timer (`/api/push/tick`): fires, incidents, restocks, the dog pound and elections.
+
+**The economy.** Shops sell what each city stocks, and gear is limited to three of a kind. The
+black market trades items by rarity. Player-run businesses earn from real customers. There are
+also cars and smuggling, a home stash, break-ins, customs and the Velvet Ace casino in Port
+Solace.
+
+**Crime and the law.** Crews, fronts, turf wars, ambushes, arson, contract hits, prison life,
+escapes and hideouts. Then court cases, lawyers, court-martials and martial law. Risk is only
+ever shown in words, never as odds.
+
+**Favors.** The paid currency buys looks only: frames, name colours, banners, car paint and home
+decor, plus a season pass. It never buys power (see `docs/MONETIZATION.md`).
+
+**The look (7.x).** The syndicate kit: Outfit and Plus Jakarta Sans, crimson, amber and green
+by meaning, glass panels and pills. One sheet of colours and sizes (`src/app/tokens.css`).
+- **Phones:** five tabs (Home, Work, City, People, Me). Fight sits inside Work and the Shop
+  inside City. The top bar and quick bar fold away as you scroll.
+- **Desktop:** a side menu and a live rail.
+- **Fights:** every fight ends on a result plate.
+- **Confirmations:** the game asks its own questions instead of browser pop-ups.
+- **New players:** the first-day checklist is pinned to the top of Home, and coach marks give
+  them a first look around.
+
+## Releasing
+
+Every push to `claude/injustice-game-design-1lp7d6` deploys to production on Vercel. For each
+release:
+
+1. Run `npx tsc --noEmit`, `npx vitest run` and `npm run build`.
+2. Check the changed screens in a browser at phone (390px) and desktop widths.
+3. Bump the version with `npm version X.Y.Z --no-git-tag-version` and add a `CHANGELOG.md` entry.
+4. Update this README if what the game does has changed.
+5. Commit and push.

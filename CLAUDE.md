@@ -23,4 +23,6 @@ Read `docs/DESIGN_LESSONS.md` first. The short version:
   check of the changed screens at phone (390px) and desktop widths.
 - Bump the version in `package.json` and `package-lock.json` and add a `CHANGELOG.md` entry for
   each release.
+- The owner's standing instruction: always push each finished release (pushing deploys to
+  production), and update `README.md` with it.
 - Don't copy other games' names, rank titles or text; take ideas only.
