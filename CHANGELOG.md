@@ -1,5 +1,36 @@
 # Changelog
 
+## 7.11.0: a treasury that pays its way
+
+The city's only regular income was the 3% tax on job pay, while fire rewards, guard pay and
+bounties came out of the same pot. Most treasuries sat near $0, and anyone the city owed was
+mostly paid nothing. 3% stays: it's a realistic city income tax. What changed:
+
+- **Sales tax, 6%, on shop purchases.** Food, medicine, weapons and armor; homes are exempt.
+  - Shelf prices include it, with one line in the Shop saying so. What you see is what you pay.
+  - Regulars pay it too.
+  - A shop owner's cut is worked out on the price before tax.
+  - Very cheap items round to no tax (a $8 sandwich is still $8).
+- **Court fines.** A guilty verdict now also fines the convicted person half the amount stolen,
+  from $250 to $10,000, paid to the city after the victim is paid back. The verdict message says
+  so.
+- **The state pays for state work.**
+  - Fire investigation rewards ($400) come from the state fire marshal.
+  - Soldiers on guard ($40 an hour) and soldiers breaking up a turf war ($50 each) are paid by
+    the garrison.
+
+  These were the biggest drain on the city, and they're now always paid in full.
+- **City hall still pays:** the mayor, the police chief, the editor, seat stipends, bounties, the
+  soup kitchen, witness protection and calling in the army.
+- **Checked with a simulated day** of the city timer on the same data (regulars working,
+  shopping, crimes, trials, fires, guards):
+  - Grayhaven went from losing $1,015 a day to gaining $904.
+  - Port Solace, Ironmoor and Halcyon now gain $181 to $265 a day before any real players, up
+    from $44 to $108.
+
+  That covers a mayor's salary everywhere. Seat stipends ($300 each) need a busier city. Details
+  in `docs/FEES.md`.
+
 ## 7.10.0: fees that match real life; Your Place needs a place
 
 - **Every professional fee checked against real life.** Shop prices in this game are real-world

@@ -43,7 +43,10 @@ describe("stolen car recovery", () => {
     expect(thief.garage).toHaveLength(0);
     expect(owner.garage).toHaveLength(1);
     expect(owner.garage![0].hot).toBeUndefined();
-    expect(thief.cash).toBe(99_000);
+    // No money back to the owner (they have the car), but the court's fine goes to the city.
+    expect(c.trial?.fine).toBeGreaterThanOrEqual(BALANCE.courtFine.min);
+    expect(c.trial?.fine).toBeLessThanOrEqual(BALANCE.courtFine.max);
+    expect(thief.cash).toBe(99_000 - c.trial!.fine!);
     expect(owner.inbox?.[0].text).toMatch(/is back/);
   });
 

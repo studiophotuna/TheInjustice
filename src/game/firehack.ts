@@ -59,8 +59,8 @@ export function investigateFire(p: Player, c: City, fireId: string, arsonist: Pl
     return [{ tone: "info", text: "The ash tells you it was set, and not much else. Someone else may read it better." }, ...addMerit(p, "fire", 1)];
   }
   fire!.solved = { arsonistName: fire!.arsonistName, by: p.name, at: now };
-  const reward = Math.min(c.treasury, FIRE.reward);
-  c.treasury -= reward;
+  // Arson investigation is paid by the state fire marshal's office, not city hall.
+  const reward = FIRE.reward;
   p.cash += reward;
   p.reputation += 3;
   p.jobCounts["fire:solved"] = (p.jobCounts["fire:solved"] ?? 0) + 1;
@@ -70,7 +70,7 @@ export function investigateFire(p: Player, c: City, fireId: string, arsonist: Pl
   }
   c.log = [{ at: now, to: "officials" as const, text: `Fire investigator ${p.name} names ${fire!.arsonistName} as the arsonist behind the ${fire!.what} fire.` }, ...c.log].slice(0, 20);
   return [
-    { tone: "good", text: `Pour patterns, a melted can, a witness who remembers a face: it was ${fire!.arsonistName}.${reward ? ` City hall pays $${reward}.` : ""}` },
+    { tone: "good", text: `Pour patterns, a melted can, a witness who remembers a face: it was ${fire!.arsonistName}. The state fire marshal pays $${reward}.` },
     ...addMerit(p, "fire", 3),
   ];
 }

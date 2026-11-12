@@ -50,14 +50,16 @@ export async function settleTrial(
       now,
       Math.random,
     );
-    // City hall pays the arresting officer a bounty for each conviction, if it can afford it.
+    // The court's fine goes to city hall; city hall pays the arresting officer a bounty for each
+    // conviction, if it can afford it.
     const officer = get(t.officerId);
-    if (t.verdict === "guilty" && officer) {
+    if (t.verdict === "guilty" && (officer || t.fine)) {
       const city = await tx.getCity(c.country);
       if (city) {
         advanceCity(city, now);
-        const bounty = Math.min(city.policeBounty, city.treasury);
-        if (bounty > 0) {
+        city.treasury += t.fine ?? 0;
+        const bounty = officer ? Math.min(city.policeBounty, city.treasury) : 0;
+        if (officer && bounty > 0) {
           city.treasury -= bounty;
           officer.cash += bounty;
           notify(officer, `City hall pays you a $${bounty} bounty for the conviction in case #${c.id}.`, "good", undefined, now);

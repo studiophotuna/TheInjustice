@@ -10,7 +10,7 @@ grow hidden stats that decide whether you survive.
 
 **Play online:** https://injustice-booking-cms.vercel.app
 
-**Current version:** 7.10.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
+**Current version:** 7.11.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
 [latest changes](#where-the-game-is-now) are summed up at the end of this page.
 
 ## Play it locally
@@ -408,7 +408,8 @@ live feed shows the street the news. Officials (police, courts, fire, the mayor)
 numbers and investigation work. Covert and corrupt work is never posted (`src/game/feed.ts`).
 
 **The economy.** Player-run shops set their own price level, which is what customers see and pay
-(the owner sees it on their own shelf too). Shops sell what each city stocks, and gear is limited to three of a kind. The
+(the owner sees it on their own shelf too). City hall is funded by a 3% income tax, a 6% sales
+tax and court fines; the state pays fire rewards and soldiers. Shops sell what each city stocks, and gear is limited to three of a kind. The
 black market trades items by rarity. Player-run businesses earn from real customers. There are
 also cars and smuggling, a home stash, break-ins, customs and the Velvet Ace casino in Port
 Solace.

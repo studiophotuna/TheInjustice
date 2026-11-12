@@ -68,3 +68,34 @@ Checked in 7.10.0. "Rank" is the professional's career rank (1 to 8).
 - Something done off the books costs more than the legal version, not less.
 - Players and regulars doing the same work charge the same.
 - A fee the player sets has limits that stay inside the real range.
+
+## The city treasury (7.11.0)
+
+Real cities fund themselves from several taxes, and the state pays for state work. Conspira
+now does the same.
+
+| Money in | Rate | Real life |
+|---|---|---|
+| City income tax on job pay and business income (players and regulars) | 3% by default, the mayor sets 0% to 10% | Philadelphia 3.75%, New York City up to about 3.9%, Detroit 2.4% |
+| Sales tax on shop purchases (not homes) | 6%, included in the shelf price | US combined average about 7% |
+| Court fines on a guilty verdict | Half the amount stolen, from $250 to $10,000 | Theft fines: a few hundred dollars to about $10,000 |
+| Tax on a shop owner's takings, shop licences | Unchanged | |
+
+| Money out | Paid by |
+|---|---|
+| Mayor, police chief, editor, seat stipends, conviction and fugitive bounties, soup kitchen, witness protection, calling in the army | The city |
+| Fire investigation rewards ($400) | The state fire marshal (not the city) |
+| Soldiers on guard ($40 an hour) and breaking up a turf war ($50) | The garrison (not the city) |
+
+A simulated day of the city timer on the same data (regulars working, shopping, crimes,
+trials, fires, guard shifts):
+
+| City | Before 7.11.0 | After |
+|---|---|---|
+| Grayhaven (with a mayor) | -$1,015 | +$904 |
+| Port Solace | +$44 | +$265 |
+| Ironmoor | +$55 | +$181 |
+| Halcyon | +$108 | +$247 |
+
+Before, the small gains only happened because payouts were capped at an empty treasury.
+Real players' tax and shopping come on top of these numbers.

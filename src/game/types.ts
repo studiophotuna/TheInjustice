@@ -502,6 +502,8 @@ export interface Trial {
   decidedAt?: number;
   sentenceMs?: number;
   restitution?: number;
+  /** Paid to the city on a guilty verdict. */
+  fine?: number;
   /** Server-only: the judge took the envelope. Evidence for internal affairs later. */
   bribed?: boolean;
   /** Car theft: the stolen car went back to its owner. */

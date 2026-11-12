@@ -127,6 +127,9 @@ export const BALANCE = {
   bounty: { min: 100 },
   /** Bail = the stolen amount × this, at least `min`; refunded to whoever paid at the verdict. */
   bail: { multiplier: 3, min: 500 },
+  /** A guilty verdict also carries a fine to the city, after the victim is paid back. Real theft fines run
+   *  from a few hundred dollars to several thousand. */
+  courtFine: { share: 0.5, min: 250, max: 10_000 },
   /** Crew prison breaks for members serving a sentence. */
   breakout: {
     joinEnergy: 15,

@@ -264,7 +264,14 @@ export function decideTrial(
       s.cash -= fromCash;
       s.bank -= fromBank;
       t.restitution = fromDirty + fromCash + fromBank;
-      notify(s, `Guilty, says ${t.decidedBy}. ${minutes(sentence)} in a cell${t.carReturned ? `, and the ${t.carReturned.name.toLowerCase()} goes back to ${c.victimName}` : t.restitution ? `, and $${t.restitution} goes back to ${c.victimName}` : ""}.`, "bad", undefined, now);
+      // Then the court's fine, to the city: what's left in cash, then savings.
+      const fine = Math.min(BALANCE.courtFine.max, Math.max(BALANCE.courtFine.min, Math.round(c.amount * BALANCE.courtFine.share)));
+      const fineCash = Math.min(s.cash, fine);
+      const fineBank = Math.min(s.bank, fine - fineCash);
+      s.cash -= fineCash;
+      s.bank -= fineBank;
+      t.fine = fineCash + fineBank;
+      notify(s, `Guilty, says ${t.decidedBy}. ${minutes(sentence)} in a cell${t.carReturned ? `, and the ${t.carReturned.name.toLowerCase()} goes back to ${c.victimName}` : t.restitution ? `, and $${t.restitution} goes back to ${c.victimName}` : ""}${t.fine ? `. The court fines you $${t.fine}` : ""}.`, "bad", undefined, now);
       if (s.path === "military") courtMartial(s, `convicted of ${crime}`, now);
     } else {
       s.jailUntil = now;

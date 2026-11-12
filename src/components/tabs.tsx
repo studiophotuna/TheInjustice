@@ -83,6 +83,7 @@ import { AuthForm } from "./screens";
 import { fmt, type GameApi } from "./useGame";
 import { SkelCard } from "./skeleton";
 import { askNumberThen, askThen } from "./ask";
+import { SALES_TAX, withSalesTax } from "@/game/shops";
 
 const list = { hidden: {}, show: { transition: { staggerChildren: 0.04 } } };
 const item = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } };
@@ -394,13 +395,17 @@ export function ShopTab({ game }: { game: GameApi }) {
         </div>
       </section>
       )}
+      {cat !== "business" && cat !== "style" && cat !== "housing" && (
+        <p className="fine muted shop-tax">Prices include {Math.round(SALES_TAX * 100)}% city sales tax.</p>
+      )}
       {cat !== "business" && (
     <motion.div key={cat} className="shop-grid" variants={list} initial="hidden" animate="show">
       {view.shop.filter((i) => kinds.includes(i.kind) && (!GEAR_HOME[i.id] || GEAR_HOME[i.id] === view.location.country)).map((i) => {
         const row = shopFor(shops.data, i.kind);
-        const price = shelfPrice(i.price, row);
+        // The price at the till, sales tax included.
+        const price = withSalesTax(shelfPrice(i.price, row), i.kind);
         // In your own shop you pay the usual price; your customers pay yours.
-        const theirs = row?.mine && row.markup !== 1 ? Math.round(i.price * row.markup) : null;
+        const theirs = row?.mine && row.markup !== 1 ? withSalesTax(Math.round(i.price * row.markup), i.kind) : null;
         // Weapons and armor: each city sells its own, in limited stock.
         const home = GEAR_HOME[i.id];
         const away = home && home !== view.location.country ? soldIn(i.id) : null;

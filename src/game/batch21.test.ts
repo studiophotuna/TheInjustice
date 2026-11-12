@@ -3,21 +3,7 @@ import { BALANCE } from "./balance";
 import { newCity } from "./city";
 import { ITEM_BY_ID } from "./content/items";
 import { applyAction, createPlayer, itemPrice, tick } from "./engine";
-import {
-  acceptOffer,
-  collectTill,
-  creditSale,
-  licensePrice,
-  makeOffer,
-  ownerCut,
-  sellBack,
-  setMarkup,
-  SHOP,
-  shopMarkups,
-  shopsOwnedBy,
-  shopsView,
-  takeLicense,
-} from "./shops";
+import { SHOP, acceptOffer, collectTill, creditSale, licensePrice, makeOffer, ownerCut, salesTax, sellBack, setMarkup, shopMarkups, shopsOwnedBy, shopsView, takeLicense, withSalesTax } from "./shops";
 import type { Player } from "./types";
 
 const T0 = 1_800_000_000_000;
@@ -62,7 +48,9 @@ describe("player-run shops", () => {
     const cash = buyer.cash;
     applyAction(buyer, { type: "buy", itemId: item.id }, NOW, () => 0.5, { shopMarkups: shopMarkups(c) });
     const paid = Math.round(local * 1.2);
-    expect(buyer.cash).toBe(cash - paid);
+    // Sales tax on top of the owner's price goes to city hall; the owner's cut is from the shelf price.
+    expect(buyer.cash).toBe(cash - withSalesTax(paid, item.kind));
+    expect(buyer.taxOwed).toEqual({ country: c.country, amount: salesTax(paid, item.kind) });
     expect(buyer.shopSale).toEqual({ country: c.country, kind: "guns", amount: ownerCut(local, paid) });
     creditSale(c, "guns", buyer.shopSale!.amount, NOW);
     expect(c.shops!.guns!.till).toBe(ownerCut(local, paid));
@@ -87,7 +75,7 @@ describe("player-run shops", () => {
     const med = Object.values(ITEM_BY_ID).find((i) => i.kind === "medical")!;
     const cash = owner.cash;
     applyAction(owner, { type: "buy", itemId: med.id }, NOW, () => 0.5, { shopMarkups: shopMarkups(c) });
-    expect(owner.cash).toBe(cash - itemPrice(owner, med.price));
+    expect(owner.cash).toBe(cash - withSalesTax(itemPrice(owner, med.price), med.kind));
     expect(owner.shopSale ?? null).toBeNull();
   });
 

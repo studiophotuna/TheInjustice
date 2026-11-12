@@ -35,7 +35,7 @@ import { launder } from "./money";
 import { claimTutorial } from "./tutorial";
 import { bumpSeason } from "./season";
 import { familyGate, passTest } from "./family";
-import { ownerCut, shopKindFor, shopPrice, type ShopMarkups } from "./shops";
+import { ownerCut, salesTax, shopKindFor, shopPrice, type ShopMarkups } from "./shops";
 import { stashAll, useStash } from "./stash";
 import { chopCar, fitAlarm, newPlates } from "./breakin";
 import { buyDog, feedDog, giveAwayDog } from "./dogs";
@@ -919,7 +919,10 @@ function buy(p: Player, itemId: string, events: GameEvent[], ctx: ActionContext 
   const run = ctx.shopMarkups?.[kind];
   // Owners buy from their own shelves at the usual price; everyone else pays the owner's price.
   const own = run?.ownerId === p.id;
-  const price = run && !own ? shopPrice(local, run.markup) : local;
+  const shelf = run && !own ? shopPrice(local, run.markup) : local;
+  // Sales tax goes to city hall; the shop's owner gets their cut of the shelf price only.
+  const tax = salesTax(shelf, item.kind);
+  const price = shelf + tax;
   if (maxPrice !== undefined && price > maxPrice) throw new GameError(`The owner just changed the prices: it's $${price.toLocaleString()} now. Check again.`);
   if (p.cash < price) throw new GameError("You can't afford that. (Cash on hand only.)");
   if (item.kind === "housing") {
@@ -943,7 +946,12 @@ function buy(p: Player, itemId: string, events: GameEvent[], ctx: ActionContext 
     p.inventory[item.id] = (p.inventory[item.id] ?? 0) + 1;
   }
   p.cash -= price;
-  if (run && !own) p.shopSale = { country: countryOf(p), kind, amount: ownerCut(local, price) };
+  if (tax > 0) {
+    const country = countryOf(p);
+    const owed = p.taxOwed?.country === country ? p.taxOwed.amount : 0;
+    p.taxOwed = { country, amount: owed + tax };
+  }
+  if (run && !own) p.shopSale = { country: countryOf(p), kind, amount: ownerCut(local, shelf) };
   events.push({ tone: "good", text: `Bought: ${item.name}.` });
 }
 

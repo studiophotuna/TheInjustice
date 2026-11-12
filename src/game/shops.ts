@@ -37,6 +37,15 @@ export function licensePrice(country: CountryId, kind: ShopKind): number {
 }
 
 /** Shelf price at a player-run shop. `local` is the usual price in this city. */
+/**
+ * Sales tax on what the city's shops sell, paid on top of the shelf price and sent to city hall.
+ * Real US combined sales tax averages about 7%. Homes are exempt: property isn't sold over a counter.
+ */
+export const SALES_TAX = 0.06;
+export const salesTax = (price: number, itemKind: string) => (itemKind === "housing" ? 0 : Math.round(price * SALES_TAX));
+/** What you pay at the till: the shelf price plus sales tax. */
+export const withSalesTax = (price: number, itemKind: string) => price + salesTax(price, itemKind);
+
 export function shopPrice(local: number, markup: number): number {
   return Math.round(local * markup);
 }

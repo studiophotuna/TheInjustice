@@ -8,6 +8,7 @@ import { useScrollLock } from "./scrollLock";
 import { fmt, type GameApi } from "./useGame";
 import { shelfPrice, shopFor, useShops } from "./shops";
 import { GEAR_HOME } from "@/game/stock";
+import { withSalesTax } from "@/game/shops";
 
 type Cmd = { id: string; group: string; label: string; hint?: string; keywords?: string; run: () => unknown; block?: string | null };
 type Online = { id: string; name: string; canAttack: string | null; canCrime: Record<string, string | null>; regular?: boolean };
@@ -108,7 +109,7 @@ export function CommandPalette({ game, go, open, setOpen }: { game: GameApi; go:
       ...(shops.data ? view.shop : [])
         .filter((s) => !s.owned && (!GEAR_HOME[s.id] || GEAR_HOME[s.id] === view.location.country))
         .map((s) => {
-          const price = shelfPrice(s.price, shopFor(shops.data, s.kind));
+          const price = withSalesTax(shelfPrice(s.price, shopFor(shops.data, s.kind)), s.kind);
           const out = GEAR_HOME[s.id] ? shops.data?.stock?.[s.id] === 0 : false;
           return {
             id: `buy-${s.id}`, group: "Shop", label: `Buy ${s.name}`, hint: `$${price.toLocaleString()}`, keywords: `${s.kind} buy`,

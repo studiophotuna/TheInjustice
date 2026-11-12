@@ -44,8 +44,8 @@ export function standGuard(c: City, p: Player, now: number): GameEvent[] {
   if (block) throw new GameError(block);
   p.energy -= GUARD.energy;
   c.guards = [...activeGuards(c, now), { id: p.id, name: p.name, until: now + GUARD.shiftMs }].slice(-10);
-  const pay = Math.min(GUARD.pay, c.treasury);
-  c.treasury -= pay;
+  // Soldiers on guard are paid by the garrison (the state), not city hall.
+  const pay = GUARD.pay;
   p.cash += pay;
   p.reputation += 1;
   const n = Math.min(GUARD.maxGuards, activeGuards(c, now).length);
@@ -125,8 +125,8 @@ export function peaceSettle(c: City, d: DistrictId, attackers: Player[], defende
     notify(f, "Soldiers broke up the war and arrested everyone fighting.", "bad", undefined, now);
   }
   for (const s of soldiers) {
-    const pay = Math.min(MARTIAL.pay, c.treasury);
-    c.treasury -= pay;
+    // Soldiers breaking up a war are paid by the garrison; the city paid to call them in.
+    const pay = MARTIAL.pay;
     s.cash += pay;
     s.reputation += 2;
     addMerit(s, "military", 3);

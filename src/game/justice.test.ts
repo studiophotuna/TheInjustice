@@ -152,8 +152,10 @@ describe("trials", () => {
     offerBribe(s2.thief, s2.c, 200);
     decideTrial(s2.c, parties(s2.c, [s2.thief, s2.victim, s2.det]), { judge: null }, s2.c.trial!.deadline, always(0));
     expect(s2.c.trial!.verdict).toBe("guilty");
-    // The envelope comes back as dirty cash ($200); restitution takes $20 of it.
-    expect(s2.thief.bank).toBe(320);
+    // The envelope comes back as dirty cash ($200); restitution takes $20 of it. Then the court's
+    // fine ($250 minimum) comes out of savings.
+    expect(s2.c.trial!.fine).toBe(250);
+    expect(s2.thief.bank).toBe(320 - 250);
     expect(s2.thief.dirty).toBe(180);
   });
 

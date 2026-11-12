@@ -161,6 +161,10 @@ export function regularShop(p: Player, c: City | null, now: number, rng: Rng): s
     if (c) creditSale(c, p.shopSale.kind, p.shopSale.amount, now);
     p.shopSale = null;
   }
+  if (p.taxOwed) {
+    if (c && c.country === p.taxOwed.country) c.treasury += p.taxOwed.amount;
+    p.taxOwed = null;
+  }
   if (item.kind === "food" || item.kind === "medical") {
     try {
       applyAction(p, { type: "use", itemId: id }, now, rng);
