@@ -107,8 +107,9 @@ describe("the mayor's powers", () => {
   it("sets the tax, which is withheld from job pay", () => {
     const m = mk("m", "Mayor");
     const c = cityWithMayor(m);
-    setTax(c, m, 0.1, LATER);
-    expect(() => setTax(c, m, 0.5, LATER)).toThrow(/between/);
+    setTax(c, m, 0.05, LATER);
+    // Real city income taxes top out around 4%: the cap is 5%.
+    expect(() => setTax(c, m, 0.1, LATER)).toThrow(/between/);
     expect(() => setTax(c, mk("x", "Not mayor"), 0.05, LATER)).toThrow(/Only the mayor/);
     const worker = mk("w", "Worker");
     applyAction(worker, { type: "job", jobId: "cans" }, LATER, always(0.99), { taxRates: { varrow: 0.5 } });

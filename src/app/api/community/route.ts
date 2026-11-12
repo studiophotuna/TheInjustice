@@ -201,7 +201,7 @@ export async function GET(req: Request) {
       const country = countryOf(p);
       await cityIncident(store, country, now).catch((e) => console.error("incident", e));
       let cases = await store.listCases(country, 100);
-      // Trials nobody ruled on in time are closed by the court clerk.
+      // Trials nobody ruled on in time are closed by the duty judge.
       const overdue = cases.filter((c) => c.trial && !c.trial.verdict && now >= c.trial.deadline).slice(0, 3);
       if (overdue.length) {
         for (const c of overdue) await settleTrial(store, c.id, now).catch((e) => console.error(e));

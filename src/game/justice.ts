@@ -1,6 +1,6 @@
 // Stage 2 of the justice chain: arrests, trials, verdicts, bribes and jail.
 // A detective arrests someone who fits the clues. The suspect is held for trial. Lawyers
-// argue, a judge rules (or the court clerk does when no judge shows up), and the guilty
+// argue, a judge rules (the duty judge, when no player judge takes the case), and the guilty
 // serve time and pay the victim back. Nobody is ever told whether the verdict was right.
 
 import { courtMartial } from "./military";
@@ -194,7 +194,7 @@ export function trialPartyIds(c: CaseFile): string[] {
 }
 
 /**
- * Closes the trial. `judge` null means the court clerk decides by the strength of the case.
+ * Closes the trial. `judge` null means the duty judge decides by the strength of the case.
  * `takeBribe` means the judge pockets the envelope and lets the suspect walk.
  */
 export function decideTrial(
@@ -232,7 +232,7 @@ export function decideTrial(
   t.bribe = 0;
 
   t.verdict = verdict;
-  t.decidedBy = judge ? `Judge ${judge.name}` : "the court clerk";
+  t.decidedBy = judge ? `Judge ${judge.name}` : "the duty judge";
   if (judge) t.judgeId = judge.id;
   t.decidedAt = now;
   const s = parties.suspect;

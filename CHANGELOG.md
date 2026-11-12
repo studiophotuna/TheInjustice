@@ -1,5 +1,24 @@
 # Changelog
 
+## 7.12.0: closer to real life
+
+A check of every price, wage, fee, sentence and rule against real life. The full findings are
+in `docs/REALISM.md`. Fixed:
+
+- **Verdicts come from a judge.** When no player judge takes a trial, "the duty judge" now
+  decides. It was "the court clerk", but clerks keep records and can't rule.
+- **City tax tops out at 5%** (was 10%). Real city income taxes top out around 4%. Regular
+  mayors already kept between 1% and 5%, and every city is at 3%.
+- **Jail time follows real seriousness.** A mugging is a robbery, so it now carries 40 minutes,
+  more than assault (35, was 45), burglary (30) or car theft (25). It was 25.
+- **Steak dinner $70** (was $140). A steak dinner out costs $40 to $80.
+
+Bigger gaps are listed in `docs/REALISM.md` for a decision:
+- weapons and armor cost 10 to 50 times real prices;
+- homes cost 10 to 15 times less than real;
+- businesses are cheap and pay back in days;
+- top career pay doesn't follow real pay.
+
 ## 7.11.0: a treasury that pays its way
 
 The city's only regular income was the 3% tax on job pay, while fire rewards, guard pay and

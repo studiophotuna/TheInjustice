@@ -24,7 +24,7 @@ export function searchBlock(o: Player, c: CaseFile, suspect: Player | null, elig
   if (c.searches?.some((s) => s.searcherId === o.id)) return "You already searched for this case.";
   if (!suspect || suspect.dead) return "They're not around anymore.";
   if (suspect.id === o.id) return "You can't search your own place.";
-  // The court clerk signs the warrant only when the suspect fits the clues.
+  // A judge signs the warrant only when the suspect fits the clues.
   if (!eligible.some((s) => s.id === suspect.id)) return "No judge would sign that warrant: they don't fit the clues.";
   if (o.energy < S.energy) return "You're too tired.";
   return null;

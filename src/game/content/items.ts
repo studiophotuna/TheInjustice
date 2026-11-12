@@ -31,7 +31,7 @@ export const ITEMS: ItemDef[] = [
   // ── Food (one meal every few hours) ──
   { id: "sandwich", name: "Day-old sandwich", kind: "food", price: 8, energy: 12, icon: "🥪", description: "Slightly squashed. Still food." },
   { id: "hot_meal", name: "Hot meal at Rosa's", kind: "food", price: 30, energy: 25, icon: "🍲", description: "Rosa doesn't ask questions. She just ladles." },
-  { id: "steak_dinner", name: "Steak dinner", kind: "food", price: 140, energy: 40, icon: "🥩", description: "White tablecloth, a waiter who calls you sir. Worth every bite." },
+  { id: "steak_dinner", name: "Steak dinner", kind: "food", price: 70, energy: 40, icon: "🥩", description: "White tablecloth, a waiter who calls you sir. Worth every bite." },
   // ── Medical ──
   { id: "medkit", name: "Street medkit", kind: "medical", price: 60, heal: 40, icon: "🩹", description: "Heals wounds. In the hospital, cuts your stay in half." },
   // ── Housing (bigger energy bar, faster rest) ──

@@ -108,12 +108,12 @@ describe("trials", () => {
     expect(inJail(thief, out)).toBe(false);
   });
 
-  it("the court clerk decides when no judge rules, by case strength", () => {
+  it("the duty judge decides when no player judge rules, by case strength", () => {
     const { thief, victim, c, det, pool } = scene();
     arrest(det, thief, c, pool(thief), null, LATER);
     decideTrial(c, parties(c, [thief, victim, det]), { judge: null }, c.trial!.deadline, always(0.99));
     expect(c.trial!.verdict).toBe("not_guilty");
-    expect(c.trial!.decidedBy).toBe("the court clerk");
+    expect(c.trial!.decidedBy).toBe("the duty judge");
     expect(inJail(thief, c.trial!.deadline + 1)).toBe(false);
     expect(victim.inbox![0].text).toMatch(/not guilty/);
   });

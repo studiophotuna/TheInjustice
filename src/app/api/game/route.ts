@@ -42,7 +42,7 @@ export async function GET() {
     // The named reputation leaderboard is gone: a public list of names puts targets on backs.
     // Anonymous season boards live at /api/season.
     let player = id.playerId ? await store.get(id.playerId) : null;
-    // Held past the trial deadline with no judge: the court clerk rules now.
+    // Held past the trial deadline with no judge: the duty judge rules now.
     if (player?.onBail) {
       // Out on bail: the verdict comes when the trial's time is up.
       await settleTrial(store, player.onBail, now).catch((e) => console.error(e));

@@ -8,7 +8,7 @@ import type { PlayerStore } from "./store";
 
 /**
  * Closes a trial inside one transaction, locking everyone it touches.
- * Without a judge it only acts once the deadline has passed (the court clerk decides).
+ * Without a judge it only acts once the deadline has passed (the duty judge decides).
  */
 export async function settleTrial(
   store: PlayerStore,

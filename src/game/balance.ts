@@ -165,13 +165,15 @@ export const BALANCE = {
     investigateEnergy: 10,
   },
   justice: {
-    /** Suspects are held this long; if no judge rules, the court clerk decides. */
+    /** Suspects are held this long; if no player judge rules, the duty judge decides. */
     trialMs: 30 * 60_000,
     arrestEnergy: 10,
     /** Courts rank to argue a case (Junior Attorney) and to sit as judge (Judge). */
     lawyerRank: 2,
     judgeRank: 7,
-    sentenceMs: { pickpocket: 10 * 60_000, snatch: 15 * 60_000, mug: 25 * 60_000, murder: 6 * 60 * 60_000, attempted_murder: 2 * 60 * 60_000, assault: 45 * 60_000, burglary: 30 * 60_000, car_theft: 25 * 60_000 },
+    /** Minutes stand in for years, but in the real order of seriousness: robbery (a mugging) is punished harder
+     *  than assault, burglary or car theft. */
+    sentenceMs: { pickpocket: 10 * 60_000, snatch: 15 * 60_000, mug: 40 * 60_000, murder: 6 * 60 * 60_000, attempted_murder: 2 * 60 * 60_000, assault: 35 * 60_000, burglary: 30 * 60_000, car_theft: 25 * 60_000 },
     minBribe: 50,
   },
   /** Other careers that help solve crimes. */
@@ -200,7 +202,8 @@ export const BALANCE = {
     /** Reputation and filing fee (from the bank) to run for mayor. */
     runReputation: 25,
     runFee: 500,
-    maxTax: 0.1,
+    /** Real city income taxes top out around 4% (New York City, Philadelphia). */
+    maxTax: 0.05,
     defaultTax: 0.03,
     maxBounty: 200,
     crackdownMs: 60 * 60_000,

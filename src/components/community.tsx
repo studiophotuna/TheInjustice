@@ -1877,7 +1877,7 @@ export function JailCard({ game }: { game: GameApi }) {
       <p className="muted">
         {jail.custodyCase
           ? left > 0
-            ? `Trial within ${Math.ceil(left / 60000)} min. A judge rules, or the court clerk decides on the evidence.`
+            ? `Trial within ${Math.ceil(left / 60000)} min. A judge rules, or the duty judge decides on the evidence.`
             : "The verdict is coming."
           : `Free in ${Math.ceil(left / 60000)} min. No jobs, crimes or travel until then.`}
       </p>

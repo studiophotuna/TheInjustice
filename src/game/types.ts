@@ -479,7 +479,7 @@ export interface CourtParty {
 
 export type Verdict = "guilty" | "not_guilty";
 
-/** Opened by an arrest; closed by a judge or, if none rules in time, the court clerk. */
+/** Opened by an arrest; closed by a judge or, if none rules in time, the duty judge. */
 export interface Trial {
   suspectId: string;
   suspectName: string;
