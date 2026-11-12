@@ -1,5 +1,28 @@
 # Changelog
 
+## 7.17.0: vigilantes watch homes, firefighters inspect businesses
+
+- **Night watch by vigilantes.** Vigilantes from rank 2 can take clients from the Directory at a
+  fee they set ($100 to $1,000; a real night of private security is $200 to $350).
+  - A homeowner hires one with "Watch my place": for 10 hours, break-ins at their home are
+    harder.
+  - The vigilante keeps the fee, and every night counts toward their next promotion.
+  - You need a place in the city to have it watched. That now also goes for regular vigilantes,
+    who used to take money to watch a home you didn't have.
+- **Fire inspections by firefighters.** Firefighters from rank 2 can take clients from the
+  Directory, charging per business ($100 to $2,000; real commercial inspections are $100 to $500
+  and up).
+  - A business owner picks which business to have inspected.
+  - For a week it's much harder to torch: half the arsonist's usual chance.
+  - Your business card in the Shop shows "Passed a fire inspection" and how many days are left.
+  - Every inspection counts toward the firefighter's next promotion.
+  - Regular firefighters offer it too, from the People list: $300 a business, covering everything
+    you own in the city that's due.
+  - Before this, the only defense against arson was the Fire Chief's city-wide fire watch.
+- Checked: hiring both from the Directory on phone and desktop, the fees moving to the right
+  people, the watch and the inspection taking effect, and an inspection stopping a torching that
+  would otherwise succeed. Every API route was also stress-tested, with no errors and no hangs.
+
 ## 7.16.0: the pay ladder keeps its promises
 
 - **Hidden work always pays more than the work that unlocks it.** Raising street pay in 7.14 left

@@ -44,6 +44,7 @@ import { PROPERTIES } from "./content/properties";
 import { countryOf, dayKey, propertyIncome, FIGHT_ENERGY, inHospital, itemPrice, jobLock } from "./engine";
 import { describe, integrityHint } from "./stats";
 import type { DistrictId, LogEntry, PathId, Player } from "./types";
+import { canInspect, canWatch, INSPECT, WATCH } from "./protect";
 
 export interface JobView {
   id: string;
@@ -241,6 +242,8 @@ export interface PublicView {
     waiting: number;
     buyable: boolean;
     closedUntil: number | null;
+    /** Passed a fire inspection, good until. */
+    inspectedUntil: number | null;
   }[];
   crewId: string | null;
   location: { country: CountryId; countryName: string; city: string; color: string; laws: string };
@@ -274,6 +277,11 @@ export interface PublicView {
   background: ReturnType<typeof backgroundView>;
   /** Hackers: your record-scrub service. */
   scrub: { open: boolean; fee: number; jobs: number } | null;
+  /** Vigilantes: watching homes. Firefighters: inspecting businesses. */
+  watchService: { open: boolean; fee: number; jobs: number } | null;
+  inspectService: { open: boolean; fee: number; jobs: number } | null;
+  /** Your home here is watched until. */
+  homeWatchedUntil: number | null;
   /** Mechanics: your garage for customers. */
   garage: { open: boolean; rate: number; earned: number; jobs: number; services: string[]; next: { name: string; rank: string } | null } | null;
   /** Rank progress for the career ladder. */
@@ -417,6 +425,7 @@ export function toView(p: Player, now: number): PublicView {
       owned: !!p.properties?.[pr.id],
       waiting: p.properties?.[pr.id] ? propertyIncome(pr.id, p.properties[pr.id], now) : 0,
       closedUntil: (p.closed?.[pr.id] ?? 0) > now ? p.closed![pr.id] : null,
+      inspectedUntil: (p.inspected?.[pr.id] ?? 0) > now ? p.inspected![pr.id] : null,
       buyable: pr.country === here && !p.properties?.[pr.id],
     })),
     crewId: p.crewId ?? null,
@@ -597,6 +606,9 @@ export function toView(p: Player, now: number): PublicView {
     inside: insideView(p, now),
     fugitive: fugitiveView(p, now),
     scrub: p.path === "hacker" && p.rank >= 3 ? { open: !!p.scrubService?.open, fee: p.scrubService?.fee ?? 500, jobs: p.scrubService?.jobs ?? 0 } : null,
+    watchService: canWatch(p) ? { open: !!p.watchService?.open, fee: p.watchService?.fee ?? WATCH.defaultFee, jobs: p.watchService?.jobs ?? 0 } : null,
+    inspectService: canInspect(p) ? { open: !!p.inspectService?.open, fee: p.inspectService?.fee ?? INSPECT.defaultFee, jobs: p.inspectService?.jobs ?? 0 } : null,
+    homeWatchedUntil: (p.homeWatchUntil ?? 0) > now ? p.homeWatchUntil! : null,
     garage:
       p.path === "mechanic" && p.rank >= 1
         ? {

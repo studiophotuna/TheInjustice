@@ -53,6 +53,8 @@ Checked in 7.10.0. "Rank" is the professional's career rank (1 to 8).
 | Bodyguards for a day (against a hit) | $2,000 | Close protection: $500 to $2,000 per guard per day | In range (a team) |
 | Muscle from a regular, half a day | $450 | As above | In range |
 | Vigilante watching your place overnight | **$250**. Was $120 | Night security guard: $20 to $35 an hour, $200 to $350 a night | Fixed |
+| Night watch by a player vigilante (their own price) | $100 to $1,000 | As above | In range (7.17) |
+| Fire inspection by a firefighter, per business | Players $100 to $2,000 (their own price); regulars $300 | Commercial fire inspection: $100 to $500 and up | In range (7.17) |
 | Safe house for six hours | $300 | A night in a discreet room: $100 to $300 | In range |
 | Beat cop taking the heat off you (a bribe) | $150 | Small police bribes are reported at $50 to $500 | In range |
 | Customs officer looking the other way | The officer's price, $50 to $20,000 | Varies with what's in the trunk | In range |

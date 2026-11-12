@@ -69,6 +69,8 @@ describe("street regulars do their job", () => {
     useService(d.p, d.reg, "drill", d.now, hooks);
     expect(d.p.energy).toBe(e - WORK.drillEnergy);
     const v = pair("elena");
+    // A watch needs a home to watch (7.17).
+    v.p.housing = 2;
     useService(v.p, v.reg, "watch", v.now, hooks);
     expect(v.p.homeWatchUntil).toBeGreaterThan(v.now);
   });

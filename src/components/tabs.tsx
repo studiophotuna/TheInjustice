@@ -388,6 +388,9 @@ export function ShopTab({ game }: { game: GameApi }) {
                 <p className="muted">{pr.description}</p>
                 <p className="property-income">≈ ${pr.incomePerHour}/hour</p>
               </div>
+              {pr.owned && pr.inspectedUntil && !pr.closedUntil && (
+                <p className="fine text-green">Passed a fire inspection · {Math.ceil((pr.inspectedUntil - Date.now()) / 86_400_000)} days left.</p>
+              )}
               {pr.owned && pr.closedUntil ? (
                 <p className="fine text-red">Burned out. Reopens in {Math.ceil((pr.closedUntil - Date.now()) / 3_600_000)}h.</p>
               ) : pr.owned ? (

@@ -58,6 +58,10 @@ export function parseAction(body: unknown): Action {
     case "dog_buy":
       if (!DOG_BREEDS.includes(b.breed as DogBreed)) throw new GameError("Bad request.");
       return { type: "dog_buy", breed: b.breed as "mutt", name: str(b.name, 40) };
+    case "watch_set":
+    case "inspect_set":
+      if (typeof b.open !== "boolean") throw new GameError("Bad request.");
+      return { type: b.type, open: b.open, fee: Number(b.fee) };
     case "scrub_set":
       if (typeof b.open !== "boolean") throw new GameError("Bad request.");
       return { type: "scrub_set", open: b.open, fee: Number(b.fee) };

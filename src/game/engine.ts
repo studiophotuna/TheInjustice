@@ -62,6 +62,7 @@ import {
   type Rng,
   type StatKey,
 } from "./types";
+import { setInspect, setWatch } from "./protect";
 
 const ALLOWED_FLAGS = new Set(["seen_prologue", "visited:people", "visited:map", "tut:hidden"]);
 const FIGHT_ENERGY = 10;
@@ -1362,6 +1363,12 @@ function applyActionInner(p: Player, action: Action, now: number, rng: Rng, ctx:
       break;
     case "scrub_set":
       events.push(...setScrub(p, action.open, action.fee));
+      break;
+    case "watch_set":
+      events.push(...setWatch(p, action.open, action.fee));
+      break;
+    case "inspect_set":
+      events.push(...setInspect(p, action.open, action.fee));
       break;
     case "tunnel_dig":
       events.push(...digTunnel(p, now, rng));

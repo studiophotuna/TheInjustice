@@ -8,6 +8,7 @@ import { countryOf, shiftIntegrity } from "./engine";
 import { defFor, scheduledOut } from "./regulars";
 import { GameError, type GameEvent, type Player } from "./types";
 import { playerMaxHp, WOUNDS, woundsOf } from "./wounds";
+import { INSPECT, needsInspection } from "./protect";
 
 export const WORK = {
   /** Patch-up: a base fee plus this much per missing health point. */
@@ -34,11 +35,13 @@ export const WORK = {
   drillXp: 1.6,
   /** Vigilante: watches your place for the night (break-ins are harder). */
   watchFee: 250,
+  /** Firefighter: a fire inspection, per business (a week of being much harder to torch). */
+  inspectFee: 300,
   watchMs: 10 * 60 * 60_000,
   dayMs: 24 * 60 * 60_000,
 };
 
-export type ServiceId = "patch" | "surgery" | "retainer" | "launder" | "cop" | "muscle" | "drill" | "watch";
+export type ServiceId = "patch" | "surgery" | "retainer" | "launder" | "cop" | "muscle" | "drill" | "watch" | "inspect";
 export interface Service { id: ServiceId; label: string; fee: number; note: string; block: string | null; amount?: boolean }
 
 const usedAt = (p: Player, key: string) => p.regularServices?.[key] ?? 0;
@@ -93,8 +96,14 @@ export function servicesOf(p: Player, r: Player, now: number): Service[] {
     case "military":
       out.push(s("drill", "Drill with them", WORK.drillFee, "Strength and toughness, harder than the gym.", p.energy < WORK.drillEnergy ? "You're too tired." : p.cash < WORK.drillFee ? `It's $${WORK.drillFee}, cash.` : null));
       break;
+    case "fire": {
+      const due = needsInspection(p, now);
+      const fee = WORK.inspectFee * Math.max(1, due.length);
+      out.push(s("inspect", due.length > 1 ? `Inspect your ${due.length} businesses` : "Inspect your business", fee, "A week of being much harder to set on fire.", !Object.keys(p.properties ?? {}).length ? "You don't own a business." : !due.length ? "Everything you own here passed its inspection." : p.cash < fee ? `It's $${fee}, cash.` : null));
+      break;
+    }
     case "vigilante":
-      out.push(s("watch", "Watch your place tonight", WORK.watchFee, "Break-ins at your home are harder for 10 hours.", (p.homeWatchUntil ?? 0) > now ? "They're already watching it." : p.cash < WORK.watchFee ? `It's $${WORK.watchFee}, cash.` : null));
+      out.push(s("watch", "Watch your place tonight", WORK.watchFee, "Break-ins at your home are harder for 10 hours.", p.housing < 1 ? "You need a place in this city first." : (p.homeWatchUntil ?? 0) > now ? "They're already watching it." : p.cash < WORK.watchFee ? `It's $${WORK.watchFee}, cash.` : null));
       break;
   }
   return out;
@@ -168,6 +177,12 @@ export function useService(p: Player, r: Player, id: ServiceId, now: number, hoo
       p.energy -= WORK.drillEnergy;
       const xp = BALANCE.gym.xp * WORK.drillXp;
       return [{ tone: "good", text: `${r.name} runs you through drills until your legs shake. -$${WORK.drillFee}` }, ...hooks.drill(p, { strength: xp / 2, toughness: xp / 2 })];
+    }
+    case "inspect": {
+      const due = needsInspection(p, now);
+      pay(WORK.inspectFee * due.length);
+      p.inspected = { ...(p.inspected ?? {}), ...Object.fromEntries(due.map((id) => [id, now + INSPECT.ms])) };
+      return [{ tone: "good", text: `${r.name} walks through ${due.length > 1 ? "your businesses" : "your business"}: wiring, exits, sprinklers. For a week ${due.length > 1 ? "they're" : "it's"} much harder to set on fire. -$${WORK.inspectFee * due.length}` }];
     }
     case "watch": {
       pay(WORK.watchFee);

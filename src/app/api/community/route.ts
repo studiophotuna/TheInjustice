@@ -20,6 +20,7 @@ import { CARS } from "@/game/vehicles";
 import { dogAt } from "@/game/dogs";
 import { huntBlock, huntFugitive, isFugitive } from "@/game/fugitive";
 import { hireScrub, scrubBlock, SCRUB } from "@/game/firehack";
+import { canInspect, canWatch, hireInspection, hireWatch, inspectBlock, needsInspection, watchBlock } from "@/game/protect";
 import { hireMechanic, isMechService, mechanicCard } from "@/game/mechanic";
 import { SHOP, SHOP_KINDS } from "@/game/shops";
 import { buyFront, collectFront, crewCap, frontView, isFrontKind, launderAtFront, rebuildFront, rivalFronts, torchFront } from "@/game/fronts";
@@ -356,6 +357,17 @@ export async function GET(req: Request) {
         hackers: here
           .filter((o) => o.path === "hacker" && o.rank >= SCRUB.minRank && o.scrubService?.open)
           .map((o) => ({ ...base(o), title: rankTitle(o) ?? "Hacker", fee: o.scrubService!.fee, heat: SCRUB.heat, jobs: o.scrubService!.jobs, block: scrubBlock(o, p, now) })),
+        // Vigilantes who watch homes overnight, firefighters who inspect businesses.
+        watchers: here
+          .filter((o) => canWatch(o) && o.watchService?.open)
+          .map((o) => ({ ...base(o), title: rankTitle(o) ?? "Vigilante", fee: o.watchService!.fee, jobs: o.watchService!.jobs, block: watchBlock(o, p, now) })),
+        inspectors: here
+          .filter((o) => canInspect(o) && o.inspectService?.open)
+          .map((o) => ({
+            ...base(o), title: rankTitle(o) ?? "Firefighter", fee: o.inspectService!.fee, jobs: o.inspectService!.jobs,
+            // One button per business of yours here that's due an inspection.
+            targets: needsInspection(p, now).map((id) => ({ id, block: inspectBlock(o, p, id, now) })),
+          })),
         shops: SHOP_KINDS.flatMap((k) => {
           const h = city?.shops?.[k];
           if (!h) return [];
@@ -1077,6 +1089,17 @@ export async function POST(req: Request) {
       case "frisk": {
         const target = str(b.targetId);
         events = await store.transaction((tx) => withPair(tx, playerId, target, now, (o, t) => frisk(o, t, now, Math.random)));
+        break;
+      }
+      case "hire_watch": {
+        const target = str(b.vigilanteId);
+        events = await store.transaction((tx) => withPair(tx, playerId, target, now, (me, v) => hireWatch(v, me, now)));
+        break;
+      }
+      case "hire_inspection": {
+        const target = str(b.firefighterId);
+        const propertyId = str(b.propertyId);
+        events = await store.transaction((tx) => withPair(tx, playerId, target, now, (me, f) => hireInspection(f, me, propertyId, now)));
         break;
       }
       case "hire_scrub": {

@@ -11,6 +11,7 @@ import { notify } from "./social";
 import { sv } from "./stats";
 import { fireWatchOn, logFire } from "./firehack";
 import { GameError, type City, type GameEvent, type Player, type Rng } from "./types";
+import { INSPECT, inspected } from "./protect";
 
 export const TORCH = {
   energy: 20,
@@ -61,7 +62,9 @@ export function torchBusiness(a: Player, owner: Player, propertyId: string, city
   a.attackLog = { ...(a.attackLog ?? {}), [`torch:${a.id}`]: now };
   crewJob(a, "war");
 
-  if (rng() < torchChance(a, propertyId)) {
+  // A business that passed a fire inspection this week is much harder to burn.
+  const chance = torchChance(a, propertyId) * (inspected(owner, propertyId, now) ? INSPECT.chanceMult : 1);
+  if (rng() < chance) {
     const until = now + TORCH.closedMs;
     owner.closed = { ...(owner.closed ?? {}), [propertyId]: until };
     // The takings in the register burn with it; income starts again when it reopens.
@@ -84,7 +87,7 @@ export function torchBusiness(a: Player, owner: Player, propertyId: string, city
   }
 
   a.heat += TORCH.failHeat * heatMult;
-  notify(owner, `Someone tried to set fire to your ${prop.name.toLowerCase()}. The sprinklers saved it.`, "info", undefined, now);
+  notify(owner, `Someone tried to set fire to your ${prop.name.toLowerCase()}. The sprinklers saved it${inspected(owner, propertyId, now) ? ". Good thing it passed its inspection" : ""}.`, "info", undefined, now);
   return [{ tone: "bad", text: "The fire doesn't catch. Sprinklers. You run before anyone sees your face." }];
 }
 

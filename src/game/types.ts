@@ -167,6 +167,12 @@ export interface Player {
   regularServices?: Record<string, number>;
   /** A vigilante regular is watching your home until then (break-ins are harder). */
   homeWatchUntil?: number;
+  /** Vigilantes (rank 2+): watching people's homes overnight, for a fee they set. */
+  watchService?: { open: boolean; fee: number; jobs: number };
+  /** Firefighters (rank 2+): inspecting businesses, for a fee they set. */
+  inspectService?: { open: boolean; fee: number; jobs: number };
+  /** Businesses that passed a fire inspection, until when. */
+  inspected?: Record<string, number>;
   /** Looks bought with Favors, and the ones being worn. */
   cosmetics?: { owned: string[]; frame?: string | null; color?: string | null; banner?: string | null };
   /** Gear in use: only equipped gear counts in a fight. */
@@ -879,6 +885,7 @@ export type Action =
   | { type: "lead_start" | "lead_pay" | "lead_close"; id: string }
   | { type: "garage_set"; open: boolean; rate: number }
   | { type: "tunnel_dig" | "make_shank" | "parole_hearing" }
+  | { type: "watch_set" | "inspect_set"; open: boolean; fee: number }
   | { type: "scrub_set"; open: boolean; fee: number }
   | { type: "cargo_buy" | "cargo_sell"; carId: string; good: GoodId; qty: number }
   | { type: "ack_arrival" }
