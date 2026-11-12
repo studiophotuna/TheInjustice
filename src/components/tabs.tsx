@@ -33,7 +33,6 @@ import {
   Wind,
   BookOpen,
   Dumbbell,
-  Eye,
   Landmark,
   Lock,
   LogOut,
@@ -219,17 +218,34 @@ function CareerTrack({ game }: { game: GameApi }) {
         {photo && <div className="track-photo"><img src={photo} alt="" /></div>}
       </div>
       <div className="track-body">
-        {ladder && (
-          <div className="track-steps">
-            {ladder.ranks.map((r, i) => (
-              <span key={r} className={i + 1 < ladder.current ? "done" : i + 1 === ladder.current ? "now" : ""}>{r}</span>
-            ))}
-          </div>
-        )}
+        {ladder && <Ladder ranks={ladder.ranks} current={ladder.current} promo={view.promo} />}
         {path.promotion && <p className="track-note">{path.promotion}</p>}
-        <PromoBar game={game} />
+        {view.promo?.statsHint && view.promo.work >= 60 && <p className="fine promo-hint">{view.promo.statsHint}</p>}
       </div>
     </section>
+  );
+}
+
+/**
+ * The road to the top: one step per rank. Steps behind you are lit, yours is bright, and the next
+ * one fills as you put in the work. Names only for where you are and where you're going.
+ */
+function Ladder({ ranks, current, promo }: { ranks: string[]; current: number; promo: PublicView["promo"] }) {
+  const next = promo?.next ?? null;
+  const work = promo?.work ?? 0;
+  return (
+    <div className="ladder">
+      <div className="ladder-steps" role="img" aria-label={`Rank ${current} of ${ranks.length}${next ? `. Next: ${next}` : ""}`}>
+        {ranks.map((r, i) => {
+          const n = i + 1;
+          const cls = n < current ? "done" : n === current ? "now" : n === current + 1 && next ? "next" : "";
+          return <span key={r} className={cls}>{cls === "next" && <i style={{ width: `${work}%` }} />}</span>;
+        })}
+      </div>
+      <div className="ladder-names">
+        {next ? <span>Next: <b>{next}</b></span> : <span>Top of the ladder</span>}
+      </div>
+    </div>
   );
 }
 
@@ -239,21 +255,24 @@ function JobCard({ job, cover, big, energy, regenMs, blocked, best, flash, onWor
   const tired = energy < job.energy;
   // Short of energy: say when it'll be ready, instead of just greying the button out.
   const readyIn = tired ? Math.max(1, Math.ceil(((job.energy - energy) * regenMs) / 60_000)) : 0;
-  const marks = [job.grade, job.risky && !job.grade ? "Risky" : null, job.crime ? "Shady" : null].filter(Boolean).join(" · ");
+  // One marker at most: the best pick or something new first, then how hard it is, then the risk.
+  const mark = best ? null : job.fresh ? null : job.grade ?? (job.risky ? "Risky" : job.crime ? "Shady" : null);
   return (
     <motion.article id={`job-${job.id}`} variants={item} className={`jcard ${big ? "big" : ""} ${job.pathJob ? "job-path" : ""} ${flash ? "flash" : ""} ${job.locked ? "job-locked" : ""}`}>
       <div className="jcard-art" style={{ backgroundImage: `url(${cover})` }}>
         <div className="jcard-tags">
-          {marks && (
+          {best ? (
+            <span className="jcard-tag best">Best now</span>
+          ) : job.fresh ? (
+            <span className="jcard-tag new">New</span>
+          ) : mark && (
             <span
-              className={`jcard-tag ${job.crime ? "shady" : "risky"}`}
-              title={job.grade ? "Hidden work you unlocked by getting good at this district's jobs. Harder, riskier, and better paid." : undefined}
+              className={`jcard-tag ${job.crime && !job.grade && !job.risky ? "shady" : "risky"}`}
+              title={job.grade ? "Hidden work you unlocked by getting good at this district's jobs. Harder, riskier, and better paid." : job.crime ? "Crime: it raises your heat." : undefined}
             >
-              {marks}
+              {mark}
             </span>
           )}
-          {best && <span className="jcard-tag best">Best now</span>}
-          {job.fresh && <span className="jcard-tag new">New</span>}
         </div>
         <h3>{job.name}</h3>
       </div>
@@ -273,40 +292,66 @@ function JobCard({ job, cover, big, energy, regenMs, blocked, best, flash, onWor
 
 export function FightTab({ game }: { game: GameApi }) {
   const view = game.view!;
-  const blocked = game.busy || game.live!.hospital > 0;
+  const live = game.live!;
+  const blocked = game.busy || live.hospital > 0;
+  const hurt = view.hp < view.hurtLimit;
+  const tired = live.energy < view.fightEnergy;
+  const readyIn = tired ? Math.max(1, Math.ceil(((view.fightEnergy - live.energy) * view.energyRegenMs) / 60_000)) : 0;
+  const tiles = [
+    { n: view.fightRecord.wins, label: view.fightRecord.wins === 1 ? "Street win" : "Street wins", tone: "teal" },
+    { n: view.fightRecord.season, label: "All wins this season", tone: "violet" },
+    { n: view.hp, label: hurt ? "Too hurt" : "Health", tone: hurt ? "red" : "orange" },
+  ];
   return (
-    <div className="stack">
-      <GymCard game={game} />
-      <div className="callout glass">
-        <Eye size={18} />
-        <p>
-          Nobody wears their strength on their sleeve. Size them up from who they are and what they do.{" "}
-          <b className="text-red">Losing badly to someone far stronger can kill you.</b>
-        </p>
-      </div>
-      <motion.div className="fight-grid" variants={list} initial="hidden" animate="show">
+    <div className="stack fight-page">
+      <section className="fight-head">
+        <div className="fight-head-art" style={{ backgroundImage: "url(/scenes/street.jpg)" }}>
+          <span className="label tone-amber-t">Street fights · {view.location.city}</span>
+          <h2>Pick your fight</h2>
+          <p className="fight-warn">Losing badly to someone far stronger can kill you.</p>
+        </div>
+        <div className="tiles fight-tiles">
+          {tiles.map((t) => (
+            <div key={t.label} className={`tile tone-${t.tone}`}>
+              <b>{t.n}</b>
+              <span>{t.label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+      <motion.div className="cover-grid" variants={list} initial="hidden" animate="show">
         {view.fights.map((n) => (
-          <motion.article key={n.id} variants={item} className={`fighter ${n.locked ? "is-locked" : ""}`}>
-            <NpcPortrait id={n.id} className="fighter-portrait" />
-            <div className="fighter-body">
+          <motion.article key={n.id} variants={item} className={`jcard fcard ${n.locked ? "job-locked" : ""}`}>
+            <div className="jcard-art fcard-art">
+              <NpcPortrait id={n.id} className="fcard-face" />
+              <div className="jcard-tags">
+                <span className="jcard-tag build">{n.build}</span>
+              </div>
               <h3>{n.name}</h3>
-              <p className="muted">{n.description}</p>
-              {n.locked ? (
-                <p className="job-lock"><Lock size={12} /> {n.locked}</p>
-              ) : (
+            </div>
+            <p className="fcard-bio">{n.description}</p>
+            <div className="jcard-foot">
+              <span className="fcard-meta">
+                <span className="job-pay">Up to ${n.carries}</span>
+                {n.beaten > 0 && <span className="fine muted">Beaten {n.beaten === 1 ? "once" : `${n.beaten} times`}</span>}
+              </span>
+              {!n.locked && (
                 <motion.button
-                  whileTap={{ scale: 0.94 }}
-                  className="btn btn-danger btn-sm"
-                  disabled={blocked || game.live!.energy < view.fightEnergy || view.hp < 20}
+                  whileTap={{ scale: 0.92 }}
+                  className="btn btn-danger btn-sm jcard-go"
+                  disabled={blocked || tired || hurt}
                   onClick={() => game.act({ type: "fight", npcId: n.id })}
+                  aria-label={hurt ? `${n.name}: too hurt to fight` : tired ? `${n.name}: ready in ${readyIn} minutes` : `Fight ${n.name}: ${view.fightEnergy} energy`}
                 >
-                  <Swords size={14} /> {view.hp < 20 ? "Too hurt" : `Fight · ${view.fightEnergy} energy`}
+                  {hurt ? "Too hurt" : tired && !blocked ? <span className="jcard-wait">Ready in {readyIn >= 60 ? `${Math.floor(readyIn / 60)}h ${readyIn % 60}m` : `${readyIn} min`}</span> : <><Swords size={13} /> {view.fightEnergy}</>}
                 </motion.button>
               )}
             </div>
+            {n.locked && <p className="job-lock jcard-lock"><Lock size={12} /> {n.locked}</p>}
           </motion.article>
         ))}
       </motion.div>
+      <GymCard game={game} />
     </div>
   );
 }
@@ -1129,8 +1174,7 @@ function GymCard({ game }: { game: GameApi }) {
   const blocked = game.busy || game.live!.hospital > 0 || !!view.travel;
   return (
     <section className="card gym">
-      <h3 className="card-title"><DumbbellIcon size={16} /> {view.location.city} boxing gym</h3>
-      <p className="muted">Pick what to train. You won&apos;t see numbers, but you&apos;ll feel it. ${view.gym.fee} and <Zap size={13} className="zap-inline" />{view.gym.energy} a session.</p>
+      <h3 className="card-title">The gym<span className="title-aside">${view.gym.fee} · <Zap size={11} className="zap-inline" />{view.gym.energy} a session</span></h3>
       <div className="exercises">
         {EXERCISES.map(({ stat, name, Icon }) => (
           <motion.button
@@ -1435,22 +1479,6 @@ function Specialties({ game }: { game: GameApi }) {
 }
 
 /** Work done toward your next rank. Stats stay words: you're told when they're the hold-up. */
-export function PromoBar({ game }: { game: GameApi }) {
-  const p = game.view!.promo;
-  if (!p) return null;
-  if (!p.next) return <p className="fine muted promo-bar-top">Top of the ladder.</p>;
-  return (
-    <div className="promo-bar">
-      <div className="row between">
-        <span className="fine">Next: <b>{p.next}</b></span>
-        <span className="fine promo-pct">{p.work}% of the work</span>
-      </div>
-      <div className="promo-track"><span style={{ width: `${p.work}%` }} /></div>
-      {p.statsHint && p.work >= 60 && <p className="fine promo-hint">{p.statsHint}</p>}
-    </div>
-  );
-}
-
 // ── 4. Community service ──
 
 const SERVICE_LIST = [

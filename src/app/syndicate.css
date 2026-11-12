@@ -504,3 +504,33 @@ img.slot-art { object-fit: cover; }
 .market-table .market-act { flex-wrap: nowrap; gap: 4px; justify-content: flex-end; }
 .market-table .market-act input { width: 52px !important; min-width: 0; flex: none; padding: 6px; text-align: center; }
 .market-table td:first-child { white-space: nowrap; }
+
+/* 7.22: Fight. A headline over the street, your record in tiles, opponents as cover-art cards. */
+.fight-head { display: grid; gap: var(--sp-2); }
+.fight-head-art { position: relative; display: grid; align-content: end; gap: 4px; min-height: 150px; padding: var(--sp-4); border-radius: var(--radius); overflow: hidden; background-size: cover; background-position: center; box-shadow: inset 0 0 0 1px var(--border); }
+.fight-head-art::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(12, 14, 19, 0.15), rgba(12, 14, 19, 0.92) 80%); }
+.fight-head-art > * { position: relative; margin: 0; }
+.fight-head-art h2 { font: 800 clamp(30px, 9vw, 44px)/0.95 var(--headline, var(--display)); text-transform: uppercase; letter-spacing: -0.01em; }
+.fight-warn { font-size: 12.5px; font-weight: 600; color: var(--crimson-soft); }
+.fight-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.fight-tiles .tile { cursor: default; }
+.fcard-art { height: 170px; background: var(--panel-2); }
+.fcard-face { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important; border-radius: 0 !important; border: 0 !important; box-shadow: none !important; }
+.fcard-face img { width: 100%; height: 100%; object-fit: cover; object-position: center 25%; border-radius: 0 !important; }
+.fcard .jcard-art h3 { font-size: 15px; }
+.jcard-tag.build { color: var(--text); }
+.fcard-bio { margin: 0; padding: 8px 10px 0; font-size: 12px; line-height: 1.35; color: var(--text-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.fcard-meta { flex: 1; display: grid; gap: 2px; min-width: 0; }
+.fcard-meta .job-pay { flex: none; }
+@media (min-width: 700px) { .fcard-art { height: 200px; } }
+.gym .title-aside { display: inline-flex; align-items: center; gap: 2px; }
+
+/* 7.22: Work. The career ladder: one step per rank, the next one filling with your work. */
+.ladder { display: grid; gap: 8px; }
+.ladder-steps { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; }
+.ladder-steps span { position: relative; height: 8px; border-radius: 999px; background: var(--panel-3); overflow: hidden; }
+.ladder-steps span.done { background: color-mix(in srgb, var(--path, var(--amber-hi)) 55%, var(--panel-3)); }
+.ladder-steps span.now { background: var(--amber-hi); box-shadow: 0 0 10px rgba(255, 194, 75, 0.45); }
+.ladder-steps span.next i { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--amber-hi) 60%, transparent); border-radius: inherit; }
+.ladder-names { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 12.5px; color: var(--text-2); }
+.ladder-names > b { font: 800 14px/1 var(--display); color: var(--text); }

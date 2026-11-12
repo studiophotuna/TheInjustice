@@ -41,7 +41,7 @@ import { insideView } from "./prisonlife";
 import { fugitiveView } from "./fugitive";
 import type { Arrival, CountryId, TravelMode } from "./types";
 import { PROPERTIES } from "./content/properties";
-import { countryOf, dayKey, propertyIncome, FIGHT_ENERGY, inHospital, itemPrice, jobLock } from "./engine";
+import { countryOf, dayKey, propertyIncome, FIGHT_ENERGY, hurtLimit, inHospital, itemPrice, jobLock } from "./engine";
 import { describe, integrityHint } from "./stats";
 import type { DistrictId, LogEntry, PathId, Player } from "./types";
 import { canInspect, canWatch, INSPECT, WATCH } from "./protect";
@@ -116,8 +116,18 @@ export interface PublicView {
     description: string;
     district: DistrictId;
     locked: string | null;
+    /** How they look: a word for their build, never a number or your odds. */
+    build: string;
+    /** The most cash they might have on them. */
+    carries: number;
+    /** How many times you've beaten them. */
+    beaten: number;
   }[];
   fightEnergy: number;
+  /** Your street-fight record: every win, and this season's. */
+  fightRecord: { wins: number; season: number };
+  /** Below this much health you're too hurt to fight (lower on painkillers). */
+  hurtLimit: number;
   assessment: { available: boolean; reason: string };
   flags: string[];
   log: LogEntry[];
@@ -293,6 +303,15 @@ function heatLabel(heat: number): PublicView["heatLabel"] {
   if (heat < 25) return "Noticed";
   if (heat < 50) return "Wanted";
   return "Most wanted";
+}
+
+/** What a street opponent's build looks like, from muscle and bulk. A description, not odds. */
+export function buildWord(bulk: number): string {
+  if (bulk < 25) return "Scrawny";
+  if (bulk < 40) return "Rough";
+  if (bulk < 55) return "Solid";
+  if (bulk < 70) return "Heavy";
+  return "Built like a door";
 }
 
 export function toView(p: Player, now: number): PublicView {
@@ -491,8 +510,13 @@ export function toView(p: Player, now: number): PublicView {
       description: n.description,
       district: n.district,
       locked: lockedDistrict[n.district],
+      build: buildWord(n.strength + n.toughness),
+      carries: n.cash[1],
+      beaten: p.jobCounts[`beat:${n.id}`] ?? 0,
     })),
     fightEnergy: FIGHT_ENERGY,
+    fightRecord: { wins: p.jobCounts["fight:win"] ?? 0, season: p.season?.wins ?? 0 },
+    hurtLimit: hurtLimit(p, now),
     assessment: {
       available: p.assessmentReady && cooldownLeft <= 0,
       reason: !p.assessmentReady

@@ -1,5 +1,24 @@
 # Changelog
 
+## 7.22.0: Work and Fight upgraded
+
+- **Fight:**
+  - A "Pick your fight" headline over the street replaces the explainer card. The warning that
+    losing badly can kill you stays, as one line.
+  - Your record in three tiles: street wins, all wins this season, and health (red, "Too hurt",
+    when you can't fight).
+  - Opponents are photo cards like jobs. Each shows a word for their build (Scrawny to "Built like
+    a door"), the most cash they might carry, and how many times you've beaten them. No odds or
+    numbers for their strength.
+  - The gym sits below the fights, its price and energy in the title.
+  - Fixed: the Fight button said "Too hurt" below 20 health even on painkillers. It now uses the
+    same lower limit as the game. Short of energy, it says "Ready in X min" like jobs do.
+- **Work:**
+  - The career card shows one 8-step ladder instead of eight rank chips and a separate progress
+    bar. The next step fills as you put in the work.
+  - Job cards carry one tag at most: Best now or New first, then the difficulty, then Risky or
+    Shady.
+
 ## 7.21.0: a faster Shop, Directory and Street
 
 - **The Shop is about half as long on phones.** Each item is one row: photo, name and note, then the

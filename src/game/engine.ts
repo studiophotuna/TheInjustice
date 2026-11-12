@@ -747,6 +747,7 @@ function fightNpc(p: Player, npc: NpcDef, now: number, rng: Rng, events: GameEve
     p.cash += loot;
     p.reputation += npc.reputation;
     p.jobCounts["fight:win"] = (p.jobCounts["fight:win"] ?? 0) + 1;
+    p.jobCounts[`beat:${npc.id}`] = (p.jobCounts[`beat:${npc.id}`] ?? 0) + 1;
     bumpSeason(p, "wins", 1, now);
     bumpContract(p, "fights");
     events.push({ tone: "good", text: `You beat the ${npc.name}.${loot ? ` +$${loot}` : ""}` });
