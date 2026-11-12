@@ -482,3 +482,25 @@ img.slot-art { object-fit: cover; }
 /* 7.20: Me's grid columns can't be pushed wider than the screen by a long line inside a card. */
 .profile { grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 960px) { .profile { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+
+/* 7.21: shop rows. Photo, name and note, price: one row, the button next to what it buys. */
+.shop-grid .shop-item { grid-template-columns: 64px minmax(0, 1fr) auto; grid-template-rows: auto; align-items: center; gap: var(--sp-3); padding: var(--sp-3); }
+.shop-grid .shop-art { grid-row: auto; width: 64px; height: 64px; }
+.shop-grid .shop-body { gap: 2px; }
+.shop-grid .shop-body h3 { margin: 0; font-size: var(--fs-md, 16px); line-height: 1.2; }
+.shop-grid .shop-body > p { margin: 0; }
+.shop-grid .shop-body .muted:not(.fine) { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.shop-grid .shop-item .btn { grid-column: 3; justify-self: end; align-self: center; white-space: nowrap; min-width: 64px; }
+
+/* 7.21: Directory. Services nobody offers share one card at the end. */
+.dir-quiet-head { list-style: none; cursor: pointer; }
+.dir-quiet-head::-webkit-details-marker { display: none; }
+.dir-quiet-head .card-title { margin: 0; flex-wrap: wrap; }
+.dir-quiet-head .title-aside { white-space: normal; text-align: right; }
+.dir-quiet-list { list-style: none; margin: var(--sp-3) 0 0; padding: 0; display: grid; gap: var(--sp-2); }
+.dir-quiet-list li { display: grid; gap: 2px; }
+
+/* 7.21: the street's drug table. Amount, Buy and Sell stay on one line. */
+.market-table .market-act { flex-wrap: nowrap; gap: 4px; justify-content: flex-end; }
+.market-table .market-act input { width: 52px !important; min-width: 0; flex: none; padding: 6px; text-align: center; }
+.market-table td:first-child { white-space: nowrap; }

@@ -1,5 +1,18 @@
 # Changelog
 
+## 7.21.0: a faster Shop, Directory and Street
+
+- **The Shop is about half as long on phones.** Each item is one row: photo, name and note, then the
+  price button right beside them, instead of a tall card with the button in the far corner. The
+  "Food" and "Medical" chip on every item is gone, since the tab already says it. Weapons and armor
+  keep their rarity tag.
+- **The Directory shows who's working first.** Services someone actually offers come first. Services
+  nobody offers right now share one "Nobody offering yet" card at the end (tap it to see which, and
+  how to start offering one) instead of a card each.
+- **The Street's drug table:** the amount box, Buy and Sell sit on one line per drug again. A
+  general input style had been stretching the box to full width and pushing the buttons below it.
+  The intro above it is shorter.
+
 ## 7.20.0: shorter pages, clearer labels
 
 - **Me is about half as long.** "Your record" (career record, season, the story so far, what

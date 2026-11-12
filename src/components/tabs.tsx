@@ -313,7 +313,6 @@ export function FightTab({ game }: { game: GameApi }) {
 
 // ─── Shop ──────────────────────────────────────────────────────────────────
 
-const KIND_LABEL: Record<string, string> = { food: "Food", housing: "Housing", weapon: "Weapon", armor: "Armor", medical: "Medical" };
 
 const SHOP_CATS = [
   { id: "supplies", label: "Supplies", kinds: ["food", "medical"] },
@@ -434,7 +433,8 @@ export function ShopTab({ game }: { game: GameApi }) {
         <motion.article key={i.id} variants={item} className={`shop-item ${i.owned ? "owned" : ""}`}>
           <ItemArt id={i.id} icon={i.icon} name={i.name} price={price} className="shop-art" />
           <div className="shop-body">
-            {home ? <RarityTag rarity={rarityOf(i.id)} /> : <span className="chip">{KIND_LABEL[i.kind]}</span>}
+            {/* Gear shows its rarity; everyday things don't need a chip saying what tab you're on. */}
+            {home && <RarityTag rarity={rarityOf(i.id)} />}
             <h3>{i.name}</h3>
             <p className="muted">{i.description}</p>
             {left !== null && <p className={`fine stock-note ${soldOut ? "out" : ""}`}>In stock: {left}{soldOut ? " · next shipment soon" : ""}</p>}

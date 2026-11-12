@@ -97,8 +97,7 @@ export function StreetMarket({ game }: { game: GameApi }) {
       <Scene kind="street" className="banner-scene" />
       <h3 className="card-title"><Pill size={16} /> The street · {view.location.city}</h3>
       <p className="muted fine">
-        Prices change every hour and from city to city. Dealers take dirty money or cash, and pay you in dirty money. Carrying drugs on a trip
-        risks a search. You&apos;re carrying {m.carried}/{m.maxCarry}.
+        Prices change hourly and city to city. Dealers pay in dirty money; carrying on a trip risks a search. You&apos;re carrying {m.carried}/{m.maxCarry}.
       </p>
       <table className="market-table">
         <thead>
@@ -112,7 +111,7 @@ export function StreetMarket({ game }: { game: GameApi }) {
               <td>${d.sell}</td>
               <td>{d.have}</td>
               <td>
-                <span className="row">
+                <span className="row market-act">
                   <input type="number" min={1} value={qty[d.id] ?? "1"} onChange={(e) => setQty({ ...qty, [d.id]: e.target.value })} aria-label={`${d.name} quantity`} />
                   <button className="btn btn-ghost btn-xs" disabled={game.busy} onClick={() => game.act({ type: "drug_buy", drug: d.id, qty: q(d.id) })}>Buy</button>
                   <button className="btn btn-ghost btn-xs" disabled={game.busy || d.have < 1} onClick={() => game.act({ type: "drug_sell", drug: d.id, qty: Math.min(q(d.id), d.have) })}>Sell</button>

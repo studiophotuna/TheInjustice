@@ -56,12 +56,43 @@ function Who({ r }: { r: Base }) {
   );
 }
 
-function Section({ icon, title, empty, children, count }: { icon: React.ReactNode; title: string; empty: string; children: React.ReactNode; count: number }) {
+/** What each service says when nobody in town offers it. Empty services share one card at the end. */
+const QUIET: Record<string, string> = {
+  "Mechanics": "No garage open in this city yet. Mechanics open theirs from the Docks.",
+  "Hackers": "No hacker here is taking clients. Pen Testers and up can offer it from the Directory.",
+  "Night watch": "No vigilante here is watching homes right now. Vigilantes from rank 2 offer it from the Directory.",
+  "Fire inspections": "No firefighter here is inspecting businesses right now. Firefighters from rank 2 offer it from the Directory.",
+  "Bankers who launder": "No banker in this city launders for clients right now. Bankers offer it from the Bank.",
+  "Lawyers": "No attorneys in this city right now.",
+  "Back-alley doctors": "No doctor here treats patients off the books right now.",
+  "Shops": "Every counter in town is still run by city hall. Anyone can take one over from Shop → Businesses.",
+};
+
+function Section({ icon, title, children, count }: { icon: React.ReactNode; title: string; children: React.ReactNode; count: number }) {
+  if (!count) return null;
   return (
     <section className="card dir-section">
       <h3 className="card-title">{icon} {title}</h3>
-      {count ? <ul className="officials dir-list">{children}</ul> : <p className="fine muted">{empty}</p>}
+      <ul className="officials dir-list">{children}</ul>
     </section>
+  );
+}
+
+/** Every service nobody offers right now, one line each, so the ones you can use come first. */
+function Quiet({ counts }: { counts: Record<string, number> }) {
+  const none = Object.keys(QUIET).filter((k) => !counts[k]);
+  if (!none.length) return null;
+  return (
+    <details className="card dir-quiet">
+      <summary className="dir-quiet-head">
+        <h3 className="card-title">Nobody offering yet<span className="title-aside">{none.length} {none.length === 1 ? "service" : "services"}</span></h3>
+      </summary>
+      <ul className="dir-quiet-list">
+        {none.map((k) => (
+          <li key={k}><b>{k}</b> <span className="fine muted">{QUIET[k]}</span></li>
+        ))}
+      </ul>
+    </details>
   );
 }
 
@@ -74,7 +105,7 @@ export function Directory({ game }: { game: GameApi }) {
       <p className="muted fine dir-intro">
         <BookUser size={14} /> Everyone in {d.city} who offers a service, and what they charge. Tap a name to open their file.
       </p>
-      <Section icon={<Wrench size={16} />} title="Mechanics" count={d.mechanics.length} empty="No garage open in this city yet. Mechanics open theirs from the Docks.">
+      <Section icon={<Wrench size={16} />} title="Mechanics" count={d.mechanics.length}>
         {d.mechanics.map((m) => (
           <li key={m.id}>
             <span className="dir-row">
@@ -86,7 +117,7 @@ export function Directory({ game }: { game: GameApi }) {
         ))}
       </Section>
       <MyScrub game={game} />
-      <Section icon={<Terminal size={16} />} title="Hackers" count={d.hackers.length} empty="No hacker here is taking clients. Pen Testers and up can offer it from the Directory.">
+      <Section icon={<Terminal size={16} />} title="Hackers" count={d.hackers.length}>
         {d.hackers.map((h) => (
           <li key={h.id}>
             <span className="dir-row">
@@ -105,7 +136,7 @@ export function Directory({ game }: { game: GameApi }) {
         ))}
       </Section>
       <MyProtect game={game} kind="watch" />
-      <Section icon={<ShieldCheck size={16} />} title="Night watch" count={d.watchers.length} empty="No vigilante here is watching homes right now. Vigilantes from rank 2 offer it from the Directory.">
+      <Section icon={<ShieldCheck size={16} />} title="Night watch" count={d.watchers.length}>
         {d.watchers.map((w) => (
           <li key={w.id}>
             <span className="dir-row">
@@ -119,7 +150,7 @@ export function Directory({ game }: { game: GameApi }) {
         ))}
       </Section>
       <MyProtect game={game} kind="inspect" />
-      <Section icon={<Flame size={16} />} title="Fire inspections" count={d.inspectors.length} empty="No firefighter here is inspecting businesses right now. Firefighters from rank 2 offer it from the Directory.">
+      <Section icon={<Flame size={16} />} title="Fire inspections" count={d.inspectors.length}>
         {d.inspectors.map((f) => (
           <li key={f.id}>
             <span className="dir-row">
@@ -140,7 +171,7 @@ export function Directory({ game }: { game: GameApi }) {
           </li>
         ))}
       </Section>
-      <Section icon={<Landmark size={16} />} title="Bankers who launder" count={d.bankers.length} empty="No banker in this city launders for clients right now. Bankers offer it from the Bank.">
+      <Section icon={<Landmark size={16} />} title="Bankers who launder" count={d.bankers.length}>
         {d.bankers.map((b) => (
           <li key={b.id}>
             <span className="dir-row">
@@ -151,7 +182,7 @@ export function Directory({ game }: { game: GameApi }) {
           </li>
         ))}
       </Section>
-      <Section icon={<Scale size={16} />} title="Lawyers" count={d.lawyers.length} empty="No attorneys in this city right now.">
+      <Section icon={<Scale size={16} />} title="Lawyers" count={d.lawyers.length}>
         {d.lawyers.map((l) => (
           <li key={l.id}>
             <span className="dir-row">
@@ -162,7 +193,7 @@ export function Directory({ game }: { game: GameApi }) {
           </li>
         ))}
       </Section>
-      <Section icon={<Stethoscope size={16} />} title="Back-alley doctors" count={d.doctors.length} empty="No doctor here treats patients off the books right now.">
+      <Section icon={<Stethoscope size={16} />} title="Back-alley doctors" count={d.doctors.length}>
         {d.doctors.map((x) => (
           <li key={x.id}>
             <span className="dir-row">
@@ -173,7 +204,7 @@ export function Directory({ game }: { game: GameApi }) {
           </li>
         ))}
       </Section>
-      <Section icon={<Store size={16} />} title="Shops" count={d.shops.length} empty="Every counter in town is still run by city hall. Anyone can take one over from Shop → Businesses.">
+      <Section icon={<Store size={16} />} title="Shops" count={d.shops.length}>
         {d.shops.map((s) => {
           const p = Math.round((s.markup - 1) * 100);
           return (
@@ -189,6 +220,7 @@ export function Directory({ game }: { game: GameApi }) {
           );
         })}
       </Section>
+      <Quiet counts={{ "Mechanics": d.mechanics.length, "Hackers": d.hackers.length, "Night watch": d.watchers.length, "Fire inspections": d.inspectors.length, "Bankers who launder": d.bankers.length, "Lawyers": d.lawyers.length, "Back-alley doctors": d.doctors.length, "Shops": d.shops.length }} />
     </div>
   );
 }
