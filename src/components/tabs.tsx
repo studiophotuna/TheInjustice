@@ -243,7 +243,14 @@ function JobCard({ job, cover, big, energy, regenMs, blocked, best, flash, onWor
     <motion.article id={`job-${job.id}`} variants={item} className={`jcard ${big ? "big" : ""} ${job.pathJob ? "job-path" : ""} ${flash ? "flash" : ""} ${job.locked ? "job-locked" : ""}`}>
       <div className="jcard-art" style={{ backgroundImage: `url(${cover})` }}>
         <div className="jcard-tags">
-          {marks && <span className={`jcard-tag ${job.crime ? "shady" : "risky"}`}>{marks}</span>}
+          {marks && (
+            <span
+              className={`jcard-tag ${job.crime ? "shady" : "risky"}`}
+              title={job.grade ? "Hidden work you unlocked by getting good at this district's jobs. Harder, riskier, and better paid." : undefined}
+            >
+              {marks}
+            </span>
+          )}
           {best && <span className="jcard-tag best">Best now</span>}
           {job.fresh && <span className="jcard-tag new">New</span>}
         </div>

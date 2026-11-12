@@ -14,13 +14,16 @@ export default function GuidePage() {
       <h2>Energy and work</h2>
       <p>
         Almost everything costs energy: jobs, training, crimes, fights. Energy refills over time, faster with a better place to
-        sleep, and food tops it up. When you&apos;re out, come back later. The quick bar at the bottom works your usual job, trains,
-        eats and patches you up with what you carry.
+        sleep, and food tops it up. A coffee or an energy drink gives a quick boost between meals (one every half hour, six a
+        day). When you&apos;re out, a job tells you when it&apos;ll be ready. The quick bar at the bottom works your usual job,
+        trains, eats and patches you up with what you carry.
       </p>
       <p>
         Jobs are listed by district. Some are honest, some are <b>shady</b> (they pay dirty money and draw attention), and some are{" "}
         <b>risky</b> (they can go wrong and hurt you). Get good at the work you do and harder, better-paid work turns up that you
-        didn&apos;t know about.
+        didn&apos;t know about. It comes in three grades: <b>rough work</b>, <b>hard work</b> and <b>only for the hardened</b>.
+        Each one costs more energy, can go worse, and always pays more than the work before it. Careers pay more than street
+        work from the first rank, and every promotion is a raise.
       </p>
 
       <h2>You never see your stats</h2>

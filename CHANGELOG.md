@@ -1,5 +1,25 @@
 # Changelog
 
+## 7.16.0: the pay ladder keeps its promises
+
+- **Hidden work always pays more than the work that unlocks it.** Raising street pay in 7.14 left
+  the first step of every street ladder ("Rough work") paying less than the ordinary jobs you had
+  to grind to find it. The Mafia's and the vigilantes' "Only for the hardened" jobs paid no more
+  than their regular top work. Every hidden job now pays at least 20% more per energy point than
+  the best work that unlocks it.
+- **Careers pay more than the street from rank 1, and every promotion is a raise.**
+  - A rank 1 cop, doctor or clerk was earning less per energy point than someone washing
+    windshields. Rank 1 now averages at least $3 per energy point, above ordinary street work.
+  - Rank 3 paid less than rank 2 for police, courts and doctors, and rank 4 less than rank 3 for
+    mechanics and hackers. Every rank now pays at least 15% more than the one below.
+  - Top banking, police and courts work rises to keep the ladder climbing.
+  - 79 jobs adjusted. A test now holds all three rules.
+- **The guide explains the grades.**
+  - Hidden work comes as rough work, hard work and only for the hardened: each costs more energy,
+    can go worse, and pays more.
+  - The grade on a job card explains itself when you hover over it.
+  - The guide also covers coffee and energy drinks, and the "Ready in" times on jobs.
+
 ## 7.15.0: energy that respects your time, with a second wind and a coffee
 
 Energy stays (a one-job-a-minute timer would reward whoever stays online longest, and empty out
