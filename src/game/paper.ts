@@ -6,6 +6,7 @@ import { CRIMES } from "./crime";
 import { COUNTRY_BY_ID } from "./content/world";
 import { cityEvent } from "./events";
 import type { CaseFile, City, CountryId } from "./types";
+import { visibleFeed } from "./feed";
 
 const WEEK = 7 * 24 * 60 * 60_000;
 const PAPER_NAMES: Record<CountryId, string> = {
@@ -35,7 +36,8 @@ export function weekStories(country: CountryId, city: City | null, cases: CaseFi
           : `${t.suspectName} walks free: not guilty in the ${c.district} ${CRIMES[c.kind].name.toLowerCase()}`,
     });
   }
-  for (const l of city?.log ?? []) if (now - l.at < WEEK) stories.push({ id: `city:${l.at}`, at: l.at, kind: "city", headline: l.text });
+  // The paper prints what the street may know: no case numbers, nothing meant for officials.
+  for (const l of visibleFeed(city?.log ?? [], false)) if (now - l.at < WEEK) stories.push({ id: `city:${l.at}`, at: l.at, kind: "city", headline: l.text });
   stories.sort((a, b) => b.at - a.at);
   return { stories, recent, verdicts };
 }

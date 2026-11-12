@@ -26,7 +26,7 @@ describe("regulars work their careers", () => {
   it("a regular out on the street does a career job about once an hour and gets paid", () => {
     const p = reg("marisol");
     const cash = p.cash;
-    expect(regularWork(p, NOW, always(0.2))).toMatch(/Marisol Cruz · /);
+    expect(regularWork(p, NOW, always(0.2))?.text).toMatch(/Marisol Cruz · /);
     expect(p.cash).toBeGreaterThan(cash);
     expect(regularWork(p, NOW + 1000, always(0.2))).toBeNull();
     expect(regularWork(p, NOW + LIFE.jobEveryMs, always(0.2))).not.toBeNull();

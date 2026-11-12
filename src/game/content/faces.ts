@@ -48,6 +48,11 @@ export const REGULAR_LOOKS: Record<string, { g: Gender; old?: boolean; face?: st
   sloane: { g: "f" }, jules: { g: "m" }, kai: { g: "m" }, dex: { g: "m" }, noor: { g: "f" }, finn: { g: "m" },
   zara: { g: "f" }, milo2: { g: "m" }, reed: { g: "m" }, tess: { g: "f" },
   vale: { g: "m", old: true, face: "mk21449" }, thorne: { g: "m", face: "mk14090" },
+  // Night and early hours (7.9)
+  june: { g: "f" }, petra: { g: "f" }, wes: { g: "m" }, nell: { g: "f" }, amos: { g: "m" },
+  ines: { g: "f" }, gio: { g: "m" }, carla: { g: "f" }, tavi: { g: "m" }, sergio: { g: "m" },
+  mira: { g: "f" }, tomek: { g: "m" }, daria: { g: "f" }, emil: { g: "m" }, lada: { g: "f" },
+  ren: { g: "m" }, maya: { g: "f" }, otis: { g: "m" }, hana: { g: "f" }, bram: { g: "m" },
 };
 
 /**
@@ -94,10 +99,10 @@ const NPC_SRCS = new Set([...Object.values(NPC_FACES), ...STORY_SOURCE_FACES]);
 
 /** Which regulars share a city (the same order as the roster). */
 const CITIES: string[][] = [
-  ["gus", "rosa", "dutch", "ivy", "teo", "mags", "lenny", "bea", "sully", "nico", "crowe", "webb", "hank", "otto", "pix"],
-  ["lucia", "dario", "marisol", "beppe", "ana", "tomas", "pia", "rico", "elena", "matteo", "bruni", "vargas", "sal", "nino", "luca"],
-  ["anya", "pavel", "irina", "bogdan", "vera", "oleg", "katya", "stefan", "dusan", "yuri", "hraba", "sorokina", "ivan", "milan", "lev"],
-  ["sloane", "jules", "kai", "dex", "noor", "finn", "zara", "milo2", "reed", "tess", "vale", "thorne", "cole", "ray", "theo"],
+  ["gus", "rosa", "dutch", "ivy", "teo", "mags", "lenny", "bea", "sully", "nico", "crowe", "webb", "hank", "otto", "pix", "june", "petra", "wes", "nell", "amos"],
+  ["lucia", "dario", "marisol", "beppe", "ana", "tomas", "pia", "rico", "elena", "matteo", "bruni", "vargas", "sal", "nino", "luca", "ines", "gio", "carla", "tavi", "sergio"],
+  ["anya", "pavel", "irina", "bogdan", "vera", "oleg", "katya", "stefan", "dusan", "yuri", "hraba", "sorokina", "ivan", "milan", "lev", "mira", "tomek", "daria", "emil", "lada"],
+  ["sloane", "jules", "kai", "dex", "noor", "finn", "zara", "milo2", "reed", "tess", "vale", "thorne", "cole", "ray", "theo", "ren", "maya", "otis", "hana", "bram"],
 ];
 
 function hash(s: string) {

@@ -66,9 +66,9 @@ export function investigateFire(p: Player, c: City, fireId: string, arsonist: Pl
   p.jobCounts["fire:solved"] = (p.jobCounts["fire:solved"] ?? 0) + 1;
   if (arsonist) {
     arsonist.heat += FIRE.heat;
-    notify(arsonist, `Fire investigator ${p.name} traced the ${fire!.what} fire to you, and said so in public.`, "bad", p, now);
+    notify(arsonist, `Fire investigator ${p.name} traced the ${fire!.what} fire to you and gave your name to the police.`, "bad", p, now);
   }
-  c.log = [{ at: now, text: `Fire investigator ${p.name} names ${fire!.arsonistName} as the arsonist behind the ${fire!.what} fire.` }, ...c.log].slice(0, 20);
+  c.log = [{ at: now, to: "officials" as const, text: `Fire investigator ${p.name} names ${fire!.arsonistName} as the arsonist behind the ${fire!.what} fire.` }, ...c.log].slice(0, 20);
   return [
     { tone: "good", text: `Pour patterns, a melted can, a witness who remembers a face: it was ${fire!.arsonistName}.${reward ? ` City hall pays $${reward}.` : ""}` },
     ...addMerit(p, "fire", 3),

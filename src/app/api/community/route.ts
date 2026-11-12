@@ -115,6 +115,7 @@ import { toView } from "@/game/view";
 import { assertJson } from "@/server/auth";
 import { resolveIdentity } from "@/server/identity";
 import { getStore, StoreConfigError, type Tx } from "@/server/store";
+import { seesOfficialFeed, visibleFeed } from "@/game/feed";
 
 export const dynamic = "force-dynamic";
 
@@ -435,7 +436,9 @@ export async function GET(req: Request) {
         .map((o) => ({ name: o.name, photo: o.profile?.photo ?? (o.regular ? regularPhoto(o.regular.country, o.regular.key) : null) }))
         .sort((a, b) => b.name.length - a.name.length);
       const faceFor = (text: string) => faces.find((f) => text.startsWith(f.name))?.photo ?? null;
-      const feed = [...(city?.log ?? []).slice(0, 10).map((l) => ({ at: l.at, text: l.text, kind: "city" as const })), ...(city?.street ?? []).map((l) => ({ at: l.at, text: l.text, kind: "street" as const })), ...ambientLines(out, districts, now).map((l) => ({ ...l, kind: "street" as const }))]
+      // Officials (police, courts, fire, the mayor) also see case numbers and investigation work.
+      const official = seesOfficialFeed(p, city, country);
+      const feed = [...visibleFeed((city?.log ?? []).slice(0, 10), official).map((l) => ({ at: l.at, text: l.text, kind: "city" as const })), ...visibleFeed(city?.street ?? [], official).map((l) => ({ at: l.at, text: l.text, kind: "street" as const })), ...ambientLines(out, districts, now).map((l) => ({ ...l, kind: "street" as const }))]
         .filter((l) => now - l.at < 24 * 60 * 60_000)
         .sort((x, y) => y.at - x.at)
         .map((l) => ({ ...l, photo: faceFor(l.text) }))

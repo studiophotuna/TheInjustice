@@ -1,5 +1,5 @@
 // Street regulars: characters the game runs, so a city never feels empty while it's still
-// filling up with players. Each city has its own ten, with a career, a rank, a temper and a
+// filling up with players. Each city has its own twenty, with a career, a rank, a temper and a
 // daily routine. When few real players are out, more regulars are; as the city fills up they
 // fade away.
 //
@@ -14,7 +14,7 @@ import { STAT_KEYS, type CountryId, type PathId, type Player, type StatKey } fro
 
 export const REGULARS = {
   /** How many people the street should feel like it has (real players + regulars). */
-  busyStreet: 6,
+  busyStreet: 9,
   /** While the city has fewer real players than this, every regular is listed in People. */
   listAllBelow: 20,
   cashMin: 20,
@@ -65,6 +65,13 @@ export const ROSTER: Record<CountryId, RegularDef[]> = {
     R("nico", "Nico Hale", "military", 2, [4, 9], ["strength", "toughness"], "On leave from the garrison. Bored, which is dangerous.", ["Garrison's quiet. Too quiet.", "Anyone know a gym that opens early?", "Civilians. Always in a hurry."]),
     HEAVY(R("crowe", "Silas Crowe", "enforcer", 7, [19, 9], ["strength", "nerve", "toughness"], "Runs Iron Row's collections for Kozak. Has never once raised his voice.", ["Everyone pays. The only question is when.", "Kozak sends his regards.", "I don't threaten people. I explain things."]), 170, [300, 700]),
     HEAVY(R("webb", "Captain Harlan Webb", "police", 6, [13, 10], ["perception", "toughness", "wits"], "Precinct Square's night captain. Half the city fears him; the other half pays him.", ["Nothing happens in this city I don't hear about.", "Clean records are just records nobody's read yet.", "Move along. Unless you want to talk."]), 150, [200, 500]),
+
+    // Night and early hours (added 7.9, when the streets were emptiest).
+    R("june", "June Abara", "police", 1, [0, 9], ["perception", "agility"], "Rookie on the graveyard shift in the Gutter. Writes everything down.", ["Quiet night. I don't trust quiet nights.", "Somebody's been sleeping in the bus shelter on Ninth. I'm just checking.", "Sergeant says I ask too many questions."]),
+    R("petra", "Petra Lind", "medicine", 4, [1, 9], ["wits", "perception"], "Runs St. Brigid's emergency room after midnight. Hasn't sat down since spring.", ["Two stab wounds and a broken jaw before two a.m. Normal Tuesday.", "If you're going to fight, at least do it near the hospital.", "Coffee, then the next one."]),
+    R("wes", "Wes Ruddock", "mechanic", 4, [17, 12], ["strength", "wits"], "Drives the night tow truck. Knows every car that leaves the Gutter after dark.", ["Parked on a red line? That's mine now.", "Funny how many cars break down outside the rail yard at three a.m.", "Cash, card, or a favor. Cash is faster."]),
+    R("nell", "Nell Tobin", "fire", 1, [4, 9], ["toughness", "agility"], "Probationary firefighter at Engine Company 9. First in, last to sit down.", ["Hank says I'll stop jumping at the bell. I haven't yet.", "Smoke alarms are free at the station. Take one.", "Washed the truck twice. It's still the rookie's job."]),
+    R("amos", "Amos Clay", "courts", 4, [6, 8], ["charisma", "wits"], "Public defender who starts at six because the docket does.", ["Everyone deserves a lawyer. Most of them deserve a better one than me.", "Crane's court runs fast. Faster than the truth.", "Don't say anything to anybody. Including me, before coffee."]),
   ],
   solmarra: [
     R("sal", "Salvo Greco", "fire", 3, [6, 10], ["toughness", "perception"], "Harbor fireboat captain. Knows which warehouse fires were insured last week.", ["Fire on the water is the worst kind.", "Funny how the empty warehouses burn first.", "Keep the docks clear, people."]),
@@ -82,6 +89,13 @@ export const ROSTER: Record<CountryId, RegularDef[]> = {
     R("matteo", "Matteo Russo", "military", 1, [5, 9], ["toughness"], "Navy recruit. Homesick, broke, and handy with a wrench.", ["Shore leave's too short.", "Anyone hiring? Odd jobs?", "The sea's calmer than this city."]),
     HEAVY(R("bruni", "Don Salvatore Bruni", "enforcer", 7, [20, 9], ["charisma", "nerve", "strength"], "Owns the harbor, the casino strip and three judges. Smiles at everyone.", ["Port Solace is a family. I am its father.", "Sit, eat. Then we talk business.", "The sea keeps secrets. So do I."]), 210, [400, 900]),
     HEAVY(R("vargas", "Commodore Vargas", "military", 6, [6, 10], ["toughness", "strength", "perception"], "Runs the naval yard like a fortress and the smuggling routes like a business.", ["Nothing leaves this harbor without my say.", "Discipline is cheaper than bribes.", "Stand straight when you talk to me."]), 160, [250, 600]),
+
+    // Night and early hours (added 7.9, when the streets were emptiest).
+    R("ines", "Inés Corvo", "police", 4, [0, 9], ["perception", "nerve"], "Harbor patrol's night sergeant. Counts the boats going out and the ones coming back.", ["Three boats out, two back. I'll wait.", "The Marina is quiet when somebody is paying it to be.", "Customs gets the paperwork. I get the swimmers."]),
+    R("gio", "Gio Ferrante", "medicine", 1, [1, 9], ["perception", "wits"], "Junior doctor on the harbor clinic's night shift. Still says please.", ["Marisol says I'll stop being shocked. Not tonight.", "Fish hook, fish hook, knife, fish hook.", "Please stop bringing me people who 'fell off a boat'."]),
+    R("carla", "Carla Bassi", "banking", 1, [5, 9], ["wits"], "Opens the exchange's counting room before the boats come in.", ["The money arrives wet some mornings. I don't ask.", "Count it twice, sign it once.", "Lucia says I'll be a broker by summer. Lucia says a lot."]),
+    R("tavi", "Ottavio Rinaldi", "fire", 2, [2, 9], ["toughness", "strength"], "Fireboat deckhand. Sleeps in his boots.", ["Warehouse fires burn blue when somebody helped.", "Salt in the hoses again. Salvo will kill me.", "Pier six smells like gasoline. Somebody's planning something."]),
+    R("sergio", "Sergio Lupo", "hacker", 1, [3, 9], ["wits", "agility"], "Repairs the casino's slot machines at night. Repairs them a little too well.", ["Machine fourteen pays out on Thursdays. I didn't tell you that.", "Every lock in this town has a back door. Some have two.", "Luca taught me everything. I taught him the rest."]),
   ],
   kestrova: [
     R("ivan", "Ivan Brodsky", "fire", 4, [6, 10], ["toughness", "strength"], "Foundry fire brigade chief. Burns on both arms, none on his record.", ["Foundry fires don't start themselves.", "Sand, not water. Never water.", "Somebody wanted that building gone."]),
@@ -99,6 +113,13 @@ export const ROSTER: Record<CountryId, RegularDef[]> = {
     R("yuri", "Yuri Sokol", "enforcer", 3, [16, 10], ["toughness", "strength"], "Runs the rail yard card game. Never loses, never smiles.", ["Sit. Play. Lose quietly.", "The rail yard has its own law.", "You looking for work or trouble?"]),
     HEAVY(R("hraba", "Colonel Radek Hraba", "military", 7, [5, 10], ["strength", "toughness", "nerve"], "Commands the Ironmoor garrison and sells its rifles out the back door.", ["Order is a product. I sell it.", "The rail yard answers to me.", "You have papers? Good. Now you owe me."]), 200, [350, 800]),
     HEAVY(R("sorokina", "Mila Sorokina", "enforcer", 6, [20, 9], ["agility", "wits", "nerve"], "Runs the foundry rackets. Nobody has seen her lose a fight.", ["Everyone in Ironmoor works for me. Some just don't know it.", "Pay on Friday. Always Friday.", "I remember every face."]), 155, [250, 650]),
+
+    // Night and early hours (added 7.9, when the streets were emptiest).
+    R("mira", "Mira Zelenko", "police", 2, [0, 9], ["perception", "wits"], "Checkpoint night officer. Stamps papers and reads faces.", ["Papers, please. And the other papers.", "Nobody crosses at four a.m. for a good reason.", "Irina says I'm too soft. I say I'm patient."]),
+    R("tomek", "Tomek Wilk", "mechanic", 4, [17, 12], ["strength", "wits"], "Fixes engines in the railyard by night and cars behind it by morning.", ["A diesel tells you everything if you listen.", "Somebody keeps asking me about hidden fuel tanks. I keep not hearing it.", "The foundry trucks break down on purpose. Overtime."]),
+    R("daria", "Daria Krol", "medicine", 4, [1, 9], ["perception", "toughness"], "Foundry district doctor. Burns and crush injuries, no questions.", ["Third burn this week from the same furnace. Nobody fixes it.", "Wear gloves. I'm begging you.", "I stitch up workers and soldiers. Same blood."]),
+    R("emil", "Emil Hruby", "fire", 1, [4, 9], ["toughness", "agility"], "Probationary firefighter. Ivan makes him carry the heavy hose.", ["Ivan says the foundry will burn one day. I hope it's not my shift.", "First week. I've already been on the roof of the barracks twice.", "Ladder drills at dawn. Again."]),
+    R("lada", "Lada Peskova", "courts", 2, [6, 8], ["charisma", "wits"], "Court interpreter. Hears both sides in four languages.", ["The witness said yes. The translation said maybe.", "Vera reads every word. Then she reads between them.", "Martial law makes the courts very quiet."]),
   ],
   meridian: [
     R("cole", "Cole Harper", "fire", 3, [8, 10], ["toughness", "perception"], "Fire inspector for the towers. Signs off on things he probably shouldn't.", ["Sprinklers in the penthouse don't work. Nobody fixes them.", "Glass towers burn faster than you'd think.", "That fire on the strip was set."]),
@@ -116,6 +137,13 @@ export const ROSTER: Record<CountryId, RegularDef[]> = {
     R("tess", "Tess Laurent", "enforcer", 1, [19, 10], ["charisma"], "Card sharp who works the casino floor.", ["Pick a card. Any card. That one's mine.", "The casino lets me win. Small.", "Never play with a man who counts out loud."]),
     HEAVY(R("vale", "Augustin Vale", "banking", 7, [12, 10], ["wits", "charisma", "perception"], "Chairman of the Meridian Exchange. Launders more money than the central bank prints.", ["Money has no smell. I made sure.", "Every crisis is an opportunity, for me.", "My lawyers have lawyers."]), 220, [500, 1000]),
     HEAVY(R("thorne", "Marcus Thorne", "enforcer", 6, [21, 9], ["strength", "agility", "nerve"], "Vale's fixer. Problems in Halcyon tend to vanish around him.", ["Mr. Vale doesn't like loose ends.", "I'm just here to talk. For now.", "Halcyon is a clean city. I keep it that way."]), 160, [300, 700]),
+
+    // Night and early hours (added 7.9, when the streets were emptiest).
+    R("ren", "Ren Okoye", "police", 1, [0, 9], ["agility", "perception"], "Rookie with the transit unit. Rides the last trains and the first.", ["Last train out of the Glass Quarter. Everyone on it has a story.", "Somebody tagged the station again. Nice colors, though.", "Kai says the night shift builds character. My feet disagree."]),
+    R("maya", "Maya Lindqvist", "medicine", 2, [1, 9], ["wits", "perception"], "Night resident at Halcyon General. Runs on vending machine coffee.", ["Finn says sleep is optional. Finn is wrong.", "Rich people get hurt in very expensive ways.", "If your heart's racing, it's the energy drinks. Mostly."]),
+    R("otis", "Otis Bell", "mechanic", 1, [2, 9], ["agility", "wits"], "Valets the tower garages at night and borrows the good cars.", ["Nice car. I'd never drive it around the block. Twice.", "The penthouse cars never have a scratch. The owners do.", "Ray says I'll be a real mechanic one day. I'm a real valet now."]),
+    R("hana", "Hana Sorel", "hacker", 2, [3, 9], ["wits", "perception"], "Night-shift sysadmin for half the glass towers.", ["Every tower runs the same software. Every tower has the same hole.", "Theo thinks he's the best in Halcyon. Theo is second.", "Reboot it. No, really, reboot it."]),
+    R("bram", "Bram Keller", "fire", 4, [5, 9], ["perception", "toughness"], "Fire marshal for the towers. Signs off on every sprinkler in Halcyon.", ["Fortieth floor, no working sprinklers. Somebody paid somebody.", "Cole fights the fires. I find out who lit them.", "If the inspection's easy, I wasn't the inspector."]),
   ],
 };
 

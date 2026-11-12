@@ -3,7 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { COUNTRIES } from "@/game/content/world";
 import { incidentDue, planIncident, runIncident } from "@/game/incidents";
-import { GameError, type CountryId, type Player } from "@/game/types";
+import { GameError, type CountryId, type FeedLine, type Player } from "@/game/types";
 import { withCity } from "./city";
 import { cityRegulars } from "./regulars";
 import { LIFE, regularShop, regularWork } from "@/game/reglife";
@@ -45,13 +45,13 @@ export async function cityIncident(store: Store, country: CountryId, now: number
     await tx.putPlayer(victim);
     if (culprit) await tx.putPlayer(culprit);
     if (out.caseFile) await tx.putCase(out.caseFile);
-    c.log = [{ at: now, text: out.line }, ...c.log].slice(0, 20);
+    c.log = [{ at: now, text: out.line, ...(out.detail ? { detail: out.detail } : {}) }, ...c.log].slice(0, 20);
     return out.line;
   });
 }
 
 /** One piece of a regular's city work, in its own transaction. Returns a street-feed line. */
-async function doTask(store: Store, country: CountryId, regId: string, task: Task, w: CityWork, now: number): Promise<string | null> {
+async function doTask(store: Store, country: CountryId, regId: string, task: Task, w: CityWork, now: number): Promise<string | Omit<FeedLine, "at"> | null> {
   const rng = Math.random;
   const mark = (p: Player) => {
     if (p.regular) p.regular.workAt = now;
@@ -71,7 +71,7 @@ async function doTask(store: Store, country: CountryId, regId: string, task: Tas
         if (!p) return null;
         tick(p, now);
         if (other) tick(other, now);
-        let line: string;
+        let line: string | Omit<FeedLine, "at">;
         if (task.kind === "arrest") {
           if (!other) return null;
           const pool = w.people.filter((x) => x.id !== p.id).map((player) => ({ player, crewTag: w.tags.get(player.id) ?? null }));
@@ -79,16 +79,16 @@ async function doTask(store: Store, country: CountryId, regId: string, task: Tas
           line = `${p.name} arrested ${other.name} for the ${c.kind === "mug" ? "mugging" : c.kind === "snatch" ? "snatching" : "theft"} in ${c.district}.`;
         } else if (task.kind === "investigate") {
           investigate(p, c, now, rng);
-          line = `${p.name} worked the scene in ${c.district} (case #${c.id}).`;
+          line = { text: `${p.name} worked a crime scene in ${c.district}.`, detail: `(case #${c.id})` };
         } else if (task.kind === "prosecute") {
           joinTrial(p, c, "prosecutor", null, now);
           line = `${p.name} is prosecuting ${c.trial!.suspectName}.`;
         } else if (task.kind === "examine") {
           examine(p, c, other, now, rng);
-          line = `${p.name} examined ${c.victimName}'s injuries for case #${c.id}.`;
+          line = { text: `${p.name} examined ${c.victimName}'s injuries for the police.`, to: "officials", detail: `(case #${c.id})` };
         } else {
           reviewDeposit(p, c, other, "report", now, rng);
-          line = `${p.name} flagged a suspicious deposit to the police.`;
+          line = { text: `${p.name} flagged a suspicious deposit to the police.`, to: "officials" };
         }
         mark(p);
         await tx.putPlayer(p);
@@ -158,7 +158,7 @@ export async function cityLife(store: Store, country: CountryId, now: number): P
   const crewTag = new Map(crews.map((c) => [c.id, c.tag]));
   const people = [...real, ...regs];
   const w: CityWork = { city, cases, people, tags: new Map(people.map((x) => [x.id, x.crewId ? crewTag.get(x.crewId) ?? null : null])) };
-  const lines: string[] = [];
+  const lines: Omit<FeedLine, "at">[] = [];
   const worked = new Set<string>();
   for (const r of due) {
     const task = pickTask(r, w, now);
@@ -171,7 +171,7 @@ export async function cityLife(store: Store, country: CountryId, now: number): P
     if (line !== null || task.kind === "scrub") worked.add(r.id);
     // Keep this run's picture of the city current, so two regulars don't take the same post.
     if (line && task.kind === "guard" && w.city) w.city.guards = [...(w.city.guards ?? []), { id: r.id, name: r.name, until: now + 60 * 60_000 }];
-    if (line) lines.push(line);
+    if (line) lines.push(typeof line === "string" ? { text: line } : line);
   }
   // Everyone else works a career job; everyone shops.
   await withCity(store, country, now, async (c, tx) => {
@@ -181,7 +181,8 @@ export async function cityLife(store: Store, country: CountryId, now: number): P
       tick(p, now);
       const job = worked.has(p.id) ? null : regularWork(p, now, Math.random, c);
       const bought = regularShop(p, c, now, Math.random);
-      for (const l of [job, bought]) if (l) lines.push(l);
+      if (job) lines.push(job);
+      if (bought) lines.push({ text: bought });
       // The black market: a regular buys a piece a player put up, and the seller gets paid.
       const wanted = regularPick(c, p, now);
       if (wanted) {
@@ -197,7 +198,7 @@ export async function cityLife(store: Store, country: CountryId, now: number): P
       }
       await tx.putPlayer(p);
     }
-    if (lines.length) c.street = [...lines.map((text, i) => ({ at: now - i * 1000, text })), ...(c.street ?? [])].slice(0, 15);
+    if (lines.length) c.street = [...lines.map((l, i) => ({ at: now - i * 1000, ...l })), ...(c.street ?? [])].slice(0, 15);
   });
   return lines.length;
 }

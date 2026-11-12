@@ -10,7 +10,7 @@ grow hidden stats that decide whether you survive.
 
 **Play online:** https://injustice-booking-cms.vercel.app
 
-**Current version:** 7.8.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
+**Current version:** 7.9.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
 [latest changes](#where-the-game-is-now) are summed up at the end of this page.
 
 ## Play it locally
@@ -400,9 +400,11 @@ with their own photo, its own city work (the hospital ward, the fire log, the ga
 on), and experience for every job done. The Jobs page is a career track with a cover card for
 every job.
 
-**A living city.** Street regulars (`src/game/regulars.ts`) live like players, with limits:
+**A living city.** Twenty street regulars per city (`src/game/regulars.ts`) live like players, with limits:
 they work their careers, shop, eat, get treated, own spare gear, run for mayor and vote. The
-city runs on a timer (`/api/push/tick`): fires, incidents, restocks, the dog pound and elections.
+city runs on a timer (`/api/push/tick`): fires, incidents, restocks, the dog pound and elections. The
+live feed shows the street the news. Officials (police, courts, fire, the mayor) also see case
+numbers and investigation work. Covert and corrupt work is never posted (`src/game/feed.ts`).
 
 **The economy.** Player-run shops set their own price level, which is what customers see and pay
 (the owner sees it on their own shelf too). Shops sell what each city stocks, and gear is limited to three of a kind. The

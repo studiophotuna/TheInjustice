@@ -19,6 +19,7 @@ import { notify, protectedUntil } from "./social";
 import { buzzWord } from "./batch4";
 import { caseCold } from "./crime";
 import { GameError, type CaseFile, type City, type CountryId, type GameEvent, type Player } from "./types";
+import { seesOfficialFeed, visibleFeed } from "./feed";
 
 const B = BALANCE.city;
 /** Terms are counted from this date, so every city's terms line up. */
@@ -420,7 +421,7 @@ export function cityView(c: City, p: Player, now: number) {
     canRun: runBlock(c, p, now),
     canVote: voteBlock(c, p, now),
     history: c.history,
-    log: c.log,
+    log: visibleFeed(c.log, seesOfficialFeed(p, c, countryOf(p))),
     // Mayor-only controls.
     controls: mayor
       ? {

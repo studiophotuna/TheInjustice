@@ -1,5 +1,42 @@
 # Changelog
 
+## 7.9.0: what the street sees, and more people on it
+
+- **The live feed no longer leaks police and investigation details to everyone.** Checked against
+  the live feed:
+  - **Case numbers.** "Marisol Cruz was mugged in The Boardwalk. The police opened case
+    #D00B24." Everyone now reads "Marisol Cruz was mugged in The Boardwalk." Officials still see
+    the case number.
+  - **Investigation results.** "Fire investigator Hank Doyle names Lenny Pike as the arsonist…"
+    now goes to officials only. The public still hears about the fire itself. The arsonist is told
+    their name went to the police, no longer "said so in public".
+  - **Police casework by regulars.** Crime-scene work shows publicly without the case number.
+    Examining a victim for a case and flagging a suspicious deposit (which tipped off whoever was
+    laundering) go to officials only.
+  - **Covert and corrupt work is never announced.** "Look the other way" (a bribed cop) and other
+    crime, corruption and pressure jobs stay off the feed. Surveillance work ("Tail a suspect")
+    goes to officials only.
+  - Officials are the police, the courts and the fire service in that city, plus its mayor.
+  - The same rule covers the live feed, the desktop side panel, City Hall's log and the
+    newspaper, which never prints anything meant for officials.
+  - Lines written before this release are cleaned up the same way.
+  - News stays public: muggings, fires, crashes, arrests, trials, elections, who took over a shop.
+- **More people on the streets.** Every city has five new regulars (twenty each), mostly on night
+  and early shifts, when the streets were emptiest:
+  - **Grayhaven:** a rookie night cop, an emergency-room attending, a night tow-truck driver, a
+    probationary firefighter, a 6am public defender.
+  - **Port Solace:** a harbor night sergeant, a junior night doctor, a counting-room clerk, a
+    fireboat deckhand, a slot-machine repairman who hacks.
+  - **Ironmoor:** a checkpoint night officer, a railyard mechanic, a foundry doctor, a
+    probationary firefighter, a court interpreter.
+  - **Halcyon:** a transit-unit rookie, a night resident, a tower-garage valet, a night sysadmin,
+    a fire marshal.
+
+  They work their careers, shop, pay tax and do city work like the others. At least five
+  regulars are out in every city at every hour (it used to drop to two). When few real players
+  are around, up to nine people are out at once (up from six), and they still make room as real
+  players arrive. Nobody in a city shares a face.
+
 ## 7.8.0: no more frozen requests
 
 An overall check of the game: types, tests, build, every action and API call end to end, every

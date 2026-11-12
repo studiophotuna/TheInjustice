@@ -759,6 +759,15 @@ export interface TripIncident {
   hospitalMs?: number;
 }
 
+/** A line in the city's feeds. `to: "officials"` hides the whole line from everyone else;
+ *  `detail` is appended only for officials (a case number, for example). See game/feed.ts. */
+export interface FeedLine {
+  at: number;
+  text: string;
+  to?: "officials";
+  detail?: string;
+}
+
 export interface Trip {
   from: CountryId;
   to: CountryId;
@@ -962,7 +971,7 @@ export interface City {
   /** Recent arsons, for fire investigators. */
   fires?: FireRecord[];
   /** What the regulars have been up to (jobs, purchases), for the street feed. */
-  street?: { at: number; text: string }[];
+  street?: FeedLine[];
   /** When the city's own people last had an incident (muggings, fires, wrecks among regulars). */
   incidentAt?: number;
   /** Jobs waiting at the garage after a wreck in the street. */
@@ -1009,7 +1018,7 @@ export interface City {
   votes: Record<string, string>;
   history: { term: number; name: string | null; votes: number; turnout: number; at: number }[];
   /** Public announcements from city hall. */
-  log: { at: number; text: string }[];
+  log: FeedLine[];
   /** Which crew runs each district (crew wars). */
   turf?: Partial<Record<DistrictId, TurfHold>>;
   /** Server-only: residents who signed the recall petition against the current mayor. */

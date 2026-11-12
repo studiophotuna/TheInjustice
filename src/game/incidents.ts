@@ -104,7 +104,7 @@ export function runIncident(
   now: number,
   rng: Rng,
   caseId: string,
-): { caseFile: CaseFile | null; line: string } {
+): { caseFile: CaseFile | null; line: string; detail?: string } {
   c.incidentAt = now;
   const district = crimeDistrict(victim, rng);
 
@@ -151,7 +151,7 @@ export function runIncident(
     cf.deposit = { amount: Math.floor(amount * (0.6 + rng() * 0.4)), at: now + 10 * 60_000, account: accountNumber(thief.id) };
   }
   const what = { pickpocket: "had a wallet lifted", snatch: "had a bag snatched", mug: "was mugged" }[kind];
-  return { caseFile: cf, line: `${victim.name} ${what} in ${district}. The police opened case #${cf.id}.` };
+  return { caseFile: cf, line: `${victim.name} ${what} in ${district}.`, detail: `The police opened case #${cf.id}.` };
 }
 
 // ── Doctors: anyone in hospital ─────────────────────────────────────────────

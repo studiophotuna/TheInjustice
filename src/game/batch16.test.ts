@@ -18,10 +18,10 @@ const mk = (id: string, name: string) => {
 const allRegulars = (now: number) => ROSTER.varrow.filter((d) => !d.heavy).map((d) => makeRegular("varrow", d.key, now));
 
 describe("street regulars", () => {
-  it("every city has fifteen, with unique ids, and they're never protected newcomers", () => {
+  it("every city has twenty, with unique ids, and they're never protected newcomers", () => {
     for (const list of Object.values(ROSTER)) {
-      expect(list).toHaveLength(15);
-      expect(new Set(list.map((d) => d.key)).size).toBe(15);
+      expect(list).toHaveLength(20);
+      expect(new Set(list.map((d) => d.key)).size).toBe(20);
       expect(list.filter((d) => d.heavy)).toHaveLength(2);
     }
     const r = makeRegular("varrow", "dutch", LATER);
@@ -39,7 +39,7 @@ describe("street regulars", () => {
     expect(quiet.length).toBeGreaterThan(0);
     expect(quiet.length).toBeLessThanOrEqual(REGULARS.busyStreet);
     expect(quiet.every((r) => scheduledOut(ROSTER.varrow.find((d) => d.key === r.regular!.key)!, LATER))).toBe(true);
-    expect(regularsOut(regs, 3, LATER, none).length).toBeLessThanOrEqual(3);
+    expect(regularsOut(regs, 3, LATER, none).length).toBeLessThanOrEqual(REGULARS.busyStreet - 3);
     expect(regularsOut(regs, REGULARS.busyStreet, LATER, none)).toHaveLength(0);
     // Stable within the hour.
     expect(regularsOut(regs, 0, LATER + 1000, none).map((r) => r.id)).toEqual(quiet.map((r) => r.id));

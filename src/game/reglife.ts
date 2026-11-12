@@ -12,6 +12,7 @@ import { applyAction, countryOf, inHospital, inJail } from "./engine";
 import { equippedId, usesLeft } from "./gear";
 import { creditSale, shopMarkups } from "./shops";
 import { taxOn } from "./city";
+import { jobAudience } from "./feed";
 import { carried } from "./stock";
 import { defFor, regularStats } from "./regulars";
 import { playerMaxHp } from "./wounds";
@@ -55,8 +56,11 @@ export function regularJobs(p: Player): JobDef[] {
 
 const busy = (p: Player, now: number) => p.dead || inJail(p, now) || inHospital(p, now);
 
+/** A line for the street feed (null: the work isn't announced). */
+export type WorkLine = { text: string; to?: "officials" };
+
 /** One job, if it's time. Returns a line for the street feed. */
-export function regularWork(p: Player, now: number, rng: Rng, city?: City | null): string | null {
+export function regularWork(p: Player, now: number, rng: Rng, city?: City | null): WorkLine | null {
   if (!p.regular || busy(p, now)) return null;
   if (now - (p.regular.workAt ?? 0) < LIFE.jobEveryMs) return null;
   const jobs = regularJobs(p).filter((j) => j.energy <= p.energy);
@@ -73,7 +77,8 @@ export function regularWork(p: Player, now: number, rng: Rng, city?: City | null
   p.cash += gross - tax;
   for (const k of STAT_KEYS) p.stats[k] += (job.xp[k] ?? 0) * LIFE.xpShare;
   p.regular.jobs = (p.regular.jobs ?? 0) + 1;
-  const line = `${p.name} · ${job.name}`;
+  const seen = jobAudience(job.tag);
+  const line: WorkLine | null = seen === "secret" ? null : { text: `${p.name} · ${job.name}`, ...(seen === "officials" ? { to: "officials" as const } : {}) };
   // Promotions come slowly, and stop at the cap.
   if (p.path && p.rank < rankCap(p) && p.regular.jobs >= LIFE.jobsPerRank * Math.max(1, p.rank)) {
     p.rank += 1;
@@ -83,7 +88,7 @@ export function regularWork(p: Player, now: number, rng: Rng, city?: City | null
       const lift = regularStats(def, p.rank);
       for (const k of STAT_KEYS) p.stats[k] = Math.max(p.stats[k], lift[k]);
     }
-    return `${p.name} got a promotion.`;
+    return { text: `${p.name} got a promotion.` };
   }
   return line;
 }
