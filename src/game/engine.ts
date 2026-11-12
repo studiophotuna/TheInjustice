@@ -85,6 +85,8 @@ export function createPlayer(id: string, rawName: string, now: number, country: 
     name: cleanName(rawName),
     country,
     homes: { [country]: 0 },
+    // The first lead starts with you: the jobs of your first session count toward it.
+    leads: { benny_seen: { startedAt: now, base: { jobs: 0, careerJobs: 0, fights: 0 } } },
     createdAt: now,
     cash: 0,
     bank: 0,
@@ -757,6 +759,9 @@ function fightNpc(p: Player, npc: NpcDef, now: number, rng: Rng, events: GameEve
 
 function maybeMugging(p: Player, job: JobDef, now: number, rng: Rng, events: GameEvent[]) {
   if (p.cash < BALANCE.muggingMinCash) return;
+  // Newcomers are left alone at first, like they are by other players: a first session shouldn't
+  // end with your first wages gone and you in the clinic.
+  if (now < p.createdAt + BALANCE.pvp.protectionMs) return;
   if (!["gutter", "old_market", "boardwalk", "rail_yards", "undercity"].includes(job.district)) return;
   if (rng() >= BALANCE.muggingChance) return;
   const m = mugger(p.reputation);

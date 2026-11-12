@@ -421,3 +421,14 @@ img.slot-art { object-fit: cover; }
 .building.locked .building-tag { color: var(--amber-hi); }
 .no-home { display: grid; gap: var(--sp-3); }
 .no-home .btn { justify-self: start; }
+
+/* Someone wants a word: on phones a face at the right edge with the time left, not a bar over the page. */
+@media (max-width: 959px) {
+  .encounter:not(.open) { left: auto; right: 12px; justify-content: flex-end; }
+  .encounter:not(.open) .enc-peek { padding: 4px; gap: 0; position: relative; }
+  .encounter:not(.open) .enc-peek-text b { display: none; }
+  .encounter:not(.open) .enc-peek-text { position: absolute; right: -4px; bottom: -6px; }
+  .encounter:not(.open) .enc-peek-text small { font: 800 10px/1 var(--display); color: #fff; background: var(--crimson); padding: 3px 6px; border-radius: 999px; white-space: nowrap; }
+  .encounter:not(.open) .enc-bubble, .encounter:not(.open) .enc-wants { display: none; }
+  body.scroll-down .encounter:not(.open) { transform: translateY(calc(var(--qb-h) + 4px)); transition: transform 0.22s ease; }
+}

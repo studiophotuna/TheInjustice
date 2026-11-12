@@ -26,12 +26,11 @@ describe("leads", () => {
     expect(LEADS.at(-1)?.suspect).toBe("crane");
   });
 
-  it("a new player can open the first lead and close it within a first session", () => {
+  it("a new player arrives already following the first lead, and closes it within a first session", () => {
     const p = mk();
-    expect(leadState(p, LEAD_BY_ID.benny_seen)).toBe("open");
+    // The first lead starts with the character, so the first session's jobs count toward it.
+    expect(leadState(p, LEAD_BY_ID.benny_seen)).toBe("active");
     expect(leadState(p, LEAD_BY_ID.benny_minder)).toBe("locked");
-    applyAction(p, { type: "lead_start", id: "benny_seen" }, NOW, always(0.5));
-    // Work done before starting doesn't count; work after does.
     expect(() => applyAction(p, { type: "lead_close", id: "benny_seen" }, NOW, always(0.5))).toThrow(/Not yet/);
     doJobs(p, 3);
     const cash = p.cash;
@@ -57,14 +56,12 @@ describe("leads", () => {
 
   it("nothing on a lead can be done from a cell or on the road", () => {
     const p = mk();
-    applyAction(p, { type: "lead_start", id: "benny_seen" }, NOW, always(0.5));
     p.jailUntil = NOW + 60_000;
     expect(() => applyAction(p, { type: "lead_pay", id: "benny_seen" }, NOW, always(0.5))).toThrow();
   });
 
   it("the view never shows odds, and the request parser accepts lead actions", () => {
     const p = mk();
-    applyAction(p, { type: "lead_start", id: "benny_seen" }, NOW, always(0.5));
     const v = leadsView(p);
     expect(JSON.stringify(v)).not.toMatch(/%/);
     expect(v.find((l) => l.id === "benny_seen")?.steps[0].count).toBe("0 of 3");

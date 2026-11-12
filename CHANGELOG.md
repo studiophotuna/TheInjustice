@@ -1,5 +1,29 @@
 # Changelog
 
+## 7.14.0: a first session that goes somewhere
+
+Played as a brand-new player, the first session used to end after about 13 jobs with about
+$119 earned. Often the new player was mugged, lost half of it and ended up in the clinic, and
+the first lead couldn't be followed. Now the same session earns about $266, closes the first
+lead (Benny Marlowe goes on the board), buys a first weapon and a meal, and wins a first street
+fight.
+
+- **Street work pays a living.** Legal street jobs paid about $1 per energy point. They now pay
+  about $2 to $3.90; crime still pays more.
+  - Collect cans: $5 to $12 (was $2 to $5).
+  - Wash windshields: $10 to $22 (was $4 to $9).
+  - Every city's starter work pays for a first weapon in one full bar.
+- **A goal you can reach on day one.** Your first day has a new step, "Get something to fight
+  with", which opens the Shop on Weapons. The cheapest weapon, a $150 lead pipe, is within reach
+  of a first session.
+- **Your first lead starts with you.** "Someone saw Benny" is already being followed when you
+  arrive, so the jobs of your first session count toward it. Before, only jobs done after
+  pressing "Follow the lead" counted.
+- **Newcomers aren't mugged on the job in their first 24 hours.** It's the same grace period they
+  already had from other players. After that the street is the street.
+- **"Someone wants a word" no longer covers the page on phones.** It's a face at the right edge
+  with the time left. Tap it for the full card.
+
 ## 7.13.0: the four realism decisions
 
 - **Weapons and armor are street prices.** The Shop says so: "No paperwork, no serial numbers:

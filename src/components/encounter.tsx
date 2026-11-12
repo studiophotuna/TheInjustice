@@ -45,7 +45,7 @@ export function EncounterDock({ game }: { game: GameApi }) {
             <PlayerAvatar name={e.name} path={e.path} photo={e.photo} className="enc-face" />
             <span className="enc-peek-text">
               <b>{e.name}</b>
-              <small>wants a word · {fmt(left)}</small>
+              <small><span className="enc-wants">wants a word · </span>{fmt(left)}</small>
             </span>
             <MessageCircle size={18} className="enc-bubble" />
           </button>

@@ -18,7 +18,7 @@ const selOf = (t: Mark["targets"][number]) => (typeof t === "string" ? t : t.sel
 const MARKS: Mark[] = [
   { targets: [".hud-vitals"], title: "Health, energy, cash", text: "Energy fills up by itself. Work, fights and the gym spend it." },
   { targets: [".case-hero"], title: "Your case", text: "Someone framed you. Here is who, what you can prove, and your next lead." },
-  { targets: [".dayone"], title: "Your first day", text: "Ten small things that teach you the city. Each one pays." },
+  { targets: [".dayone"], title: "Your first day", text: "Small things that teach you the city. Each one pays." },
   {
     targets: [".bottomnav [data-tab=jobs]", { sel: ".sidenav [data-tab=jobs]", title: "Jobs", text: "Jobs pay, and they make you stronger without telling you how much. Fights and the gym are just below." }],
     title: "Work",

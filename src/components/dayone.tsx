@@ -71,7 +71,7 @@ export function DayOne({ game, go }: { game: GameApi; go: (t: string) => void })
       )}
       <div className="dayone-foot">
         <button className="dayone-more" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-          {open ? "Fewer" : "All ten"} <ChevronDown size={14} className={open ? "flip" : ""} />
+          {open ? "Fewer" : `All ${steps.length}`} <ChevronDown size={14} className={open ? "flip" : ""} />
         </button>
         <button className="dayone-more" onClick={() => game.act({ type: "flag", flag: "tut:hidden" })}>Hide for good</button>
       </div>
