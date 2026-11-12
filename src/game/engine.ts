@@ -831,6 +831,12 @@ function doJob(p: Player, jobId: string, now: number, rng: Rng, events: GameEven
   if ((p.lieLowUntil ?? 0) > now) throw new GameError("You're lying low in a safe house. No work until it's safe.");
   if (p.energy < job.energy) throw new GameError("You're too tired. Rest or eat something.");
   p.energy -= job.energy;
+  // A new character's first bar fills again once, on their first day.
+  if (p.energy < 6 && now < p.createdAt + BALANCE.secondWindMs && !p.flags.includes("second_wind")) {
+    p.flags.push("second_wind");
+    p.energy = maxEnergy(p.housing);
+    events.push({ tone: "story", text: "Second wind. Your first day on the street, and you're not done yet. Energy full." });
+  }
   p.jobCounts[job.id] = (p.jobCounts[job.id] ?? 0) + 1;
   addMarks(p, "job", now);
   // Getting good at something gets you noticed: harder work turns up.
@@ -960,10 +966,27 @@ function buy(p: Player, itemId: string, events: GameEvent[], ctx: ActionContext 
   events.push({ tone: "good", text: `Bought: ${item.name}.` });
 }
 
+/** Why you can't have a quick boost right now (or null). */
+export function boostBlock(p: Player, now: number): string | null {
+  const day = new Date(now).toISOString().slice(0, 10);
+  if (p.boosts?.day === day && p.boosts.n >= BALANCE.boost.perDay) return "That's enough caffeine for one day.";
+  if ((p.boostUntil ?? 0) > now) return "Too soon for another. Give it a few minutes.";
+  return null;
+}
+
 function useItem(p: Player, itemId: string, now: number, events: GameEvent[]) {
   const item = ITEM_BY_ID[itemId];
   if (!item || !p.inventory[itemId]) throw new GameError("You don't have that.");
-  if (item.kind === "food") {
+  if (item.kind === "food" && item.boost) {
+    const block = boostBlock(p, now);
+    if (block) throw new GameError(block);
+    p.energy = Math.min(maxEnergy(p.housing), p.energy + (item.energy ?? 0));
+    if (item.hpCost) p.hp = Math.max(1, p.hp - item.hpCost);
+    p.boostUntil = now + BALANCE.boost.cooldownMs;
+    const day = new Date(now).toISOString().slice(0, 10);
+    p.boosts = { day, n: (p.boosts?.day === day ? p.boosts.n : 0) + 1 };
+    events.push({ tone: "good", text: `${item.id === "coffee" ? "You knock back the coffee." : "You crush the can."} +${item.energy} energy${item.hpCost ? `, and your heart is racing (−${item.hpCost} health)` : ""}.` });
+  } else if (item.kind === "food") {
     if (p.fullUntil > now) throw new GameError("You're still full. Try again later.");
     p.energy = Math.min(maxEnergy(p.housing), p.energy + (item.energy ?? 0));
     p.fullUntil = now + BALANCE.foodCooldownMs;

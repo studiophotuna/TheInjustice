@@ -1,5 +1,25 @@
 # Changelog
 
+## 7.15.0: energy that respects your time, with a second wind and a coffee
+
+Energy stays (a one-job-a-minute timer would reward whoever stays online longest, and empty out
+homes and food), with its two weak spots fixed.
+
+- **A second wind on day one.** When a new character's first bar runs out, it fills again once.
+  A first day is now about 49 jobs instead of 13 (playtested: $397 earned).
+- **Quick boosts: coffee and energy drinks.** Both are in the Shop under Supplies.
+  - Black coffee: $5, +10 energy.
+  - Energy drink: $6, +20 energy, but your heart races (−5 health).
+  - They don't wait on meals: you can have one right after eating.
+  - They share one timer and one daily limit: one every 30 minutes, six a day, whichever you
+    buy. That holds boosts to at most +40 energy an hour and +120 a day, so more boost items can
+    be added later without breaking balance.
+  - Bought with game cash only, never Favors (Favors buy looks, never power).
+  - The quick bar's food slot offers whatever you can have right now.
+  - Regulars stick to meals.
+- **Waiting says how long.** A job you don't have the energy for says "Ready in 12 min" instead
+  of just greying out.
+
 ## 7.14.0: a first session that goes somewhere
 
 Played as a brand-new player, the first session used to end after about 13 jobs with about

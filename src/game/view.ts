@@ -82,6 +82,9 @@ export interface PublicView {
   maxHp: number;
   hospitalMs: number;
   fullMs: number;
+  /** Time until the next quick boost, and boosts left today. */
+  boostMs: number;
+  boostsLeft: number;
   heatLabel: "Clean" | "Noticed" | "Wanted" | "Most wanted";
   reputation: number;
   housing: string;
@@ -351,6 +354,8 @@ export function toView(p: Player, now: number): PublicView {
     pushOff: p.push?.off ?? [],
     hospitalMs: hospital ? p.hospitalUntil - now : 0,
     fullMs: Math.max(0, p.fullUntil - now),
+    boostMs: Math.max(0, (p.boostUntil ?? 0) - now),
+    boostsLeft: Math.max(0, BALANCE.boost.perDay - (p.boosts?.day === new Date(now).toISOString().slice(0, 10) ? p.boosts.n : 0)),
     heatLabel: heatLabel(p.heat),
     reputation: p.reputation,
     housing: BALANCE.housing[p.housing].name,

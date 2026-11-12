@@ -117,7 +117,7 @@ export function regularWant(p: Player, c: City | null, now: number): string | nu
   if (laidUp) return null;
   if (now - (p.regular.ateAt ?? 0) >= LIFE.mealEveryMs && p.fullUntil <= now) {
     // The best meal that's still small change to them; the cheapest if money is tight.
-    const meals = affordable("food");
+    const meals = affordable("food").filter((m) => !m.boost);
     const treat = meals.filter((m) => m.price <= p.cash * LIFE.mealShare).pop();
     const meal = treat ?? meals[0];
     if (meal) return meal.id;

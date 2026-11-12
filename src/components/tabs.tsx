@@ -116,7 +116,7 @@ export function JobsTab({ game, highlight }: { game: GameApi; highlight: string 
           <CareerTrack game={game} />
           <motion.div className="cover-grid" variants={list} initial="hidden" animate="show">
             {withCovers(careerJobs.sort((a, b) => Number(!!a.locked) - Number(!!b.locked) || b.pay[1] - a.pay[1]), view.path?.id).map(([j, cover], i) => (
-              <JobCard key={j.id} job={j} cover={cover} big={i === 0 && !j.locked} energy={energy} blocked={blocked} best={j.id === view.recommendedJobId} flash={j.id === highlight} onWork={() => game.act({ type: "job", jobId: j.id })} />
+              <JobCard key={j.id} job={j} cover={cover} big={i === 0 && !j.locked} energy={energy} regenMs={view.energyRegenMs} blocked={blocked} best={j.id === view.recommendedJobId} flash={j.id === highlight} onWork={() => game.act({ type: "job", jobId: j.id })} />
             ))}
           </motion.div>
         </>
@@ -147,7 +147,7 @@ export function JobsTab({ game, highlight }: { game: GameApi; highlight: string 
             {jobs.length > 0 && (
               <motion.div className="cover-grid" variants={list} initial="hidden" animate="show">
                 {withCovers(jobs, view.path?.id).map(([j, cover]) => (
-                  <JobCard key={j.id} job={j} cover={cover} big={false} energy={energy} blocked={blocked} best={j.id === view.recommendedJobId} flash={j.id === highlight} onWork={() => game.act({ type: "job", jobId: j.id })} />
+                  <JobCard key={j.id} job={j} cover={cover} big={false} energy={energy} regenMs={view.energyRegenMs} blocked={blocked} best={j.id === view.recommendedJobId} flash={j.id === highlight} onWork={() => game.act({ type: "job", jobId: j.id })} />
                 ))}
               </motion.div>
             )}
@@ -232,10 +232,12 @@ function CareerTrack({ game }: { game: GameApi }) {
   );
 }
 
-function JobCard({ job, cover, big, energy, blocked, best, flash, onWork }: {
-  job: JobView; cover: string; big: boolean; energy: number; blocked: boolean; best: boolean; flash: boolean; onWork: () => void;
+function JobCard({ job, cover, big, energy, regenMs, blocked, best, flash, onWork }: {
+  job: JobView; cover: string; big: boolean; energy: number; regenMs: number; blocked: boolean; best: boolean; flash: boolean; onWork: () => void;
 }) {
   const tired = energy < job.energy;
+  // Short of energy: say when it'll be ready, instead of just greying the button out.
+  const readyIn = tired ? Math.max(1, Math.ceil(((job.energy - energy) * regenMs) / 60_000)) : 0;
   const marks = [job.grade, job.risky && !job.grade ? "Risky" : null, job.crime ? "Shady" : null].filter(Boolean).join(" · ");
   return (
     <motion.article id={`job-${job.id}`} variants={item} className={`jcard ${big ? "big" : ""} ${job.pathJob ? "job-path" : ""} ${flash ? "flash" : ""} ${job.locked ? "job-locked" : ""}`}>
@@ -250,8 +252,8 @@ function JobCard({ job, cover, big, energy, blocked, best, flash, onWork }: {
       <div className="jcard-foot">
         {big && <span className="jcard-kind">{job.tag}</span>}
         <span className="job-pay">${job.pay[0]}–{job.pay[1]}</span>
-        <motion.button whileTap={{ scale: 0.92 }} className="btn btn-primary btn-sm jcard-go" disabled={blocked || tired || !!job.locked} onClick={onWork} aria-label={`${job.name}: ${job.energy} energy`}>
-          <Zap size={13} /> {job.energy}
+        <motion.button whileTap={{ scale: 0.92 }} className="btn btn-primary btn-sm jcard-go" disabled={blocked || tired || !!job.locked} onClick={onWork} aria-label={tired ? `${job.name}: ready in ${readyIn} minutes` : `${job.name}: ${job.energy} energy`}>
+          {tired && !blocked && !job.locked ? <span className="jcard-wait">Ready in {readyIn >= 60 ? `${Math.floor(readyIn / 60)}h ${readyIn % 60}m` : `${readyIn} min`}</span> : <><Zap size={13} /> {job.energy}</>}
         </motion.button>
       </div>
       {job.locked && <p className="job-lock jcard-lock"><Lock size={12} /> {job.locked}</p>}

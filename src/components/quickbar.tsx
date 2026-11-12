@@ -64,7 +64,13 @@ export function QuickBar({ game }: { game: GameApi }) {
       .filter((i) => i.count > 0 && ITEM_BY_ID[i.id]?.kind === kind)
       .map((i) => ({ id: i.id, name: i.name, count: i.count, energy: ITEM_BY_ID[i.id]?.energy ?? 0 }))
       .sort((a, b) => b.energy - a.energy);
-  const foods = pocket("food");
+  // A meal waits for you to be hungry again; a boost (coffee, energy drink) has its own timer.
+  const notReady = (id: string): string | null =>
+    ITEM_BY_ID[id]?.boost
+      ? view.boostsLeft <= 0 ? "That's enough caffeine for today." : view.boostMs > 0 ? `Next one in ${fmt(view.boostMs)}.` : null
+      : view.fullMs > 0 ? `Still full for ${fmt(view.fullMs)}.` : null;
+  // The slot offers what you can have now, best first.
+  const foods = [...pocket("food")].sort((a, b) => Number(!!notReady(a.id)) - Number(!!notReady(b.id)));
   const meds = pocket("medical");
   const food = foods[0];
   const medkit = meds[0];
@@ -101,7 +107,7 @@ export function QuickBar({ game }: { game: GameApi }) {
       tone: "cash",
       Icon: Utensils,
       shop: !food,
-      block: !food ? null : away && !view.travel ? away : view.fullMs > 0 ? `Still full for ${fmt(view.fullMs)}.` : null,
+      block: !food ? null : away && !view.travel ? away : notReady(food.id),
       run: () => (!food ? goShop() : act({ type: "use", itemId: food.id })),
       more: "food",
     },
@@ -218,7 +224,7 @@ export function QuickBar({ game }: { game: GameApi }) {
             <button
               key={i.id}
               role="menuitem"
-              disabled={game.busy || (pick === "food" ? view.fullMs > 0 : view.hp >= view.maxHp && live.hospital === 0)}
+              disabled={game.busy || (pick === "food" ? !!notReady(i.id) : view.hp >= view.maxHp && live.hospital === 0)}
               onClick={() => {
                 setPick(null);
                 act({ type: "use", itemId: i.id });

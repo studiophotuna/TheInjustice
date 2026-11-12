@@ -432,3 +432,6 @@ img.slot-art { object-fit: cover; }
   .encounter:not(.open) .enc-bubble, .encounter:not(.open) .enc-wants { display: none; }
   body.scroll-down .encounter:not(.open) { transform: translateY(calc(var(--qb-h) + 4px)); transition: transform 0.22s ease; }
 }
+
+/* A job you're too tired for says when it'll be ready. */
+.jcard-go:disabled .jcard-wait { font: 700 11.5px/1 var(--display); white-space: nowrap; }

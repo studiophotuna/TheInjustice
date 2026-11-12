@@ -7,6 +7,8 @@ Video Free License (see /public/scenes/CREDITS.md), cropped square.
 |---|---|
 | sandwich | 26611 crab sandwiches on a wooden board |
 | hot_meal | 20814 large bowl of borsch |
+| coffee | 4992 cup of coffee on top of coffee beans |
+| energy_drink | 5091 canned soda is uncovered |
 | steak_dinner | 45718 well done steak being sliced by a sharp knife |
 | medkit | 50348 bandaged hands rest on a tray full of torture implements |
 | sleeping_bag | 43144 a couple talking in a tent |

@@ -2,7 +2,7 @@
 
 /** Items and businesses with a photo (see public/items/PHOTOS.md). */
 const ART = new Set([
-  "sandwich", "hot_meal", "steak_dinner", "medkit", "sleeping_bag", "room", "apartment", "townhouse", "penthouse",
+  "sandwich", "hot_meal", "steak_dinner", "coffee", "energy_drink", "medkit", "sleeping_bag", "room", "apartment", "townhouse", "penthouse",
   "bike_chain", "pipe", "knuckles", "baseball_bat", "switchblade", "hatchet", "snub_pistol", "revolver", "machine_pistol", "shotgun", "service_pistol", "service_rifle", "machine_gun", "army_rifle", "army_lmg",
   "jacket", "leathers", "vest", "steel_coat", "riot_gear", "concealed_vest", "tactical_plate", "undersuit", "police_vest", "combat_armor", "heavy_armor",
   "laundromat", "corner_bar", "beach_kiosk", "boutique_hotel", "coal_depot", "black_market_stall", "repair_shop", "server_rack", "nightclub", "steel_mill",

@@ -11,6 +11,10 @@ export interface ItemDef {
   icon: string;
   /** food: energy restored */
   energy?: number;
+  /** food: a quick boost (coffee, an energy drink) instead of a meal. Boosts share one timer and a daily limit. */
+  boost?: boolean;
+  /** A boost that takes some health with it. */
+  hpCost?: number;
   /** housing: tier granted */
   housing?: HousingTier;
   /** weapon/armor: combat bonus */
@@ -31,6 +35,9 @@ export const ITEMS: ItemDef[] = [
   // ── Food (one meal every few hours) ──
   { id: "sandwich", name: "Day-old sandwich", kind: "food", price: 8, energy: 12, icon: "🥪", description: "Slightly squashed. Still food." },
   { id: "hot_meal", name: "Hot meal at Rosa's", kind: "food", price: 30, energy: 25, icon: "🍲", description: "Rosa doesn't ask questions. She just ladles." },
+  // ── A quick boost (between meals): coffee or an energy drink share one timer and a daily limit ──
+  { id: "coffee", name: "Black coffee", kind: "food", boost: true, price: 5, energy: 10, icon: "☕", description: "Burnt, bitter, and exactly what you needed." },
+  { id: "energy_drink", name: "Energy drink", kind: "food", boost: true, hpCost: 5, price: 6, energy: 20, icon: "🥤", description: "Twice the kick of a coffee. Your heart notices." },
   { id: "steak_dinner", name: "Steak dinner", kind: "food", price: 70, energy: 40, icon: "🥩", description: "White tablecloth, a waiter who calls you sir. Worth every bite." },
   // ── Medical ──
   { id: "medkit", name: "Street medkit", kind: "medical", price: 60, heal: 40, icon: "🩹", description: "Heals wounds. In the hospital, cuts your stay in half." },

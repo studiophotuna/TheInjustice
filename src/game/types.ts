@@ -120,6 +120,10 @@ export interface Player {
   treatedStay?: number;
   /** Can't eat again until this time (prevents food → energy exploits). */
   fullUntil: number;
+  /** Next quick boost (coffee, energy drink) allowed at. */
+  boostUntil?: number;
+  /** Boosts used today (UTC day). */
+  boosts?: { day: string; n: number };
 
   /** How wanted you are. Fractional; cools down over time. */
   heat: number;
