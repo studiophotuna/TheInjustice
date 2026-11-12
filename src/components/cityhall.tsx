@@ -464,7 +464,7 @@ function Leadership({
   return (
     <section className="card leadership">
       <h3 className="card-title"><Crown size={16} /> Leadership</h3>
-      <p className="muted fine">The head of each career in this city. Rank 6 and up can take an empty seat or challenge the holder (once a week). Seats pay $300 a day and come with one daily power.</p>
+      <p className="muted fine">The head of each career here. Rank 6 and up can take a seat: $300 a day and one daily power.</p>
       {(mostWanted || truceUntil) && (
         <p className="fine">
           {mostWanted && <span className="chip chip-red">Most Wanted: {mostWanted}</span>}{" "}

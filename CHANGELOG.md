@@ -1,5 +1,22 @@
 # Changelog
 
+## 7.20.0: shorter pages, clearer labels
+
+- **Me is about half as long.** "Your record" (career record, season, the story so far, what
+  happened) and "Settings and account" (motion, alerts, account, help) are now tap-to-open groups.
+  They remember whether you left them open. For guests, Settings and account starts open, so saving
+  the character is still right there.
+- **Home:** the "Daily reward" bubble in the top row is gone. The Daily card further down has the
+  button.
+- **City Hall:** the Leadership card's four-line explanation is now one line. The full rule (rank 6,
+  one challenge a week, losing costs reputation) is in How to play.
+- **Quick bar on phones:** each slot shows one short word that fits: Work, Lift, Eat, Patch up.
+  Wider screens and the tooltip still show the full name.
+- **Today's contracts:** no empty progress bar until you've made a start.
+- **Coloured names over photos** get a tight dark outline, so a gold name on a bright photo still
+  reads.
+- Fixed: on phones, cards on Me ran 12px past the right edge of the screen.
+
 ## 7.19.0: a tidier layout
 
 - **Home stops saying things twice.** The "Right now" card no longer repeats the daily reward, the

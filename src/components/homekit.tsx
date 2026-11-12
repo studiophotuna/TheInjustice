@@ -74,7 +74,7 @@ export function Stories({ game, go, needs, onRead, war, heavies, fires, election
   if (election) s.push({ key: "election", label: "Election", img: scene("cityhall"), fresh: false, run: () => go("place:cityhall") });
   if (war) s.push({ key: "war", label: "Turf war", img: scene("street"), fresh: true, run: () => go("place:cityhall") });
   for (const n of needs) s.push({ key: `need-${n.kind}`, label: n.cta, img: scene(NEED_ART[n.kind] ?? "street"), fresh: true, run: () => go(n.go) });
-  if (view.daily.canClaim) s.push({ key: "daily", label: "Daily reward", img: scene("bank"), fresh: true, run: () => game.act({ type: "claim_daily" }) });
+  // No "Daily reward" bubble: the Daily card further down Home already has the button.
   const unread = view.inbox.items.filter((i) => !i.read).length;
   if (unread) s.push({ key: "inbox", label: `${unread} message${unread > 1 ? "s" : ""}`, img: scene("city"), fresh: true, run: () => go("people:inbox") });
   const risky = view.dirty > 0 || view.stash.drugs.some((d) => d.onYou > 0);

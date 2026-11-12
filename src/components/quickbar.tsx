@@ -16,11 +16,12 @@ const readKey = (k: string) => {
   }
 };
 
-type Slot = { key: string; label: string; sub: string; cost?: string; tone: string; Icon: typeof Briefcase; block: string | null; run: () => void; /** Nothing on you: the slot links to the Shop instead. */ shop?: boolean; /** An arrow opens a list to choose from. */ more?: "job" | "gym" | "food" | "medical" };
+type Slot = { key: string; label: string; /** What a phone shows: one short word that fits the slot. */ short: string; sub: string; cost?: string; tone: string; Icon: typeof Briefcase; block: string | null; run: () => void; /** Nothing on you: the slot links to the Shop instead. */ shop?: boolean; /** An arrow opens a list to choose from. */ more?: "job" | "gym" | "food" | "medical" };
 type Pocket = { id: string; name: string; count: number; energy: number };
 
 /** The gym's activities by name; the stats they train stay unseen, as on the Fight tab. */
 const GYM_NAME: Record<Stat, string> = { strength: "Lift weights", toughness: "Spar & condition", agility: "Footwork drills" };
+const GYM_SHORT: Record<Stat, string> = { strength: "Lift", toughness: "Spar", agility: "Drills" };
 
 const goShop = () => window.dispatchEvent(new CustomEvent("injustice:go", { detail: "tab:shop" }));
 
@@ -81,6 +82,7 @@ export function QuickBar({ game }: { game: GameApi }) {
     {
       key: "1",
       label: job ? job.name : "Work",
+      short: "Work",
       sub: job ? `$${job.pay[0]}–${job.pay[1]}` : "No work here",
       cost: job ? String(job.energy) : undefined,
       tone: "energy",
@@ -92,6 +94,7 @@ export function QuickBar({ game }: { game: GameApi }) {
     {
       key: "2",
       label: GYM_NAME[gymStat],
+      short: GYM_SHORT[gymStat],
       sub: `$${view.gym.fee}`,
       cost: String(view.gym.energy),
       tone: "rep",
@@ -103,6 +106,7 @@ export function QuickBar({ game }: { game: GameApi }) {
     {
       key: "3",
       label: food ? food.name : "No food",
+      short: food ? "Eat" : "No food",
       sub: food ? `${total(foods)} on you` : "None on you · Shop",
       tone: "cash",
       Icon: Utensils,
@@ -114,6 +118,7 @@ export function QuickBar({ game }: { game: GameApi }) {
     {
       key: "4",
       label: !medkit && medic ? "Field dressing" : medkit ? medkit.name : "No medkit",
+      short: medkit || medic ? "Patch up" : "No meds",
       sub: !medkit && medic ? (medic.ready ? "Field surgeon" : "Restocking") : medkit ? `${total(meds)} on you` : "None on you · Shop",
       shop: !medkit && !medic,
       tone: "health",
@@ -248,7 +253,7 @@ export function QuickBar({ game }: { game: GameApi }) {
           <span className="qkey">{s.key}</span>
           <s.Icon size={20} className="qicon" />
           <span className="qtext">
-            <b>{s.label}</b>
+            <b><span className="q-long">{s.label}</span><span className="q-short">{s.short}</span></b>
             <small>{s.block && s.block.length < 24 ? s.block : s.sub}</small>
           </span>
           {s.cost && <span className="qcost"><Zap size={10} strokeWidth={3} />{s.cost}</span>}

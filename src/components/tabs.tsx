@@ -43,6 +43,7 @@ import {
   Swords,
   Trophy,
   Zap,
+  ChevronDown,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { JobView, PublicView } from "@/game/view";
@@ -583,6 +584,38 @@ const ME_SCENE: Record<string, string> = {
   banking: "bank", military: "checkpoint", mechanic: "foundry", hacker: "techpark", fire: "foundry",
 };
 
+/**
+ * A tap-to-open group on Me. The cards inside lose their own frame; the group remembers whether
+ * you left it open (per browser, a convenience only).
+ */
+function MeFold({ id, title, aside, children, startOpen = false }: { id: string; title: string; aside?: string; children: React.ReactNode; startOpen?: boolean }) {
+  const key = `cns_fold_${id}`;
+  const [open, setOpen] = useState(startOpen);
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem(key);
+      if (v !== null) setOpen(v === "1");
+    } catch {}
+  }, [key]);
+  return (
+    <details
+      className="card me-fold"
+      open={open}
+      onToggle={(e) => {
+        const now = (e.currentTarget as HTMLDetailsElement).open;
+        setOpen(now);
+        try { localStorage.setItem(key, now ? "1" : "0"); } catch {}
+      }}
+    >
+      <summary className="me-fold-head">
+        <h3 className="card-title">{title}{aside && <span className="title-aside">{aside}</span>}</h3>
+        <ChevronDown size={18} className="me-fold-chev" aria-hidden />
+      </summary>
+      {open && <div className="me-fold-body">{children}</div>}
+    </details>
+  );
+}
+
 export function ProfileTab({ game }: { game: GameApi }) {
   const view = game.view!;
   const [editing, setEditing] = useState(false);
@@ -662,8 +695,6 @@ export function ProfileTab({ game }: { game: GameApi }) {
         </section>
       )}
 
-      <CareerRecord game={game} />
-
       {!view.path && (
         <section className="card">
           <h3 className="card-title"><GraduationCap size={16} /> No career yet</h3>
@@ -673,6 +704,9 @@ export function ProfileTab({ game }: { game: GameApi }) {
       )}
 
       <GearCard game={game} />
+
+      <MeFold id="record" title="Your record">
+      <CareerRecord game={game} />
       <SeasonBoard game={game} />
       <StoryLine game={game} />
 
@@ -685,6 +719,7 @@ export function ProfileTab({ game }: { game: GameApi }) {
         </ul>
         {view.log.length > 6 && <button className="btn btn-ghost btn-sm" onClick={() => setAllLog(!allLog)}>{allLog ? "Show less" : `Show all ${view.log.length}`}</button>}
       </section>
+      </MeFold>
 
       {(view.inventory.length > 0 || game.live!.full > 0) && (
       <section className="card">
@@ -699,6 +734,8 @@ export function ProfileTab({ game }: { game: GameApi }) {
       </section>
       )}
 
+      {/* A guest's account card stays out in the open: saving the character matters more than tidiness. */}
+      <MeFold id="settings" title="Settings and account" aside={game.account ? game.account.username : "Guest"} startOpen={!game.account}>
       <MotionSetting />
 
       <AlertsCard game={game} />
@@ -727,6 +764,7 @@ export function ProfileTab({ game }: { game: GameApi }) {
       </section>
 
       <HelpLinks />
+      </MeFold>
     </div>
   );
 }
@@ -1061,7 +1099,7 @@ export function DailyCard({ game }: { game: GameApi }) {
                 <span>{c.label}</span>
                 <b>${c.reward}</b>
               </div>
-              <div className="bar-track"><motion.div className="contract-fill" animate={{ width: `${(c.progress / c.target) * 100}%` }} /></div>
+              {c.progress > 0 && !c.claimed && <div className="bar-track"><motion.div className="contract-fill" animate={{ width: `${(c.progress / c.target) * 100}%` }} /></div>}
               <div className="contract-foot">
                 <span className="muted">{c.progress}/{c.target}</span>
                 {c.claimed ? (

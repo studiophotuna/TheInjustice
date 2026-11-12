@@ -10,7 +10,7 @@ grow hidden stats that decide whether you survive.
 
 **Play online:** https://injustice-booking-cms.vercel.app
 
-**Current version:** 7.19.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
+**Current version:** 7.20.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
 [latest changes](#where-the-game-is-now) are summed up at the end of this page.
 
 ## Play it locally
@@ -439,6 +439,8 @@ by meaning, glass panels and pills. One sheet of colours and sizes (`src/app/tok
 - **One thing in one place (7.19):** Home doesn't repeat the daily reward, story or work nudge;
   regulars who've gone home are one line each on People; City Hall seats you can't act on are one
   line; finished jobs leave the list.
+- **Me (7.20):** your record and settings fold into two tap-to-open groups. On phones the quick bar
+  shows one short word per slot.
 
 ## Releasing
 

@@ -460,3 +460,25 @@ img.slot-art { object-fit: cover; }
 .seat.compact details > p { margin: 0; padding: 0 12px 10px; }
 .card.paper .paper-lead.mid { font-size: clamp(22px, 6vw, 30px); line-height: 1.1; }
 .card.paper .paper-lead.long { font-size: clamp(19px, 5vw, 24px); line-height: 1.15; }
+
+/* 7.20: quick bar. Phones show one short word per slot; the full name is in the tooltip and on wider screens. */
+.qslot .q-short { display: none; }
+@media (max-width: 699px) { .qslot .q-long { display: none; } .qslot .q-short { display: inline; } }
+
+/* 7.20: a coloured name over a photo gets a tight dark outline, so gold on a bright photo still reads.
+   A drop-shadow filter works for plain and gradient (clipped-text) names alike. */
+.lu-name[class*="name-"] { filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.9)); }
+.contract .contract-foot { margin-top: 2px; }
+
+/* 7.20: Me folds its long tail into two tap-to-open groups. Cards inside drop their own frame. */
+.me-fold { padding: 0; }
+.me-fold-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); min-height: var(--tap); padding: var(--sp-3) var(--sp-4); cursor: pointer; list-style: none; }
+.me-fold-head::-webkit-details-marker { display: none; }
+.me-fold-head .card-title { margin: 0; }
+.me-fold-chev { flex: none; color: var(--text-2); transition: transform 0.15s; }
+.me-fold[open] .me-fold-chev { transform: rotate(180deg); }
+.me-fold-body { display: grid; gap: var(--sp-4); padding: 0 var(--sp-4) var(--sp-4); }
+.me-fold-body > .card, .me-fold-body > section, .me-fold-body > nav { margin: 0; padding: var(--sp-3) 0 0; border: 0; border-top: 1px solid var(--border); border-radius: 0; background: none; box-shadow: none; }
+/* 7.20: Me's grid columns can't be pushed wider than the screen by a long line inside a card. */
+.profile { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 960px) { .profile { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }

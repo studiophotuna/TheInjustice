@@ -122,6 +122,10 @@ export default function GuidePage() {
         live here like you do: they work, shop, vote, and one of them may run for mayor. Players&apos; votes always come first. The
         regulars&apos; votes only decide an election when players&apos; votes are tied or there are none.
       </p>
+      <p>
+        Every career has one leadership seat per city. From rank 6 you can take an empty seat, or challenge whoever holds it, once a
+        week. Lose a challenge and you lose reputation. A seat pays $300 a day and gives you one power you can use once a day.
+      </p>
 
       <h2>The casino</h2>
       <p>
