@@ -36,7 +36,7 @@ import { NpcPortrait, PATH_LOOKS, PlayerAvatar } from "./art/Portraits";
 import { Skyline } from "./art/Skyline";
 import { Vehicle } from "./art/Vehicles";
 import { AgeBlocked, AgeGate, AuthForm, ChapterViewer, DeathScreen, Landing, Logo, Prologue } from "./screens";
-import { DeanLetter, FightTab, JobsTab, ProfileTab, ShopTab } from "./tabs";
+import { requestShopCat, DeanLetter, FightTab, JobsTab, ProfileTab, ShopTab } from "./tabs";
 import { CityPlaces, type Building } from "./places";
 import { careerStill } from "./art/Cutout";
 import { CommunityTab } from "./community";
@@ -260,6 +260,11 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
       window.scrollTo({ top: 0, behavior: "smooth" });
       setPeopleSection(id);
       setTimeout(() => window.dispatchEvent(new CustomEvent("conspira:section", { detail: id })), 60);
+    }
+    // "shop:housing" opens the Shop on a category.
+    if (kind === "shop") {
+      requestShopCat(id);
+      setTab("shop");
     }
     // "place:police" opens a building in the City tab; old "tab:map" links land on the City.
     if (kind === "place") {

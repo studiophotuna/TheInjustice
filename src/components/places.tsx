@@ -23,6 +23,9 @@ import { ItemArt } from "./art/ItemArt";
 import { LaunderCard, StreetMarket } from "./underworld";
 import type { GameApi } from "./useGame";
 
+/** Opens the Shop on its housing category. */
+const goShopHousing = () => window.dispatchEvent(new CustomEvent("injustice:go", { detail: "shop:housing" }));
+
 export type Building = "police" | "court" | "hospital" | "bank" | "academy" | "cityhall" | "prison" | "street" | "station" | "docks" | "home" | "directory" | "casino" | "pound" | "firehouse";
 
 const BUILDINGS: { id: Building; name: string; scene: SceneKind; poster: string; Icon: ComponentType<{ size?: number }>; short: string; tagline: string }[] = [
@@ -80,16 +83,17 @@ export function CityPlaces({ game, place, setPlace, onRead }: { game: GameApi; p
         {BUILDINGS.filter((b) => b.id !== "casino" || view.location.country === "solmarra").map((b, i) => (
           <motion.button
             key={b.id}
-            className="building"
+            className={`building ${b.id === "home" && !view.homeHere ? "locked" : ""}`}
             style={{ backgroundImage: `url(/scenes/${b.poster}.jpg)` }}
-            onClick={() => setPlace(b.id)}
+            onClick={() => (b.id === "home" && !view.homeHere ? goShopHousing() : setPlace(b.id))}
+            aria-label={b.id === "home" && !view.homeHere ? `${b.name}: buy a place in ${view.location.city} first` : undefined}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.03 }}
           >
             <span className="building-shade" />
             <span className="building-name">{b.name}</span>
-            <span className="building-tag">{b.short}</span>
+            <span className="building-tag">{b.id === "home" && !view.homeHere ? "Buy a place here first" : b.short}</span>
             {badge(b.id) ? <span className="badge-dot building-badge">{badge(b.id)}</span> : null}
           </motion.button>
         ))}
@@ -182,6 +186,15 @@ function PlaceContent({ game, place, onRead }: { game: GameApi; place: Building;
     case "directory":
       return <Directory game={game} />;
     case "home":
+      // Reached by a link while you have no place here: say so, and point at the Shop.
+      if (!view.homeHere)
+        return (
+          <section className="card no-home">
+            <h3 className="card-title">You don&apos;t have a place in {view.location.city}</h3>
+            <p className="muted">Buy one in the Shop, from a sleeping bag up. Then this is where you sleep, hide what can&apos;t go in a bank, and keep a dog.</p>
+            <button className="btn btn-primary" onClick={goShopHousing}>See places to live</button>
+          </section>
+        );
       return (
         <div className="stack">
           <StashCard game={game} />

@@ -10,7 +10,7 @@ grow hidden stats that decide whether you survive.
 
 **Play online:** https://injustice-booking-cms.vercel.app
 
-**Current version:** 7.9.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
+**Current version:** 7.10.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
 [latest changes](#where-the-game-is-now) are summed up at the end of this page.
 
 ## Play it locally
@@ -266,6 +266,7 @@ transaction opens. A guard in `store.ts` fails a store call made inside a transa
 - [Timers, pop-ups & monetization](docs/TIMERS_AND_MONETIZATION.md)
 - [Design lessons and the syndicate kit](docs/DESIGN_LESSONS.md) (read before changing how anything looks)
 - [Monetization rules](docs/MONETIZATION.md) (Favors buy looks, never power)
+- [Professional fees: the real-life reference](docs/FEES.md) (check new fees against it)
 
 ## The City: buildings
 

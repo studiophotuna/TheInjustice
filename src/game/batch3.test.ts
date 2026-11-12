@@ -61,9 +61,9 @@ describe("lawyers on retainer", () => {
     const { thief, c, det } = scene();
     const lawyer = career(mk("l", "Saul"), "courts", 4);
     thief.hasBankAccount = true;
-    thief.bank = 1000;
+    thief.bank = 3000;
     hireLawyer(thief, lawyer, LATER, lawyerPower(lawyer));
-    expect(thief.bank).toBe(1000 - retainerFee(lawyer));
+    expect(thief.bank).toBe(3000 - retainerFee(lawyer));
     expect(lawyer.cash).toBe(retainerFee(lawyer));
     arrest(det, thief, c, [], null, LATER);
     expect(c.trial?.defender?.name).toBe("Saul");

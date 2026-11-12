@@ -413,11 +413,11 @@ function personActions(game: GameApi, hub: Hub, p: Profile, social: (b: Record<s
       key: "loan",
       label: <>{hub.lender === "bank" ? "Offer a loan" : "Offer a loan (shark)"}</>,
       run: () => {
-        const max = hub.lender === "bank" ? 20 : 100;
+        const max = hub.lender === "bank" ? 5 : 30;
         void (async () => {
           const amount = await askNumber({ title: `Lend ${p.name} how much?`, body: "It comes out of your bank.", yes: "Next", input: { value: 100, min: 1, unit: "$", label: "Loan" } });
           if (amount === null) return;
-          const rate = await askNumber({ title: "What interest?", body: "They have three days to pay it back.", yes: "Offer the loan", input: { value: hub.lender === "bank" ? 10 : 50, min: 0, max, unit: "%", label: "Interest" } });
+          const rate = await askNumber({ title: "What interest?", body: "They have three days to pay it back.", yes: "Offer the loan", input: { value: hub.lender === "bank" ? 3 : 20, min: 0, max, unit: "%", label: "Interest" } });
           if (rate !== null) social({ op: "loan_offer", borrowerId: p.id, amount, rate: rate / 100 });
         })();
       },

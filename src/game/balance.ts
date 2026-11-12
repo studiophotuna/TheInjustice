@@ -111,19 +111,22 @@ export const BALANCE = {
   /** Campaigns: money spent shows on the ballot (and breaks ties); a share pays for permits. */
   campaign: { min: 50, permitShare: 0.2, minBribe: 20 },
   /** Loans: bankers at legal rates, loan sharks at any rate; three days to pay. */
-  loans: { min: 50, bankMaxRate: 0.2, sharkMaxRate: 1, termMs: 3 * 24 * 60 * 60_000, collectEnergy: 15 },
+  /** Rates are per three-day term. A legal lender stays near payday-loan rates (about 15% over two weeks in real
+   *  life); a loan shark's "vig" runs about 20% a week, so 30% for three days is already brutal. */
+  loans: { min: 50, bankMaxRate: 0.05, sharkMaxRate: 0.3, termMs: 3 * 24 * 60 * 60_000, collectEnergy: 15 },
   /** Revenge contracts: a victim's reward for whoever gets their money back. */
   contracts: { min: 50, energy: 15 },
   /** Search warrants: a detective searches a suspect's home once per case. */
   search: { energy: 15, missChance: 0.2 },
-  /** Lawyers on retainer: a week of defense, paid up front. */
-  retainer: { base: 100, perRank: 20, weekMs: 7 * 24 * 60 * 60_000 },
+  /** Lawyers on retainer: a week of defense, paid up front. Real criminal-defense retainers start around $1,000. */
+  retainer: { base: 600, perRank: 200, weekMs: 7 * 24 * 60 * 60_000 },
   /** Doctors' back-alley treatment: cash, no paperwork. */
-  backAlley: { base: 50, perRank: 10 },
+  /** Off-the-books doctor: cash, no records. Real discreet doctors charge a premium over urgent care ($300 to $1,000). */
+  backAlley: { base: 200, perRank: 50 },
   /** Bounties on other players: posted from the bank, collected by beating the target. */
   bounty: { min: 100 },
   /** Bail = the stolen amount × this, at least `min`; refunded to whoever paid at the verdict. */
-  bail: { multiplier: 3, min: 100 },
+  bail: { multiplier: 3, min: 500 },
   /** Crew prison breaks for members serving a sentence. */
   breakout: {
     joinEnergy: 15,
@@ -171,7 +174,8 @@ export const BALANCE = {
   /** Other careers that help solve crimes. */
   casework: {
     /** Interns and up examine victims of snatches and muggings. */
-    clinic: { minRank: 2, fee: 20, feePerRank: 5 },
+    /** Examining a victim for the police (real forensic exams are paid by the state, several hundred dollars). */
+    clinic: { minRank: 2, fee: 100, feePerRank: 20 },
     /** Loan Officers and up review cash deposits made soon after a crime. */
     bank: { minRank: 3, windowMs: 2 * 60 * 60_000, minDeposit: 50, buryShare: 0.1 },
     /** Night Patrollers and up hunt suspects on cold cases. */

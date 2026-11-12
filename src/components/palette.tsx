@@ -89,7 +89,11 @@ export function CommandPalette({ game, go, open, setOpen }: { game: GameApi; go:
       { id: "chat", group: "Go to", label: "Chat", keywords: "messages talk", run: () => go("people:chat") },
       { id: "crew", group: "Go to", label: "Crew", keywords: "family gang heist ambush", run: () => go("people:crew") },
       { id: "inbox", group: "Go to", label: "Inbox", hint: view.inbox.unread ? `${view.inbox.unread} new` : undefined, run: () => go("people:inbox") },
-      ...PLACES.map(([id, label, kw]) => ({ id: `place-${id}`, group: "Places", label, keywords: kw, run: () => go(`place:${id}`) })),
+      ...PLACES.map(([id, label, kw]) => ({
+        id: `place-${id}`, group: "Places", label, keywords: kw,
+        block: id === "home" && !view.homeHere ? `Buy a place in ${view.location.city} first.` : null,
+        run: () => go(`place:${id}`),
+      })),
       ...view.jobs.filter((j) => !j.locked).map((j) => ({
         id: `job-${j.id}`, group: "Work", label: j.name, hint: `$${j.pay[0]}–${j.pay[1]} · ${j.energy} energy`, keywords: `job work ${j.tag}`,
         block: away ?? (view.energy < j.energy ? "Not enough energy." : null),

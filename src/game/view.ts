@@ -85,6 +85,8 @@ export interface PublicView {
   heatLabel: "Clean" | "Noticed" | "Wanted" | "Most wanted";
   reputation: number;
   housing: string;
+  /** Your home tier in this city: 0 means you haven't bought a place here. */
+  homeHere: number;
   inventory: { id: string; name: string; icon: string; count: number; usable: boolean }[];
   gear: ReturnType<typeof import("./gear").gearView>;
   feel: ReturnType<typeof describe> & { conscience: string };
@@ -352,6 +354,7 @@ export function toView(p: Player, now: number): PublicView {
     heatLabel: heatLabel(p.heat),
     reputation: p.reputation,
     housing: BALANCE.housing[p.housing].name,
+    homeHere: p.housing,
     daily: (() => {
       const d = p.daily;
       const today = dayKey(now);

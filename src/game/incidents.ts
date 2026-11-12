@@ -34,11 +34,11 @@ export const INCIDENT = {
   /** Wrecks wait at the garage this long. */
   walkInMs: 12 * 60 * 60_000,
   /** A doctor treats a patient: half their remaining stay. */
-  treat: { energy: 8, fee: 25, feePerRank: 8, merit: 1.5 },
+  treat: { energy: 8, fee: 60, feePerRank: 20, merit: 1.5 },
   /** A mechanic fixes a regular's wreck. */
   repair: { minRank: 1, energy: 10, fee: [80, 260] as [number, number], merit: 1.5 },
   /** A hacker scrubs a regular's record (they pay dirty money). */
-  scrub: { energy: 10, minHeat: 10, fee: 120, feePerRank: 30 },
+  scrub: { energy: 10, minHeat: 10, fee: 400, feePerRank: 100 },
 };
 
 export type IncidentKind = "pickpocket" | "snatch" | "mug" | "arson" | "crash";

@@ -313,9 +313,31 @@ const SHOP_CATS = [
   { id: "style", label: "Style", kinds: [] },
 ] as const;
 
+/** A Shop category asked for by a link ("shop:housing"), picked up when the Shop opens. */
+let wantedShopCat: string | null = null;
+export function requestShopCat(id: string) {
+  wantedShopCat = id;
+  window.dispatchEvent(new CustomEvent("conspira:shopcat", { detail: id }));
+}
+
 export function ShopTab({ game }: { game: GameApi }) {
   const view = game.view!;
-  const [cat, setCat] = useState<(typeof SHOP_CATS)[number]["id"]>("supplies");
+  const [cat, setCat] = useState<(typeof SHOP_CATS)[number]["id"]>(() => {
+    const want = wantedShopCat;
+    wantedShopCat = null;
+    return (SHOP_CATS.find((c) => c.id === want)?.id ?? "supplies") as (typeof SHOP_CATS)[number]["id"];
+  });
+  useEffect(() => {
+    const on = (e: Event) => {
+      const want = (e as CustomEvent<string>).detail;
+      if (SHOP_CATS.some((c) => c.id === want)) {
+        wantedShopCat = null;
+        setCat(want as (typeof SHOP_CATS)[number]["id"]);
+      }
+    };
+    window.addEventListener("conspira:shopcat", on);
+    return () => window.removeEventListener("conspira:shopcat", on);
+  }, []);
   const kinds = SHOP_CATS.find((c) => c.id === cat)!.kinds as readonly string[];
   const shops = useShops();
   const mineWaiting = shops.data?.shops.some((s) => s.mine && ((s.till ?? 0) > 0 || s.offers.length > 0)) ?? false;
@@ -601,7 +623,7 @@ export function ProfileTab({ game }: { game: GameApi }) {
                 disabled={game.busy}
                 onClick={() => {
                   askNumberThen(
-                    { title: "Your fee for surgery", body: "What a patient pays you to operate on their old wounds.", yes: view.surgeryFee ? "Change fee" : "Start operating", input: { value: view.surgeryFee ?? 400, min: 50, max: 5000, unit: "$", label: "Fee" } },
+                    { title: "Your fee for surgery", body: "What a patient pays you to operate on their old wounds.", yes: view.surgeryFee ? "Change fee" : "Start operating", input: { value: view.surgeryFee ?? 3000, min: 1000, max: 20000, unit: "$", label: "Fee" } },
                     (fee) => game.social({ op: "surgery_fee", fee }),
                   );
                 }}

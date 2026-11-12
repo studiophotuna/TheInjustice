@@ -91,7 +91,7 @@ export function fireLogView(c: City, p: Player, now: number) {
 
 // ── Hackers ────────────────────────────────────────────────────────────────
 
-export const SCRUB = { minRank: 3, heat: 20, cooldownMs: 6 * 60 * 60_000, minFee: 100, maxFee: 10_000, merit: 1.5 };
+export const SCRUB = { minRank: 3, heat: 20, cooldownMs: 6 * 60 * 60_000, minFee: 500, maxFee: 10_000, merit: 1.5 };
 
 export function setScrub(p: Player, open: boolean, fee: number): GameEvent[] {
   if (p.path !== "hacker" || p.rank < SCRUB.minRank) throw new GameError("Pen Testers and up can scrub records.");

@@ -67,21 +67,21 @@ describe("loans", () => {
   it("bankers lend at legal rates; repaying on time earns reputation", () => {
     const lender = banker();
     const borrower = mk("p", "Pat");
-    expect(() => offerLoan(lender, borrower, 100, 0.5, LATER)).toThrow(/between 0% and 20%/);
-    offerLoan(lender, borrower, 100, 0.1, LATER);
+    expect(() => offerLoan(lender, borrower, 100, 0.1, LATER)).toThrow(/between 0% and 5%/);
+    offerLoan(lender, borrower, 100, 0.05, LATER);
     acceptLoan(borrower, lender, borrower.loanOffers![0].id, LATER);
     expect(borrower.cash).toBe(100);
-    expect(borrower.loans?.[0].owed).toBe(110);
-    borrower.cash = 110;
+    expect(borrower.loans?.[0].owed).toBe(105);
+    borrower.cash = 105;
     repayLoan(borrower, lender, borrower.loans![0].id, LATER + 1000);
-    expect(lender.bank).toBe(5000 - 100 + 110);
+    expect(lender.bank).toBe(5000 - 100 + 105);
     expect(borrower.reputation).toBe(1);
   });
 
   it("an overdue bank loan is seized from savings; a shark sends the muscle", () => {
     const lender = banker();
     const borrower = mk("p", "Pat");
-    offerLoan(lender, borrower, 100, 0.2, LATER);
+    offerLoan(lender, borrower, 100, 0.05, LATER);
     acceptLoan(borrower, lender, borrower.loanOffers![0].id, LATER);
     borrower.hasBankAccount = true;
     borrower.bank = 80;
@@ -95,7 +95,7 @@ describe("loans", () => {
     shark.rank = 3;
     shark.stats.strength = shark.stats.toughness = shark.stats.agility = 400;
     const mark = mk("m", "Mark");
-    offerLoan(shark, mark, 100, 1, LATER);
+    offerLoan(shark, mark, 100, 0.3, LATER);
     acceptLoan(mark, shark, mark.loanOffers![0].id, LATER);
     const due = LATER + BALANCE.loans.termMs + 1;
     tick(shark, due);

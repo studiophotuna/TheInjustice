@@ -415,3 +415,9 @@ img.slot-art { object-fit: cover; }
 .ask-amount input { flex: 1; min-width: 0; border: 0; background: none; outline: none; color: var(--text); font: 800 var(--fs-xl)/1 var(--display); }
 .ask-hint { font-size: var(--fs-xs); color: var(--muted); }
 .ask-hint.bad { color: var(--crimson-soft); }
+
+/* Your Place before you've bought one in this city. */
+.building.locked { filter: grayscale(0.85) brightness(0.6); }
+.building.locked .building-tag { color: var(--amber-hi); }
+.no-home { display: grid; gap: var(--sp-3); }
+.no-home .btn { justify-self: start; }

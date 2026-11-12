@@ -13,11 +13,11 @@ export const WORK = {
   /** Patch-up: a base fee plus this much per missing health point. */
   patchBase: 25,
   patchPerHp: 2,
-  surgeryBase: 450,
-  surgeryPerRank: 80,
+  surgeryBase: 2500,
+  surgeryPerRank: 500,
   /** Attorney retainer: a week, like a player lawyer. */
-  retainerBase: 300,
-  retainerPerRank: 120,
+  retainerBase: 600,
+  retainerPerRank: 200,
   retainerMs: 7 * 24 * 60 * 60_000,
   /** Banker's cut of dirty money cleaned (the laundromat takes 30%). */
   launderCut: 0.22,
@@ -33,7 +33,7 @@ export const WORK = {
   drillEnergy: 12,
   drillXp: 1.6,
   /** Vigilante: watches your place for the night (break-ins are harder). */
-  watchFee: 120,
+  watchFee: 250,
   watchMs: 10 * 60 * 60_000,
   dayMs: 24 * 60 * 60_000,
 };

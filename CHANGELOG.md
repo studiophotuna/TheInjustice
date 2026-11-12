@@ -1,5 +1,38 @@
 # Changelog
 
+## 7.10.0: fees that match real life; Your Place needs a place
+
+- **Every professional fee checked against real life.** Shop prices in this game are real-world
+  dollars (a sandwich $8, a sedan $12,000), so fees for services are now held to what the same
+  service costs in real life. The full table is in `docs/FEES.md`. What changed:
+  - **Doctor treating you in hospital:** $60 + $20 per rank ($100 to $220), was $25 + $8. A
+    real physician consult is $100 to $300.
+  - **Back-alley doctor:** $200 + $50 per rank, was $50 + $10, which was cheaper than a clinic.
+    Off-the-books care costs more than the legal kind.
+  - **Surgery on old wounds:**
+    - regulars charge $2,500 + $500 per rank (was $450 + $80);
+    - players set $1,000 to $20,000 (was $50 to $5,000).
+
+    Real outpatient surgery is $3,000 to $15,000.
+  - **Lawyer on retainer:** $600 + $200 per rank a week for players and regulars alike. Players
+    charged $100 + $20 and regulars $300 + $120. Real defense retainers start around $1,000.
+  - **Bail:** at least $500, was $100.
+  - **Loan interest per three-day term:**
+    - banks up to 5% (was 20%, far above even payday lenders);
+    - loan sharks up to 30% (was 100%; a real shark's "vig" is about 20% a week).
+  - **Hacker scrubbing a record:** at least $500 (was $100). Scrubbing a regular's record:
+    $400 + $100 per rank (was $120 + $30).
+  - **Vigilante watching your place overnight:** $250, was $120 (a night guard is $200 to $350).
+  - **Doctor examining a victim for the police:** $100 + $20 per rank, was $20 + $5.
+  - **Checked and already in range:** patch-ups, laundering rates, garage repairs, hidden
+    compartments, alarms, bodyguards, the safe house, bribes, the gym.
+  - Fees doctors had already set, and loans already taken, keep their terms.
+- **Your Place opens only once you've bought a place in that city.** Until then its tile in the
+  City is greyed out and says "Buy a place here first". Tapping it opens the Shop on Housing,
+  and a link to it explains why it's closed. Buying anything from a sleeping bag up opens it.
+  The search box (Ctrl+K) says the same. Stashing, a dog and an alarm already needed a home.
+- Links can now open the Shop straight on a category (used here for Housing).
+
 ## 7.9.0: what the street sees, and more people on it
 
 - **The live feed no longer leaks police and investigation details to everyone.** Checked against

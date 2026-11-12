@@ -14,8 +14,8 @@ export const WOUNDS = {
   surgeryRank: 3,
   surgeryRemoves: 2,
   surgeryEnergy: 15,
-  minFee: 50,
-  maxFee: 5000,
+  minFee: 1000,
+  maxFee: 20000,
 };
 
 export const woundsOf = (p: Player) => p.wounds?.count ?? 0;
