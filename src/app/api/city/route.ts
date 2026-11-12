@@ -112,15 +112,19 @@ export async function POST(req: Request) {
     assertActive(self, now);
     const country = countryOf(self);
 
+    // Read what decides who gets locked before the transaction opens: online a transaction holds
+    // the only database connection, so a read through `store` inside it would wait forever.
+    // A war being settled locks everyone who fought in it.
+    const pre = b.op === "settle_war" || b.op === "bury_story" || b.op === "stakeout" ? await store.getCity(country) : null;
+    const pre2 = b.op === "seat_claim" ? await store.getCity(country) : null;
+    const editorId = b.op === "bury_story" ? pre?.editor?.id : undefined;
+    // A stakeout may catch the hitman, so lock them and the person they're after.
+    const threat = b.op === "stakeout" ? pre?.threats?.find((t) => t.id === str(b.threatId)) : undefined;
+    const hitCrewPre = threat ? await store.getCrew(threat.crewId) : null;
+    const weekCases = b.op === "bury_story" ? await store.listCases(country, 100) : [];
+
     // Lock order everywhere: players first, the city last.
     const events: GameEvent[] = await store.transaction(async (tx) => {
-      // A war being settled locks everyone who fought in it.
-      const pre = b.op === "settle_war" || b.op === "bury_story" || b.op === "stakeout" ? await store.getCity(country) : null;
-      const pre2 = b.op === "seat_claim" ? await store.getCity(country) : null;
-      const editorId = b.op === "bury_story" ? pre?.editor?.id : undefined;
-      // A stakeout may catch the hitman, so lock them and the person they're after.
-      const threat = b.op === "stakeout" ? pre?.threats?.find((t) => t.id === str(b.threatId)) : undefined;
-      const hitCrewPre = threat ? await store.getCrew(threat.crewId) : null;
       const stakeIds = hitCrewPre?.hit ? [hitCrewPre.hit.hitmanId, hitCrewPre.hit.targetId] : threat ? [threat.targetId] : [];
       // Seats: a challenge locks the holder; a power may lock its target.
       const seatHolder = b.op === "seat_claim" && self.path ? pre2?.seats?.[self.path]?.id : undefined;
@@ -239,7 +243,7 @@ export async function POST(req: Request) {
         case "bury_story": {
           const editor = editorId ? byId.get(editorId) : null;
           if (!editor || c.editor?.id !== editor.id) throw new GameError("The paper has no editor to lean on.");
-          const ids = weekStories(c.country, c, await store.listCases(c.country, 100), now).stories.map((s) => s.id);
+          const ids = weekStories(c.country, c, weekCases, now).stories.map((s) => s.id);
           out = buryStory(c, p, editor, str(b.storyId), ids, now);
           await tx.putPlayer(editor);
           break;

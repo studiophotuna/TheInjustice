@@ -2008,6 +2008,9 @@ export async function POST(req: Request) {
           witnessIds.push(...(await regularWitnesses(store, country, now)).filter((id) => !roleIds.includes(id)));
         }
         const caseId = randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase();
+        // Who's out on the street, read before the transaction (a store read inside it would wait
+        // forever online: the transaction holds the only connection).
+        const streetNow = b.op === "ambush_hire" ? (await regularsOnStreet(store, plan?.country ?? countryOf(self), 0, now)).out : [];
         events = await store.transaction(async (tx) => {
           // Planning tells the whole crew, so they can take a role in time.
           const memberIds = b.op === "ambush_plan" ? crewNow.members.map((m) => m.id) : [];
@@ -2037,8 +2040,7 @@ export async function POST(req: Request) {
             if (!["attacker", "driver", "lookout"].includes(role)) throw new GameError("Bad request.");
             const reg = byId.get(hireId!);
             if (!reg) throw new GameError("They're not around.");
-            const { out: outNow } = await regularsOnStreet(store, crew.ambush?.country ?? countryOf(me), 0, now);
-            if (!outNow.some((r) => r.id === reg.id)) throw new GameError(`${reg.name} isn't out on the street right now.`);
+            if (!streetNow.some((r) => r.id === reg.id)) throw new GameError(`${reg.name} isn't out on the street right now.`);
             out = AM.hireRegular(crew, me, reg, role, now);
           } else if (b.op === "ambush_leave") out = AM.leaveRole(crew, me);
           else if (b.op === "ambush_cancel") out = AM.cancelAmbush(crew, me, now);

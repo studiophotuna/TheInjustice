@@ -10,7 +10,7 @@ grow hidden stats that decide whether you survive.
 
 **Play online:** https://injustice-booking-cms.vercel.app
 
-**Current version:** 7.7.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
+**Current version:** 7.8.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
 [latest changes](#where-the-game-is-now) are summed up at the end of this page.
 
 ## Play it locally
@@ -252,6 +252,11 @@ Supabase project is connected to the Vercel project. Without it, the deployed ga
 All rules run on the server, so the game is ready for multiplayer. Storage sits behind a
 small `PlayerStore` interface (`src/server/store.ts`) with a Postgres version for Supabase and a JSON file version
 for local development.
+
+Online there is one database connection per server instance, and a transaction holds it. Inside
+`store.transaction(...)`, read and write only through its `tx`; do any other reads before the
+transaction opens. A guard in `store.ts` fails a store call made inside a transaction online
+(instead of letting it hang) and logs it locally with where it came from.
 
 ## Design docs
 

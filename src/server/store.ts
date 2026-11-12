@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
@@ -880,19 +881,68 @@ function createPostgres(url: string): postgres.Sql {
   });
 }
 
+/**
+ * Online there is one database connection per server instance, and a transaction holds it. A
+ * store call made inside a transaction (anything but the transaction's own `tx`) waits for that
+ * same connection and never gets it: the request hangs until the platform kills it, holding its
+ * row locks the whole time. This guard catches such calls. Online it fails them at once with a
+ * clear error; locally it logs them (with where they came from) so they can be fixed.
+ */
+export class StoreNestingError extends Error {}
+const inTx = new AsyncLocalStorage<{ open: boolean }>();
+export const nestingLog: { method: string; stack: string }[] = [];
+
+export function guarded(store: PlayerStore, strict: boolean): PlayerStore {
+  return new Proxy(store, {
+    get(target, prop, receiver) {
+      const v = Reflect.get(target, prop, receiver);
+      if (typeof v !== "function") return v;
+      if (prop === "transaction") {
+        return <T,>(fn: (tx: Tx) => Promise<T>) => {
+          const outer = inTx.getStore();
+          if (outer?.open) return nested("transaction", () => (v as PlayerStore["transaction"]).call(target, fn));
+          return (v as PlayerStore["transaction"]).call(target, async (tx: Tx) => {
+            const state = { open: true };
+            try {
+              return await inTx.run(state, () => fn(tx));
+            } finally {
+              state.open = false;
+            }
+          });
+        };
+      }
+      return (...args: unknown[]) => {
+        if (inTx.getStore()?.open) return nested(String(prop), () => (v as (...a: unknown[]) => unknown).apply(target, args));
+        return (v as (...a: unknown[]) => unknown).apply(target, args);
+      };
+    },
+  });
+
+  function nested<T>(method: string, run: () => T): T {
+    const stack = (new Error().stack ?? "").split("\n").slice(3, 9).join("\n");
+    nestingLog.push({ method, stack });
+    console.error(`[store] ${method} called inside a transaction\n${stack}`);
+    // Fail the call (as a rejected promise, so an un-awaited call can't break the transaction
+    // around it) instead of letting it wait forever for the connection the transaction holds.
+    if (strict) return Promise.reject(new StoreNestingError(`A database call (${method}) was made inside a transaction.`)) as T;
+    return run();
+  }
+}
+
 const globalForStore = globalThis as unknown as { __injusticeStore?: PlayerStore };
 
 export function getStore(): PlayerStore {
   if (globalForStore.__injusticeStore) return globalForStore.__injusticeStore;
   const url = connectionString();
   if (url) {
-    globalForStore.__injusticeStore = new PostgresStore(createPostgres(url));
+    globalForStore.__injusticeStore = guarded(new PostgresStore(createPostgres(url)), true);
   } else if (process.env.VERCEL) {
     // The filesystem is read-only on Vercel; refuse instead of losing saves.
     throw new StoreConfigError("The game database isn't connected yet.");
   } else {
-    globalForStore.__injusticeStore = new FileStore(
-      process.env.INJUSTICE_DATA_FILE ?? path.join(process.cwd(), ".data", "players.json"),
+    globalForStore.__injusticeStore = guarded(
+      new FileStore(process.env.INJUSTICE_DATA_FILE ?? path.join(process.cwd(), ".data", "players.json")),
+      process.env.STORE_STRICT === "1",
     );
   }
   return globalForStore.__injusticeStore;

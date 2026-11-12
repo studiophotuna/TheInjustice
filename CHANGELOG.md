@@ -1,5 +1,36 @@
 # Changelog
 
+## 7.8.0: no more frozen requests
+
+An overall check of the game: types, tests, build, every action and API call end to end, every
+screen on phone and desktop, the city timer, the live error logs and the live data.
+
+- **Fixed: some actions froze for five minutes online, and could freeze other players' requests
+  with them.** Online, each server instance has one database connection, and a transaction holds
+  it. A few actions read the database outside their transaction while it was open, so they waited
+  for a connection that could never come free, until the platform killed them at five minutes.
+  The live logs showed 14 of these in the last week, plus two timeouts on locked player rows. The
+  actions that froze:
+  - settling a turf war;
+  - burying a story;
+  - a stakeout;
+  - challenging for a seat;
+  - hiring a regular for a crew ambush.
+
+  They now do those reads before the transaction opens.
+- **A guard against it happening again.** Any database call made inside a transaction is now
+  caught. Online it fails at once with a clear error instead of hanging. Locally it's logged with
+  the line it came from, so it gets fixed before release.
+- **Checked and working:**
+  - all 69 game actions, from the button through the server's checks to the game rules;
+  - every API operation (334 requests with bare and filled-in inputs, plus every game action):
+    none failed with a server error or hung;
+  - every tab, sub-tab and City place on phone and desktop: no errors, no failed requests, no
+    broken images, no sideways scrolling;
+  - the city timer, which runs online about every five minutes;
+  - live data: no negative or broken money, and no players, crews, shops or seats pointing at
+    anything missing.
+
 ## 7.7.0: settings that reach where they're used
 
 A review of everything a player sets (prices, rates, fees) to check it shows up where it's used.
