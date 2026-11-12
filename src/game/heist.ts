@@ -6,12 +6,14 @@
 
 import { BALANCE } from "./balance";
 import { COUNTRY_BY_ID } from "./content/world";
-import { addMerit, countryOf, inHospital, inJail } from "./engine";
-import { earnDirty } from "./money";
+import { addMerit, countryOf, inHospital, inJail, shiftIntegrity } from "./engine";
 import { crewJob } from "./family";
 import { notify } from "./social";
 import { sv } from "./stats";
 import { GameError, type City, type Crew, type GameEvent, type HeistRole, type Player, type Rng, type StatKey } from "./types";
+import { npcScrubFee } from "./incidents";
+import { SCRUB } from "./firehack";
+import { canPayIllegal, earnDirty, payIllegal } from "./money";
 
 const H = BALANCE.heist;
 export const ROLES: { id: HeistRole; name: string; stat: StatKey; job: string }[] = [
@@ -153,7 +155,47 @@ export function heistView(crew: Crew, viewer: Player, now: number) {
           isLeader: crew.leaderId === viewer.id,
           roles: ROLES.map((r) => ({ id: r.id, name: r.name, job: h.target ? HOME_ROLE_JOB[r.id] : r.job, who: h.roles[r.id]?.name ?? null, canTake: roleBlock(crew, viewer, r.id, now) })),
           ready: !!h.roles.driver && !!h.roles.safecracker,
+          hacker: h.hacker?.name ?? null,
         }
       : null,
   };
+}
+
+// ── A hacker for the alarm (home jobs) ─────────────────────────────────────
+
+/** What a hacker charges to cut an alarm: a player's own scrub fee, or a regular's going rate. */
+export const alarmFee = (h: Player) => (h.regular ? npcScrubFee(h) : h.scrubService?.fee ?? SCRUB.minFee);
+/** Chance the hacker gets the alarm off: better hackers, better odds (never shown to players). */
+export const alarmOdds = (rank: number) => Math.min(0.9, 0.45 + 0.07 * rank);
+
+export function hireHackerBlock(crew: Crew, leader: Player, h: Player | null, now: number): string | null {
+  const plan = crew.heist;
+  if (!plan?.target) return "There's no home job planned.";
+  if (crew.leaderId !== leader.id) return "Only the leader hires outside help.";
+  if (plan.hacker) return "You already have a hacker on it.";
+  if (!h || h.dead) return "They're not around anymore.";
+  if (h.path !== "hacker" || h.rank < SCRUB.minRank) return "They're not a hacker who takes this kind of work.";
+  if (!h.regular && !h.scrubService?.open) return "They're not taking clients.";
+  if (countryOf(h) !== plan.country) return "They work in another city.";
+  if (inJail(h, now) || inHospital(h, now)) return "They're in no shape for it.";
+  if (h.id === plan.target.id) return "That's the person you're robbing.";
+  if (!canPayIllegal(leader, alarmFee(h))) return `They want $${alarmFee(h).toLocaleString()}, dirty money or cash.`;
+  return null;
+}
+
+/** The leader pays a hacker to cut the target's alarm when the crew goes in. */
+export function hireHacker(crew: Crew, leader: Player, h: Player, now: number): GameEvent[] {
+  const block = hireHackerBlock(crew, leader, h, now);
+  if (block) throw new GameError(block);
+  const fee = alarmFee(h);
+  payIllegal(leader, fee);
+  earnDirty(h, fee);
+  crew.heist!.hacker = { id: h.id, name: h.name, rank: h.rank };
+  crew.log = [{ at: now, text: `${leader.name} hired ${h.name} to take care of the alarm.` }, ...crew.log].slice(0, 30);
+  if (!h.regular) {
+    shiftIntegrity(h, -1);
+    addMerit(h, "hacker", SCRUB.merit);
+    notify(h, `${leader.name} paid you $${fee.toLocaleString()} to cut an alarm on a job. Dirty money.`, "good", leader, now);
+  }
+  return [{ tone: "good", text: `${h.name} will take care of the alarm when you go in. -$${fee.toLocaleString()}` }];
 }

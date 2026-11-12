@@ -60,6 +60,8 @@ Checked in 7.10.0. "Rank" is the professional's career rank (1 to 8).
 | Customs officer looking the other way | The officer's price, $50 to $20,000 | Varies with what's in the trunk | In range |
 | Hacker scrubbing your record (player's own price) | **$500 to $10,000**. Minimum was $100 | Illegal record-tampering offers: $1,000 to $10,000 | Minimum fixed |
 | Hacker scrubbing a regular's record | **$400 + $100 per rank**. Was $120 + $30 per rank | As above | Fixed |
+| Hacker cutting a home's alarm for a crew job | The hacker's own scrub fee (players), $400 + $100 per rank (regulars) | Illegal hacking jobs: $1,000 and up | In range (7.18) |
+| Bandages, painkillers | $15, $20 | First-aid supplies $5 to $15; a box of painkillers $5 to $20 | In range (7.18) |
 | Gym session | $12 | Gym day pass: $10 to $25 | In range |
 | Drill session with a soldier | $40 | Personal training session: $50 to $100 | Slightly cheap, kept: it's a regular's side job |
 | Fire investigation reward (from the treasury) | $400 | Arson reward programs: $1,000 to $5,000 | Not a fee: kept low because it comes out of the city's money |

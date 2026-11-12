@@ -111,7 +111,7 @@ export function regularWant(p: Player, c: City | null, now: number): string | nu
   const affordable = (kind: string) => ITEMS.filter((i) => i.kind === kind && i.price <= spend).sort((a, b) => a.price - b.price);
   const laidUp = inHospital(p, now);
   if ((laidUp ? p.regular.medStay !== p.hospitalUntil : p.hp < playerMaxHp(p) * 0.5) && !p.inventory.medkit) {
-    const med = affordable("medical")[0];
+    const med = affordable("medical").find((m) => m.halvesStay);
     if (med) return med.id;
   }
   if (laidUp) return null;

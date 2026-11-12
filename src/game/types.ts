@@ -120,6 +120,8 @@ export interface Player {
   treatedStay?: number;
   /** Can't eat again until this time (prevents food → energy exploits). */
   fullUntil: number;
+  /** On painkillers until. */
+  numbUntil?: number;
   /** Next quick boost (coffee, energy drink) allowed at. */
   boostUntil?: number;
   /** Boosts used today (UTC day). */
@@ -669,6 +671,8 @@ export interface Crew {
     createdAt: number;
     /** A home job instead of a bank: whose place, and what kind. */
     target?: { id: string; name: string; home: string } | null;
+    /** A hacker hired to cut the home's alarm (paid up front). */
+    hacker?: { id: string; name: string; rank: number } | null;
   } | null;
   lastHeistAt?: number;
   /** A planned prison break for a jailed member (one at a time). */

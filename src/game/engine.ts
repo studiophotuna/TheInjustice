@@ -967,6 +967,9 @@ function buy(p: Player, itemId: string, events: GameEvent[], ctx: ActionContext 
   events.push({ tone: "good", text: `Bought: ${item.name}.` });
 }
 
+/** Below this much health you're too hurt to fight: lower while painkillers last. */
+export const hurtLimit = (p: Player, now: number) => ((p.numbUntil ?? 0) > now ? BALANCE.hurt.numbed : BALANCE.hurt.limit);
+
 /** Why you can't have a quick boost right now (or null). */
 export function boostBlock(p: Player, now: number): string | null {
   const day = new Date(now).toISOString().slice(0, 10);
@@ -992,8 +995,13 @@ function useItem(p: Player, itemId: string, now: number, events: GameEvent[]) {
     p.energy = Math.min(maxEnergy(p.housing), p.energy + (item.energy ?? 0));
     p.fullUntil = now + BALANCE.foodCooldownMs;
     events.push({ tone: "good", text: `You eat the ${item.name.toLowerCase()}. Energy restored.` });
+  } else if (item.kind === "medical" && item.numbMs) {
+    if (p.hp >= playerMaxHp(p)) throw new GameError("Nothing hurts. Save them.");
+    p.numbUntil = now + item.numbMs;
+    events.push({ tone: "good", text: "The edges go soft. For two hours you can fight even badly hurt. It still counts as hurt." });
   } else if (item.kind === "medical") {
     if (inHospital(p, now)) {
+      if (!item.halvesStay) throw new GameError("This needs more than a bandage. Use a medkit, or wait it out.");
       p.hospitalUntil = now + Math.round((p.hospitalUntil - now) / 2);
       events.push({ tone: "good", text: "The nurse patches you up faster. Hospital time halved." });
     } else {
@@ -1244,7 +1252,7 @@ function applyActionInner(p: Player, action: Action, now: number, rng: Rng, ctx:
       const lock = DISTRICT_BY_ID[npc.district].locked(p);
       if (lock) throw new GameError(lock);
       if (p.energy < FIGHT_ENERGY) throw new GameError("You're too tired to fight.");
-      if (p.hp < 20) throw new GameError("You're too hurt to fight. Heal up first.");
+      if (p.hp < hurtLimit(p, now)) throw new GameError("You're too hurt to fight. Heal up first, or take something for the pain.");
       p.energy -= FIGHT_ENERGY;
       fightNpc(p, npc, now, rng, events);
       checkProgress(p, events);

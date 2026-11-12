@@ -10,6 +10,8 @@ Video Free License (see /public/scenes/CREDITS.md), cropped square.
 | coffee | 4992 cup of coffee on top of coffee beans |
 | energy_drink | 5091 canned soda is uncovered |
 | steak_dinner | 45718 well done steak being sliced by a sharp knife |
+| bandage | 4596 man bandaging his hand before boxing |
+| painkillers | 35377 conceptual video of medical pills |
 | medkit | 50348 bandaged hands rest on a tray full of torture implements |
 | sleeping_bag | 43144 a couple talking in a tent |
 | room | 3111 master bedroom and window |

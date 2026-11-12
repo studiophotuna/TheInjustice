@@ -1,5 +1,27 @@
 # Changelog
 
+## 7.18.0: a real Pharmacy, and a hacker for the alarm
+
+- **The Pharmacy sells three things instead of one**, priced like real life:
+  - Bandages, $15: heal 15 health.
+  - Painkillers, $20: they heal nothing, but for two hours you can still fight (and mug) while
+    badly hurt, down to 8 health instead of 20.
+  - The medkit, $60: unchanged, and the only item that gets you out of the clinic early. A bandage
+    used to do that too, since any medical item halved the stay.
+
+  Regulars keep buying medkits. The Pharmacy's owner now has more to sell.
+- **Crews can hire a hacker to cut a home's alarm.** On a job against someone's home, the leader
+  can bring in a hacker: a player hacker taking clients from the Directory, or a regular hacker
+  who's out. They're paid their usual fee up front, dirty money first.
+  - When the crew goes in, the hacker tries the alarm first; better hackers get it off more
+    often.
+  - If it works, there's no siren to slow the safecracker, and no alarm camera footage goes on the
+    police case file.
+  - Player hackers get dirty money and credit toward their next promotion.
+  - Before this, hackers had no part in crew work: only the Mafia can join crews, so this is
+    outside help, the same way ambushes hire regulars.
+- The guide covers the new Pharmacy items.
+
 ## 7.17.0: vigilantes watch homes, firefighters inspect businesses
 
 - **Night watch by vigilantes.** Vigilantes from rank 2 can take clients from the Directory at a

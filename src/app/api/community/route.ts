@@ -117,8 +117,18 @@ import { assertJson } from "@/server/auth";
 import { resolveIdentity } from "@/server/identity";
 import { getStore, StoreConfigError, type Tx } from "@/server/store";
 import { seesOfficialFeed, visibleFeed } from "@/game/feed";
+import { alarmFee, hireHacker, hireHackerBlock } from "@/game/heist";
 
 export const dynamic = "force-dynamic";
+
+/** Hackers who could cut the alarm on this crew's home job (only the leader sees them). */
+async function alarmHackers(store: ReturnType<typeof getStore>, crew: Crew, viewer: Player, now: number) {
+  const plan = crew.heist;
+  if (!plan?.target || plan.hacker || crew.leaderId !== viewer.id) return [];
+  const [locals, street] = await Promise.all([store.listPlayers(plan.country, 200), regularsOnStreet(store, plan.country, 0, now)]);
+  const pool = [...locals.filter((o) => o.path === "hacker" && o.scrubService?.open), ...street.out.filter((o) => o.path === "hacker")];
+  return pool.slice(0, 6).map((o) => ({ id: o.id, name: o.name, regular: !!o.regular, fee: alarmFee(o), block: hireHackerBlock(crew, viewer, o, now) }));
+}
 
 function failure(e: unknown) {
   if (e instanceof GameError) return NextResponse.json({ error: e.message }, { status: 400 });
@@ -593,7 +603,7 @@ export async function GET(req: Request) {
       crews: crews.map((c) => crewView(c, p)),
       myCrew: myCrew ? crewView(myCrew, p) : null,
       breakout: myCrew ? await crewJailView(store, myCrew, p, now) : null,
-      heist: myCrew ? heistView(myCrew, p, now) : null,
+      heist: myCrew ? { ...heistView(myCrew, p, now), hackers: await alarmHackers(store, myCrew, p, now) } : null,
       ambush: myCrew ? AM.ambushView(myCrew, p, now) : null,
       contacts: await contactsView(store, p, now),
       hit: myCrew ? hitView(myCrew, p, now) : null,
@@ -1873,6 +1883,24 @@ export async function POST(req: Request) {
             out = executeBreakout(crew, me, team, target, now, Math.random, crack);
           }
           for (const r of byId.values()) await tx.putPlayer(r);
+          await tx.putCrew(crew);
+          return out;
+        });
+        break;
+      }
+      case "heist_hacker": {
+        const hackerId = str(b.hackerId);
+        events = await store.transaction(async (tx) => {
+          const [me, h] = await tx.getPlayers([playerId, hackerId]);
+          if (!me) throw new GameError("Create a character first.");
+          if (!me.crewId) throw new GameError("You're not in a crew.");
+          const crew = await tx.getCrew(me.crewId);
+          if (!crew) throw new GameError("Your crew is gone.");
+          tick(me, now);
+          if (h) tick(h, now);
+          const out = hireHacker(crew, me, h!, now);
+          await tx.putPlayer(me);
+          if (h) await tx.putPlayer(h);
           await tx.putCrew(crew);
           return out;
         });

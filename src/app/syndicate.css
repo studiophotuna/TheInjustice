@@ -435,3 +435,6 @@ img.slot-art { object-fit: cover; }
 
 /* A job you're too tired for says when it'll be ready. */
 .jcard-go:disabled .jcard-wait { font: 700 11.5px/1 var(--display); white-space: nowrap; }
+
+.heist-alarm { display: grid; gap: var(--sp-2); padding: var(--sp-3) 0; border-top: 1px solid var(--border); }
+.heist-alarm .chip { justify-self: start; }

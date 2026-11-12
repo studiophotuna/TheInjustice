@@ -238,7 +238,9 @@ type Hub = {
       isLeader: boolean;
       roles: { id: string; name: string; job: string; who: string | null; canTake: string | null }[];
       ready: boolean;
+      hacker: string | null;
     } | null;
+    hackers: { id: string; name: string; regular: boolean; fee: number; block: string | null }[];
   } | null;
   breakout: {
     jailed: { id: string; name: string; until: number; reason: string; canPlan: string | null }[];
@@ -1012,6 +1014,27 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
                     </li>
                   ))}
                 </ul>
+                {hub.heist.plan.target && (hub.heist.plan.hacker || hub.heist.plan.isLeader) && (
+                  <div className="heist-alarm">
+                    <p className="fine"><b>Alarm</b> <span className="muted">· a hacker can kill it before anyone touches a door: no camera, no siren.</span></p>
+                    {hub.heist.plan.hacker ? (
+                      <span className="chip chip-green">{hub.heist.plan.hacker}</span>
+                    ) : hub.heist.hackers.length ? (
+                      <ul className="officials">
+                        {hub.heist.hackers.map((h) => (
+                          <li key={h.id}>
+                            <span>{h.name}{h.regular ? <span className="muted"> · regular</span> : null}</span>
+                            <button className="btn btn-ghost btn-xs" disabled={game.busy || !!h.block} title={h.block ?? "Dirty money first, then cash."} onClick={() => social({ op: "heist_hacker", hackerId: h.id })}>
+                              Hire · ${h.fee.toLocaleString()}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="fine muted">No hacker in the city is taking this kind of work right now.</p>
+                    )}
+                  </div>
+                )}
                 {hub.heist.plan.isLeader && (
                   <div className="row wrap">
                     <button className="btn btn-danger btn-sm" disabled={game.busy || !hub.heist.plan.ready} title={hub.heist.plan.ready ? "" : "You need at least a driver and a safecracker."} onClick={() => social({ op: "heist_go" })}>
@@ -1022,7 +1045,7 @@ function CrewPanel({ game, hub, social }: { game: GameApi; hub: Hub | null; soci
                 )}
                 <p className="fine muted">
                   {hub.heist.plan.target
-                    ? "Driver: no getaway, everyone's caught. Safecracker: opens the hiding spot. Lookout: keeps the owner from walking in on you. Muscle: handles them if they do."
+                    ? "Driver: no getaway, everyone's caught. Safecracker: opens the hiding spot. Lookout: keeps the owner from walking in on you. Muscle: handles them if they do. A hired hacker: the alarm."
                     : "Driver: no getaway, everyone's caught. Safecracker: no vault, no money. Lookout: double heat. Muscle: everyone gets hurt, less money."}
                 </p>
               </>

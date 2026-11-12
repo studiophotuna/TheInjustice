@@ -26,6 +26,8 @@ export const BALANCE = {
   /** Quick boosts (coffee, an energy drink): one every half hour, six a day, whichever you buy. At most
    *  +40 energy an hour and +120 a day on top of meals, so no boost item can run away with the game. */
   boost: { cooldownMs: 30 * 60_000, perDay: 6 },
+  /** Below this much health you're too hurt to fight; on painkillers, below the lower number. */
+  hurt: { limit: 20, numbed: 8 },
   /** Once, on a new character's first day: when the first bar runs out, it fills again. */
   secondWindMs: 24 * 60 * 60_000,
   bankOpenCost: 20,

@@ -77,7 +77,8 @@ export default function GuidePage() {
         far stronger than you can get you killed. Dying isn&apos;t the end: you start a new life, keep half of what you trained and your
         bank savings, but lose your cash, gear, home and career. A paid hit from a crew is softer: a stretch in the morgue and one
         rank lost.
-      </p>
+       The Pharmacy sells bandages (a small patch-up), painkillers (for two hours you can fight while badly hurt, but they
+        heal nothing) and medkits (the only thing that gets you out of the clinic early).</p>
 
       <h2>Weapons and armor</h2>
       <p>

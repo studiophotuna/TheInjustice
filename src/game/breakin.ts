@@ -18,6 +18,7 @@ import { CARS, CAR, cargoUnits } from "./vehicles";
 import { roleOdds } from "./heist";
 import { crewJob } from "./family";
 import { GameError, type Crew, type HeistRole, type Car, type CaseFile, type CountryId, type GameEvent, type Player, type Rng } from "./types";
+import { alarmOdds } from "./heist";
 
 export const BREAKIN = {
   energy: 20,
@@ -355,7 +356,10 @@ export function runHomeJob(
   if (!team.driver || !team.safecracker) throw new GameError("You need at least a driver and a safecracker.");
   const country = h.country;
   const tier = homeIn(t, country);
-  const alarm = hasAlarm(t, country);
+  const wired = hasAlarm(t, country);
+  // A hired hacker tries to get the alarm off before anyone touches a door.
+  const alarmCut = wired && !!h.hacker && rng() < alarmOdds(h.hacker.rank);
+  const alarm = wired && !alarmCut;
   const home = ownerHome(t, country, now);
   const lock = BREAKIN.lock[tier] / BREAKIN.lock[HOME_JOB.minTier];
   const roll = (role: HeistRole, mult = 1) => !!team[role] && rng() < roleOdds(team[role]!, role) * mult;
@@ -463,6 +467,7 @@ export function runHomeJob(
       ? { tone: "good", text: `You find the hiding spot ${STASH.spots[tier]} and open it: ${took.join(", ")}. Your cut is $${cut.toLocaleString()}, dirty.` }
       : { tone: "info", text: "In and out, but the hiding spot won't give. You leave with nothing." },
   ];
+  if (wired && h.hacker) events.unshift(alarmCut ? { tone: "good", text: `${h.hacker.name} kills the alarm before anyone touches a door. No camera, no siren.` } : { tone: "bad", text: `${h.hacker.name} can't get the alarm off. It's still watching.` });
   if (!ok.lookout) events.push({ tone: "bad", text: "Nobody watched the street. Half the block saw your crew leave." });
   return { events, caseFile: c };
 }

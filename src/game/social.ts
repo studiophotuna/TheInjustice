@@ -20,6 +20,7 @@ import { bumpSeason } from "./season";
 import { streetTitle } from "./titles";
 import { crewCap } from "./fronts";
 import { GameError, type Crew, type CrewPolicy, type FightSummary, type GameEvent, type GameEventTone, type Player, type Rng } from "./types";
+import { hurtLimit } from "./engine";
 
 export function notify(p: Player, text: string, tone: GameEventTone, from?: Player, now = Date.now()) {
   p.inbox = [
@@ -76,7 +77,7 @@ export function attackBlock(a: Player, t: Player, now: number): string | null {
   const last = a.attackLog?.[t.id] ?? 0;
   if (now - last < BALANCE.pvp.cooldownMs) return "You just fought them. Let it cool down.";
   if (a.energy < BALANCE.pvp.energy) return "You're too tired to start a fight.";
-  if (a.hp < 20) return "You're too hurt to start a fight.";
+  if (a.hp < hurtLimit(a, now)) return "You're too hurt to start a fight.";
   return null;
 }
 

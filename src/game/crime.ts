@@ -27,6 +27,7 @@ import {
   type Rng,
   type Tip,
 } from "./types";
+import { hurtLimit } from "./engine";
 
 export interface CrimeDef {
   id: CrimeKind;
@@ -223,7 +224,7 @@ export function crimeBlock(a: Player, t: Player, kind: CrimeKind, now: number): 
   if (!t.regular && a.reputation > t.reputation * 3 + 15) return "Robbing someone that small would ruin your name.";
   if (now - (a.attackLog?.[`crime:${t.id}`] ?? 0) < BALANCE.crime.cooldownMs) return "They'd recognize you. Give it time.";
   if (a.energy < CRIMES[kind].energy) return "You're too tired.";
-  if (kind === "mug" && a.hp < 20) return "You're too hurt to corner anyone.";
+  if (kind === "mug" && a.hp < hurtLimit(a, now)) return "You're too hurt to corner anyone.";
   return null;
 }
 

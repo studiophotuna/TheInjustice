@@ -25,6 +25,10 @@ export interface ItemDef {
   durability?: number;
   /** medical: hp restored */
   heal?: number;
+  /** medical: in hospital, cuts the stay in half (a real medkit, not a bandage). */
+  halvesStay?: boolean;
+  /** medical: dulls the pain for this long, so you can fight while badly hurt. */
+  numbMs?: number;
   /** Issued by a career at a rank, never sold. Handed back if you leave the career. */
   issued?: { path: PathId; rank: number };
   /** Stolen army gear: only on the black market, sold by soldiers at this rank or higher. */
@@ -40,7 +44,9 @@ export const ITEMS: ItemDef[] = [
   { id: "energy_drink", name: "Energy drink", kind: "food", boost: true, hpCost: 5, price: 6, energy: 20, icon: "🥤", description: "Twice the kick of a coffee. Your heart notices." },
   { id: "steak_dinner", name: "Steak dinner", kind: "food", price: 70, energy: 40, icon: "🥩", description: "White tablecloth, a waiter who calls you sir. Worth every bite." },
   // ── Medical ──
-  { id: "medkit", name: "Street medkit", kind: "medical", price: 60, heal: 40, icon: "🩹", description: "Heals wounds. In the hospital, cuts your stay in half." },
+  { id: "bandage", name: "Bandages", kind: "medical", price: 15, heal: 15, icon: "🩹", description: "Stops the bleeding. Doesn't fix much else." },
+  { id: "painkillers", name: "Painkillers", kind: "medical", price: 20, numbMs: 2 * 60 * 60_000, icon: "💊", description: "Nothing heals, but for two hours you can still fight while badly hurt." },
+  { id: "medkit", name: "Street medkit", kind: "medical", price: 60, heal: 40, halvesStay: true, icon: "🩹", description: "Heals wounds. In the hospital, cuts your stay in half." },
   // ── Housing (bigger energy bar, faster rest) ──
   { id: "sleeping_bag", name: "Sleeping bag", kind: "housing", price: 60, housing: 1, icon: "🛌", description: "Off the concrete, at least. You sleep a little better." },
   { id: "room", name: "Rented room", kind: "housing", price: 450, housing: 2, icon: "🏠", description: "Four walls, a door that locks, and an address. Schools and some employers care about that." },
