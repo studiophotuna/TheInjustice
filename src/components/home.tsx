@@ -95,7 +95,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
       </div>
 
       <div className="home-later">
-        <RightNow game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} />
+        <RightNow game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} skip={["daily", "story", "work"]} />
       </div>
 
       <DailyCard game={game} />

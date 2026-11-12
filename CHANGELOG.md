@@ -1,5 +1,24 @@
 # Changelog
 
+## 7.19.0: a tidier layout
+
+- **Home stops saying things twice.** The "Right now" card no longer repeats the daily reward, the
+  story chapter or the work nudge, because Home already shows each of those in its own place.
+- **The map's hint sits inside its card**, and so does the panel that opens when you tap a pin.
+- **People:**
+  - Names over the photos show in full on up to two lines instead of being cut off, and they are
+    readable over bright photos.
+  - Regulars who've gone home are listed one line each under "Off the street" instead of getting
+    full-size cards. The page is about a screen shorter.
+- **City Hall:**
+  - Leadership seats you can't act on are a single line. Tap one to see its power.
+  - Long newspaper headlines are set smaller, so the front page no longer runs five big lines.
+- **Me:** the Alerts card no longer appears just to say "coming soon".
+- **Jobs:** a job you've finished for good, like the test to get made, drops off the list instead
+  of sitting there locked.
+- **City chat:** regulars no longer repeat a line that's still in the channel, and the same regular
+  doesn't speak twice in a row.
+
 ## 7.18.0: a real Pharmacy, and a hacker for the alarm
 
 - **The Pharmacy sells three things instead of one**, priced like real life:

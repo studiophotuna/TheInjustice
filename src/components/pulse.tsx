@@ -113,7 +113,8 @@ type Move = { key: string; icon: typeof Zap; tone: "urgent" | "money" | "normal"
  * One card at the top of Home: the single most useful thing to do right now, plus up to two
  * smaller follow-ups. Crew needs come first, then money waiting, then work.
  */
-export function RightNow({ game, go, needs, onRead }: { game: GameApi; go: (t: string) => void; needs: CrewNeed[]; onRead: (id: string) => void }) {
+/** `skip` hides moves the screen already shows elsewhere (Home has its own daily, story and work strips). */
+export function RightNow({ game, go, needs, onRead, skip = [] }: { game: GameApi; go: (t: string) => void; needs: CrewNeed[]; onRead: (id: string) => void; skip?: string[] }) {
   const view = game.view!;
   const live = game.live!;
   const moves: Move[] = [];
@@ -191,8 +192,9 @@ export function RightNow({ game, go, needs, onRead }: { game: GameApi; go: (t: s
       moves.push({ key: "rest", icon: Zap, tone: "normal", title: `Out of energy. Full in ${fmt(live.fullIn)}.`, text: "Eat something, or check on the people in your city.", cta: "Shop", run: () => go("tab:shop") });
     }
   }
-  if (!moves.length) return null;
-  const [top, ...rest] = moves;
+  const shown = moves.filter((m) => !skip.includes(m.key));
+  if (!shown.length) return null;
+  const [top, ...rest] = shown;
   const Icon = top.icon;
 
   return (

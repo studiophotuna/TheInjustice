@@ -84,11 +84,13 @@ export function AlertsCard({ game }: { game: GameApi }) {
     if (r.off) setOff(r.off);
   };
 
+  // Nothing to offer yet: no card at all, rather than a "coming soon" placeholder.
+  if (state === "notyet") return null;
+
   return (
     <section className="card">
       <h3 className="card-title">Alerts</h3>
       {state === "checking" && <p className="muted">Checking…</p>}
-      {state === "notyet" && <p className="muted">Phone alerts are coming soon.</p>}
       {state === "unsupported" && <p className="muted">Not supported here. On iPhone, add the game to your Home Screen first, then open it from there.</p>}
       {state === "blocked" && <p className="muted">Alerts are blocked for this site. Allow notifications in your browser settings, then come back.</p>}
       {state === "off" && (

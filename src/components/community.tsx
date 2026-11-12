@@ -504,15 +504,19 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
   }
   const open = people.find((p) => p.id === openId) ?? null;
   const outNow = (p: Profile) => (p.regular ? p.regular.out : Date.now() - p.lastSeen < 10 * 60_000);
+  // Regulars who've gone home get one line each, below the faces of the people you can act on now.
+  const offStreet = (p: Profile) => !!p.regular && !p.regular.out;
+  const front = people.filter((p) => !offStreet(p));
+  const back = people.filter(offStreet);
   return (
     <div className="lineup-wrap">
       <YourPeople hub={hub} onOpen={(id) => setOpenId(id)} />
       <div className="lineup-head">
         <h3 className="card-title list-title">On the street · {view.location.city}</h3>
-        <span className="fine muted">{people.filter(outNow).length} out on the street</span>
+        <span className="fine muted lineup-count">{people.filter(outNow).length} out now</span>
       </div>
       <div className="lineup">
-        {people.map((p) => (
+        {front.map((p) => (
           <button key={p.id} className={`suspect-card${outNow(p) ? " out" : ""}${p.status !== "ok" ? " away" : ""}`} onClick={() => setOpenId(p.id)}>
             <span className="lu-photo">
               <PlayerAvatar name={p.name} path={p.path} photo={p.photo} look={p.look} className="lineup-face" />
@@ -530,6 +534,22 @@ function People({ game, hub, social }: { game: GameApi; hub: Hub | null; social:
           </button>
         ))}
       </div>
+      {back.length > 0 && (
+        <section className="card offstreet">
+          <h3 className="card-title">Off the street · {back.length}</h3>
+          <ul className="offstreet-list">
+            {back.map((p) => (
+              <li key={p.id}>
+                <button className="offstreet-row" onClick={() => setOpenId(p.id)}>
+                  <PlayerAvatar name={p.name} path={p.path} photo={p.photo} look={p.look} className="offstreet-face" />
+                  <b>{p.name}</b>
+                  <span className="fine muted">{p.title}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <AnimatePresence>{open && <PersonFile key={open.id} game={game} hub={hub} p={open} social={social} onClose={() => setOpenId(null)} />}</AnimatePresence>
     </div>
   );

@@ -38,6 +38,8 @@ export interface JobDef {
   grade?: 1 | 2 | 3;
   /** Extra lock check; returns a reason or null. */
   requires?: (p: Player) => string | null;
+  /** Once true, the job is done for good and drops off the list instead of showing locked. */
+  spent?: (p: Player) => boolean;
   lines: string[];
 }
 
@@ -434,6 +436,7 @@ export const JOBS: JobDef[] = [
     heat: 12,
     reputation: 3,
     requires: (p) => (p.family?.madeAt ? "You're already made." : null),
+    spent: (p) => !!p.family?.madeAt,
     risk: {
       stats: ["nerve", "strength"],
       difficulty: 32,

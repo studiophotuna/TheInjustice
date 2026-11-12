@@ -246,14 +246,28 @@ export function regularStats(def: RegularDef, rank = def.rank): Record<StatKey, 
 /** Bump when regularStats changes: existing regulars are recalibrated on their next update. */
 export const REGULAR_VERSION = 2;
 
-/** A line for city chat, or null if it isn't time yet. */
-export function chatLine(out: Player[], lastAt: number, now: number): { who: Player; text: string } | null {
+/**
+ * A line for city chat, or null if it isn't time yet. `recent` is what was said in the channel
+ * lately: nobody repeats a line still on screen, and the last speaker gives someone else a turn.
+ */
+export function chatLine(out: Player[], lastAt: number, now: number, recent: { authorId: string; body: string }[] = []): { who: Player; text: string } | null {
   if (!out.length || now - lastAt < REGULARS.chatGapMs) return null;
   const slot = Math.floor(now / REGULARS.chatGapMs);
-  const who = out[Math.floor(hash(`chat${slot}`) * out.length)];
-  const def = defFor(who);
-  if (!def) return null;
-  return { who, text: def.lines[Math.floor(hash(`${who.id}${slot}`) * def.lines.length)] };
+  const said = new Set(recent.map((m) => m.body));
+  const last = recent[recent.length - 1]?.authorId;
+  const start = Math.floor(hash(`chat${slot}`) * out.length);
+  for (let i = 0; i < out.length; i++) {
+    const who = out[(start + i) % out.length];
+    if (out.length > 1 && who.id === last) continue;
+    const def = defFor(who);
+    if (!def) continue;
+    const first = Math.floor(hash(`${who.id}${slot}`) * def.lines.length);
+    for (let j = 0; j < def.lines.length; j++) {
+      const text = def.lines[(first + j) % def.lines.length];
+      if (!said.has(text)) return { who, text };
+    }
+  }
+  return null;
 }
 
 /** Ops that may target a regular. Everything else is refused. */

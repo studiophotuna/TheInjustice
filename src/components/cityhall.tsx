@@ -342,7 +342,7 @@ function Paper({ paper, city, game, act }: { paper: CityData["paper"]; city: Cit
   return (
     <section className="card paper">
       <p className="paper-name">{paper.name}</p>
-      <h2 className="paper-lead">{paper.lead}</h2>
+      <h2 className={`paper-lead${paper.lead.length > 90 ? " long" : paper.lead.length > 50 ? " mid" : ""}`}>{paper.lead}</h2>
       {lead && <div className="paper-lead-actions">{storyButton(lead)}</div>}
       {paper.weather && <p className="paper-weather">{paper.weather}</p>}
       <div className="paper-stats">
@@ -472,7 +472,22 @@ function Leadership({
         </p>
       )}
       <ul className="seats">
-        {seats.map((s) => (
+        {seats.map((s) => {
+          // A seat you can't do anything about is one line; tap it for the power.
+          if (!s.holder?.you && s.canClaim) {
+            return (
+              <li key={s.path} className="seat compact">
+                <details>
+                  <summary className="seat-head">
+                    <b>{s.title}</b>
+                    <span className="muted fine">{s.holder ? s.holder.name : "Vacant"}</span>
+                  </summary>
+                  <p className="fine muted">{s.power.name}: {s.power.text}</p>
+                </details>
+              </li>
+            );
+          }
+          return (
           <li key={s.path} className={`seat ${s.holder?.you ? "mine" : ""}`}>
             <div className="seat-head">
               <b>{s.title}</b>
@@ -510,7 +525,8 @@ function Leadership({
               )
             )}
           </li>
-        ))}
+          );
+        })}
       </ul>
     </section>
   );

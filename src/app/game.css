@@ -336,6 +336,7 @@ input:focus { border-color: var(--info) !important; box-shadow: 0 0 0 3px rgba(7
 .map-actions .btn-ghost { text-transform: capitalize; }
 .map-news { color: var(--health); }
 .map-hint { margin: 8px 2px 0; }
+.citymap-wrap .card.citymap .map-hint { margin: 10px 14px 4px; }
 @media (min-width: 1100px) { .home > .citymap { grid-column: 1 / -1; } }
 .map-pos { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; }
 .map-pos .map-pin { position: relative; transform: none; display: block; }
@@ -769,3 +770,4 @@ button.ready-chip { cursor: pointer; }
 /* ─── Hackers and fire log ─────────────────────────────────────────── */
 .my-scrub input { width: 110px; padding: 7px 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: inherit; }
 .fire-log li.solved { opacity: 0.75; }
+.citymap-wrap .card.citymap .map-sheet { margin: 10px 10px 4px; }

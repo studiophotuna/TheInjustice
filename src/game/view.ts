@@ -307,7 +307,7 @@ export function toView(p: Player, now: number): PublicView {
   // Work above your rank isn't shown at all: you find out about it when you get there.
   const jobs: JobView[] = JOBS.filter(
     (j) => (j.path ? j.path === p.path && (j.minRank ?? 1) <= p.rank : localDistrict(j.district)) && revealed(p, j),
-  ).map((j) => ({
+  ).filter((j) => !j.spent?.(p)).map((j) => ({
     id: j.id,
     name: j.name,
     district: j.district,

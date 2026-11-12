@@ -707,7 +707,8 @@ async function regularChat(store: ReturnType<typeof getStore>, country: CountryI
   if (!city || now - (city.regularChatAt ?? 0) < REGULARS.chatGapMs) return;
   const real = await store.listPlayers(country, 40);
   const { out } = await regularsOnStreet(store, country, realOnlineCount(real, now), now);
-  const line = chatLine(out, city.regularChatAt ?? 0, now);
+  const recent = await store.listMessages(`country:${country}`, 30);
+  const line = chatLine(out, city.regularChatAt ?? 0, now, recent);
   if (!line) return;
   const posted = await store.transaction(async (tx) => {
     const c = await tx.getCity(country);
