@@ -43,37 +43,18 @@ Checked in 7.12.0.
 - **Business income:** a business pays for itself in about 20 days instead of 3 to 7 years. See
   "Waiting for a decision" below for the prices.
 
-## Waiting for a decision
+## Decided in 7.13.0
 
-These are big gaps from real life, but they carry the game's progression, so changing them is
-a design decision rather than a correction.
-
-1. **Weapons and armor cost 10 to 50 times their real price.**
-   - Prices:
-     - snub-nose pistol $14,500 (real street price about $500 to $2,000);
-     - sawed-off shotgun $45,000 (real about $300 to $1,500);
-     - tactical plate carrier $40,000 (real about $500 to $2,000);
-     - bike chain $160 and lead pipe $150 (real under $20).
-   - A pistol costs more than a family sedan.
-   - Options:
-     - keep the prices as the game's progression ladder and present them as black-market prices;
-     - move toward real prices with an illegal markup of two to three times, and rebalance gear
-       progression.
-2. **Homes cost 10 to 15 times less than real.**
-   - Prices: studio apartment $9,000 (real $150,000+); townhouse $38,000 (real $300,000 to
-     $600,000); penthouse $160,000 (real $2 million+).
-   - A studio costs less than a used sedan.
-   - Options:
-     - present them as prepaid long leases;
-     - raise prices, which changes how fast players reach better energy.
-3. **Businesses are cheap and pay back in days.**
-   - Prices: a corner bar $8,750 (real $100,000+); a boutique hotel $22,500 (real millions).
-   - The hotel is cheaper than the nightclub ($95,000) and only two and a half times the bar.
-   - Options:
-     - fix only the order (the hotel above the nightclub);
-     - raise prices and income together by about ten times, which keeps the payback time.
-4. **Career pay at the top doesn't follow real pay.**
-   - Rank 8 vigilantes are the best paid of all, though vigilantes aren't a paid profession.
-   - Top doctors and bankers earn about the same as police chiefs, where in real life they earn two
-     to three times more.
-   - Mechanics, hackers and the fire service stop at rank 7.
+1. **Weapons and armor** keep their prices as the game's progression ladder, and are presented as
+   what they are: street prices for unregistered gear ("No paperwork, no serial numbers: street
+   prices"). Real black-market guns do sell at several times their shop price; the game goes
+   further on purpose.
+2. **Homes** are prepaid leases ("pay once and the place is yours to live in"), which fits the
+   prices far better than buying would. Your Place says "Lease a place here first".
+3. **Businesses** keep their quick payback (game time), but the order is fixed: the boutique
+   hotel is now $140,000 earning about $280 an hour, above the nightclub ($95,000), with the same
+   payback of about 21 days. Nobody owned one, so nobody's income changed under them.
+4. **Top career pay** follows real pay more closely. Doctors and bankers at ranks 6 and 8 earn
+   15% more (up to $530 a job at the top). Vigilantes at ranks 6 and 8 earn 15% less (up to
+   $510). Top doctors and bankers are now the best paid, ahead of vigilantes and police chiefs
+   (up to $360). Mechanics, hackers and the fire service still stop at rank 7.

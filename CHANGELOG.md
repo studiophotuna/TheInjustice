@@ -1,5 +1,19 @@
 # Changelog
 
+## 7.13.0: the four realism decisions
+
+- **Weapons and armor are street prices.** The Shop says so: "No paperwork, no serial numbers:
+  street prices." The prices themselves are the game's progression ladder and stay.
+- **Homes are prepaid leases.** The Shop's Housing section says "Prepaid leases: pay once and
+  the place is yours to live in". Your Place says "Lease a place here first".
+- **The boutique hotel costs more than the nightclub.** It's now $140,000 earning about $280 an
+  hour (was $22,500 and $46), with the same payback of about 21 days as every other business.
+  Nobody owned one.
+- **Top doctors and bankers are the best paid.** Their rank 6 and 8 jobs pay 15% more; top
+  vigilante jobs pay 15% less. At rank 8: doctors and bankers up to $530 a job, vigilantes up to
+  $510, police up to $360.
+- Details in `docs/REALISM.md`.
+
 ## 7.12.0: closer to real life
 
 A check of every price, wage, fee, sentence and rule against real life. The full findings are

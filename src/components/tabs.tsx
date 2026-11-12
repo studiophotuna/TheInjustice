@@ -395,8 +395,14 @@ export function ShopTab({ game }: { game: GameApi }) {
         </div>
       </section>
       )}
-      {cat !== "business" && cat !== "style" && cat !== "housing" && (
-        <p className="fine muted shop-tax">Prices include {Math.round(SALES_TAX * 100)}% city sales tax.</p>
+      {cat !== "business" && cat !== "style" && (
+        <p className="fine muted shop-tax">
+          {cat === "housing"
+            ? "Prepaid leases: pay once and the place is yours to live in. No sales tax on homes."
+            : cat === "weapon" || cat === "armor"
+              ? `No paperwork, no serial numbers: street prices. Includes ${Math.round(SALES_TAX * 100)}% city sales tax.`
+              : `Prices include ${Math.round(SALES_TAX * 100)}% city sales tax.`}
+        </p>
       )}
       {cat !== "business" && (
     <motion.div key={cat} className="shop-grid" variants={list} initial="hidden" animate="show">

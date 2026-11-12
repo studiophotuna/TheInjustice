@@ -92,7 +92,7 @@ export function CommandPalette({ game, go, open, setOpen }: { game: GameApi; go:
       { id: "inbox", group: "Go to", label: "Inbox", hint: view.inbox.unread ? `${view.inbox.unread} new` : undefined, run: () => go("people:inbox") },
       ...PLACES.map(([id, label, kw]) => ({
         id: `place-${id}`, group: "Places", label, keywords: kw,
-        block: id === "home" && !view.homeHere ? `Buy a place in ${view.location.city} first.` : null,
+        block: id === "home" && !view.homeHere ? `Lease a place in ${view.location.city} first.` : null,
         run: () => go(`place:${id}`),
       })),
       ...view.jobs.filter((j) => !j.locked).map((j) => ({

@@ -15,7 +15,7 @@ export const PROPERTIES: PropertyDef[] = [
   { id: "laundromat", name: "Gutter laundromat", country: "varrow", price: 2250, incomePerHour: 4, icon: "🧺", description: "Coin machines and a back room nobody asks about." },
   { id: "corner_bar", name: "Southside corner bar", country: "varrow", price: 8750, incomePerHour: 16, icon: "🍺", description: "Cheap beer, loyal regulars, and a jukebox from 1974." },
   { id: "beach_kiosk", name: "Boardwalk kiosk", country: "solmarra", price: 3000, incomePerHour: 6, icon: "🍹", description: "Cold drinks for sunburned tourists." },
-  { id: "boutique_hotel", name: "Boutique hotel", country: "solmarra", price: 22500, incomePerHour: 46, icon: "🏨", description: "Twelve rooms, ocean views, guests who pay in cash." },
+  { id: "boutique_hotel", name: "Boutique hotel", country: "solmarra", price: 140000, incomePerHour: 280, icon: "🏨", description: "Twelve rooms, ocean views, guests who pay in cash." },
   { id: "coal_depot", name: "Rail-yard coal depot", country: "kestrova", price: 2500, incomePerHour: 4, icon: "🚂", description: "The state buys every ton. Slowly, but it buys." },
   { id: "black_market_stall", name: "Checkpoint Row stall", country: "kestrova", price: 10000, incomePerHour: 20, icon: "📦", description: "Officially sells soap. Unofficially, everything else." },
   { id: "repair_shop", name: "Undercity repair shop", country: "meridian", price: 3750, incomePerHour: 8, icon: "🔌", description: "Fixing what the towers throw away." },
