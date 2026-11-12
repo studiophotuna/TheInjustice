@@ -399,8 +399,11 @@ page. Chapters of your story unlock as you go.
 **Careers.** Ten careers on the law and street sides: police, courts, medicine, banking,
 vigilante, enforcer (the family), military, mechanic, hacker and fire. Each has eight ranks, nearly all
 with their own photo, its own city work (the hospital ward, the fire log, the garage and so
-on), and experience for every job done. The Jobs page is a career track with a cover card for
-every job.
+on), and experience for every job done. Careers pay more than street work from rank 1, and every
+promotion is a raise. Professionals sell services to other players at their own price, listed in
+the Directory: surgery, lawyers on retainer, laundering, loans, garage work, record scrubs, night
+watch over your home (vigilantes) and fire inspections for your businesses (firefighters). The
+Jobs page is a career track with a cover card for every job.
 
 **A living city.** Twenty street regulars per city (`src/game/regulars.ts`) live like players, with limits:
 they work their careers, shop, eat, get treated, own spare gear, run for mayor and vote. The
