@@ -10,7 +10,7 @@ grow hidden stats that decide whether you survive.
 
 **Play online:** https://injustice-booking-cms.vercel.app
 
-**Current version:** 7.22.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
+**Current version:** 8.0.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
 [latest changes](#where-the-game-is-now) are summed up at the end of this page.
 
 ## Play it locally
@@ -425,6 +425,12 @@ ever shown in words, never as odds.
 
 **Favors.** The paid currency buys looks only: frames, name colours, banners, car paint and home
 decor, plus a season pass. It never buys power (see `docs/MONETIZATION.md`).
+
+**The look (8.0, "Street level").** One slim top bar (photo, energy, health, cash); on phones one
+dock with a Go button that does your work in one tap and opens the gym, food and first aid. Amber
+means act, green means money, red means danger, nothing else. Only page headlines shout. Home
+leads with your case and an "Up next" row; Work shows jobs on the first screen. The new rules live
+in `src/app/street.css`, loaded last.
 
 **The look (7.x).** The syndicate kit: Outfit and Plus Jakarta Sans, crimson, amber and green
 by meaning, glass panels and pills. One sheet of colours and sizes (`src/app/tokens.css`).

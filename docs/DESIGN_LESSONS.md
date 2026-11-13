@@ -133,3 +133,15 @@ size across the game, change it there.
 The first-day checklist is pinned to the top of Home, showing one next step at a time. A new
 player (no rank yet, barely into the first day) gets five coach marks once, after any recap or
 letter has been closed. They can be skipped, and each says what a thing is only once.
+
+## Street level (approved November 2026, 8.0.0)
+
+What the owner approved after a mockup and samples of every screen:
+
+- Chrome takes as little of a phone as possible: a 56px top bar and one dock. Before, the header,
+  banner, sub-tabs, quick bar and tab bar left content about half the screen.
+- One main action per screen, in amber. Red is only for fights, crime and danger.
+- Only the page headline is in big capitals; card titles are sentence case.
+- Even spacing: buttons, button rows and notes keep 10px from each other and the text around
+  them. Check it with a measuring script across every screen, not by eye.
+- Styles for the look live in `src/app/street.css`, loaded last.

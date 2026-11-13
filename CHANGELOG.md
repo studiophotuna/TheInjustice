@@ -1,5 +1,34 @@
 # Changelog
 
+## 8.0.0: Street level, a new look
+
+A redesign of every screen, approved from mockups and samples. Same photos, same fonts, much less
+in the way.
+
+- **One slim top bar.** Your photo, energy, health and cash (with dirty money under it) in one
+  56px row, instead of a name row plus four tiles. Tap your photo to open Me. Your record shows
+  only when it isn't clean. The "Save your character" banner moved to Me; a small dot on your
+  photo reminds guests.
+- **One dock on phones, with a Go button.** Home, Work, City and People sit around a big amber
+  Go button that does your work in one tap. The arrow beside it opens the gym, food and first aid.
+  The separate quick bar is gone, so a phone shows about a third more of each page.
+- **Colours mean one thing each.** Amber is energy and the main action (Go, work, follow the
+  lead); green is money; red is fights, crime and warnings only. Job buttons are amber now;
+  fight buttons stay red.
+- **Calmer titles.** Only each page's own headline is in big capitals. Card titles are sentence
+  case.
+- **Page titles with their switch.** Work shows "WORK" with Jobs / Fight & gym beside it. City is
+  titled with the city's name, with Places / Shop beside it. People and Me open on their own
+  headers.
+- **Home** leads with your case: the next lead as the headline, with the face of who it's about
+  leaning out of the card. Under it, "Up next" is a row of photo cards (a new chapter, a boss out
+  on the street, the best job, the election), each one tap.
+- **Work** opens on a compact career strip with the rank ladder, then your career's jobs as the
+  first filter before the districts, so jobs show on the first screen.
+- **Even spacing.** Buttons, rows of buttons and notes now keep the same gap from each other and
+  from the text around them everywhere.
+- Desktop keeps the side menu and the full quick bar, with the same top bar, colours and Home.
+
 ## 7.22.0: Work and Fight upgraded
 
 - **Fight:**
