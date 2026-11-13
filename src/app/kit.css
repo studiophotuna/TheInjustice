@@ -1,5 +1,5 @@
 /*
- * Conspira · kit (live-game style). Loaded last: it sets the tokens and the shared shapes every
+ * Crookvale · kit (live-game style). Loaded last: it sets the tokens and the shared shapes every
  * screen uses. Rules: one corner radius, pill buttons, one red for the main action, gold for
  * money, tinted tiles per category, a condensed display face for headlines and names only.
  * See docs/DESIGN_LESSONS.md before changing anything here.

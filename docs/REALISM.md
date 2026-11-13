@@ -1,6 +1,6 @@
 # Realism check: the game against real life
 
-Prices in Conspira are real-world dollars, and time is compressed (minutes stand in for days,
+Prices in Crookvale are real-world dollars, and time is compressed (minutes stand in for days,
 months or years). This check compares every price, wage, fee, sentence and rule with real life
 (United States, late 2020s), and lists what matches, what was fixed, and what's still different
 on purpose or waiting for a decision. Professional fees have their own table in `FEES.md`.

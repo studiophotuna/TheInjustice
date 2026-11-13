@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { InfoPage } from "@/components/InfoPage";
 
-export const metadata: Metadata = { title: "How to play · Conspira", description: "How Conspira works, from the Gutter to the top." };
+export const metadata: Metadata = { title: "How to play · Crookvale", description: "How Crookvale works, from the Gutter to the top." };
 
 export default function GuidePage() {
   return (
     <InfoPage kicker="Guide" title="How to play">
       <p className="lead">
-        You were framed, jailed and let out with nothing. Conspira is about climbing back: work, learn, pick a side, and decide what
+        You were framed, jailed and let out with nothing. Crookvale is about climbing back: work, learn, pick a side, and decide what
         kind of person you become on the way up. Here&apos;s how the city works.
       </p>
 

@@ -25,7 +25,7 @@ export function LogoMark({ size = 32 }: { size?: number }) {
   return <img className="logo-mark" src="/brand/mark.webp" width={size} height={Math.round(size * 1.17)} alt="" aria-hidden />;
 }
 
-export const GAME_NAME = "Conspira";
+export const GAME_NAME = "Crookvale";
 export const SLOGAN = "Every move has an agenda.";
 
 export function Logo({ small = false }: { small?: boolean }) {
@@ -33,7 +33,7 @@ export function Logo({ small = false }: { small?: boolean }) {
     <div className={`logo ${small ? "logo-sm" : ""}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       {small ? (
-        <img className="logo-word-img" src="/brand/wordmark-400.webp" width={170} height={50} alt={GAME_NAME} />
+        <img className="logo-word-img" src="/brand/wordmark-400.webp" width={170} height={49} alt={GAME_NAME} />
       ) : (
         <img className="logo-emblem" src="/brand/logo-640.webp" width={240} height={238} alt={GAME_NAME} />
       )}
@@ -400,7 +400,7 @@ export function AgeBlocked({ game }: { game: GameApi }) {
       <div className="landing-card glass age-gate">
         <Logo />
         <h2>Sorry</h2>
-        <p className="muted">Conspira isn&apos;t available to you. It has crime, violence and gambling themes, and it&apos;s made for adults.</p>
+        <p className="muted">Crookvale isn&apos;t available to you. It has crime, violence and gambling themes, and it&apos;s made for adults.</p>
         {game.account && <button className="btn btn-ghost" onClick={() => game.auth("logout")}>Log out</button>}
       </div>
     </div>

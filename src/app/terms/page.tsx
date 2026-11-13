@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { InfoPage, LEGAL } from "@/components/InfoPage";
 
-export const metadata: Metadata = { title: "Terms of service · Conspira", description: "The terms for playing Conspira." };
+export const metadata: Metadata = { title: "Terms of service · Crookvale", description: "The terms for playing Crookvale." };
 
 export default function TermsPage() {
   return (
     <InfoPage kicker="Terms" title="Terms of service" draft>
       <p className="lead">
-        These terms are the agreement between you and {LEGAL.studio} when you play Conspira. By playing you agree to them and to
+        These terms are the agreement between you and {LEGAL.studio} when you play Crookvale. By playing you agree to them and to
         the <a href="/rules">player rules</a>. If you don&apos;t agree, please don&apos;t play.
       </p>
 

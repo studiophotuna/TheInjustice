@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { InfoPage, LEGAL } from "@/components/InfoPage";
 
-export const metadata: Metadata = { title: "Refund policy · Conspira", description: "Refunds for Favors bought in Conspira." };
+export const metadata: Metadata = { title: "Refund policy · Crookvale", description: "Refunds for Favors bought in Crookvale." };
 
 export default function RefundsPage() {
   return (
     <InfoPage kicker="Refunds" title="Refund policy" draft>
       <p className="lead">
-        Favors are a virtual currency for looks in Conspira. Payments are handled by our reseller, Lemon Squeezy, who appears on
+        Favors are a virtual currency for looks in Crookvale. Payments are handled by our reseller, Lemon Squeezy, who appears on
         your statement and handles tax and receipts.
       </p>
 

@@ -1,11 +1,11 @@
-// Who may play. Conspira has crime, guns, drugs and a casino with simulated gambling, so it's for
+// Who may play. Crookvale has crime, guns, drugs and a casino with simulated gambling, so it's for
 // adults. The form asks for a birth date without saying the minimum age (a neutral age gate),
 // and the date is kept privately on the character. Change the age here.
 import { GameError } from "./types";
 
 export const AGE = { min: 18 };
 
-export const UNDERAGE = "Sorry, Conspira isn't available to you.";
+export const UNDERAGE = "Sorry, Crookvale isn't available to you.";
 
 /** Checks a "YYYY-MM-DD" birth date. Returns it, or throws a player-facing error. */
 export function parseBirthDate(raw: unknown, now: number): string {

@@ -1,4 +1,4 @@
-Sound effects: CC0 1.0 (public domain) recordings from sfxmint.com, trimmed and mixed for Conspira:
+Sound effects: CC0 1.0 (public domain) recordings from sfxmint.com, trimmed and mixed for Crookvale:
   coin.mp3   impact-coins-03
   cash.mp3   office-cash-register-05
   fight.mp3  impact-punch-04 + impact-punch-05 + impact-thud-11

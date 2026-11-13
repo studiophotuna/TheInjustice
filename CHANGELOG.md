@@ -1,5 +1,16 @@
 # Changelog
 
+## 8.3.0: the game is now Crookvale
+
+- **New name: Crookvale.** "Conspira" was already taken (not by a game), so the game has a name of
+  its own. Every place players see the name now says Crookvale: the page titles, the app name on
+  phones, the landing page, How to play, the rules, terms, privacy and refund pages, alerts and
+  shared story text.
+- **New logo:** the Crookvale wordmark (side menu, info pages) and badge (landing page), cut out
+  from the owner's artwork so they sit on the dark panels without a black box. The small mark,
+  favicon and app icons come from the same badge.
+- Internal names (saved settings, event names) are unchanged, so nobody's preferences reset.
+
 ## 8.2.0: new place art, part 1
 
 - **New art for four places:** the Academy, the Boardwalk, the Velvet Ace casino and the city view

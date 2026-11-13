@@ -4,7 +4,7 @@ import { AGE } from "@/game/age";
 
 /** Details only the owner can fill in. Until `final` is true the legal pages say they're a draft. */
 export const LEGAL = {
-  studio: "the Conspira team",
+  studio: "the Crookvale team",
   contact: "the Report button in the game, or the contact address we'll publish here before launch",
   updated: "7 November 2026",
   minAge: AGE.min,
@@ -22,9 +22,9 @@ export function InfoPage({ title, kicker, draft, children }: { title: string; ki
   return (
     <div className="info-page">
       <header className="info-head">
-        <a href="/" className="info-back" aria-label="Conspira, back to the game">
+        <a href="/" className="info-back" aria-label="Crookvale, back to the game">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/wordmark-400.webp" alt="Conspira" width={150} height={44} />
+          <img src="/brand/wordmark-400.webp" alt="Crookvale" width={150} height={43} />
         </a>
         <nav>
           {INFO_LINKS.map((l) => (

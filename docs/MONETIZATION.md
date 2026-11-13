@@ -1,4 +1,4 @@
-# Making money from Conspira
+# Making money from Crookvale
 
 The rules every paid feature follows. Decided with the owner in November 2026.
 

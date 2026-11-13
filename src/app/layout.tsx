@@ -15,7 +15,7 @@ const body = Plus_Jakarta_Sans({ weight: ["400", "500", "600", "700", "800"], su
 const display = Outfit({ weight: ["500", "600", "700", "800", "900"], subsets: ["latin"], display: "swap", variable: "--font-display" });
 
 export const metadata: Metadata = {
-  title: "Conspira · Every move has an agenda",
+  title: "Crookvale · Every move has an agenda",
   description: "Every move has an agenda. Framed, jailed and released with nothing: climb from the Gutter to power, and decide whose side you're on.",
   manifest: "/manifest.webmanifest",
   icons: {
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     ],
     apple: "/brand/apple-touch-icon.png",
   },
-  appleWebApp: { capable: true, title: "Conspira", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "Crookvale", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {

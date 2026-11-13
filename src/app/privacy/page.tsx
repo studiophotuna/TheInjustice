@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { InfoPage, LEGAL } from "@/components/InfoPage";
 
-export const metadata: Metadata = { title: "Privacy · Conspira", description: "What Conspira stores about you and why." };
+export const metadata: Metadata = { title: "Privacy · Crookvale", description: "What Crookvale stores about you and why." };
 
 export default function PrivacyPage() {
   return (
@@ -65,7 +65,7 @@ export default function PrivacyPage() {
 
       <h2>Children</h2>
       <p>
-        Conspira is for players aged {LEGAL.minAge} and up. If we learn a younger child has an account, we&apos;ll delete it.
+        Crookvale is for players aged {LEGAL.minAge} and up. If we learn a younger child has an account, we&apos;ll delete it.
       </p>
 
       <h2>Changes</h2>

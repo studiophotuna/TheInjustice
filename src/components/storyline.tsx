@@ -42,9 +42,9 @@ export function StoryLine({ game }: { game: GameApi }) {
 
   const share = async () => {
     const lines = [...view.journal].slice(-8).map((e) => `Day ${day(e.at)}: ${e.text}`);
-    const text = `${view.name} in Conspira\n${lines.join("\n")}\n\nEvery move has an agenda.`;
+    const text = `${view.name} in Crookvale\n${lines.join("\n")}\n\nEvery move has an agenda.`;
     try {
-      if (navigator.share) await navigator.share({ title: `${view.name} · Conspira`, text, url: window.location.origin });
+      if (navigator.share) await navigator.share({ title: `${view.name} · Crookvale`, text, url: window.location.origin });
       else {
         await navigator.clipboard.writeText(`${text}\n${window.location.origin}`);
         setCopied(true);

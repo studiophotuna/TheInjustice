@@ -60,13 +60,13 @@ export function dueAlerts(p: Player, since: number, now: number): Alert[] {
     add({ kind: "school", title: "A letter from the dean", body: "The school has made a decision about you.", url: "/?go=tab:profile", at: p.application.decideAt });
   }
   const news = (p.inbox ?? []).filter((n) => !n.read && within(n.at)).sort((a, b) => a.at - b.at);
-  for (const n of news) add({ kind: "street", title: n.fromName ?? "Conspira", body: n.text, url: "/?go=tab:people", at: n.at });
+  for (const n of news) add({ kind: "street", title: n.fromName ?? "Crookvale", body: n.text, url: "/?go=tab:people", at: n.at });
 
   out.sort((a, b) => a.at - b.at);
   if (out.length <= PUSH.maxPerTick) return out;
   const keep = out.slice(0, PUSH.maxPerTick - 1);
   const rest = out.length - keep.length;
-  return [...keep, { kind: "street", title: "Conspira", body: `${rest} more things happened while you were away.`, url: "/", at: now }];
+  return [...keep, { kind: "street", title: "Crookvale", body: `${rest} more things happened while you were away.`, url: "/", at: now }];
 }
 
 /** Adds (or refreshes) a phone's subscription. */

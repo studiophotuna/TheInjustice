@@ -1,6 +1,6 @@
 # Design lessons
 
-What we learned the hard way about Conspira's look. Read this before changing any screen.
+What we learned the hard way about Crookvale's look. Read this before changing any screen.
 
 ## The problem we're solving
 
@@ -62,7 +62,7 @@ the fix is mostly **composition and system**, not a theme.
   from the name alone, and never give two people in the same city the same face. Players choose
   their own face.
 - **Use references.** When the owner shares reference images, list what to take, where it goes in
-  Conspira, and what not to take, then mock it.
+  Crookvale, and what not to take, then mock it.
 - **Art is the bottleneck.** Background removal (`rembg`, model `isnet-general-use`) works on our
   portraits, but they are 360px video stills, so cut-outs are soft and some poses are unusable.
   Real fix: commission a consistent set of character cut-outs (15 to 20) and cover art.
@@ -77,7 +77,7 @@ the fix is mostly **composition and system**, not a theme.
 
 ## The brand (November 2026)
 
-- The official logo is the Conspira badge (`public/brand/logo-original.webp`): the eye in the
+- The official logo is the Crookvale badge (`public/brand/logo-original.webp`): the eye in the
   triangle over a die, cards, the scales of justice, crossed pistols, and a gold police shield
   with a skull, on red and black. The wordmark (`wordmark-original.webp`) is the name alone.
 - Badge where there's room (start screen, splash, app icons at 128px and up); wordmark where the

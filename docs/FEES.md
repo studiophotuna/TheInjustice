@@ -1,6 +1,6 @@
 # Professional fees: the real-life reference
 
-Shop prices in Conspira are real-world dollars: a sandwich is $8, a medkit $60, a rented room
+Shop prices in Crookvale are real-world dollars: a sandwich is $8, a medkit $60, a rented room
 $450, a family sedan $12,000. So fees for professional services are set against what the same
 service costs in real life (United States, paying cash, no insurance, late 2020s), not against
 an invented scale. Ranges are typical, not exact. Where the game is cheaper on purpose, the
@@ -75,7 +75,7 @@ Checked in 7.10.0. "Rank" is the professional's career rank (1 to 8).
 
 ## The city treasury (7.11.0)
 
-Real cities fund themselves from several taxes, and the state pays for state work. Conspira
+Real cities fund themselves from several taxes, and the state pays for state work. Crookvale
 now does the same.
 
 | Money in | Rate | Real life |

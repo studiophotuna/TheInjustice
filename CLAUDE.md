@@ -1,4 +1,4 @@
-# Conspira (TheInjustice)
+# Crookvale (TheInjustice)
 
 Web crime RPG: Next.js App Router, React, TypeScript. Game logic is pure modules in `src/game`,
 API routes in `src/app/api`, UI in `src/components`, styles in `src/app/globals.css` and

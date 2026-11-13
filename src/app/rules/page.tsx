@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { InfoPage } from "@/components/InfoPage";
 
-export const metadata: Metadata = { title: "Player rules · Conspira", description: "The rules every Conspira player agrees to." };
+export const metadata: Metadata = { title: "Player rules · Crookvale", description: "The rules every Crookvale player agrees to." };
 
 export default function RulesPage() {
   return (
     <InfoPage kicker="Rules" title="Player rules">
       <p className="lead">
-        Conspira is a game about crime. Inside the game, betray, rob and outplay each other as much as you like. These rules are
+        Crookvale is a game about crime. Inside the game, betray, rob and outplay each other as much as you like. These rules are
         about how you treat real people and the game itself.
       </p>
 
