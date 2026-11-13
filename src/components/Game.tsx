@@ -74,18 +74,34 @@ const PHONE_TABS: { id: Tab; label: string; Icon: typeof Briefcase }[] = [
   { id: "jobs", label: "Work", Icon: Briefcase },
   { id: "city", label: "City", Icon: MapIcon },
   { id: "people", label: "People", Icon: Users },
-  { id: "profile", label: "Me", Icon: UserRound },
 ];
+/** Each tab's page title (Home has none: its hero is the headline). */
+/** Work and City have two halves and a switch; People and Me open on their own headers. */
+const PAGE_TITLE: Partial<Record<Tab, string>> = { jobs: "Work", fight: "Work" };
 const PHONE_HOME: Partial<Record<Tab, Tab>> = { fight: "jobs", shop: "city" };
 
-/** Phones: the two halves of Work (jobs, fights) and of City (places, the shop). */
+/** The two halves of Work (jobs, fights) and of City (places, the shop). */
 function SubSwitch({ tab, go }: { tab: Tab; go: (to: string) => void }) {
-  const pair: [Tab, string][] = tab === "jobs" || tab === "fight" ? [["jobs", "Jobs"], ["fight", "Fight and gym"]] : [["city", "Places"], ["shop", "Shop"]];
+  const pair: [Tab, string][] = tab === "jobs" || tab === "fight" ? [["jobs", "Jobs"], ["fight", "Fight & gym"]] : [["city", "Places"], ["shop", "Shop"]];
   return (
     <div className="subswitch" role="tablist">
       {pair.map(([id, label]) => (
         <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? "on" : ""} onClick={() => go(`tab:${id}`)}>{label}</button>
       ))}
+    </div>
+  );
+}
+
+/** One big title per page, with its switch beside it. */
+function PageHead({ tab, go, city }: { tab: Tab; go: (to: string) => void; city: string }) {
+  // City and the Shop are titled with the city you're in.
+  const title = tab === "city" || tab === "shop" ? city : PAGE_TITLE[tab];
+  if (!title) return null;
+  const paired = tab === "jobs" || tab === "fight" || tab === "shop" || tab === "city";
+  return (
+    <div className="page-head">
+      <h1>{title}</h1>
+      {paired && <SubSwitch tab={tab} go={go} />}
     </div>
   );
 }
@@ -368,9 +384,9 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
       </nav>
 
       <div className="main">
-        <Hud view={view} live={live} onProfile={() => go("tab:profile")} onSearch={() => setPaletteOpen(true)} />
+        <Hud view={view} live={live} guest={!game.account} onProfile={() => go("tab:profile")} onSearch={() => setPaletteOpen(true)} />
 
-        <GuestChip game={game} onSave={() => setSaveOpen(true)} />
+        {tab === "profile" && <GuestChip game={game} onSave={() => setSaveOpen(true)} />}
 
         {view.travel && (
           <div className="travel-banner">
@@ -399,7 +415,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
         <AnimatePresence mode="wait">
           <motion.main key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.22 }}>
             {tab === "home" && <HomeTab game={game} go={go} onRead={setReading} />}
-            {(tab === "jobs" || tab === "fight" || tab === "shop" || (tab === "city" && !place)) && <SubSwitch tab={tab} go={go} />}
+            {!(tab === "city" && place) && <PageHead tab={tab} go={go} city={view.location.city} />}
             {tab === "jobs" && <JobsTab game={game} highlight={highlight} />}
             {tab === "fight" && <FightTab game={game} />}
             {tab === "shop" && <ShopTab game={game} />}
@@ -432,14 +448,14 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
       />
 
       <nav className="bottomnav glass" aria-label="Main">
-        {PHONE_TABS.map(({ id, label, Icon }) => (
+        {PHONE_TABS.flatMap(({ id, label, Icon }, i) => [
+          ...(i === 2 ? [<span key="go-gap" className="dock-gap" aria-hidden />] : []),
           <button key={id} data-tab={id} className={tab === id || PHONE_HOME[tab] === id ? "on" : ""} aria-current={tab === id || PHONE_HOME[tab] === id ? "page" : undefined} onClick={() => go(`tab:${id}`)}>
-            {(tab === id || PHONE_HOME[tab] === id) && <motion.span layoutId="bottom-pill" className="bottom-pill" />}
             <Icon size={22} />
             <span>{label}</span>
             {id === "people" && view.inbox.unread + view.sightings.length > 0 && <span className="badge-dot nav-dot">{view.inbox.unread + view.sightings.length}</span>}
-          </button>
-        ))}
+          </button>,
+        ])}
       </nav>
 
       <AnimatePresence>{reading && <ChapterViewer key={reading} id={reading} onDone={closeChapter} />}</AnimatePresence>
@@ -512,7 +528,7 @@ function Shell({ game, view }: { game: GameApi; view: PublicView }) {
 /** $6,300 -> $6.3k, for tight spots. */
 const shortMoney = (n: number) => (n >= 1_000_000 ? `$${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1)}m` : n >= 1_000 ? `$${(n / 1_000).toFixed(n >= 10_000 ? 0 : 1)}k` : `$${n}`);
 
-function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonNullable<GameApi["live"]>; onProfile: () => void; onSearch: () => void }) {
+function Hud({ view, live, guest, onProfile, onSearch }: { view: PublicView; live: NonNullable<GameApi["live"]>; guest: boolean; onProfile: () => void; onSearch: () => void }) {
   const heatTone = { Clean: "ok", Noticed: "warn", Wanted: "hot", "Most wanted": "hot" }[view.heatLabel];
   const ladder = view.ladder;
   // The ring around your face fills as you work toward your next rank.
@@ -549,52 +565,44 @@ function Hud({ view, live, onProfile, onSearch }: { view: PublicView; live: NonN
   return (
     <>
     <div className="hud-spacer" style={{ height: full }} aria-hidden />
-    <header ref={ref} className="hud">
-      <div className="hud-top">
-        <button className={`hud-avatar${view.look?.frame ? " framed" : ""}`} onClick={onProfile} aria-label="Open your profile" style={{ ["--p" as string]: `${progress}%`, ["--rim" as string]: view.path ? PATH_LOOKS[view.path.id]?.rim : "#8d96a8" }}>
-          <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo ?? careerStill(view.path?.id, view.ladder?.current)} look={view.look} className="avatar-sm" />
-        </button>
-        <div className="hud-who">
-          <b className={`hud-name ${nameClass(view.look?.color)}`}>{view.name}<NameFx color={view.look?.color} /></b>
-          <span className="hud-title">{view.path ? `${view.path.rank} · ${view.path.name}` : `Nobody · ${view.location.city}`}</span>
-        </div>
-        <button className="hud-search" onClick={onSearch} aria-label="Search and do anything (Ctrl+K)" title="Do anything (Ctrl+K)">
-          <Search size={18} />
-        </button>
-        <SoundToggle />
+    <header ref={ref} className="hud hud-slim">
+      {/* One row: your photo (opens Me), energy, health, cash. The record shows only when it isn't clean. */}
+      <button className={`hud-avatar${view.look?.frame ? " framed" : ""}`} onClick={onProfile} aria-label={guest ? "Open your profile. Save your character there." : "Open your profile"} style={{ ["--p" as string]: `${progress}%`, ["--rim" as string]: view.path ? PATH_LOOKS[view.path.id]?.rim : "#8d96a8" }}>
+        <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo ?? careerStill(view.path?.id, view.ladder?.current)} look={view.look} className="avatar-sm" />
+        {guest && <i className="hud-guest-dot" aria-hidden />}
+      </button>
+      <div className="hud-who">
+        <b className={`hud-name ${nameClass(view.look?.color)}`}>{view.name}<NameFx color={view.look?.color} /></b>
+        <span className="hud-title">{view.path ? `${view.path.rank} · ${view.path.name}` : `Nobody · ${view.location.city}`}</span>
       </div>
-      {/* Vitals: four tiles, each with its own color everywhere. The record is a word, never a number. */}
-      <div className="hud-vitals">
-        <button className={`vital vital-hp ${hurt ? "hurt" : ""}`} title={healthTip} onClick={tap(healthTip)}>
-          <span className="vital-k">{hurt ? "Clinic" : "Health"}</span>
-          <span className="vital-v">{hurt ? fmt(live.hospital) : `${view.hp}/${view.maxHp}`}</span>
-          <i className="vital-bar"><span style={{ width: `${hurt ? 0 : Math.round((view.hp / view.maxHp) * 100)}%` }} /></i>
-        </button>
-        <button className={`vital vital-en ${live.energy >= view.maxEnergy ? "full" : ""}`} title={energyTip} onClick={tap(energyTip)}>
-          <span className="vital-k">Energy</span>
-          <span className="vital-v">{live.energy}<small>{live.energy >= view.maxEnergy ? " full" : ` +1 ${fmt(live.nextIn)}`}</small></span>
-          <i className="vital-bar"><span style={{ width: `${Math.round((live.energy / view.maxEnergy) * 100)}%` }} /></i>
-        </button>
-        <span className="vital vital-cash" role="button" tabIndex={0} title={`Cash on you. In the bank: $${view.bank.toLocaleString()}.`} onClick={tap(`Cash on you. In the bank: $${view.bank.toLocaleString()}.${view.dirty > 0 ? ` Dirty money: $${view.dirty.toLocaleString()}. Clean it before the bank or shops will take it.` : ""}`)}>
-          <span className="vital-k">Cash</span>
-          <span className="vital-v"><Delta value={view.cash} prefix="$" />$<Counter value={view.cash} className="cash" prefix="" /></span>
-          {view.dirty > 0 ? <small className="vital-sub">+{shortMoney(view.dirty)} dirty</small> : null}
-          <button className="pill-plus" aria-label="Open the bank" title={`Bank: $${view.bank.toLocaleString()}`} onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent("injustice:go", { detail: "place:bank" })); }}>+</button>
-        </span>
-        <button className={`vital vital-rec heat-${heatTone}`} title="Your record with the police." onClick={tap(`Your record: ${view.heatLabel}. ${view.heatLabel === "Clean" ? "The police have nothing on you." : "Lie low, or get it scrubbed."}`)}>
-          <span className="vital-k">Record</span>
-          <span className="vital-v">{view.heatLabel}</span>
-        </button>
-      </div>
+      <button className={`hmeter hm-energy ${live.energy >= view.maxEnergy ? "full" : ""}`} title={energyTip} onClick={tap(energyTip)} aria-label={`Energy ${live.energy} of ${view.maxEnergy}`}>
+        <b><Zap size={13} strokeWidth={2.6} />{live.energy}</b>
+        <i><span style={{ width: `${Math.round((live.energy / view.maxEnergy) * 100)}%` }} /></i>
+      </button>
+      <button className={`hmeter hm-health ${hurt ? "hurt" : ""}`} title={healthTip} onClick={tap(healthTip)} aria-label={hurt ? `In the clinic for ${fmt(live.hospital)}` : `Health ${view.hp} of ${view.maxHp}`}>
+        <b><Heart size={13} strokeWidth={2.6} fill="currentColor" />{hurt ? fmt(live.hospital) : view.hp}</b>
+        <i><span style={{ width: `${hurt ? 0 : Math.round((view.hp / view.maxHp) * 100)}%` }} /></i>
+      </button>
+      <button className="hcash" title={`Cash on you. In the bank: $${view.bank.toLocaleString()}.`} onClick={tap(`Cash on you. In the bank: $${view.bank.toLocaleString()}.${view.dirty > 0 ? ` Dirty money: $${view.dirty.toLocaleString()}. Clean it before the bank or shops will take it.` : ""}`)}>
+        <b><Delta value={view.cash} prefix="$" />$<Counter value={view.cash} className="cash" prefix="" /></b>
+        {view.dirty > 0 && <small>{shortMoney(view.dirty)} dirty</small>}
+      </button>
+      <button className="hud-search" onClick={onSearch} aria-label="Search and do anything (Ctrl+K)" title="Do anything (Ctrl+K)">
+        <Search size={18} />
+      </button>
+      <SoundToggle />
       {tip && <p className="hud-tip" role="status" onClick={() => setTip(null)}>{tip}</p>}
-      <div className="hud-tags">
-        {view.immuneUntil > Date.now() && (
-          <span className="tag tag-good" title="You survived a fight. Nobody can attack or mug you for a while. Attacking someone ends it.">
-            <ShieldCheck size={12} /> Safe {fmt(view.immuneUntil - Date.now())}
-          </span>
-        )}
-        {view.onBail && <span className="tag tag-warn">On bail</span>}
-      </div>
+      {(view.immuneUntil > Date.now() || view.onBail || view.heatLabel !== "Clean") && (
+        <div className="hud-tags">
+          {view.heatLabel !== "Clean" && <span className={`tag tag-heat heat-${heatTone}`}>Record: {view.heatLabel}</span>}
+          {view.immuneUntil > Date.now() && (
+            <span className="tag tag-good" title="You survived a fight. Nobody can attack or mug you for a while. Attacking someone ends it.">
+              <ShieldCheck size={12} /> Safe {fmt(view.immuneUntil - Date.now())}
+            </span>
+          )}
+          {view.onBail && <span className="tag tag-warn">On bail</span>}
+        </div>
+      )}
     </header>
     </>
   );

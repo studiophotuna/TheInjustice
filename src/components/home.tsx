@@ -77,7 +77,7 @@ export function HomeTab({ game, go, onRead }: { game: GameApi; go: (target: stri
       <DayOne game={game} go={go} />
       <CaseHero game={game} go={go} />
       <WorkStrip game={game} sub={sub} />
-      <Stories game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} war={pulse?.stats?.war} heavies={pulse?.heavies} fires={pulse?.stats?.fires} election={pulse?.stats?.election} />
+      <Stories rail game={game} go={go} needs={pulse?.needs ?? []} onRead={onRead} war={pulse?.stats?.war} heavies={pulse?.heavies} fires={pulse?.stats?.fires} election={pulse?.stats?.election} />
 
       <DisposalCard game={game} />
       <OnTheRun game={game} />

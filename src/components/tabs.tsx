@@ -98,22 +98,37 @@ export function JobsTab({ game, highlight }: { game: GameApi; highlight: string 
   // One district at a time keeps the page short; default to the best open one.
   const [district, setDistrict] = useState<string | null>(null);
   const best = view.jobs.find((j) => j.id === view.recommendedJobId)?.district;
-  const shown =
-    view.districts.find((d) => d.id === district) ??
-    view.districts.find((d) => d.id === best && !d.locked) ??
-    view.districts.find((d) => !d.locked) ??
-    view.districts[0];
+  const hasCareer = !!view.path && careerJobs.length > 0;
+  const onCareer = hasCareer && (district === null || district === "career");
+  const shown = onCareer
+    ? null
+    : view.districts.find((d) => d.id === district) ??
+      view.districts.find((d) => d.id === best && !d.locked) ??
+      view.districts.find((d) => !d.locked) ??
+      view.districts[0];
   // A job deep link (pop-up "Go") opens its district.
   useEffect(() => {
     const target = highlight ? view.jobs.find((j) => j.id === highlight) : null;
-    if (target && !target.pathJob) setDistrict(target.district);
+    if (target) setDistrict(target.pathJob ? "career" : target.district);
   }, [highlight, view.jobs]);
 
   return (
     <div className="stack">
-      {view.path && careerJobs.length > 0 && (
+      {view.path && <CareerTrack game={game} />}
+      <div className="district-chips" role="tablist">
+        {hasCareer && (
+          <button role="tab" aria-selected={onCareer} className={`chip-btn ${onCareer ? "on" : ""}`} onClick={() => setDistrict("career")}>
+            {view.path!.name}
+          </button>
+        )}
+        {view.districts.map((d) => (
+          <button key={d.id} role="tab" aria-selected={d.id === shown?.id} className={`chip-btn ${d.id === shown?.id ? "on" : ""}`} onClick={() => setDistrict(d.id)}>
+            {d.locked && <Lock size={11} />} {d.name}
+          </button>
+        ))}
+      </div>
+      {onCareer && (
         <>
-          <CareerTrack game={game} />
           <motion.div className="cover-grid" variants={list} initial="hidden" animate="show">
             {withCovers(careerJobs.sort((a, b) => Number(!!a.locked) - Number(!!b.locked) || b.pay[1] - a.pay[1]), view.path?.id).map(([j, cover], i) => (
               <JobCard key={j.id} job={j} cover={cover} big={i === 0 && !j.locked} energy={energy} regenMs={view.energyRegenMs} blocked={blocked} best={j.id === view.recommendedJobId} flash={j.id === highlight} onWork={() => game.act({ type: "job", jobId: j.id })} />
@@ -121,14 +136,6 @@ export function JobsTab({ game, highlight }: { game: GameApi; highlight: string 
           </motion.div>
         </>
       )}
-      <ServiceCard game={game} />
-      <div className="district-chips" role="tablist">
-        {view.districts.map((d) => (
-          <button key={d.id} role="tab" aria-selected={d.id === shown?.id} className={`chip-btn ${d.id === shown?.id ? "on" : ""}`} onClick={() => setDistrict(d.id)}>
-            {d.locked && <Lock size={11} />} {d.name}
-          </button>
-        ))}
-      </div>
       {shown && [shown].map((d) => {
         const jobs = view.jobs.filter((j) => j.district === d.id && !j.pathJob && !d.locked);
         return (
@@ -154,6 +161,7 @@ export function JobsTab({ game, highlight }: { game: GameApi; highlight: string 
           </section>
         );
       })}
+      <ServiceCard game={game} />
     </div>
   );
 }
@@ -209,15 +217,11 @@ function CareerTrack({ game }: { game: GameApi }) {
   const ladder = view.ladder;
   const photo = view.profile.photo ?? careerStill(path.id, ladder?.current);
   return (
-    <section className="card track" style={{ ["--path" as string]: PATH_LOOKS[path.id].rim }}>
-      <div className="track-art" style={{ backgroundImage: `url(/scenes/${ME_SCENE[path.id] ?? "street"}.jpg)` }}>
-        <div className="track-rank">
-          <span className="label tone-amber-t">{path.name}{ladder ? ` · rank ${ladder.current} of ${ladder.ranks.length}` : ""}</span>
-          <h2>{path.rank}</h2>
-        </div>
-        {photo && <div className="track-photo"><img src={photo} alt="" /></div>}
-      </div>
+    <section className="card track track-strip" style={{ ["--path" as string]: PATH_LOOKS[path.id].rim }}>
+      {photo && <img className="track-face" src={photo} alt="" />}
       <div className="track-body">
+        <span className="label tone-amber-t">{path.name}{ladder ? ` · rank ${ladder.current} of ${ladder.ranks.length}` : ""}</span>
+        <h2>{path.rank}</h2>
         {ladder && <Ladder ranks={ladder.ranks} current={ladder.current} promo={view.promo} />}
         {path.promotion && <p className="track-note">{path.promotion}</p>}
         {view.promo?.statsHint && view.promo.work >= 60 && <p className="fine promo-hint">{view.promo.statsHint}</p>}

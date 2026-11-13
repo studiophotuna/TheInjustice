@@ -4,6 +4,7 @@
 // out of, tinted tiles for the state of the city, and the big fish leaning out of his card.
 
 import { useEffect, useState, type ReactNode } from "react";
+import { Zap } from "lucide-react";
 import { CareerPortrait } from "./art/CareerPortrait";
 import { FxName, NAME_FX, type NameFxKind } from "./art/FxRing";
 import { cutoutFor, faceCutout } from "./art/Cutout";
@@ -54,12 +55,18 @@ function EventSheet({ game, go, close }: { game: GameApi; go: (t: string) => voi
   );
 }
 
-type Story = { key: string; label: string; img: string; fresh: boolean; sub?: string; run: () => unknown };
+type Story = {
+  key: string; label: string; img: string; fresh: boolean; sub?: string; run: () => unknown;
+  /** The Up next card: a tag, a title, one line and a button. Stories without a cta stay off the rail. */
+  tag?: string; title?: string; line?: string; cta?: ReactNode; tone?: "go" | "fight" | "ghost";
+};
 
 const NEED_ART: Record<string, string> = { ambush: "street", heist: "bank", breakout: "prison", war: "street" };
+/** District photos whose file name differs from the district id. */
+const DISTRICT_ART: Record<string, string> = { precinct_square: "precinct", casino_strip: "casino", checkpoint_row: "checkpoint", glass_quarter: "highrise" };
 
 /** Everything worth a tap right now, as a row of circles. Gold rings are new or ready. */
-export function Stories({ game, go, needs, onRead, war, heavies, fires, election }: { game: GameApi; go: (t: string) => void; needs: CrewNeed[]; onRead: (id: string) => void; war?: string | null; heavies?: Heavy[]; fires?: number; election?: boolean }) {
+export function Stories({ game, go, needs, onRead, war, heavies, fires, election, rail = false }: { game: GameApi; go: (t: string) => void; needs: CrewNeed[]; onRead: (id: string) => void; war?: string | null; heavies?: Heavy[]; fires?: number; election?: boolean; rail?: boolean }) {
   const view = game.view!;
   const live = game.live!;
   const [showEvent, setShowEvent] = useState(false);
@@ -67,28 +74,51 @@ export function Stories({ game, go, needs, onRead, war, heavies, fires, election
   const scene = (n: string) => `/scenes/${n}.jpg`;
   const chapter = view.chapters.find((c) => c.unlocked && !c.read);
   // The city first: what's going on out there tonight.
-  if (chapter) s.push({ key: "chapter", label: chapter.title.split(" · ")[0], img: scene("interrogation"), fresh: true, run: () => onRead(chapter.id) });
+  if (chapter) s.push({ key: "chapter", label: chapter.title.split(" · ")[0], img: scene("interrogation"), fresh: true, run: () => onRead(chapter.id), tag: "New chapter", title: chapter.title.split(" · ").slice(-1)[0], line: chapter.title.split(" · ")[0], cta: "Read" });
   const boss = heavies?.find((h) => h.out && h.status !== "hospital");
-  if (boss?.photo) s.push({ key: "boss", label: "Big fish", img: boss.photo, fresh: true, run: () => go(`person:${boss.id}`) });
-  if (fires) s.push({ key: "fire", label: "Fire!", img: "/portraits/fire-7.jpg", fresh: true, run: () => go("place:firehouse") });
-  if (election) s.push({ key: "election", label: "Election", img: scene("cityhall"), fresh: false, run: () => go("place:cityhall") });
-  if (war) s.push({ key: "war", label: "Turf war", img: scene("street"), fresh: true, run: () => go("place:cityhall") });
-  for (const n of needs) s.push({ key: `need-${n.kind}`, label: n.cta, img: scene(NEED_ART[n.kind] ?? "street"), fresh: true, run: () => go(n.go) });
+  if (boss?.photo) s.push({ key: "boss", label: "Big fish", img: boss.photo, fresh: true, run: () => go(`person:${boss.id}`), tag: "Out now", title: boss.name, line: `Runs the street · ${boss.title}`, cta: "Take him on", tone: "fight" });
+  // The best work going, one tap (the Go button does your career's work).
+  const best = view.jobs.find((j) => j.id === view.recommendedJobId && !j.locked);
+  if (best && rail && !view.jail && !view.travel && live.hospital === 0) s.push({ key: "best", label: best.name, img: scene(DISTRICT_ART[best.district] ?? best.district.replace(/_/g, "")), fresh: true, run: () => game.act({ type: "job", jobId: best.id }), tag: "Best now", title: best.name, line: `$${best.pay[0]}–${best.pay[1]} · ${view.districts.find((d) => d.id === best.district)?.name ?? ""}`, cta: <><Zap size={13} strokeWidth={2.6} fill="currentColor" />{best.energy}</> });
+  if (fires) s.push({ key: "fire", label: "Fire!", img: "/portraits/fire-7.jpg", fresh: true, run: () => go("place:firehouse"), tag: "Fire", title: fires === 1 ? "A fire in the city" : `${fires} fires in the city`, line: "Someone's livelihood is burning.", cta: "Go", tone: "fight" });
+  if (election) s.push({ key: "election", label: "Election", img: scene("cityhall"), fresh: false, run: () => go("place:cityhall"), tag: "Election", title: "City Hall is voting", line: "Vote, or run yourself.", cta: "City Hall", tone: "ghost" });
+  if (war) s.push({ key: "war", label: "Turf war", img: scene("street"), fresh: true, run: () => go("place:cityhall"), tag: "Turf war", title: "Crews at war", line: "Settled when the clock runs out.", cta: "Watch", tone: "fight" });
+  for (const n of needs) s.push({ key: `need-${n.kind}`, label: n.cta, img: scene(NEED_ART[n.kind] ?? "street"), fresh: true, run: () => go(n.go), tag: "Your crew", title: n.cta, cta: "Go" });
   // No "Daily reward" bubble: the Daily card further down Home already has the button.
   const unread = view.inbox.items.filter((i) => !i.read).length;
-  if (unread) s.push({ key: "inbox", label: `${unread} message${unread > 1 ? "s" : ""}`, img: scene("city"), fresh: true, run: () => go("people:inbox") });
+  if (unread) s.push({ key: "inbox", label: `${unread} message${unread > 1 ? "s" : ""}`, img: scene("city"), fresh: true, run: () => go("people:inbox"), tag: "Inbox", title: `${unread} new message${unread > 1 ? "s" : ""}`, line: "Who's been asking about you.", cta: "Read", tone: "ghost" });
   const risky = view.dirty > 0 || view.stash.drugs.some((d) => d.onYou > 0);
-  if (risky && view.stash.spot && !view.travel && !view.jail) s.push({ key: "stash", label: "Hide it", img: scene("highrise"), fresh: true, run: () => game.act({ type: "stash", op: "put_all" }) });
+  if (risky && view.stash.spot && !view.travel && !view.jail) s.push({ key: "stash", label: "Hide it", img: scene("highrise"), fresh: true, run: () => game.act({ type: "stash", op: "put_all" }), tag: "On you", title: "Hide what you're carrying", line: "Dirty money and drugs go in your stash.", cta: "Hide it", tone: "ghost" });
   const dog = view.dog.dog;
-  if (dog && dog.state === "hungry" && !view.travel) s.push({ key: "dog", label: `Feed ${dog.name}`, img: scene("highrise"), fresh: true, run: () => game.act({ type: "dog_feed" }) });
+  if (dog && dog.state === "hungry" && !view.travel) s.push({ key: "dog", label: `Feed ${dog.name}`, img: scene("highrise"), fresh: true, run: () => game.act({ type: "dog_feed" }), tag: "Your dog", title: `${dog.name} is hungry`, cta: "Feed", tone: "ghost" });
   const medic = view.specialties.find((x) => x.id === "combat_medic" && x.tier > 0);
   if (medic?.ready && view.hp < view.maxHp) s.push({ key: "dressing", label: "Patch up", img: scene("hospital"), fresh: true, run: () => game.act({ type: "field_dressing" }) });
   if (live.full === 0 && live.energy < view.maxEnergy) s.push({ key: "food", label: "Eat", img: scene("oldmarket"), fresh: true, run: () => go("tab:shop") });
-  if (view.event) s.push({ key: "event", label: view.event.name, img: scene(EVENT_SCENE[view.event.id] ?? "city"), fresh: true, run: () => setShowEvent(true) });
+  if (view.event) s.push({ key: "event", label: view.event.name, img: scene(EVENT_SCENE[view.event.id] ?? "city"), fresh: true, run: () => setShowEvent(true), tag: "Today", title: view.event.name, cta: "What's on", tone: "ghost" });
   // Timers: grey rings with the time left.
   if (live.fullIn > 0) s.push({ key: "energy", label: "Energy full", sub: fmt(live.fullIn), img: scene("ironrow"), fresh: false, run: () => go("tab:jobs") });
   if (live.hospital > 0) s.push({ key: "clinic", label: "Clinic", sub: fmt(live.hospital), img: scene("hospital"), fresh: false, run: () => undefined });
   if (view.travel) s.push({ key: "travel", label: view.travel.city, sub: fmt(live.travel), img: scene("station"), fresh: false, run: () => undefined });
+  if (rail) {
+    const cards = s.filter((x) => x.cta);
+    if (!cards.length) return null;
+    return (
+      <section className="upnext">
+        {showEvent && <EventSheet game={game} go={go} close={() => setShowEvent(false)} />}
+        <div className="sec-head"><h2>Up next</h2></div>
+        <div className="upnext-rail" role="list">
+          {cards.map((x) => (
+            <article key={x.key} role="listitem" className="upnext-card" style={{ backgroundImage: `url(${x.img})` }}>
+              <span className={`upnext-tag tone-${x.tone ?? "go"}`}>{x.tag}</span>
+              <h3>{x.title}</h3>
+              {x.line && <p>{x.line}</p>}
+              <button className={`btn btn-sm ${x.tone === "fight" ? "btn-danger" : x.tone === "ghost" ? "btn-ghost" : "btn-primary"}`} disabled={game.busy} onClick={() => x.run()}>{x.cta}</button>
+            </article>
+          ))}
+        </div>
+      </section>
+    );
+  }
   if (!s.length) return null;
   return (
     <>

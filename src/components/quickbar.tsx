@@ -36,6 +36,8 @@ export function QuickBar({ game }: { game: GameApi }) {
   const [lastJob, setLastJob] = useState<string | null>(null);
   const [lastGym, setLastGym] = useState<Stat>("strength");
   const [pick, setPick] = useState<"food" | "medical" | "job" | "gym" | null>(null);
+  // Phones: the four slots fold into a sheet behind the Go button.
+  const [sheet, setSheet] = useState(false);
   useEffect(() => {
     setLastJob(readKey(LAST_JOB));
     setLastGym((readKey(LAST_GYM) as Stat | null) ?? "strength");
@@ -180,7 +182,21 @@ export function QuickBar({ game }: { game: GameApi }) {
   const GYM = (["strength", "toughness", "agility"] as const).map((id) => ({ id, name: GYM_NAME[id] }));
 
   return (
-    <div className="quickbar" role="toolbar" aria-label="Quick actions">
+    <div className={`quickbar${sheet ? " open" : ""}`} role="toolbar" aria-label="Quick actions">
+      {/* Phones: Go does your work in one tap; the arrow opens the gym, food and first aid. */}
+      <button
+        className="qorb"
+        disabled={game.busy || !!slots[0].block}
+        title={slots[0].block ?? `${slots[0].label}: ${slots[0].cost ?? ""} energy`}
+        aria-label={slots[0].block ? `Work: ${slots[0].block}` : `Do ${slots[0].label}, ${slots[0].cost} energy`}
+        onClick={() => { setSheet(false); slots[0].run(); }}
+      >
+        <span className="qorb-disc"><Zap size={22} strokeWidth={2.6} fill="currentColor" /><small>Go</small></span>
+        <span className="qorb-label">{slots[0].block && slots[0].block.length < 22 ? slots[0].block : job ? `${job.name} · ${job.energy}` : "No work here"}</span>
+      </button>
+      <button className={`qorb-more${sheet ? " on" : ""}`} aria-label={sheet ? "Close quick actions" : "Gym, food and first aid"} aria-expanded={sheet} onClick={() => { setPick(null); setSheet(!sheet); }}>
+        <ChevronUp size={14} strokeWidth={3} />
+      </button>
       {pick === "job" && (
         <div className="qpick" role="menu" aria-label="Choose your work">
           {careerJobs.length > 0 && <span className="qpick-head">Your career</span>}
@@ -249,7 +265,7 @@ export function QuickBar({ game }: { game: GameApi }) {
             <ChevronUp size={12} strokeWidth={3} />
           </button>
         )}
-        <button className={`qslot q-${s.tone}${s.shop ? " q-empty" : ""}`} disabled={game.busy || (!!s.block && !s.shop)} title={s.shop ? "Nothing on you. Tap to go to the Shop." : s.block ?? `${s.label} (key ${s.key})`} onClick={s.run}>
+        <button className={`qslot q-${s.tone}${s.shop ? " q-empty" : ""}`} disabled={game.busy || (!!s.block && !s.shop)} title={s.shop ? "Nothing on you. Tap to go to the Shop." : s.block ?? `${s.label} (key ${s.key})`} onClick={() => { s.run(); setSheet(false); }}>
           <span className="qkey">{s.key}</span>
           <s.Icon size={20} className="qicon" />
           <span className="qtext">
