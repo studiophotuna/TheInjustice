@@ -71,7 +71,8 @@
 .hud-slim .hud-tags { padding: 0; }
 .tag-heat { background: rgba(255, 84, 81, 0.14); color: var(--crimson-soft); }
 @media (min-width: 960px) {
-  .hud.hud-slim { margin: 0 -24px; padding: 10px 24px !important; }
+  /* Desktop: the bar spans the middle column exactly, never under the side menu or the right rail. */
+  .hud.hud-slim { margin: 0 !important; padding: 10px 24px !important; }
   .hud-slim .hud-who { display: grid; }
   .hud-slim .hcash { margin-left: 0; }
   .hud-slim .hud-sound { display: grid; }

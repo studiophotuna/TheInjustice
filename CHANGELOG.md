@@ -1,5 +1,11 @@
 # Changelog
 
+## 8.0.3: the desktop top bar stays in its column
+
+- Fixed: on desktop the top bar reached 24px under the side menu (cutting off the logo and the
+  first letter of your name) and 24px under the right-hand panel. It now spans exactly the middle
+  column at every screen width, with its contents 24px in from each edge.
+
 ## 8.0.2: a lower dock, and the gut read explained
 
 - **The dock sits lower on phones.** It was 8px plus the whole home-bar area above the bottom
