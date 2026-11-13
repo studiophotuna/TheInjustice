@@ -72,3 +72,12 @@ art drops in place:
 
 `halcyon.*` (a recognisable real skyline) is no longer used for the city of Halcyon; it stays only
 as the "Halcyon" cosmetic banner that players may own.
+
+## AI place art (November 2026 onwards)
+
+Scenes listed in `src/components/art/aiStills.ts` are new stills generated with
+[FLUX.1-schnell](https://hf.co/black-forest-labs/FLUX.1-schnell) (Black Forest Labs, Apache 2.0,
+commercial use allowed) through the public `evalstate/flux1_schnell` Space on Hugging Face. They
+replace the stock poster at the same path, and the place shows the still instead of the old
+clip. Prompts and the queue live in `scripts/ai-art/scenes.json`; people are only ever distant
+silhouettes, never faces.

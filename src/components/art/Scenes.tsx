@@ -7,6 +7,7 @@
 
 import { motionReduced } from "../motion";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { AI_STILLS } from "./aiStills";
 
 export type SceneKind =
   | "street"
@@ -329,7 +330,8 @@ function SceneVideo({ kind }: { kind: SceneKind }) {
     v.play().catch(() => undefined);
   }, [still]);
   if (failed) return null;
-  if (still) return <img className="scene-video" src={`/scenes/${kind}.jpg`} alt="" aria-hidden />;
+  // Places with new art show the still: the old stock clip no longer matches it.
+  if (still || AI_STILLS.has(kind)) return <img className="scene-video" src={`/scenes/${kind}.jpg`} alt="" aria-hidden />;
   return (
     <video
       ref={ref}

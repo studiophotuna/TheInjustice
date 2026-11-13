@@ -7,3 +7,6 @@ next-env.d.ts
 .env*.local
 .DS_Store
 PACING-table.txt
+
+# AI art waiting for review (scripts/ai-art)
+scripts/ai-art/pending/

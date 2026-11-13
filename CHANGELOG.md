@@ -1,5 +1,15 @@
 # Changelog
 
+## 8.2.0: new place art, part 1
+
+- **New art for four places:** the Academy, the Boardwalk, the Velvet Ace casino and the city view
+  behind the Directory. Generated with FLUX.1-schnell (Apache 2.0, commercial use allowed) in
+  one moody night style; people only appear as distant silhouettes. These places now show the new
+  still instead of the old stock clip.
+- The rest of the places follow, about seven a day. Faces stay real photographs.
+- `scripts/ai-art/`: the prompts, the queue (most-seen places first) and the scripts that make and
+  accept new art.
+
 ## 8.1.0: lighter on the database, ready for more players
 
 Nothing changes on screen; the game reads far less to show the same things. Measured on a busy
