@@ -484,7 +484,11 @@ export const ENDING_CHAPTERS: Chapter[] = [
  * Panels with a painted image (public/story/<chapter>-<n>.jpg). The rest keep their drawing until
  * their image arrives; add the file name here when it does.
  */
-export const STORY_ART = new Set<string>(["prologue-1", "prologue-2", "prologue-3", "prologue-4", "old_faces-3"]);
+export const STORY_ART = new Set<string>([
+  "prologue-1", "prologue-2", "prologue-3", "prologue-4",
+  "old_faces-1", "old_faces-2", "old_faces-3",
+  "police_2-1", "police_2-2", "police_2-3",
+]);
 for (const c of [PROLOGUE, ...CHAPTERS, ...ENDING_CHAPTERS]) {
   c.panels.forEach((panel, i) => {
     if (STORY_ART.has(`${c.id}-${i + 1}`)) panel.img = `/story/${c.id}-${i + 1}.jpg`;

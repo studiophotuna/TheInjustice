@@ -10,7 +10,7 @@ grow hidden stats that decide whether you survive.
 
 **Play online:** https://injustice-booking-cms.vercel.app
 
-**Current version:** 8.4.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
+**Current version:** 8.4.1. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
 [latest changes](#where-the-game-is-now) are summed up at the end of this page.
 
 ## Play it locally
@@ -397,7 +397,8 @@ give it to the press (the story runs on the city's front page), sell it to Kozak
 money and one jail sentence that goes away) or keep it (Crane pays $2,000 a week for eight weeks).
 You choose once. Each choice has its own final chapter and street title (`src/game/ending.ts`).
 Military, mechanic, hacker and fire careers now have two story chapters each, and the prologue and
-the matchbook panel use the owner's painted art (`public/story/`).
+Chapter 1 and the police evidence-locker chapter use the owner's painted art (`public/story/`;
+8.4.1 brings it to 10 of 86 panels).
 
 **Your story.** Home opens on your case: who framed you, what you can prove, and your next lead.
 Leads (`src/game/leads.ts`) are short missions built from things you already do (work, fights,

@@ -1,5 +1,14 @@
 # Changelog
 
+## 8.4.1: five more story paintings
+
+- Chapter 1 (Old Faces) now has all three paintings: Benny at the fruit stall, Benny running, and
+  the matchbook.
+- The police chapter "The Evidence Locker" is fully painted: box 4471 in the basement, the empty
+  box with the sign-out sheet signed "A.C.", and the gavel card. The box number and the initials
+  are lettered onto the owner's art.
+- 10 of the 86 story panels are now painted.
+
 ## 8.4.0: how the case ends
 
 - **The ending.** Once the last lead is closed, the case card asks what you do with everything you
