@@ -440,7 +440,8 @@ export async function GET(req: Request) {
     if (url.searchParams.get("pulse")) {
       // The street feed (what's happening in the city) and what your crew needs from you.
       const country = countryOf(p);
-      const [city, real, myCrew] = await Promise.all([store.getCity(country), store.listPlayers(country, 40), p.crewId ? store.getCrew(p.crewId) : null]);
+      // Slim, read-only players: the pulse only shows them (who's online, faces in the feed).
+      const [city, real, myCrew] = await Promise.all([store.getCity(country), store.listFaces(country, 40), p.crewId ? store.getCrew(p.crewId) : null]);
       const { out, all } = await regularsOnStreet(store, country, realOnlineCount(real, now), now);
       const districts = DISTRICTS.filter((d) => d.country === country).map((d) => d.name);
       const outIds = new Set(out.map((o) => o.id));
@@ -528,12 +529,14 @@ export async function GET(req: Request) {
       const messages = (await store.listMessages(channel, 60)).filter((m) => !blocked.has(m.authorId));
       // Faces for the people talking (the desktop chat rail shows them).
       const ids = [...new Set(messages.slice(-30).map((m) => m.authorId))].slice(0, 20);
-      const people = await Promise.all(ids.map((id) => store.get(id)));
+      // One query for every author, slimmed: chat only needs their face and look.
+      const people = await store.getFaces(ids);
       const authors = Object.fromEntries(people.filter((o): o is Player => !!o).map((o) => [o.id, { photo: o.profile?.photo ?? null, path: o.path, look: lookOf(o) }]));
       return NextResponse.json({ messages, authors });
     }
+    // People: slim, read-only players (shown, never saved from here).
     const [players0, crews, myCrew, hubCity] = await Promise.all([
-      store.listPlayers(countryOf(p), 40),
+      store.listPeople(countryOf(p), 40),
       store.listCrews(20),
       p.crewId ? store.getCrew(p.crewId) : null,
       store.getCity(countryOf(p)),
@@ -664,7 +667,9 @@ async function ceremonyList(store: ReturnType<typeof getStore>, crew: Crew, lead
 /** Your people: where they are and whether they're around. */
 async function contactsView(store: ReturnType<typeof getStore>, p: Player, now: number) {
   const ids = (p.contacts ?? []).slice(0, 30);
-  const rows = (await Promise.all(ids.map((id) => store.get(id)))).filter((o): o is Player => !!o && !o.dead && !isBanned(o, now));
+  // One slim read for all of them, kept in your order.
+  const byId = new Map((await store.getPeople(ids)).map((o) => [o.id, o]));
+  const rows = ids.map((id) => byId.get(id)).filter((o): o is Player => !!o && !o.dead && !isBanned(o, now));
   return rows.map((o) => ({
     id: o.id,
     name: o.name,
@@ -681,7 +686,8 @@ async function contactsView(store: ReturnType<typeof getStore>, p: Player, now: 
 
 /** Ids of street regulars out right now who might see a crime (one or two of them). */
 async function regularWitnesses(store: ReturnType<typeof getStore>, country: CountryId, now: number): Promise<string[]> {
-  const real = await store.listPlayers(country, 40);
+  // Only counts who's online: faces are enough.
+  const real = await store.listFaces(country, 40);
   const { out } = await regularsOnStreet(store, country, realOnlineCount(real, now), now);
   return out.sort(() => Math.random() - 0.5).slice(0, 2).map((r) => r.id);
 }

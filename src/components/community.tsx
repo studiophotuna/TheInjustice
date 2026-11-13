@@ -655,8 +655,14 @@ function Chat({ game, hub, initial }: { game: GameApi; hub: Hub; initial?: strin
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 4000);
-    return () => clearInterval(t);
+    // Every 8 seconds, and only while you're looking (same as the desktop chat rail).
+    const t = setInterval(() => document.visibilityState === "visible" && load(), 8000);
+    const onShow = () => document.visibilityState === "visible" && load();
+    document.addEventListener("visibilitychange", onShow);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", onShow);
+    };
   }, [load]);
 
   useEffect(() => {
@@ -849,7 +855,7 @@ function ForumBoard({ game, forum, social }: { game: GameApi; forum: Hub["forums
   }, [forum.channel]);
   useEffect(() => {
     load();
-    const t = setInterval(load, 6000);
+    const t = setInterval(() => document.visibilityState === "visible" && load(), 8000);
     return () => clearInterval(t);
   }, [load]);
   return (

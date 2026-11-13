@@ -1,5 +1,26 @@
 # Changelog
 
+## 8.1.0: lighter on the database, ready for more players
+
+Nothing changes on screen; the game reads far less to show the same things. Measured on a busy
+city (40 players), per request:
+
+| Request | Before | After |
+|---|---|---|
+| City pulse (every minute) | 618 KB | 57 KB |
+| City chat (every 8 s) | 316 KB | 35 KB |
+| People tab | 669 KB | 231 KB |
+
+- Lists of other players (the pulse, People, chat, your contacts) read slim copies: the database
+  leaves out what only the owner sees before sending. A slim copy can never be saved over a
+  player.
+- Uploaded photos are served from their own address and cached by the browser, instead of
+  travelling inside every list.
+- Chat looks up all its authors in one go instead of one by one.
+- The People chat and crew forum check for new messages every 8 seconds, and only while you're
+  looking (they were every 4 and 6 seconds, even in a background tab).
+- New `docs/CAPACITY.md` with the measurements and what they mean for hosting.
+
 ## 8.0.3: the desktop top bar stays in its column
 
 - Fixed: on desktop the top bar reached 24px under the side menu (cutting off the logo and the

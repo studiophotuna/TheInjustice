@@ -84,6 +84,22 @@ export interface PlayerStore {
   transaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T>;
   /** Most recently active players in a country. */
   listPlayers(country: string, limit: number): Promise<Player[]>;
+  /**
+   * The same players as listPlayers, slimmed for showing to someone else: private parts (log,
+   * ledger, inbox, journal...) left out and uploaded photos replaced by a cacheable link.
+   * Read-only: saving one throws.
+   */
+  listPeople(country: string, limit: number): Promise<Player[]>;
+  /** Slim, read-only players by id, in one query (see listPeople). Missing ids are skipped. */
+  getPeople(ids: string[]): Promise<Player[]>;
+  /**
+   * Lighter still, for faces in the street feed and chat: only id, name, career, photo link,
+   * cosmetics, and whether and when they were last seen. Read-only like listPeople.
+   */
+  listFaces(country: string, limit: number): Promise<Player[]>;
+  getFaces(ids: string[]): Promise<Player[]>;
+  /** Just a player's uploaded photo (a data URL), or null. */
+  facePhoto(id: string): Promise<string | null>;
   /** The street regulars living in a country (never included in listPlayers). */
   listRegulars(country: string): Promise<Player[]>;
   /** Players with at least one phone signed up for alerts. */
@@ -130,6 +146,43 @@ export interface ErrorLog {
 
 
 const titleOf = (p: Player) => rankTitle(p) ?? "Nobody";
+
+// ─── Slim players: what other people's screens need, and nothing private ───────
+
+/** Parts of a player only they ever see. Left out when the player is shown to someone else. */
+/** ("devices" stays: the same-device check reads it to stop you attacking your own other characters.) */
+export const PRIVATE_FIELDS = ["log", "ledger", "inbox", "journal", "myCases", "favorLog", "jsnap", "casino", "practice", "daily", "leads", "attackLog", "favorRefs"] as const;
+
+/** Where an uploaded photo is served from, cached until it changes. */
+export const faceUrl = (id: string, v: number | string | undefined) => `/api/face/${id}?v=${v ?? 0}`;
+
+/** Marks a slimmed player so it can never be saved over the full one. */
+const SLIM = Symbol("slim");
+function markSlim(p: Player): Player {
+  Object.defineProperty(p, SLIM, { value: true, enumerable: false });
+  return p;
+}
+export function assertFull(p: Player) {
+  if ((p as unknown as Record<symbol, unknown>)[SLIM]) throw new Error(`Refusing to save a slimmed copy of ${p.id}.`);
+}
+/** The fields a face needs (see listFaces). */
+/** Includes what the pulse counts in its city tiles: travel, crew and fugitive status. */
+const FACE_FIELDS = ["id", "name", "path", "dead", "seenAt", "tickAt", "cosmetics", "country", "travel", "crewId", "fugitive"] as const;
+function faceCopy(p: Player): Player {
+  const o: Record<string, unknown> = {};
+  for (const k of FACE_FIELDS) if ((p as unknown as Record<string, unknown>)[k] !== undefined) o[k] = structuredClone((p as unknown as Record<string, unknown>)[k]);
+  const photo = p.profile?.photo;
+  o.profile = { photo: photo?.startsWith("data:") ? faceUrl(p.id, p.profile?.updatedAt) : photo ?? null };
+  return markSlim(o as unknown as Player);
+}
+
+function slimCopy(p: Player): Player {
+  const o = structuredClone(p) as unknown as Record<string, unknown>;
+  for (const k of PRIVATE_FIELDS) delete o[k];
+  const prof = o.profile as { photo?: string | null; updatedAt?: number } | undefined;
+  if (prof?.photo?.startsWith("data:")) o.profile = { ...prof, photo: faceUrl(p.id, prof.updatedAt) };
+  return markSlim(o as unknown as Player);
+}
 
 // ─── Local JSON file (development) ──────────────────────────────────────────
 
@@ -334,7 +387,10 @@ export class FileStore implements PlayerStore {
       const orders = new Map<string, FavorOrder>();
       const tx: Tx = {
         getPlayers: async (ids) => ids.map((id) => (d.players[id] ? structuredClone(d.players[id]) : null)),
-        putPlayer: async (p) => void players.set(p.id, structuredClone(p)),
+        putPlayer: async (p) => {
+          assertFull(p);
+          players.set(p.id, structuredClone(p));
+        },
         getCrew: async (id) => (d.crews[id] ? structuredClone(d.crews[id]) : null),
         putCrew: async (c) => void crews.set(c.id, structuredClone(c)),
         deleteCrew: async (id) => void crews.set(id, null),
@@ -405,6 +461,37 @@ export class FileStore implements PlayerStore {
       .sort((a, b) => b.tickAt - a.tickAt)
       .slice(0, limit)
       .map((p) => structuredClone(p));
+  }
+
+  async listPeople(country: string, limit: number) {
+    return Object.values((await this.load()).players)
+      .filter((p) => !p.regular && (p.country ?? "varrow") === country)
+      .sort((a, b) => b.tickAt - a.tickAt)
+      .slice(0, limit)
+      .map(slimCopy);
+  }
+
+  async getPeople(ids: string[]) {
+    const d = await this.load();
+    return [...new Set(ids)].map((id) => d.players[id]).filter((p): p is Player => !!p).map(slimCopy);
+  }
+
+  async listFaces(country: string, limit: number) {
+    return Object.values((await this.load()).players)
+      .filter((p) => !p.regular && (p.country ?? "varrow") === country)
+      .sort((a, b) => b.tickAt - a.tickAt)
+      .slice(0, limit)
+      .map(faceCopy);
+  }
+
+  async getFaces(ids: string[]) {
+    const d = await this.load();
+    return [...new Set(ids)].map((id) => d.players[id]).filter((p): p is Player => !!p).map(faceCopy);
+  }
+
+  async facePhoto(id: string) {
+    const photo = (await this.load()).players[id]?.profile?.photo;
+    return photo?.startsWith("data:") ? photo : null;
   }
 
   async listCrews(limit: number) {
@@ -637,6 +724,7 @@ class PostgresStore implements PlayerStore {
           return ids.map((id) => byId.get(id) ?? null);
         },
         putPlayer: async (p) => {
+          assertFull(p);
           await q`
             update injustice.players set
               name = ${p.name}, reputation = ${p.reputation}, title = ${titleOf(p)},
@@ -693,6 +781,62 @@ class PostgresStore implements PlayerStore {
       where coalesce(data->>'country', 'varrow') = ${country} and data->'regular' is null
       order by updated_at desc limit ${limit}`;
     return rows.map((r) => r.data);
+  }
+
+  /** The slim player, built in the database so the private parts never leave it. */
+  private slimSelect() {
+    // The field list is a fixed constant (never user input), written into the query as a literal.
+    const drop = this.sql.unsafe(`'{${PRIVATE_FIELDS.join(",")}}'::text[]`);
+    return this.sql`(data - ${drop}) || case when data->'profile'->>'photo' like 'data:%'
+      then jsonb_build_object('profile', (data->'profile') || jsonb_build_object('photo', '/api/face/' || id || '?v=' || coalesce(data->'profile'->>'updatedAt', '0')))
+      else '{}'::jsonb end`;
+  }
+
+  async listPeople(country: string, limit: number) {
+    const rows = await this.sql<{ data: Player }[]>`
+      select ${this.slimSelect()} as data from injustice.players
+      where coalesce(data->>'country', 'varrow') = ${country} and data->'regular' is null
+      order by updated_at desc limit ${limit}`;
+    return rows.map((r) => markSlim(r.data));
+  }
+
+  async getPeople(ids: string[]) {
+    const unique = [...new Set(ids)];
+    if (!unique.length) return [];
+    const rows = await this.sql<{ data: Player }[]>`
+      select ${this.slimSelect()} as data from injustice.players where id = any(${unique})`;
+    return rows.map((r) => markSlim(r.data));
+  }
+
+  /** A face, built in the database: a handful of fields instead of the whole player. */
+  private faceSelect() {
+    const fields = FACE_FIELDS.filter((k) => k !== "id").map((k) => `'${k}', data->'${k}'`).join(", ");
+    return this.sql`jsonb_strip_nulls(jsonb_build_object('id', id, ${this.sql.unsafe(fields)}, 'profile', jsonb_build_object('photo',
+      case when data->'profile'->>'photo' like 'data:%' then to_jsonb('/api/face/' || id || '?v=' || coalesce(data->'profile'->>'updatedAt', '0'))
+      else data->'profile'->'photo' end)))`;
+  }
+
+  async listFaces(country: string, limit: number) {
+    const rows = await this.sql<{ data: Player }[]>`
+      select ${this.faceSelect()} as data from injustice.players
+      where coalesce(data->>'country', 'varrow') = ${country} and data->'regular' is null
+      order by updated_at desc limit ${limit}`;
+    return rows.map((r) => markSlim(r.data));
+  }
+
+  async getFaces(ids: string[]) {
+    const unique = [...new Set(ids)];
+    if (!unique.length) return [];
+    const rows = await this.sql<{ data: Player }[]>`
+      select ${this.faceSelect()} as data from injustice.players where id = any(${unique})`;
+    return rows.map((r) => markSlim(r.data));
+  }
+
+  async facePhoto(id: string) {
+    const rows = await this.sql<{ photo: string | null }[]>`
+      select data->'profile'->>'photo' as photo from injustice.players where id = ${id}`;
+    const photo = rows[0]?.photo ?? null;
+    return photo?.startsWith("data:") ? photo : null;
   }
 
   async listPropertyOwners(country: string, limit: number) {
@@ -892,6 +1036,34 @@ export class StoreNestingError extends Error {}
 const inTx = new AsyncLocalStorage<{ open: boolean }>();
 export const nestingLog: { method: string; stack: string }[] = [];
 
+/**
+ * Measuring only: with STORE_METER set to a file path, each store call appends its name and the
+ * size of what it returned (the JSON the database would send). Off unless the variable is set.
+ */
+const meterFile = process.env.STORE_METER;
+function metered<T>(method: string, out: T): T {
+  if (!meterFile || !(out instanceof Promise)) return out;
+  return out.then((v) => {
+    try {
+      const bytes = v === undefined ? 0 : Buffer.byteLength(JSON.stringify(v) ?? "");
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require("node:fs").appendFileSync(meterFile, `${method}\t${bytes}\n`);
+    } catch {
+      // measuring must never break a request
+    }
+    return v;
+  }) as T;
+}
+function meterTx(tx: Tx): Tx {
+  if (!meterFile) return tx;
+  return new Proxy(tx, {
+    get(target, prop, receiver) {
+      const v = Reflect.get(target, prop, receiver);
+      return typeof v === "function" ? (...a: unknown[]) => metered(`tx.${String(prop)}`, (v as (...x: unknown[]) => unknown).apply(target, a)) : v;
+    },
+  });
+}
+
 export function guarded(store: PlayerStore, strict: boolean): PlayerStore {
   return new Proxy(store, {
     get(target, prop, receiver) {
@@ -904,7 +1076,7 @@ export function guarded(store: PlayerStore, strict: boolean): PlayerStore {
           return (v as PlayerStore["transaction"]).call(target, async (tx: Tx) => {
             const state = { open: true };
             try {
-              return await inTx.run(state, () => fn(tx));
+              return await inTx.run(state, () => fn(meterTx(tx)));
             } finally {
               state.open = false;
             }
@@ -913,7 +1085,7 @@ export function guarded(store: PlayerStore, strict: boolean): PlayerStore {
       }
       return (...args: unknown[]) => {
         if (inTx.getStore()?.open) return nested(String(prop), () => (v as (...a: unknown[]) => unknown).apply(target, args));
-        return (v as (...a: unknown[]) => unknown).apply(target, args);
+        return metered(String(prop), (v as (...a: unknown[]) => unknown).apply(target, args));
       };
     },
   });
