@@ -248,3 +248,10 @@ ul + p.fine, ul + p.muted, ol + p.fine { margin-top: 10px; }
 .case-ending span { font-size: 14px; line-height: 1.45; color: var(--muted); }
 .case-ending:hover:not(:disabled) { border-color: var(--go); background: rgba(255, 176, 32, 0.07); }
 .case-ending:disabled { opacity: 0.5; cursor: default; }
+
+/* City paintings: the city picker and the "Welcome to" card. */
+.country-art { display: block; width: calc(100% + 28px); margin: -12px -14px 12px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 14px 14px 0 0; }
+.arrival-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.arrival-art:has(.arrival-photo) { height: 190px; }
+.arrival-art:has(.arrival-photo)::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0, 0, 0, 0.75), transparent 60%); pointer-events: none; }
+.arrival-art:has(.arrival-photo) .arrival-title { z-index: 1; }

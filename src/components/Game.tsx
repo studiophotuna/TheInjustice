@@ -52,6 +52,7 @@ import { AskHost } from "./ask";
 import { CoachMarks } from "./coach";
 import { type FightShow, fmt, useGame, type GameApi } from "./useGame";
 import { SkelShell } from "./skeleton";
+import { cityArt } from "./art/cities";
 
 type Tab = "home" | "jobs" | "fight" | "shop" | "people" | "city" | "profile";
 
@@ -731,7 +732,7 @@ function ArrivalCard({ view, onDone }: { view: PublicView; onDone: () => void })
   return (
     <div className="arrival" style={{ ["--path" as string]: country.color }}>
       <div className="arrival-art">
-        <Skyline district={view.districts[0]?.id ?? "title"} />
+        {cityArt(a.to) ? <img className="arrival-photo" src={cityArt(a.to)!} alt="" /> : <Skyline district={view.districts[0]?.id ?? "title"} />}
         <div className="arrival-title">
           <p className="eyebrow"><MapPin size={14} /> Welcome to</p>
           <h2>{country.capital}</h2>

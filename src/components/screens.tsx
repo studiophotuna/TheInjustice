@@ -15,6 +15,7 @@ import { Skyline } from "./art/Skyline";
 import { Scene } from "./art/Scenes";
 import { Bars, ComicPanel, Gavel, LightsOut, Street } from "./Comic";
 import type { GameApi } from "./useGame";
+import { cityArt } from "./art/cities";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -151,6 +152,7 @@ function NameForm({ game, label = "Start" }: { game: GameApi; label?: string }) 
           ))}
         </div>
         <div className="country-story" style={{ ["--path" as string]: chosen.color }}>
+          {cityArt(chosen.id, true) && <img className="country-art" src={cityArt(chosen.id, true)!} alt="" />}
           <p className="fine">{chosen.startStory}</p>
           <dl className="expect">
             <dt>Good for</dt><dd>{chosen.expect.good}</dd>

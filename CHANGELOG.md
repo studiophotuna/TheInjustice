@@ -1,5 +1,11 @@
 # Changelog
 
+## 8.4.2: Ironmoor's painting
+
+- The owner's painting of Ironmoor (freight train, snow, checkpoint floodlights) now shows when a
+  new player picks where to live, and on the "Welcome to Ironmoor" card after a trip there. The
+  other cities keep their drawn skyline until their paintings arrive (`src/components/art/cities.ts`).
+
 ## 8.4.1: five more story paintings
 
 - Chapter 1 (Old Faces) now has all three paintings: Benny at the fruit stall, Benny running, and
