@@ -1,5 +1,11 @@
 # Changelog
 
+## 8.0.1: the Go button stays put
+
+- Fixed: on phones, scrolling down hid the Go button (an old rule that folded the quick bar away
+  on scroll). The Go button and the dock now stay on screen while you scroll, and a street
+  encounter card no longer slides down over them.
+
 ## 8.0.0: Street level, a new look
 
 A redesign of every screen, approved from mockups and samples. Same photos, same fonts, much less

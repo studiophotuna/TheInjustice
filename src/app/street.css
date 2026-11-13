@@ -229,3 +229,9 @@
 :where(.row, .btn) + :where(p, small, .log, ul.log) { margin-top: 10px; }
 .row + p, .row + small, .row + .log, .row + ul, .btn + p, .btn + small { margin-top: 10px; }
 ul + p.fine, ul + p.muted, ol + p.fine { margin-top: 10px; }
+
+/* The Go button and the dock stay put while you scroll (the old quick bar folded away). */
+@media (max-width: 959px) {
+  body.scroll-down .quickbar { transform: none !important; opacity: 1 !important; }
+  body.scroll-down .encounter:not(.open) { transform: none !important; }
+}
