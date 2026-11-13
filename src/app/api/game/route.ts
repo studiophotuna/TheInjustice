@@ -124,6 +124,7 @@ export async function POST(req: Request) {
     const customs = leaver ? searchingOfficers(await store.getCity(countryOf(leaver)), now, playerId!).map((x) => ({ id: x.id, name: x.name, eye: x.eye })) : [];
     let seizure: { officerId: string; value: number; what: string; from: string } | null = null;
     let launderFlag: { amount: number; method: string } | null = null;
+    let press: { country: import("@/game/types").CountryId; text: string } | null = null;
     if (action.type === "create") {
       const jar = await cookies();
       if (jar.get(AGE_COOKIE)) throw new GameError(UNDERAGE);
@@ -168,6 +169,10 @@ export async function POST(req: Request) {
         launderFlag = p.launderFlag;
         p.launderFlag = null;
       }
+      if (p.pressStory) {
+        press = { country: countryOf(p), text: p.pressStory };
+        p.pressStory = null;
+      }
       if (p.turfOwed) {
         turfOwed = p.turfOwed;
         p.turfOwed = null;
@@ -188,6 +193,9 @@ export async function POST(req: Request) {
       if (dogBuy?.country) await withCity(store, dogBuy.country, now, (c) => returnDog(c, dogBuy.breed)).catch(() => undefined);
       throw e;
     });
+    // The press ending: the story goes on the city's front page for everyone.
+    const pr = press as { country: import("@/game/types").CountryId; text: string } | null;
+    if (pr) await withCity(store, pr.country, now, (c) => void (c.log = [{ at: now, text: pr.text }, ...(c.log ?? [])].slice(0, 60))).catch((e) => console.error(e));
     // A big laundering gets flagged for detectives.
     const lf = launderFlag as { amount: number; method: string } | null;
     if (lf) {

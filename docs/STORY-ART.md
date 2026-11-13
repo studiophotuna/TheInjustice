@@ -307,6 +307,198 @@ Each chapter is a short comic: three or four panels, each with a caption. Files 
 
 ---
 
+## Part 1b: The new career chapters (24 panels)
+
+Shown to players in that career, at ranks 2 and 3.
+
+### Military · Requisition
+*Teaser: "The armory books don't add up."*
+
+**military_2-1.jpg**
+> Inventory night at the garrison armory. Forty rifles signed out for "private security training". None came back.
+- **Shot:** A long garrison armory at night, rifle racks half empty, a clipboard on a crate under a caged bulb.
+
+**military_2-2.jpg**
+> The requisition was countersigned by Sergeant Major Brann's predecessor, and paid for by C&P Holdings.
+- **Shot:** Close on a requisition form on a steel desk: two signatures, a C&P Holdings stamp in red (leave the text plain).
+
+**military_2-3.jpg**
+> Two weeks later the same serial numbers turn up in a police raid on Iron Row. Kozak's men were holding them.
+- **Shot:** A police raid in a rain-wet alley on Iron Row: crates pried open, rifles inside, flashlights crossing.
+
+### Military · Escort Duty
+*Teaser: "A VIP convoy, and no names on the manifest."*
+
+**military_3-1.jpg**
+> A two-car escort at midnight: Courthouse Hill to the airfield. No names on the manifest.
+- **Shot:** Two black cars with military plates on an empty highway at midnight, headlights on wet asphalt.
+
+**military_3-2.jpg**
+> The passenger climbs out at the airfield with a locked case. On his hand, a gold ring shaped like a gavel.
+- **Shot:** An airfield at night: a man in a long coat steps from a car holding a locked case. Close on his hand: a gold gavel-shaped ring.
+
+**military_3-3.jpg**
+> Brann watches the plane climb toward Solmarra. "Some orders come with a judge's signature. Forget you saw him." You don't.
+- **Shot:** Sergeant Major Brann in uniform, seen from behind at the airfield fence, watching a plane's lights climb into cloud.
+
+### Mechanic · The Black Sedan
+*Teaser: "A quiet repair for a very private client."*
+
+**mechanic_2-1.jpg**
+> A black sedan rolls in after closing. The driver pays cash for a quiet repair and waits outside, smoking.
+- **Shot:** A garage after closing: a black sedan under a single work light, the driver smoking outside the open roll-up door.
+
+**mechanic_2-2.jpg**
+> Behind the back seat: a hidden compartment full of brown envelopes, each one sealed with red wax.
+- **Shot:** Behind a lifted back seat: a hidden compartment packed with brown envelopes sealed with red wax.
+
+**mechanic_2-3.jpg**
+> Vera Dobrev runs the plates and frowns. "Registered to C&P Holdings. Fix it, give it back, and never open that panel again."
+- **Shot:** Vera Dobrev at a cluttered garage office desk, a phone to her ear, frowning at a plate number on a notepad.
+
+### Mechanic · Brake Lines
+*Teaser: "An accident that wasn't."*
+
+**mechanic_3-1.jpg**
+> The wreck comes in on a flatbed. Its driver was due to testify at a retrial of one of Judge Crane's old cases.
+- **Shot:** A crumpled car arriving on a flatbed tow truck into a garage at dawn, rain on the windshield.
+
+**mechanic_3-2.jpg**
+> The brake line didn't wear through. It was cut, clean. Then the shop's service records were changed to say otherwise.
+- **Shot:** Macro close on a brake line under a work lamp: a clean, straight cut. A service logbook open beside it.
+
+**mechanic_3-3.jpg**
+> Dobrev bags the old line and locks it in her safe. "Somebody paid to make this look like an accident. We keep this."
+- **Shot:** Dobrev sealing the brake line into an evidence bag and locking it into an old floor safe.
+
+### Hacker · Forty Logins
+*Teaser: "C&P's servers have a back door."*
+
+**hacker_2-1.jpg**
+> C&P Holdings keeps its accounts on an old server nobody patched. Juno Okafor gets you in before her coffee goes cold.
+- **Shot:** A dark room lit by monitors; Juno Okafor at a keyboard, a cold coffee cup, green terminal text on screen (unreadable).
+
+**hacker_2-2.jpg**
+> Forty accounts. Every one of them logs in from the same place: a terminal inside the Grayhaven courthouse.
+- **Shot:** A screen showing a list of forty accounts, each line tracing to one point on a city map: the courthouse.
+
+**hacker_2-3.jpg**
+> "Judges don't do their own banking at work," Okafor says. "Unless they don't want it done anywhere else."
+- **Shot:** Okafor turning in her chair toward camera, monitor glow on her face, a half smile.
+
+### Hacker · Edit History
+*Teaser: "The court records keep every change."*
+
+**hacker_3-1.jpg**
+> Case 4471, in the court's own records system. Every change is logged. Almost nobody thinks to look.
+- **Shot:** A records system on an old office monitor in a dim archive, rows of case numbers (keep text unreadable).
+
+**hacker_3-2.jpg**
+> The witness list was edited the night before your trial. One name added: Benny Marlowe. User: a.crane.
+- **Shot:** Close on a screen: an edit log, one highlighted line. Reflected faintly in the glass, a gavel-shaped ring.
+
+**hacker_3-3.jpg**
+> Okafor copies the log to three places and erases your trail. "Deleting is easy. Making them believe it was never there is the job."
+- **Shot:** Okafor on a rooftop at night with a laptop, three USB drives laid out beside her, the city behind.
+
+### Fire · The Records Fire
+*Teaser: "The courthouse annex burned the week before your trial."*
+
+**fire_2-1.jpg**
+> An old file: the courthouse annex fire, three years ago. The week before your trial. Ruled electrical.
+- **Shot:** A dusty fire department records room; an old file box open, a folder marked with a red stamp.
+
+**fire_2-2.jpg**
+> The photos say otherwise. Pour patterns on the floor, two points of origin. Somebody used an accelerant.
+- **Shot:** Black-and-white fire scene photos spread on a table: scorch pour patterns on a floor, two origin points circled.
+
+**fire_2-3.jpg**
+> The annex held the defense files for eleven cases. Yours was one. Every one of them was in front of Judge Crane.
+- **Shot:** The burned-out courthouse annex in daylight: charred file cabinets, ash-covered folders.
+
+### Fire · Signed Off
+*Teaser: "Who called it an accident?"*
+
+**fire_3-1.jpg**
+> The "electrical" ruling was signed by the fire marshal of the day: Chief Hal Brennan's predecessor.
+- **Shot:** Close on a fire report on a desk: a signature line and an official seal (leave text plain).
+
+**fire_3-2.jpg**
+> His bank records show a payment from C&P Holdings the same week. Then early retirement, to a villa in Port Solace.
+- **Shot:** A bank statement under a desk lamp beside a postcard of a white villa on the Port Solace coast.
+
+**fire_3-3.jpg**
+> Brennan stares at the signature a long time. "I trained under that man." Then: "Whatever you need from this house, ask."
+- **Shot:** Chief Hal Brennan in a firehouse at night, holding the report, an engine's red flank behind him.
+
+---
+
+## Part 1c: The endings (12 panels)
+
+Each player sees only the ending they choose, after closing the last lead.
+
+### Ending · The Retrial
+*Teaser: "You took it to a court that wasn't bought."*
+
+**ending_court-1.jpg**
+> Courtroom 1, and a judge from out of town who has never heard of the Ledger. Marsh lays the evidence out, piece by piece.
+- **Shot:** A bright, clean courtroom: a defense lawyer (Marsh) laying evidence bags on a table before an older judge.
+
+**ending_court-2.jpg**
+> The ring, the seals, the forty accounts, Benny's statement. Crane says nothing. For once, nobody tells the jury what to think.
+- **Shot:** Judge Crane at the defendant's table, silent, gold gavel ring on his folded hands; the jury box out of focus.
+
+**ending_court-3.jpg**
+> "Not guilty." Then, for him: "Guilty." You walk out into the rain with your name back. The first thing you've owned in years.
+- **Shot:** The player character walking out of the courthouse doors into rain, face lifted, free.
+
+### Ending · Front Page
+*Teaser: "You gave it to the paper."*
+
+**ending_press-1.jpg**
+> You spread it across the editor's desk. She reads for an hour without a word, then calls the printers.
+- **Shot:** A newspaper editor's desk at night, papers spread, a woman reading under a green banker's lamp.
+
+**ending_press-2.jpg**
+> Morning. Every newsstand in the city: THE LEDGER, with Crane's photograph under it. By noon he has resigned, "for his health".
+- **Shot:** Morning newsstand: stacks of the same paper with a huge headline and a photo of Crane (headline area plain; I'll add it).
+
+**ending_press-3.jpg**
+> Nobody can put it back in the box now. The whole city knows your name, and so does everyone who ever paid the Ledger.
+- **Shot:** The player character on a rooftop at dawn, a newspaper folded in one hand, the city waking below.
+
+### Ending · Sold
+*Teaser: "You sold the case to Kozak."*
+
+**ending_kozak-1.jpg**
+> Kozak turns the pages slowly, like a man reading a will. Then he smiles. "This is worth more than you know. To me."
+- **Shot:** Kozak behind a heavy desk in a dark office, turning the pages of a leather ledger, smoke in the lamp light.
+
+**ending_kozak-2.jpg**
+> A fat envelope crosses the desk. "Crane works for me now. And he owes you one. Once, whatever you did, it goes away."
+- **Shot:** A thick envelope sliding across polished wood toward the camera; Kozak's ringed hand letting go of it.
+
+**ending_kozak-3.jpg**
+> You walk out richer and no cleaner. Somewhere a judge just changed owners. The Ledger doesn't care who holds the pen.
+- **Shot:** The player character walking down a neon-lit alley at night, envelope in coat, not looking back.
+
+### Ending · Insurance
+*Teaser: "You kept it, and Crane pays."*
+
+**ending_keep-1.jpg**
+> You make copies and hide them in three places only you know. Then you send Crane one photograph: his ring.
+- **Shot:** Three hiding places in one frame: a floorboard, a locker key, a safe-deposit drawer, each holding the same copied file.
+
+**ending_keep-2.jpg**
+> Every week after that, an envelope finds you. No note. Just cash, and a judge who sleeps badly.
+- **Shot:** An envelope pushed under an apartment door at night, a strip of hallway light.
+
+**ending_keep-3.jpg**
+> His heart was failing anyway. You'll be paid for as long as it keeps beating. Insurance, of a kind.
+- **Shot:** A private hospital room: Crane in the bed, a heart monitor's green line, rain on the window.
+
+---
+
 ## Part 2: The evidence board (9 images)
 
 When you close a lead, its evidence is pinned to the board on the City page. Square
@@ -346,9 +538,11 @@ Files go in `public/cities/<city>.jpg`.
 | Part | Images |
 |---|---|
 | Story chapters | 37 |
+| New career chapters | 24 |
+| Endings | 12 |
 | Evidence board | 9 |
 | Cities (optional) | 4 |
-| **All** | **50** |
+| **All** | **86** |
 
 The logo and name artwork you're making come on top of this. The game currently shows Chapters
 0 and 1 to everyone, and the career chapters to players in that career. If you work in order, do

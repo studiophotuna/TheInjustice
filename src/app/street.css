@@ -240,3 +240,11 @@ ul + p.fine, ul + p.muted, ol + p.fine { margin-top: 10px; }
   body.scroll-down .quickbar { transform: none !important; opacity: 1 !important; }
   body.scroll-down .encounter:not(.open) { transform: none !important; }
 }
+
+/* The ending: four choices on the case card, one tap each, then a confirm. */
+.case-endings { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 14px 0 4px; }
+.case-ending { display: grid; gap: 4px; text-align: left; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--border-strong); background: rgba(255, 255, 255, 0.03); color: inherit; font: inherit; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.case-ending b { font-family: var(--display); font-size: 17px; text-transform: uppercase; letter-spacing: 0.02em; color: var(--go); }
+.case-ending span { font-size: 14px; line-height: 1.45; color: var(--muted); }
+.case-ending:hover:not(:disabled) { border-color: var(--go); background: rgba(255, 176, 32, 0.07); }
+.case-ending:disabled { opacity: 0.5; cursor: default; }

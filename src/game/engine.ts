@@ -63,6 +63,7 @@ import {
   type StatKey,
 } from "./types";
 import { setInspect, setWatch } from "./protect";
+import { chooseEnding, endingTick, useCraneFavor } from "./ending";
 
 const ALLOWED_FLAGS = new Set(["seen_prologue", "visited:people", "visited:map", "tut:hidden"]);
 const FIGHT_ENERGY = 10;
@@ -157,6 +158,7 @@ export function tick(p: Player, now: number): void {
   ensureEquipped(p);
   regularUpkeep(p, now);
   journalTick(p, now);
+  endingTick(p, now);
   recordMoney(p, now, "On the street (fights, robberies, fines, interest)");
 }
 
@@ -1405,6 +1407,12 @@ function applyActionInner(p: Player, action: Action, now: number, rng: Rng, ctx:
       break;
     case "lead_close":
       events.push(...closeLead(p, action.id, now));
+      break;
+    case "case_end":
+      events.push(...chooseEnding(p, action.choice, now));
+      break;
+    case "crane_favor":
+      events.push(...useCraneFavor(p, now));
       break;
     case "dog_give_away":
       events.push(...giveAwayDog(p));

@@ -164,7 +164,7 @@ export const LEADS: LeadDef[] = [
     ],
     evidence: { title: "The signet ring", teaser: "Wax seals on Ledger letters, and the ring that made them. The case against Crane is whole.", links: ["crane", "cp"] },
     reward: { cash: 400, reputation: 10 },
-    outcome: "His driver hands you a letter sealed with the ring. You have everything you need. Whatever you do with it is coming.",
+    outcome: "His driver hands you a letter sealed with the ring. You have everything you need. Now decide what to do with it: it's on your case card.",
   },
 ];
 

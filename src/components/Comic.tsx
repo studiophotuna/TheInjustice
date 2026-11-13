@@ -441,7 +441,7 @@ export function ComicPanel({ panel }: { panel: Panel }) {
   return (
     <figure className="comic-panel">
       <div className="comic-art">
-        <Art />
+        {panel.img ? <img src={panel.img} alt="" loading="lazy" /> : <Art />}
       </div>
       <figcaption>{panel.caption}</figcaption>
     </figure>

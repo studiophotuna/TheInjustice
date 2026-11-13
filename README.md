@@ -10,7 +10,7 @@ grow hidden stats that decide whether you survive.
 
 **Play online:** https://injustice-booking-cms.vercel.app
 
-**Current version:** 8.3.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
+**Current version:** 8.4.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
 [latest changes](#where-the-game-is-now) are summed up at the end of this page.
 
 ## Play it locally
@@ -390,6 +390,14 @@ murder case and a three-day vendetta. Full rules in `WHACK.md`.
 ## Where the game is now
 
 Everything since 1.8, in short. The details are in [CHANGELOG.md](CHANGELOG.md).
+
+**How the case ends (8.4).** Close the last lead and your case card asks one question: what do you
+do with everything you have on Judge Crane? Take it to court (your heat is wiped, standing goes up),
+give it to the press (the story runs on the city's front page), sell it to Kozak ($25,000 in dirty
+money and one jail sentence that goes away) or keep it (Crane pays $2,000 a week for eight weeks).
+You choose once. Each choice has its own final chapter and street title (`src/game/ending.ts`).
+Military, mechanic, hacker and fire careers now have two story chapters each, and the prologue and
+the matchbook panel use the owner's painted art (`public/story/`).
 
 **Your story.** Home opens on your case: who framed you, what you can prove, and your next lead.
 Leads (`src/game/leads.ts`) are short missions built from things you already do (work, fights,

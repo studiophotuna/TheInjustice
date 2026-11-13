@@ -1941,6 +1941,11 @@ export function JailCard({ game }: { game: GameApi }) {
           </button>
         ) : null;
       })()}
+      {game.view!.ending.favor && !jail.custodyCase && (
+        <button className="btn btn-primary btn-sm" disabled={game.busy} onClick={() => game.act({ type: "crane_favor" })}>
+          Call in Crane's favour
+        </button>
+      )}
       {jail.custodyCase && jail.bail > 0 && (
         <button className="btn btn-primary btn-sm" disabled={game.busy || game.view!.bank < jail.bail} onClick={() => game.social({ op: "bail", caseId: jail.custodyCase })}>
           Post your own bail (${jail.bail} from the bank)

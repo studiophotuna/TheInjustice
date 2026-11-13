@@ -6,6 +6,8 @@ import { careerStill } from "./art/Cutout";
 import { caseProgress, SUSPECTS } from "./board";
 import { PATH_LOOKS } from "./art/Portraits";
 import type { GameApi } from "./useGame";
+import { askThen } from "./ask";
+import { ENDING_CHOICES } from "@/game/ending";
 
 type Lead = PublicView["leads"][number];
 
@@ -35,6 +37,8 @@ export function CaseHero({ game, go }: { game: GameApi; go: (to: string) => void
   // A payment can be made any time while you're on the lead.
   const pay = lead?.canPay ? lead.steps.find((s) => !s.done && /\(\$[\d,]+\)$/.test(s.label)) ?? null : null;
   const blocked = !!view.jail || !!view.travel || game.live!.hospital > 0;
+  const ending = view.ending;
+  const choosing = allClosed && ending.complete && !ending.choice;
 
   // The face of whoever the lead is about, leaning out of the card.
   const subject = lead ? SUSPECTS.find((x) => x.match.test(`${lead.title} ${lead.text}`) && NPC_FACES[x.id]) ?? null : null;
@@ -48,9 +52,19 @@ export function CaseHero({ game, go }: { game: GameApi; go: (to: string) => void
           <span>{subject.name.replace(/^Judge Aldous /, "Judge ")}<br />{subject.role}</span>
         </div>
       )}
-      <span className="label tone-amber-t">Your case · {lead ? (lead.state === "active" ? "on the lead" : "next lead") : allClosed ? "closed" : "no lead right now"}</span>
-      <h1 className="case-title">{lead ? lead.title : `Who framed ${view.name}`}</h1>
-      <p className="case-lead-text">{lead ? lead.text : allClosed ? "You have everything on Crane. What you do with it is coming." : "Close the lead you're on, or read the evidence you've found."}</p>
+      <span className="label tone-amber-t">Your case · {lead ? (lead.state === "active" ? "on the lead" : "next lead") : ending.choice ? "how it ended" : choosing ? "your decision" : allClosed ? "closed" : "no lead right now"}</span>
+      <h1 className="case-title">{lead ? lead.title : ending.title ?? (choosing ? "What you do with it" : `Who framed ${view.name}`)}</h1>
+      <p className="case-lead-text">{lead ? lead.text : ending.choice ? endingLine(ending) : choosing ? "You have everything on Judge Crane. You only get to choose once." : allClosed ? "You have everything on Crane." : "Close the lead you're on, or read the evidence you've found."}</p>
+      {choosing && (
+        <div className="case-endings">
+          {ENDING_CHOICES.map((c) => (
+            <button key={c.id} className="case-ending" disabled={game.busy || blocked} onClick={() => askThen({ title: `${c.label}? You can't change this later.`, body: c.line }, () => game.act({ type: "case_end", choice: c.id }))}>
+              <b>{c.label}</b>
+              <span>{c.line}</span>
+            </button>
+          ))}
+        </div>
+      )}
       {lead?.state === "active" && (
         <ul className="case-steps">
           {lead.steps.map((st) => (
@@ -78,6 +92,7 @@ export function CaseHero({ game, go }: { game: GameApi; go: (to: string) => void
         {lead?.state === "active" && !lead.ready && pay && next?.label !== pay.label && (
           <button className="btn btn-ghost btn-sm" disabled={game.busy || blocked} onClick={() => game.act({ type: "lead_pay", id: lead.id })}>{pay.label}</button>
         )}
+        {ending.choice && <button className="btn btn-primary" onClick={() => go(`story:ending_${ending.choice}`)}>Read the ending</button>}
         <button className="btn btn-ghost" onClick={() => go("board")}>The board</button>
       </div>
     </section>
@@ -120,4 +135,14 @@ export function WorkStrip({ game, sub }: { game: GameApi; sub: string }) {
       </div>
     </section>
   );
+}
+
+function endingLine(e: PublicView["ending"]): string {
+  switch (e.choice) {
+    case "court": return "The retrial cleared your name. Crane is in prison.";
+    case "press": return "The whole city read it. Crane resigned, and everyone knows your name.";
+    case "kozak": return e.favor ? "Kozak bought the case. Crane owes you one: once, a sentence goes away." : "Kozak bought the case. Crane's favour is spent.";
+    case "keep": return e.paymentsLeft ? `You kept it. Crane pays every week: ${e.paymentsLeft} envelope${e.paymentsLeft === 1 ? "" : "s"} to go.` : "You kept it. Crane's heart gave out, and the envelopes stopped.";
+    default: return "";
+  }
 }

@@ -115,6 +115,7 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194, 75
 .cinematic { min-height: 100dvh; max-width: 620px; margin: 0 auto; padding: 28px 16px calc(28px + env(safe-area-inset-bottom)); display: grid; align-content: center; gap: 18px; text-align: center; }
 .comic-panel { margin: 0; border-radius: 20px; overflow: hidden; background: var(--surface-solid); border: 1px solid var(--border-strong); box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6); text-align: left; }
 .comic-art { overflow: hidden; }
+.comic-art img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; animation: kenburns 12s ease-out both; }
 .comic-art svg { display: block; width: 100%; height: auto; animation: kenburns 12s ease-out both; }
 .comic-panel figcaption { padding: 16px 18px 18px; font-size: 17px; line-height: 1.55; color: #dfe3ea; }
 .dots { display: flex; gap: 8px; justify-content: center; }
@@ -1020,6 +1021,7 @@ textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 194,
 /* Landing cold open */
 .cold-open { position: fixed; inset: 0; z-index: 60; background: #05060a; display: grid; place-items: center; padding: 24px 16px; cursor: pointer; }
 .cold-panel { margin: 0; width: min(560px, 100%); display: grid; gap: 18px; }
+.cold-panel img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 18px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7); border: 1px solid var(--border); }
 .cold-panel svg { width: 100%; height: auto; border-radius: 18px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7); border: 1px solid var(--border); }
 .cold-panel figcaption { font-family: var(--display); font-size: clamp(28px, 7vw, 44px); line-height: 1; letter-spacing: 0.03em; text-align: center; text-shadow: 0 2px 14px #000; font-weight: 800; }
 .cold-dots { position: fixed; bottom: calc(28px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); display: flex; gap: 8px; }

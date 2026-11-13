@@ -1,5 +1,25 @@
 # Changelog
 
+## 8.4.0: how the case ends
+
+- **The ending.** Once the last lead is closed, the case card asks what you do with everything you
+  have on Judge Crane. Four choices, and you get one:
+  - **Take it to court:** a retrial clears your name. Heat drops to zero, +15 standing, title
+    "Exonerated".
+  - **Give it to the press:** the story runs on your city's front page for every player to see.
+    +25 standing, title "The one who talked".
+  - **Sell it to Kozak:** $25,000 in dirty money, and Crane owes you one favour: once, a jail
+    sentence ends early (it doesn't work during a trial). Title "Kozak's friend".
+  - **Keep it:** blackmail. Crane pays $2,000 a week for eight weeks, then his heart gives out.
+    Title "Holds the Ledger".
+  Each choice unlocks its own three-panel final chapter. None of them changes fighting strength.
+- **Career chapters.** Military, mechanic, hacker and fire careers each get two chapters, at ranks
+  2 and 3, like the other careers.
+- **Painted story art.** The cold open and the prologue now use the owner's painted images, and
+  the matchbook panel in Old Faces carries "CRANE & PARTNERS" in gold. Panels without a painting
+  keep their drawing until one arrives.
+- `docs/STORY-ART.md` has scripts for the 36 new panels (24 career, 12 ending).
+
 ## 8.3.0: the game is now Crookvale
 
 - **New name: Crookvale.** "Conspira" was already taken (not by a game), so the game has a name of

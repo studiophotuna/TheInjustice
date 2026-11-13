@@ -116,6 +116,10 @@ export interface Player {
   hospitalUntil: number;
   /** Leads you're following or have closed: when you started, your counts then, which payments are made. */
   leads?: Record<string, { startedAt: number; base: { jobs: number; careerJobs: number; fights: number }; paid?: number[]; closedAt?: number }>;
+  /** What you did with the whole case (see ending.ts). Chosen once, kept forever. */
+  caseEnding?: { choice: "court" | "press" | "kozak" | "keep"; at: number; cuts?: number; lastCutAt?: number; favorUsed?: boolean };
+  /** A headline for the city's front page, picked up by the server after the action. */
+  pressStory?: string | null;
   /** A doctor already treated this stay (the hospitalUntil it was cut to). */
   treatedStay?: number;
   /** Can't eat again until this time (prevents food → energy exploits). */
@@ -887,6 +891,8 @@ export type Action =
   | { type: "dog_buy"; breed: DogBreed; name: string }
   | { type: "dog_feed" | "dog_give_away" }
   | { type: "lead_start" | "lead_pay" | "lead_close"; id: string }
+  | { type: "case_end"; choice: "court" | "press" | "kozak" | "keep" }
+  | { type: "crane_favor" }
   | { type: "garage_set"; open: boolean; rate: number }
   | { type: "tunnel_dig" | "make_shank" | "parole_hearing" }
   | { type: "watch_set" | "inspect_set"; open: boolean; fee: number }

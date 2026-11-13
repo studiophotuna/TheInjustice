@@ -29,7 +29,7 @@ import { NPCS } from "./content/npcs";
 import { PATHS, promotionHint, rankTitle } from "./content/paths";
 import { familyGate, ratOf } from "./family";
 import { sellableGear } from "./military";
-import { CHAPTERS } from "./content/story";
+import { CHAPTERS, ENDING_CHAPTERS } from "./content/story";
 import { SCHOOL_BY_ID, SCHOOLS } from "./content/schools";
 import { COUNTRIES, COUNTRY_BY_ID, TRAVEL_MODES, tripCost, tripMs } from "./content/world";
 import { docksView, driveRoutes } from "./vehicles";
@@ -45,6 +45,7 @@ import { countryOf, dayKey, propertyIncome, FIGHT_ENERGY, hurtLimit, inHospital,
 import { describe, integrityHint } from "./stats";
 import type { DistrictId, LogEntry, PathId, Player } from "./types";
 import { canInspect, canWatch, INSPECT, WATCH } from "./protect";
+import { endingView } from "./ending";
 
 export interface JobView {
   id: string;
@@ -136,6 +137,8 @@ export interface PublicView {
   chapters: { id: string; title: string; teaser: string; unlocked: boolean; read: boolean }[];
   /** Leads: optional missions that add evidence to the board. */
   leads: ReturnType<typeof leadsView>;
+  /** What you did with the case, once it's whole (see ending.ts). */
+  ending: ReturnType<typeof endingView>;
   /** First unlocked chapter the player hasn't read yet. */
   unreadChapter: string | null;
   schools: {
@@ -530,7 +533,8 @@ export function toView(p: Player, now: number): PublicView {
     dead: p.dead ?? null,
     deaths: p.deaths ?? 0,
     leads: leadsView(p),
-    chapters: CHAPTERS.map((c) => ({
+    ending: endingView(p, now),
+    chapters: [...CHAPTERS, ...ENDING_CHAPTERS.filter((c) => p.caseEnding && c.id === `ending_${p.caseEnding.choice}`)].map((c) => ({
       id: c.id,
       title: c.title,
       teaser: c.teaser,

@@ -79,6 +79,11 @@ export function parseAction(body: unknown): Action {
     case "lead_pay":
     case "lead_close":
       return { type: b.type, id: str(b.id) };
+    case "case_end":
+      if (!["court", "press", "kozak", "keep"].includes(b.choice as string)) throw new GameError("Bad request.");
+      return { type: "case_end", choice: b.choice as "court" };
+    case "crane_favor":
+      return { type: "crane_favor" };
     case "cargo_buy":
     case "cargo_sell":
       if (!["smokes", "liquor", "phones", "pistols"].includes(b.good as string)) throw new GameError("Bad request.");

@@ -182,11 +182,11 @@ function NameForm({ game, label = "Start" }: { game: GameApi; label?: string }) 
   );
 }
 
-const COLD_OPEN: { art: () => React.ReactElement; line: string }[] = [
-  { art: Gavel, line: "A judge you never met signed your name to a crime." },
-  { art: Bars, line: "Three years behind bars." },
-  { art: Street, line: "Today they let you out. With nothing." },
-  { art: LightsOut, line: "Somebody arranged that. Find out who." },
+const COLD_OPEN: { art: () => React.ReactElement; img: string; line: string }[] = [
+  { art: Gavel, img: "/story/prologue-1.jpg", line: "A judge you never met signed your name to a crime." },
+  { art: Bars, img: "/story/prologue-2.jpg", line: "Three years behind bars." },
+  { art: Street, img: "/story/prologue-3.jpg", line: "Today they let you out. With nothing." },
+  { art: LightsOut, img: "/story/prologue-4.jpg", line: "Somebody arranged that. Find out who." },
 ];
 const INTRO_KEY = "cns_intro_seen";
 
@@ -207,7 +207,7 @@ function ColdOpen({ onDone }: { onDone: () => void }) {
     <motion.div className="cold-open" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} onClick={() => (i < COLD_OPEN.length - 1 ? setI(i + 1) : onDone())}>
       <AnimatePresence mode="wait">
         <motion.figure key={i} className="cold-panel" initial={{ opacity: 0, scale: 1.08 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.7, ease }}>
-          <Art />
+          {COLD_OPEN[i].img ? <img src={COLD_OPEN[i].img} alt="" /> : <Art />}
           <motion.figcaption initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, duration: 0.5 }}>
             {COLD_OPEN[i].line}
           </motion.figcaption>
