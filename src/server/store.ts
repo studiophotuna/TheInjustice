@@ -5,7 +5,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import postgres from "postgres";
 import { rankTitle } from "@/game/content/paths";
-import type { CaseFile, City, Crew, FavorOrder, Player, Report, Upload } from "@/game/types";
+import { GameError, type CaseFile, type City, type Crew, type FavorOrder, type Player, type Report, type Upload } from "@/game/types";
 import { LOCKOUT_MS, MAX_FAILED_LOGINS } from "./auth";
 
 export interface LeaderRow {
@@ -80,6 +80,8 @@ export interface PlayerStore {
   logError(e: Omit<ErrorLog, "id" | "at">): Promise<void>;
   listErrors(limit: number): Promise<ErrorLog[]>;
 
+  /** Enforces a shared per-requester action limit. */
+  throttleAction(key: string, now: number, burst: number, burstMs: number, perMinute: number): Promise<void>;
   /** Runs `fn` inside one transaction with row locks. */
   transaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T>;
   /** Most recently active players in a country. */
@@ -206,6 +208,8 @@ interface FileData {
 export class FileStore implements PlayerStore {
   private data: FileData | null = null;
   private queue: Promise<unknown> = Promise.resolve();
+  private actionHits = new Map<string, number[]>();
+  private actionHitsSweptAt = 0;
 
   constructor(private file: string) {}
 
@@ -264,6 +268,25 @@ export class FileStore implements PlayerStore {
       if (player) d.players[id] = player;
       return result;
     });
+  }
+
+  throttleAction(key: string, now: number, burst: number, burstMs: number, perMinute: number) {
+    return this.serial(() => {
+      if (now - this.actionHitsSweptAt > 60_000) {
+        for (const [requestKey, timestamps] of this.actionHits) {
+          if (!timestamps.some((at) => now - at < 60_000)) this.actionHits.delete(requestKey);
+        }
+        this.actionHitsSweptAt = now;
+      }
+      const hits = (this.actionHits.get(key) ?? []).filter((at) => now - at < 60_000);
+      const recent = hits.filter((at) => now - at < burstMs).length;
+      if (recent >= burst || hits.length >= perMinute) {
+        this.actionHits.set(key, hits);
+        throw new GameError("You're going too fast. Give it a few seconds.");
+      }
+      hits.push(now);
+      this.actionHits.set(key, hits);
+    }, false);
   }
 
   async leaderboard(limit: number) {
@@ -625,6 +648,27 @@ class PostgresStore implements PlayerStore {
       }
       return result;
     })) as T;
+  }
+
+  async throttleAction(key: string, now: number, burst: number, burstMs: number, perMinute: number) {
+    await this.sql.begin(async (tx) => {
+      // Serialize this requester's counters across every serverless instance.
+      await tx`select pg_advisory_xact_lock(hashtextextended(${key}, 0))`;
+      await tx`delete from injustice.action_rate_hits
+        where request_key = ${key} and hit_at <= to_timestamp(${(now - 60_000) / 1000})`;
+      const rows = await tx<{ burst_count: number; minute_count: number }[]>`
+        select
+          count(*) filter (where hit_at > to_timestamp(${(now - burstMs) / 1000}))::int as burst_count,
+          count(*)::int as minute_count
+        from injustice.action_rate_hits
+        where request_key = ${key}
+      `;
+      if (rows[0].burst_count >= burst || rows[0].minute_count >= perMinute) {
+        throw new GameError("You're going too fast. Give it a few seconds.");
+      }
+      await tx`insert into injustice.action_rate_hits (request_key, hit_at)
+        values (${key}, to_timestamp(${now / 1000}))`;
+    });
   }
 
   async leaderboard(limit: number) {
