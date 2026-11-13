@@ -214,3 +214,18 @@
 
 /* Quick bar labels: sentence case, like every other title below the page head. */
 .qtext b { text-transform: none !important; letter-spacing: 0 !important; }
+
+/*
+ * Spacing inside cards: buttons, button rows and forms keep 10px from the text and rows around
+ * them, and from each other. :where() keeps these at zero specificity, so a card that sets its
+ * own spacing still wins.
+ */
+:where(.card, .card > div:not(.row):not([class*="acts"]):not([class*="foot"]), .card > section, .card > form, .dir-section) > :where(.row, .btn, .segmented, form, select, .front-launder) + :where(.row, .btn, .segmented, form, p, ul, ol, small, .log) { margin-top: 10px; }
+:where(.card, .card > div:not(.row):not([class*="acts"]):not([class*="foot"]), .card > section, .card > form, .dir-section) > :where(p, ul, ol, small, h4, .muted, .fine) + :where(.row, .btn, .segmented, form, select) { margin-top: 10px; }
+:where(.card, .card > section) > :where(.card-title) + :where(.row, .btn, .segmented, form, ul, .chips, .spec-list) { margin-top: 8px; }
+/* Lists of log lines under a button row. */
+:where(.card) > :where(.row) + :where(.log, ul) { margin-top: 12px; }
+/* A note or a log under a row of buttons, at any depth. */
+:where(.row, .btn) + :where(p, small, .log, ul.log) { margin-top: 10px; }
+.row + p, .row + small, .row + .log, .row + ul, .btn + p, .btn + small { margin-top: 10px; }
+ul + p.fine, ul + p.muted, ol + p.fine { margin-top: 10px; }
