@@ -1,5 +1,14 @@
 # Changelog
 
+## 8.0.2: a lower dock, and the gut read explained
+
+- **The dock sits lower on phones.** It was 8px plus the whole home-bar area above the bottom
+  edge; now it's 4px, using only the part of the home-bar area it needs. The Go button, its sheet,
+  and pop-ups above the dock moved down with it.
+- **How to play explains the gut read:** what Build, Reflexes, Street smarts and Presence mean,
+  their six words from weakest to strongest, what each one helps with and how to raise it, and
+  what the "how people see you" line under your name means. No numbers, as before.
+
 ## 8.0.1: the Go button stays put
 
 - Fixed: on phones, scrolling down hid the Go button (an old rule that folded the quick bar away

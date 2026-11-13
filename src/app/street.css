@@ -81,9 +81,13 @@
 /* ── Phones: one dock, the Go button in the middle ───────────────────────── */
 .qorb, .qorb-more { display: none; }
 @media (max-width: 959px) {
-  :root { --qb-h: 18px; --nav-h: 62px; }
+  :root {
+    --qb-h: 18px; --nav-h: 62px;
+    /* How far the dock sits above the bottom edge: clear of the home bar on phones that have one, no more. */
+    --dock-lift: max(0px, calc(env(safe-area-inset-bottom) - 18px));
+  }
   .bottomnav {
-    left: 8px !important; right: 8px !important; bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+    left: 8px !important; right: 8px !important; bottom: calc(4px + var(--dock-lift)) !important;
     height: 62px !important; padding: 0 !important; border-radius: 22px !important;
     grid-template-columns: 1fr 1fr 96px 1fr 1fr !important;
     background: rgba(27, 32, 43, 0.95) !important; border: 1px solid var(--border) !important;
@@ -104,7 +108,7 @@
   .quickbar > .qwrap { display: none; }
   .qorb {
     display: grid; justify-items: center; gap: 4px; position: fixed; left: 50%; transform: translateX(-50%);
-    bottom: calc(14px + env(safe-area-inset-bottom)); width: 96px; padding: 0; border: 0; background: none; cursor: pointer; color: var(--text);
+    bottom: calc(10px + var(--dock-lift)); width: 96px; padding: 0; border: 0; background: none; cursor: pointer; color: var(--text);
   }
   .qorb-disc {
     display: grid; place-items: center; align-content: center; width: 60px; height: 60px; border-radius: 50%;
@@ -118,14 +122,14 @@
   .qorb:disabled .qorb-disc { filter: grayscale(0.7) brightness(0.7); box-shadow: 0 0 0 5px #0d0f14; }
   .qorb:disabled .qorb-label { color: var(--muted); }
   .qorb-more {
-    display: grid; place-items: center; position: fixed; left: calc(50% + 22px); bottom: calc(68px + env(safe-area-inset-bottom));
+    display: grid; place-items: center; position: fixed; left: calc(50% + 22px); bottom: calc(64px + var(--dock-lift));
     width: 24px; height: 24px; border-radius: 50%; border: 2px solid #0d0f14; background: var(--panel-4); color: var(--text); cursor: pointer; padding: 0;
   }
   .qorb-more.on { background: var(--go); color: var(--go-ink); }
   .qorb-more.on svg { transform: rotate(180deg); }
   /* Open: a panel of the four slots, just above the dock. */
   .quickbar.open {
-    height: auto; left: 10px !important; right: 10px !important; bottom: calc(104px + env(safe-area-inset-bottom)) !important;
+    height: auto; left: 10px !important; right: 10px !important; bottom: calc(98px + var(--dock-lift)) !important;
     display: grid !important; grid-template-columns: 1fr 1fr; gap: 12px 10px; padding: 16px 12px 12px !important;
     background: #1b202b !important; border: 1px solid var(--border-strong) !important; border-radius: 20px;
     box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.75);
@@ -137,10 +141,10 @@
   .quickbar.open .q-long { display: inline !important; }
   .quickbar.open .q-short { display: none !important; }
   .quickbar.open .qtext small { display: block; }
-  .quickbar .qpick { position: fixed; bottom: calc(100px + env(safe-area-inset-bottom)); left: 12px; right: 12px; width: auto; transform: none; }
-  .main { padding-bottom: calc(110px + env(safe-area-inset-bottom)) !important; }
-  .encounter { bottom: calc(100px + env(safe-area-inset-bottom)) !important; }
-  .toasts { bottom: calc(100px + env(safe-area-inset-bottom)) !important; }
+  .quickbar .qpick { position: fixed; bottom: calc(94px + var(--dock-lift)); left: 12px; right: 12px; width: auto; transform: none; }
+  .main { padding-bottom: calc(104px + var(--dock-lift)) !important; }
+  .encounter { bottom: calc(94px + var(--dock-lift)) !important; }
+  .toasts { bottom: calc(94px + var(--dock-lift)) !important; }
 }
 
 /* ── Home: the case hero ─────────────────────────────────────────────────── */

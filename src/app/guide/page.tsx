@@ -33,6 +33,38 @@ export default function GuidePage() {
         so size people up by who they are and what they do.
       </p>
 
+      <h2>Your gut read</h2>
+      <p>
+        The Gut read on your Me page is how your hidden strengths look from the outside. Each line moves up one word at a time as
+        you train and work. The first steps come quickly; the last ones take a long time.
+      </p>
+      <ul>
+        <li>
+          <b>Build</b> (strength and toughness): Scrawny, Wiry, Lean, Solid, Hard as nails, Built like a wall. How hard you hit and how
+          much you can take, in every fight, break-in and heist. Lift weights and spar at the gym; physical work helps too.
+        </li>
+        <li>
+          <b>Reflexes</b> (agility): Clumsy, Slow, Steady, Quick, Sharp, Lightning. Striking first and dodging in a fight, and getting
+          away with a snatch or a break-in. Footwork drills at the gym, and quick, risky work.
+        </li>
+        <li>
+          <b>Street smarts</b> (wits and perception): Naive, Green, Alert, Savvy, Shrewd, Sees everything. Getting away with crimes,
+          cooking, spotting a thief or an ambush before it happens, and holding your own in court. Comes from street encounters,
+          investigations, study and careers that use your head.
+        </li>
+        <li>
+          <b>Presence</b> (charisma and nerve): Invisible, Timid, Noticeable, Confident, Commanding, Magnetic. Leaning on people,
+          talking your way through court and parole, and keeping your head on a mugging, an arson or a hit. Comes from risky work,
+          talking jobs and careers that deal with people.
+        </li>
+      </ul>
+      <p>
+        The line in quotes under your name is how people see you, and it follows what you do rather than how you train. Honest work
+        and community service raise it; crime lowers it. From best to worst: the shopkeepers trust you with their keys; people on
+        the block nod when you pass; nobody&apos;s sure what to make of you yet; some people cross the street; conversations stop
+        when you walk into a room. It counts when you ask for parole.
+      </p>
+
       <h2>Your case</h2>
       <p>
         Someone framed you. Home always opens on your case: the people behind it, how much you can prove, and your next lead.
