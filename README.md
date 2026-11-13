@@ -10,7 +10,7 @@ grow hidden stats that decide whether you survive.
 
 **Play online:** https://injustice-booking-cms.vercel.app
 
-**Current version:** 8.4.2. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
+**Current version:** 8.4.3. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
 [latest changes](#where-the-game-is-now) are summed up at the end of this page.
 
 ## Play it locally
@@ -398,7 +398,7 @@ money and one jail sentence that goes away) or keep it (Crane pays $2,000 a week
 You choose once. Each choice has its own final chapter and street title (`src/game/ending.ts`).
 Military, mechanic, hacker and fire careers now have two story chapters each, and the prologue and
 Chapter 1 and the police evidence-locker chapter use the owner's painted art (`public/story/`;
-8.4.1 brings it to 10 of 86 panels). Ironmoor has its city painting (8.4.2), shown in the city
+8.4.1 brings it to 10 of 86 panels). Grayhaven, Port Solace and Ironmoor have their city paintings (8.4.2, 8.4.3), shown in the city
 picker and on arrival.
 
 **Your story.** Home opens on your case: who framed you, what you can prove, and your next lead.

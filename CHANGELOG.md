@@ -1,5 +1,11 @@
 # Changelog
 
+## 8.4.3: Grayhaven and Port Solace paintings
+
+- Grayhaven (the courthouse dome over the harbour, in the rain) and Port Solace (the wet docks,
+  cranes and palms) now have the owner's paintings in the city picker and on the arrival card,
+  like Ironmoor. Halcyon waits for a sharper image.
+
 ## 8.4.2: Ironmoor's painting
 
 - The owner's painting of Ironmoor (freight train, snow, checkpoint floodlights) now shows when a

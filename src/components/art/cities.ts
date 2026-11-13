@@ -6,6 +6,8 @@ import type { CountryId } from "@/game/types";
  * here when its image arrives; the others keep their drawn skyline.
  */
 const CITY_FILE: Partial<Record<CountryId, string>> = {
+  varrow: "grayhaven",
+  solmarra: "portsolace",
   kestrova: "ironmoor",
 };
 
