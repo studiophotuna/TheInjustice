@@ -1,5 +1,10 @@
 # Changelog
 
+## 8.8.7: painted Banking ranks
+
+- All eight Banking ranks (Finance Student to Governor of the Exchange) use the owner's painted
+  portraits, faces in shadow. Regulars who wore old Banking photos as faces keep them.
+
 ## 8.8.6: painted Vigilante ranks
 
 - All eight Vigilante ranks (Watcher to Symbol) use the owner's painted portraits, hooded and
