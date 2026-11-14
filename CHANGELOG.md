@@ -1,5 +1,10 @@
 # Changelog
 
+## 8.8.1: painted shop
+
+- Every item in the Shop and every business (49 pictures) now uses the owner's painted artwork:
+  food, medical, homes, weapons, armour and the ten businesses, all in the same rainy noir style.
+
 ## 8.8.0: arson and turf wars play out as cards
 
 - **Arson.** Torching a business or a rival crew's front plays as cards: case it, douse it, the
