@@ -1,5 +1,10 @@
 # Changelog
 
+## 8.8.8: painted Military ranks
+
+- All eight Military ranks (Recruit to General) use the owner's painted portraits, faces in
+  shadow. The regular who wore the old Sergeant photo as a face keeps it.
+
 ## 8.8.7: painted Banking ranks
 
 - All eight Banking ranks (Finance Student to Governor of the Exchange) use the owner's painted
