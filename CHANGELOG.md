@@ -1,5 +1,10 @@
 # Changelog
 
+## 8.8.3: painted Police ranks
+
+- All eight Police ranks (Academy Cadet to Commissioner) use the owner's painted portraits, faces
+  in shadow. The old photos that street regulars wore as faces stay on as faces.
+
 ## 8.8.2: painted Medicine ranks
 
 - Medicine ranks 2 to 8 (Intern up to Medical Director) use the owner's painted portraits: one
