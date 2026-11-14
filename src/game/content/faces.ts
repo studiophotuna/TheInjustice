@@ -8,7 +8,9 @@ export interface Face { src: string; g: Gender; old?: boolean; /** Only players 
 
 const mk = (id: string, g: Gender, old = false): [string, Face] => [`mk${id}`, { src: `/faces/mk${id}.jpg`, g, ...(old ? { old } : {}) }];
 const pl = (id: string, g: Gender, old = false): [string, Face] => [`mk${id}`, { src: `/faces/mk${id}.jpg`, g, player: true, ...(old ? { old } : {}) }];
-const pt = (id: string, g: Gender, old = false): [string, Face] => [id, { src: `/portraits/${id}.jpg`, g, ...(old ? { old } : {}) }];
+const pt = (id: string, g: Gender, old = false): [string, Face] => [id, { src: `/${MOVED.has(id) ? `faces/rank-${id}` : `portraits/${id}`}.jpg`, g, ...(old ? { old } : {}) }];
+/** Rank portraits replaced by faceless painted ones: the old photos stay on as faces, in public/faces. */
+const MOVED = new Set(["medicine-4", "medicine-6", "medicine-7", "medicine-8"]);
 
 export const FACES: Record<string, Face> = Object.fromEntries([
   ...["12934", "13737", "14090", "16107", "16108", "23740", "32845", "35808", "36445", "41334", "41922", "4727", "4736", "4813", "49249", "51755", "6341", "4634"].map((i) => mk(i, "m")),

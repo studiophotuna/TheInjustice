@@ -1,5 +1,12 @@
 # Changelog
 
+## 8.8.2: painted Medicine ranks
+
+- Medicine ranks 2 to 8 (Intern up to Medical Director) use the owner's painted portraits: one
+  doctor's career from a 3 a.m. corridor to the director's office, face always turned away.
+  The Medical Student keeps the old photo until its painting arrives.
+- The old photos that street regulars wore as faces stay on as faces, so nobody's face changed.
+
 ## 8.8.1: painted shop
 
 - Every item in the Shop and every business (49 pictures) now uses the owner's painted artwork:
