@@ -1,5 +1,25 @@
 # Changelog
 
+## 8.6.0: fights play out as cards
+
+- **Card fights.** Every fight now plays out by itself as a run of cards: each move is dealt
+  face-down from the fighter who makes it, flips over, and flies at the other one.
+  - **Strike** (close range): an impact burst with slash marks.
+  - **Shot** (long range): a tracer, a muzzle flash and bullet holes punching in.
+  - **Block**: a steel shield goes up and throws sparks when the hit lands.
+  - **Dodge**: running feet with wind streaks, and the fighter jumps aside leaving afterimages.
+  - Critical hits get slow motion, letterbox bars, a zoom and a gold card.
+- **No gear is ever shown.** The cards say only strike or shot, block or dodge, and the lines under
+  them never name a weapon, so a fight can't be used to see what someone carries. There are no
+  damage numbers either: health bars show how a fight is going.
+- Hits flash, shake the screen, knock the photo back and leave marks on it (bullet holes for shots,
+  slashes for strikes). Sparks, embers, steel shards and dust fly. The street behind drifts, the
+  lamp flickers, fog rolls through the rain.
+- Long fights are cut to their eight biggest moves. Speed 2x and Skip are always there, and the
+  result plate is the same as before.
+- Under the hood: the fight engine records each move as it rolls it (`FightBeat` in `combat.ts`).
+  No new rolls, so every fight comes out exactly as it did before.
+
 ## 8.5.1: evidence photos, two more panels
 
 - **Evidence photos on the board.** A closed lead whose evidence has a painting now shows it as a

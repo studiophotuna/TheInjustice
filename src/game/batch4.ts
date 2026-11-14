@@ -153,7 +153,7 @@ export function collectLoan(lender: Player, borrower: Player, id: string, now: n
   if (lender.energy < L.collectEnergy) throw new GameError("You're too tired.");
   lender.energy -= L.collectEnergy;
   const res = resolveFight(playerFighter(lender, 100), { ...playerFighter(borrower, 100), hp: borrower.hp }, rng);
-  const fight: FightSummary = { opponent: borrower.name, icon: "🧍", won: res.won, lines: res.lines, outcome: res.won ? "win" : "loss", face: fightFace(borrower) };
+  const fight: FightSummary = { opponent: borrower.name, icon: "🧍", won: res.won, lines: res.lines, beats: res.beats, start: res.start, outcome: res.won ? "win" : "loss", face: fightFace(borrower) };
   lender.hp = Math.max(5, res.playerHp);
   lender.heat += 4;
   if (!res.won) {
@@ -218,7 +218,7 @@ export function workContract(m: Player, c: CaseFile, culprit: Player | null, vic
     return { events: [{ tone: "info", text: "You find out who did it, but they're out of reach for now." }] };
   }
   const res = resolveFight(playerFighter(m, 100), { ...playerFighter(culprit, 100), hp: culprit.hp }, rng);
-  const fight: FightSummary = { opponent: "The robber", icon: "🧍", won: res.won, lines: res.lines, outcome: res.won ? "win" : "loss" };
+  const fight: FightSummary = { opponent: "The robber", icon: "🧍", won: res.won, lines: res.lines, beats: res.beats, start: res.start, outcome: res.won ? "win" : "loss" };
   m.hp = Math.max(5, res.playerHp);
   m.heat += 4;
   const what = CRIMES[c.kind].name.toLowerCase();

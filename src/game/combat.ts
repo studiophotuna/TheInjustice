@@ -1,4 +1,4 @@
-import { armorBlock, gearAgility, gearPower } from "./gear";
+import { armorBlock, equippedId, gearAgility, gearPower } from "./gear";
 import type { NpcDef } from "./content/npcs";
 import { sv } from "./stats";
 import type { Player, Rng } from "./types";
@@ -11,7 +11,16 @@ export interface Fighter {
   maxHp: number;
   /** Share of every hit that armor soaks up (0 to about 0.45). */
   block?: number;
+  /** Fights with a gun: the fight scene shows shots instead of strikes. */
+  ranged?: boolean;
 }
+
+/**
+ * One move in a fight, for the fight scene: who moved, a strike or a shot, what happened, and both
+ * sides' health afterwards as a percentage. Deliberately says nothing about the gear behind it.
+ * [by (0 you, 1 them), kind (0 strike, 1 shot), result (0 hit, 1 crit, 2 block, 3 dodge), your %, their %]
+ */
+export type FightBeat = [0 | 1, 0 | 1, 0 | 1 | 2 | 3, number, number];
 
 export interface FightResult {
   won: boolean;
@@ -20,7 +29,15 @@ export interface FightResult {
   rounds: number;
   /** Descriptive log; no numbers, just how it felt. */
   lines: string[];
+  /** Every move, for the fight scene. */
+  beats: FightBeat[];
+  /** Both sides' health when the fight started, as percentages. */
+  start: [number, number];
 }
+
+const RANGED = /pistol|revolver|rifle|shotgun|machine_gun|lmg/;
+/** Whether a weapon fires. */
+export const isRanged = (id: string | null | undefined) => !!id && RANGED.test(id);
 
 
 export function playerFighter(p: Player, maxHp: number): Fighter {
@@ -31,6 +48,7 @@ export function playerFighter(p: Player, maxHp: number): Fighter {
     block: armorBlock(p),
     hp: p.hp,
     maxHp,
+    ranged: isRanged(equippedId(p, "weapon")),
   };
 }
 
@@ -70,6 +88,15 @@ export function resolveFight(me: Fighter, them: Fighter, rng: Rng): FightResult 
   const a = { ...me };
   const b = { ...them };
   const lines: string[] = [];
+  const beats: FightBeat[] = [];
+  const pct = (f: Fighter) => Math.max(0, Math.round((f.hp / f.maxHp) * 100));
+  // What a move looked like: a miss is a dodge; a small hit on armor is a block; a big one is a crit.
+  const beat = (by: 0 | 1, att: Fighter, def: Fighter, d: number) => {
+    const r = d / def.maxHp;
+    const result = d === 0 ? 3 : (def.block ?? 0) > 0.08 && r < 0.06 ? 2 : r > 0.2 ? 1 : 0;
+    beats.push([by, att.ranged ? 1 : 0, result, pct(a), pct(b)]);
+  };
+  const start: [number, number] = [pct(a), pct(b)];
   const meFirst = a.agility + rng() * 10 >= b.agility + rng() * 10;
   lines.push(meFirst ? "You strike first." : "They get the jump on you.");
   let round = 0;
@@ -80,10 +107,12 @@ export function resolveFight(me: Fighter, them: Fighter, rng: Rng): FightResult 
       if (who === "me") {
         const d = hit(a, b, rng);
         b.hp -= d;
+        beat(0, a, b, d);
         if (round < 3 || d / b.maxHp > 0.2) lines.push(describeHit(d, b.maxHp, true));
       } else {
         const d = hit(b, a, rng);
         a.hp -= d;
+        beat(1, b, a, d);
         if (round < 3 || d / a.maxHp > 0.2) lines.push(describeHit(d, a.maxHp, false));
       }
     }
@@ -92,7 +121,7 @@ export function resolveFight(me: Fighter, them: Fighter, rng: Rng): FightResult 
   if (a.hp <= 0) lines.push("Everything goes black.");
   else if (b.hp <= 0) lines.push("They hit the ground and stay there.");
   else lines.push(won ? "They back off and run." : "You back away, beaten.");
-  return { won, playerHp: Math.max(0, a.hp), rounds: round, lines };
+  return { won, playerHp: Math.max(0, a.hp), rounds: round, lines, beats, start };
 }
 
 /** Deterministic noise in [-1, 1] so re-scouting doesn't re-roll the answer. */

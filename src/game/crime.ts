@@ -295,7 +295,7 @@ export function commitCrime(
 
   if (kind === "mug") {
     const res = resolveFight(playerFighter(a, playerMaxHp(a)), { ...playerFighter(t, playerMaxHp(t)), hp: t.hp }, rng);
-    fight = { opponent: t.name, icon: "🧍", won: res.won, lines: res.lines, outcome: res.won ? "win" : "loss", face: fightFace(t) };
+    fight = { opponent: t.name, icon: "🧍", won: res.won, lines: res.lines, beats: res.beats, start: res.start, outcome: res.won ? "win" : "loss", face: fightFace(t) };
     events.push({ tone: res.won ? "good" : "bad", text: `Mugging: ${t.name}`, fight });
     a.hp = res.playerHp;
     success = res.won;

@@ -6,6 +6,7 @@ import "./game.css";
 import "./kit.css";
 import "./syndicate.css";
 import "./street.css";
+import "./cardfight.css";
 import { CrashReporter } from "@/components/crashes";
 import pkg from "../../package.json";
 

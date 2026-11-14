@@ -834,6 +834,10 @@ export interface FightSummary {
   won: boolean;
   /** Descriptive round-by-round lines, no numbers. */
   lines: string[];
+  /** Every move, for the card fight scene (see combat.ts FightBeat). */
+  beats?: import("./combat").FightBeat[];
+  /** Both sides' health when it started, as percentages. */
+  start?: [number, number];
   outcome: "win" | "loss" | "ko" | "death";
   /** The opponent's own face when it's a player or a regular (NPCs use their portrait). */
   face?: { photo: string | null; path: string | null; look: { frame: string | null; color: string | null; banner: string | null } | null };

@@ -354,7 +354,7 @@ function roadAmbush(p: Player, rng: Rng, by: "bus" | "car"): TripIncident {
   const me = playerFighter(p, playerMaxHp(p));
   const gang = roadGang(power(me));
   const res = resolveFight(me, npcFighter(gang), rng);
-  const fight: FightSummary = { opponent: gang.name, icon: gang.icon, won: res.won, lines: res.lines, outcome: "win" };
+  const fight: FightSummary = { opponent: gang.name, icon: gang.icon, won: res.won, lines: res.lines, beats: res.beats, start: res.start, outcome: "win" };
   if (res.won) {
     return {
       kind: "ambush",
@@ -741,7 +741,7 @@ function fightNpc(p: Player, npc: NpcDef, now: number, rng: Rng, events: GameEve
   const res = resolveFight(me, them, rng);
   p.hp = res.playerHp;
   events.push(...wearGear(p, ["weapon", "armor"]));
-  const summary: FightSummary = { opponent: npc.name, icon: npc.icon, won: res.won, lines: res.lines, outcome: "win" };
+  const summary: FightSummary = { opponent: npc.name, icon: npc.icon, won: res.won, lines: res.lines, beats: res.beats, start: res.start, outcome: "win" };
   events.push({ tone: res.won ? "good" : "bad", text: `Fight: ${npc.name}`, fight: summary });
   grantXp(p, { toughness: 0.8, strength: res.won ? 1 : 0.4, agility: 0.5, nerve: 0.6 }, 1, events);
   if (res.won) {
@@ -774,7 +774,7 @@ function maybeMugging(p: Player, job: JobDef, now: number, rng: Rng, events: Gam
   const them = npcFighter(m);
   const res = resolveFight(me, them, rng);
   p.hp = res.playerHp;
-  const summary: FightSummary = { opponent: m.name, icon: m.icon, won: res.won, lines: res.lines, outcome: "win" };
+  const summary: FightSummary = { opponent: m.name, icon: m.icon, won: res.won, lines: res.lines, beats: res.beats, start: res.start, outcome: "win" };
   events.push({ tone: res.won ? "good" : "bad", text: "Fight: Mugger", fight: summary });
   grantXp(p, { toughness: 0.6, nerve: 0.6 }, 1, events);
   if (res.won) {

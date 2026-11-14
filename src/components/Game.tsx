@@ -38,7 +38,9 @@ import { Vehicle } from "./art/Vehicles";
 import { AgeBlocked, AgeGate, AuthForm, ChapterViewer, DeathScreen, Landing, Logo, Prologue } from "./screens";
 import { requestShopCat, DeanLetter, FightTab, JobsTab, ProfileTab, ShopTab } from "./tabs";
 import { CityPlaces, type Building } from "./places";
-import { careerStill } from "./art/Cutout";
+import { careerStill, facePhoto } from "./art/Cutout";
+import { CardFight } from "./cardfight";
+import { NPC_FACES } from "@/game/content/faces";
 import { CommunityTab } from "./community";
 import { HomeTab } from "./home";
 import { AwayRecap, GuestChip, LiveRail, setPeopleSection } from "./pulse";
@@ -769,7 +771,12 @@ function plateRows(fight: FightShow, view: PublicView): { label: string; value: 
 function FightScene({ fight, view, onClose, onAgain, busy }: { fight: FightShow | FightSummary; view: PublicView; onClose: () => void; onAgain?: () => void; busy?: boolean }) {
   const [shown, setShown] = useState(0);
   const lines = fight.lines.slice(0, 7);
-  const done = shown >= lines.length;
+  // Fights with recorded moves play as cards; older saved fights keep the text version.
+  const cards = !!fight.beats?.length;
+  const [cardDone, setCardDone] = useState(false);
+  const [fast, setFast] = useState(1);
+  const [skip, setSkip] = useState(false);
+  const done = cards ? cardDone : shown >= lines.length;
   useEffect(() => {
     if (done) return;
     const t = setTimeout(() => setShown((s) => s + 1), 320);
@@ -780,7 +787,28 @@ function FightScene({ fight, view, onClose, onAgain, busy }: { fight: FightShow 
     fight.opponent === "Road Gang" ? "road_gang" : view.fights.find((f) => f.name === fight.opponent)?.id ?? "mugger";
 
   return (
-    <motion.div className="fight-scene" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={done ? onClose : undefined}>
+    <motion.div className={`fight-scene${cards ? " cf-on" : ""}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={done ? onClose : undefined}>
+      {cards ? (
+        <>
+          <CardFight
+            fight={fight}
+            youName={view.name}
+            youPhoto={view.profile.photo ?? careerStill(view.path?.id, view.ladder?.current) ?? facePhoto(view.name)}
+            foePhoto={fight.face ? (fight.face.photo && !fight.face.photo.startsWith("/regulars/") ? fight.face.photo : facePhoto(fight.opponent)) : NPC_FACES[npcId] ?? facePhoto(fight.opponent)}
+            scene={view.jail ? "/scenes/prison.jpg" : cityArt(view.location.country) ?? "/scenes/street.jpg"}
+            speed={fast}
+            skip={skip}
+            onDone={() => setCardDone(true)}
+          />
+          {!cardDone && (
+            <div className="cf-controls">
+              <button className={fast > 1 ? "on" : ""} aria-pressed={fast > 1} onClick={() => setFast(fast > 1 ? 1 : 2)}>Speed 2x</button>
+              <button onClick={() => setSkip(true)}>Skip</button>
+            </div>
+          )}
+        </>
+      ) : (
+      <>
       <div className="fight-stage">
         <motion.div initial={{ x: -120, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 200, damping: 18 }}>
           <PlayerAvatar name={view.name} path={view.path?.id} photo={view.profile.photo ?? careerStill(view.path?.id, view.ladder?.current)} look={view.look} className="avatar-fight" />
@@ -802,6 +830,8 @@ function FightScene({ fight, view, onClose, onAgain, busy }: { fight: FightShow 
           <motion.li key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>{l}</motion.li>
         ))}
       </ul>
+      </>
+      )}
       <AnimatePresence>
         {done && (
           <motion.div className={`fight-result ${o.cls}`} initial={{ scale: 0.3, rotate: -12, opacity: 0 }} animate={{ scale: 1, rotate: -4, opacity: 1 }} transition={{ type: "spring", stiffness: 300, damping: 14 }}>
