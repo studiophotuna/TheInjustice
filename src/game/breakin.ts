@@ -19,6 +19,7 @@ import { roleOdds } from "./heist";
 import { crewJob } from "./family";
 import { GameError, type Crew, type HeistRole, type Car, type CaseFile, type CountryId, type GameEvent, type Player, type Rng } from "./types";
 import { alarmOdds } from "./heist";
+import { caperEvent, witnessStep, type CaperStep } from "./caper";
 
 export const BREAKIN = {
   energy: 20,
@@ -169,12 +170,21 @@ export function breakIn(a: Player, t: Player, now: number, rng: Rng, ctx: Proper
   a.attackLog = { ...(a.attackLog ?? {}), [`burgle:${t.id}`]: now };
   a.jobCounts["crime:burglary"] = (a.jobCounts["crime:burglary"] ?? 0) + 1;
 
+  const casing: CaperStep = { card: "case", ok: true, line: `You watch ${t.name}'s place until the street goes quiet.` };
   if (rng() >= breakInOdds(a, t, country, now)) {
     a.heat += BREAKIN.heat * 0.5;
+    const stop: CaperStep = home
+      ? { card: "owner", ok: false, line: `${t.name} is home, and sees your face.` }
+      : dog
+        ? { card: "dog", ok: false, line: "A dog throws itself at the door." }
+        : alarm
+          ? { card: "alarm", ok: false, line: "The alarm screams the moment the door gives." }
+          : { card: "lock", ok: false, line: "The lock won't give." };
+    const scene = caperEvent(`Break-in: ${t.name}`, [casing, stop], "caught");
     if (home) {
       t.reputation += 1;
       notify(t, `You heard the lock and caught ${a.name} breaking into your place. They ran. +1 reputation.`, "good", a, now);
-      return { events: [{ tone: "bad", text: `${t.name} was home. They saw your face before you got out the window.` }], caseFile: null };
+      return { events: [{ tone: "bad", text: `${t.name} was home. They saw your face before you got out the window.` }, scene], caseFile: null };
     }
     notify(
       t,
@@ -189,6 +199,7 @@ export function breakIn(a: Player, t: Player, now: number, rng: Rng, ctx: Proper
     );
     return {
       events: [
+        scene,
         {
           tone: "bad",
           text: dog
@@ -225,6 +236,13 @@ export function breakIn(a: Player, t: Player, now: number, rng: Rng, ctx: Proper
   const tier = homeIn(t, country);
   const c = openCase(a, t, "burglary", amount, ctx, now, rng, alarm ? "The alarm camera" : null);
   const events: GameEvent[] = [
+    caperEvent(`Break-in: ${t.name}`, [
+      casing,
+      { card: "lock", ok: true, line: "The lock gives without a sound." },
+      took.length ? { card: "inside", ok: true, line: `You find the hiding spot ${STASH.spots[tier]}.` } : { card: "inside", ok: false, line: "Nothing worth taking." },
+      { card: "getaway", ok: true, line: "Out the way you came in." },
+      ...witnessStep(ctx.witnesses.length, ctx.witnesses.length === 1 ? "Someone saw you leave." : "People saw you leave."),
+    ], took.length ? (ctx.witnesses.length ? "seen" : "clean") : "empty"),
     {
       tone: "good",
       text: took.length
@@ -256,7 +274,10 @@ export function stealCar(a: Player, t: Player, carId: string, now: number, rng: 
   if (rng() >= carTheftOdds(a, car!)) {
     a.heat += CARJACK.heat * 0.5;
     notify(t, `Someone tried to steal your ${name} in ${COUNTRY_BY_ID[car!.country].capital}. The lock held.`, "info", undefined, now);
-    return { events: [{ tone: "bad", text: `The ${name} won't start, and someone is shouting from a window. You leave it.` }], caseFile: null };
+    return { events: [caperEvent(`Car theft: ${t.name}`, [
+      { card: "case", ok: true, line: `You find ${t.name}'s ${name} parked on a dark street.` },
+      { card: "hotwire", ok: false, line: "It won't start, and someone is shouting from a window." },
+    ], "caught"), { tone: "bad", text: `The ${name} won't start, and someone is shouting from a window. You leave it.` }], caseFile: null };
   }
   t.garage = (t.garage ?? []).filter((c) => c.id !== carId);
   const loaded = cargoUnits(car!);
@@ -267,6 +288,12 @@ export function stealCar(a: Player, t: Player, carId: string, now: number, rng: 
   c.car = { id: stolen.id, name: CARS[car!.model].name };
   notify(t, `Your ${name} was stolen in ${COUNTRY_BY_ID[car!.country].capital}${loaded ? `, with ${loaded} units still in the trunk` : ""}. The police opened case #${c.id}.`, "bad", undefined, now);
   const events: GameEvent[] = [
+    caperEvent(`Car theft: ${t.name}`, [
+      { card: "case", ok: true, line: `You find ${t.name}'s ${name} parked on a dark street.` },
+      { card: "hotwire", ok: true, line: "Two wires, one spark. It starts." },
+      { card: "getaway", ok: true, line: "You pull away with the lights off." },
+      ...witnessStep(ctx.witnesses.length, ctx.witnesses.length === 1 ? "Someone saw you drive off." : "People saw you drive off."),
+    ], ctx.witnesses.length ? "seen" : "clean"),
     { tone: "good", text: `You're driving ${t.name}'s ${name}${loaded ? `, with ${loaded} units of cargo in the trunk` : ""}. It's hot: change the plates or sell it to a chop shop at the Docks.` },
     ...addMerit(a, "enforcer", 1),
   ];
@@ -374,6 +401,14 @@ export function runHomeJob(
   const interrupted = (home && !ok.lookout) || (!team.lookout && rng() < 0.3) || (!!dog && !ok.muscle && rng() < dogGuard(t, country, now) * 2);
   const members = Object.values(team).filter((x): x is Player => !!x);
   const capital = COUNTRY_BY_ID[country].capital;
+  // The job as cards, in the order it happens.
+  const title = `Job on ${t.name}'s place`;
+  const steps: CaperStep[] = [];
+  if (wired && h.hacker) steps.push({ card: "hacker", ok: alarmCut, who: h.hacker.name, line: alarmCut ? "The alarm goes dark. No camera, no siren." : "The alarm stays on. It's watching." });
+  if (team.lookout) steps.push({ card: "lookout", ok: ok.lookout, who: team.lookout.name, line: ok.lookout ? "Eyes on the whole street." : "Nobody is watching the street." });
+  if (interrupted) steps.push(ok.muscle
+    ? { card: home ? "owner" : dog ? "dog" : "guards", ok: true, who: team.muscle?.name, line: home ? `${t.name} walks in. The muscle handles it.` : "Someone walks in. The muscle handles it." }
+    : { card: home ? "owner" : dog ? "dog" : "witness", ok: false, line: home ? `${t.name} walks in on the job.` : dog ? `${dog.name} wakes the whole block.` : "Someone walks in on the job." });
   crew.heist = null;
   crew.lastHeistAt = now;
   leader.attackLog = { ...(leader.attackLog ?? {}), [`burgle:${t.id}`]: now };
@@ -391,7 +426,8 @@ export function runHomeJob(
     }
     notify(t, `The police caught a crew breaking into your place in ${capital}. Nothing was taken.`, "good", undefined, now);
     crew.log = [{ at: now, text: `The job on ${t.name}'s place went wrong. Everyone got caught.` }, ...crew.log].slice(0, 30);
-    return { events: [{ tone: "bad", text: "The getaway car never came. You're all caught at the door." }], caseFile: null };
+    steps.push({ card: "getaway", ok: false, who: team.driver.name, line: "The getaway car never comes." });
+    return { events: [caperEvent(title, steps, "busted"), { tone: "bad", text: "The getaway car never came. You're all caught at the door." }], caseFile: null };
   }
   if (interrupted && !ok.muscle) {
     for (const p of members) {
@@ -403,6 +439,7 @@ export function runHomeJob(
     crew.log = [{ at: now, text: `The job on ${t.name}'s place was interrupted. Nobody got anything.` }, ...crew.log].slice(0, 30);
     return {
       events: [
+        caperEvent(title, steps, "caught"),
         {
           tone: "bad",
           text: home
@@ -469,5 +506,10 @@ export function runHomeJob(
   ];
   if (wired && h.hacker) events.unshift(alarmCut ? { tone: "good", text: `${h.hacker.name} kills the alarm before anyone touches a door. No camera, no siren.` } : { tone: "bad", text: `${h.hacker.name} can't get the alarm off. It's still watching.` });
   if (!ok.lookout) events.push({ tone: "bad", text: "Nobody watched the street. Half the block saw your crew leave." });
+  steps.push(
+    { card: "vault", ok: take > 0, who: team.safecracker.name, line: take > 0 ? `The hiding spot ${STASH.spots[tier]} opens.` : "The hiding spot won't give." },
+    { card: "getaway", ok: true, who: team.driver.name, line: "The engine's running. Everyone's in." },
+  );
+  events.unshift(caperEvent(title, steps, take > 0 ? (ok.lookout ? "clean" : "seen") : "empty"));
   return { events, caseFile: c };
 }

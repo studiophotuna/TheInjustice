@@ -13,6 +13,9 @@ type Side = "you" | "foe";
 type Kind = "strike" | "shot" | "block" | "dodge";
 const RESULT = ["hit", "crit", "block", "dodge"] as const;
 
+/** Painted card faces (public/fight/<name>.jpg). */
+const FIGHT_ART = new Set(["strike", "shot", "block", "dodge", "critical"]);
+
 /** At most this many moves are played; the rest of a long fight is folded into the health bars. */
 const MAX_BEATS = 8;
 
@@ -164,7 +167,10 @@ export function CardFight({
     const card = (kind: Kind, crit: boolean) => {
       const f = FACE[kind], el = document.createElement("div");
       el.className = `cf-move k-${kind}` + (crit ? " crit" : "");
-      el.innerHTML = `<div class="cf-flip"><div class="cf-face cf-back"><img src="/brand/mark.webp" alt=""></div><div class="cf-face cf-front"><svg viewBox="0 0 200 220">${f.svg}</svg><div class="cf-tag">${crit ? "Critical" : f.label}<small>${f.sub}</small></div></div></div>`;
+      // The painted card where there is one (public/fight), the drawn one otherwise.
+      const art = crit ? "critical" : kind;
+      const face = FIGHT_ART.has(art) ? `<div class="cf-art" style="background-image:url('/fight/${art}.jpg')"></div>` : `<svg viewBox="0 0 200 220">${f.svg}</svg>`;
+      el.innerHTML = `<div class="cf-flip"><div class="cf-face cf-back"><img src="/brand/mark.webp" alt=""></div><div class="cf-face cf-front">${face}<div class="cf-tag">${crit ? "Critical" : f.label}<small>${f.sub}</small></div></div></div>`;
       stage.appendChild(el);
       return el;
     };

@@ -53,7 +53,9 @@ describe("guard dogs", () => {
     applyAction(p, { type: "dog_buy", breed: "mutt", name: "Pip" }, NOW, always(0.5));
     const thief = mk("bo");
     const out = breakIn(thief, p, NOW, always(0.99), { caseId: "C", district: "Iron Row", crewTag: null, witnesses: [] });
-    expect(out.events[0].text).toMatch(/dog/);
+    // The first event plays the job as cards; the line after it says what happened.
+    expect(out.events.find((e) => !e.fight)!.text).toMatch(/dog/);
+    expect(out.events[0].fight?.caper?.steps.at(-1)?.card).toBe("dog");
     expect(p.inbox?.[0].text).toMatch(/Pip/);
   });
 });

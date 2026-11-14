@@ -28,6 +28,7 @@ import {
   type Tip,
 } from "./types";
 import { hurtLimit } from "./engine";
+import { caperEvent, witnessStep, type CaperStep } from "./caper";
 
 export interface CrimeDef {
   id: CrimeKind;
@@ -314,6 +315,17 @@ export function commitCrime(
     a.stats.agility += 0.5;
     a.stats.nerve += 0.3;
     if (kind === "pickpocket") a.stats.wits += 0.3;
+    const lift = kind === "pickpocket";
+    const steps: CaperStep[] = [
+      { card: "case", ok: true, line: `You pick out ${t.name} in ${ctx.district}.` },
+      success
+        ? { card: lift ? "lift" : "snatch", ok: true, line: lift ? "Two fingers, one wallet. Smooth." : "You grab the bag and keep moving." }
+        : { card: lift ? "lift" : "snatch", ok: false, line: lift ? `${t.name} feels it and grabs your wrist.` : `${t.name} holds on and starts shouting.` },
+    ];
+    if (success) steps.push({ card: "getaway", ok: true, line: "You melt into the crowd." }, ...witnessStep(ctx.witnesses.length));
+    const ev = caperEvent(`${def.name}: ${t.name}`, steps, success ? (ctx.witnesses.length ? "seen" : "clean") : "caught");
+    fight = ev.fight;
+    events.push(ev);
   }
 
   if (!success) {

@@ -40,6 +40,7 @@ import { requestShopCat, DeanLetter, FightTab, JobsTab, ProfileTab, ShopTab } fr
 import { CityPlaces, type Building } from "./places";
 import { careerStill, facePhoto } from "./art/Cutout";
 import { CardFight } from "./cardfight";
+import { CaperScene } from "./caperscene";
 import { NPC_FACES } from "@/game/content/faces";
 import { CommunityTab } from "./community";
 import { HomeTab } from "./home";
@@ -717,6 +718,15 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose?: () 
   );
 }
 
+/** How a crime or heist ended, stamped like a fight result. */
+const CAPER_OUTCOME = {
+  clean: { word: "CLEAN", cls: "win" },
+  seen: { word: "GOT AWAY", cls: "win" },
+  empty: { word: "EMPTY", cls: "loss" },
+  caught: { word: "CAUGHT", cls: "death" },
+  busted: { word: "BUSTED", cls: "death" },
+} as const;
+
 const OUTCOME = {
   win: { word: "WIN!", cls: "win" },
   loss: { word: "BEATEN", cls: "loss" },
@@ -772,7 +782,7 @@ function FightScene({ fight, view, onClose, onAgain, busy }: { fight: FightShow 
   const [shown, setShown] = useState(0);
   const lines = fight.lines.slice(0, 7);
   // Fights with recorded moves play as cards; older saved fights keep the text version.
-  const cards = !!fight.beats?.length;
+  const cards = !!fight.beats?.length || !!fight.caper;
   const [cardDone, setCardDone] = useState(false);
   const [fast, setFast] = useState(1);
   const [skip, setSkip] = useState(false);
@@ -782,7 +792,7 @@ function FightScene({ fight, view, onClose, onAgain, busy }: { fight: FightShow 
     const t = setTimeout(() => setShown((s) => s + 1), 320);
     return () => clearTimeout(t);
   }, [shown, done]);
-  const o = OUTCOME[fight.outcome];
+  const o = fight.caper ? CAPER_OUTCOME[fight.caper.result] : OUTCOME[fight.outcome];
   const npcId =
     fight.opponent === "Road Gang" ? "road_gang" : view.fights.find((f) => f.name === fight.opponent)?.id ?? "mugger";
 
@@ -790,6 +800,16 @@ function FightScene({ fight, view, onClose, onAgain, busy }: { fight: FightShow 
     <motion.div className={`fight-scene${cards ? " cf-on" : ""}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={done ? onClose : undefined}>
       {cards ? (
         <>
+          {fight.caper ? (
+            <CaperScene
+              caper={fight.caper}
+              title={fight.opponent}
+              scene={view.jail ? "/scenes/prison.jpg" : cityArt(view.location.country) ?? "/scenes/street.jpg"}
+              speed={fast}
+              skip={skip}
+              onDone={() => setCardDone(true)}
+            />
+          ) : (
           <CardFight
             fight={fight}
             youName={view.name}
@@ -800,6 +820,7 @@ function FightScene({ fight, view, onClose, onAgain, busy }: { fight: FightShow 
             skip={skip}
             onDone={() => setCardDone(true)}
           />
+          )}
           {!cardDone && (
             <div className="cf-controls">
               <button className={fast > 1 ? "on" : ""} aria-pressed={fast > 1} onClick={() => setFast(fast > 1 ? 1 : 2)}>Speed 2x</button>

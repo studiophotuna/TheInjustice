@@ -14,6 +14,7 @@ import { GameError, type City, type Crew, type GameEvent, type HeistRole, type P
 import { npcScrubFee } from "./incidents";
 import { SCRUB } from "./firehack";
 import { canPayIllegal, earnDirty, payIllegal } from "./money";
+import { caperEvent, type CaperStep } from "./caper";
 
 const H = BALANCE.heist;
 export const ROLES: { id: HeistRole; name: string; stat: StatKey; job: string }[] = [
@@ -102,6 +103,13 @@ export function runHeist(crew: Crew, leader: Player, team: Partial<Record<HeistR
   const members = Object.values(team).filter((x): x is Player => !!x);
   const heatMult = COUNTRY_BY_ID[h.country].heatMult;
   const capital = COUNTRY_BY_ID[h.country].capital;
+  // The job as cards, in the order it happens.
+  const title = `Bank job in ${capital}`;
+  const steps: CaperStep[] = [];
+  if (team.lookout) steps.push({ card: "lookout", ok: ok.lookout, who: team.lookout.name, line: ok.lookout ? "Eyes on every corner. No police." : "Nobody sees the police coming." });
+  if (team.muscle) steps.push({ card: "guards", ok: ok.muscle, who: team.muscle.name, line: ok.muscle ? "The guards stay on the floor." : "The guards fight back." });
+  steps.push({ card: "vault", ok: ok.safecracker, who: team.safecracker.name, line: ok.safecracker ? "The vault door swings open." : "The vault won't open." });
+  steps.push({ card: "getaway", ok: ok.driver, who: team.driver.name, line: ok.driver ? "The engine's running. Everyone's in." : "The getaway car never comes." });
   crew.heist = null;
   crew.lastHeistAt = now;
   const events: GameEvent[] = [];
@@ -127,7 +135,7 @@ export function runHeist(crew: Crew, leader: Player, team: Partial<Record<HeistR
     }
     crew.log = [{ at: now, text: `The bank job in ${capital} went wrong. Everyone got caught.` }, ...crew.log].slice(0, 30);
     if (city) city.log = [{ at: now, text: `Bank robbery foiled in ${capital}: the robbers were caught at the scene.` }, ...city.log].slice(0, 20);
-    return [{ tone: "bad", text: "The getaway car never came. You're all caught." }, ...events];
+    return [caperEvent(title, steps, "busted"), { tone: "bad", text: "The getaway car never came. You're all caught." }, ...events];
   }
 
   for (const p of members) {
@@ -141,6 +149,7 @@ export function runHeist(crew: Crew, leader: Player, team: Partial<Record<HeistR
   if (!ok.muscle) events.push({ tone: "bad", text: "The guards put up a fight. Everyone took a beating." });
   if (!ok.lookout) events.push({ tone: "bad", text: "Nobody saw the police coming. Every cop in the city knows your faces now." });
   events.unshift(take ? { tone: "good", text: `The vault opens. $${take} taken; your share is $${share}, dirty.` } : { tone: "info", text: "The vault won't open. You get away with nothing." });
+  events.unshift(caperEvent(title, steps, take ? (ok.lookout ? "clean" : "seen") : "empty"));
   return events;
 }
 

@@ -1,5 +1,20 @@
 # Changelog
 
+## 8.7.0: crimes and heists play out as cards
+
+- **Crime cards.** Pickpocketing, bag snatches, break-ins, car theft, bank jobs and crew jobs on a
+  player's home now play out step by step as cards, like fights. Each step is dealt, flips over
+  and gets stamped with how it went, then joins the trail at the top:
+  - Pickpocket and snatch: case it, the lift or the grab, the getaway, witnesses.
+  - Break-in: case it, the lock (or the owner, the dog, the alarm), inside, the getaway.
+  - Car theft: case it, hotwire, getaway.
+  - Bank job: lookout, muscle, the safe, the getaway, each with the name of who did it.
+  - Home job: the hacker on the alarm, lookout, whoever walks in, the safe, the getaway.
+  The job ends on a stamp: Clean, Got away, Empty, Caught or Busted, then the usual result plate.
+- The server already worked these crimes out step by step; now it records the steps. Nothing new
+  is rolled, and nothing shows odds.
+- **Painted fight cards.** Strike, Shot, Block, Dodge and Critical now use the owner's artwork.
+
 ## 8.6.0: fights play out as cards
 
 - **Card fights.** Every fight now plays out by itself as a run of cards: each move is dealt

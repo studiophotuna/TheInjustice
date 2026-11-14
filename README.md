@@ -10,7 +10,7 @@ grow hidden stats that decide whether you survive.
 
 **Play online:** https://injustice-booking-cms.vercel.app
 
-**Current version:** 8.6.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
+**Current version:** 8.7.0. Every release is listed in [CHANGELOG.md](CHANGELOG.md); the
 [latest changes](#where-the-game-is-now) are summed up at the end of this page.
 
 ## Play it locally
@@ -394,7 +394,8 @@ Everything since 1.8, in short. The details are in [CHANGELOG.md](CHANGELOG.md).
 **Card fights (8.6).** Fights play out as cards dealt between the two fighters: strike, shot,
 block, dodge, critical. The engine records every move (`FightBeat` in `src/game/combat.ts`) and
 `src/components/cardfight.tsx` plays them. Cards never show weapons or armour, so watching a fight
-tells you nothing about someone's gear.
+tells you nothing about someone's gear. Since 8.7 crimes and heists play the same way, step by
+step (`src/game/caper.ts`, `src/components/caperscene.tsx`).
 
 **How the case ends (8.4).** Close the last lead and your case card asks one question: what do you
 do with everything you have on Judge Crane? Take it to court (your heat is wiped, standing goes up),

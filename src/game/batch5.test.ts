@@ -110,7 +110,8 @@ describe("heists", () => {
     takeRole(c, boss, "muscle", LATER);
     expect(() => takeRole(c, boss, "driver", LATER)).toThrow(/already/);
     const events = runHeist(c, boss, { driver: team[1], safecracker: team[2], lookout: team[3], muscle: boss }, null, LATER, always(0));
-    expect(events[0].text).toMatch(/vault opens/);
+    expect(events.find((e) => !e.fight)!.text).toMatch(/vault opens/);
+    expect(events[0].fight?.caper?.result).toBe("clean");
     for (const p of team) expect(p.dirty ?? 0).toBeGreaterThan(0);
     expect(() => planHeist(c, boss, LATER + 1000)).toThrow(/Lay low/);
   });

@@ -838,6 +838,8 @@ export interface FightSummary {
   beats?: import("./combat").FightBeat[];
   /** Both sides' health when it started, as percentages. */
   start?: [number, number];
+  /** A crime or heist played as cards instead of a fight (see caper.ts). */
+  caper?: import("./caper").Caper;
   outcome: "win" | "loss" | "ko" | "death";
   /** The opponent's own face when it's a player or a regular (NPCs use their portrait). */
   face?: { photo: string | null; path: string | null; look: { frame: string | null; color: string | null; banner: string | null } | null };
