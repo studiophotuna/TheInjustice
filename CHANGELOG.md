@@ -1,5 +1,10 @@
 # Changelog
 
+## 8.8.9: painted Mechanic ranks
+
+- All seven Mechanic ranks (Grease Monkey to Garage Owner) use the owner's painted portraits,
+  faces in shadow. The Iron Foreman street fighter keeps his old photo.
+
 ## 8.8.8: painted Military ranks
 
 - All eight Military ranks (Recruit to General) use the owner's painted portraits, faces in
