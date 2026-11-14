@@ -1,5 +1,10 @@
 # Changelog
 
+## 8.8.5: painted Courts ranks
+
+- All eight Courts ranks (Law Student to Chief Justice) use the owner's painted portraits, faces
+  in shadow. Regulars who wore old Courts photos as faces keep them.
+
 ## 8.8.4: painted Mafia ranks
 
 - All eight Mafia ranks (Associate to Don) use the owner's painted portraits, faces in shadow,
