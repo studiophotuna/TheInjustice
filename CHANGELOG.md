@@ -1,5 +1,16 @@
 # Changelog
 
+## 8.5.0: twelve more painted story panels
+
+- Painted from the owner's asset set: Police "You're Not the First" (Reyes and her partner's
+  photo, the eleven files, the hand-over on the roof), Mafia "Tribute" and "Paid in Full" (Kozak's
+  envelope, the courthouse back door, the ledger), and Courts "Case 4471" (the records room, the
+  green-ink pages, Marsh). The brass door plate in Tribute now reads JUDGE A. CRANE, and white
+  strips on the edges of the Case 4471 images were trimmed.
+- 22 of the 86 story panels are now painted. Images in the set marked as rough prototypes
+  (banking, medicine, vigilante, the courts finale, the evidence board and Halcyon) were left out:
+  they were blurry, some were duplicates of each other, and several didn't match their scene.
+
 ## 8.4.3: Grayhaven and Port Solace paintings
 
 - Grayhaven (the courthouse dome over the harbour, in the rain) and Port Solace (the wet docks,

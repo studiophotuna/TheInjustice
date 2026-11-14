@@ -488,6 +488,10 @@ export const STORY_ART = new Set<string>([
   "prologue-1", "prologue-2", "prologue-3", "prologue-4",
   "old_faces-1", "old_faces-2", "old_faces-3",
   "police_2-1", "police_2-2", "police_2-3",
+  "police_3-1", "police_3-2", "police_3-3",
+  "enforcer_2-1", "enforcer_2-2", "enforcer_2-3",
+  "enforcer_3-1", "enforcer_3-2", "enforcer_3-3",
+  "courts_2-1", "courts_2-2", "courts_2-3",
 ]);
 for (const c of [PROLOGUE, ...CHAPTERS, ...ENDING_CHAPTERS]) {
   c.panels.forEach((panel, i) => {
