@@ -25,7 +25,13 @@ function unlockHint(id: string, title: string): string {
   return "Keep playing.";
 }
 
-type Clue = { id: string; title: string; teaser: string; state: "read" | "new" | "locked"; hint: string; links: string[]; read?: () => void };
+type Clue = { id: string; title: string; teaser: string; state: "read" | "new" | "locked"; hint: string; links: string[]; read?: () => void; photo?: string };
+
+/**
+ * Evidence with a painted photo (public/evidence/<lead>.jpg, square). Shown on the board once the
+ * lead is closed; add the lead id here when its image arrives.
+ */
+export const EVIDENCE_ART = new Set<string>(["benny_seen"]);
 
 /**
  * The conspiracy board: every chapter of your story is a piece of evidence pinned to the wall,
@@ -59,6 +65,7 @@ export function caseClues(view: PublicView, onRead: (id: string) => void): Clue[
       state: l.state === "closed" ? "read" : "locked",
       hint: `Lead: ${l.title}`,
       links: l.evidence.links,
+      photo: l.state === "closed" && EVIDENCE_ART.has(l.id) ? `/evidence/${l.id}.jpg` : undefined,
     });
   }
   return clues;
@@ -144,8 +151,9 @@ export function ConspiracyBoard({ game, onRead }: { game: GameApi; onRead: (id: 
         </div>
         <div className="board-clues">
           {visible.map((c) => (
-            <button key={c.id} data-clue={c.id} className={`clue ${c.state}`} disabled={!c.read} onClick={c.read}>
+            <button key={c.id} data-clue={c.id} className={`clue ${c.state}${c.photo ? " has-photo" : ""}`} disabled={!c.read} onClick={c.read}>
               <span className="pin" />
+              {c.photo && <img className="clue-photo" src={c.photo} alt="" loading="lazy" />}
               {c.state === "locked" ? (
                 <>
                   <b><Lock size={12} /> Missing evidence</b>

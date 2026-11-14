@@ -1,5 +1,15 @@
 # Changelog
 
+## 8.5.1: evidence photos, two more panels
+
+- **Evidence photos on the board.** A closed lead whose evidence has a painting now shows it as a
+  print pinned above the note. The first is Benny's new address: the door beside the pawn shop,
+  a lit room upstairs. More are added by listing the lead in `EVIDENCE_ART` (`board.tsx`) and
+  dropping `public/evidence/<lead>.jpg` in.
+- Painted: Medicine "The Quiet Patient" panel 1 (Doc Mercy at the morgue table) and Vigilante
+  "The Watchman's Wall" panel 1 (Silas at his wall of photos and red string). 24 of 86 story
+  panels are now painted.
+
 ## 8.5.0: twelve more painted story panels
 
 - Painted from the owner's asset set: Police "You're Not the First" (Reyes and her partner's
