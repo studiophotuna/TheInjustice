@@ -1,5 +1,10 @@
 # Changelog
 
+## 8.8.10: painted Hacker ranks
+
+- All seven Hacker ranks (Script Kiddie to Ghost) use the owner's painted portraits, faces in
+  shadow, ending on a figure dissolving into green code.
+
 ## 8.8.9: painted Mechanic ranks
 
 - All seven Mechanic ranks (Grease Monkey to Garage Owner) use the owner's painted portraits,
