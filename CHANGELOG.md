@@ -1,5 +1,11 @@
 # Changelog
 
+## 8.8.6: painted Vigilante ranks
+
+- All eight Vigilante ranks (Watcher to Symbol) use the owner's painted portraits, hooded and
+  masked. Regulars and the street fighters who wore old Vigilante photos (the Alley Rat, the
+  Undercity Scavenger) keep them.
+
 ## 8.8.5: painted Courts ranks
 
 - All eight Courts ranks (Law Student to Chief Justice) use the owner's painted portraits, faces
