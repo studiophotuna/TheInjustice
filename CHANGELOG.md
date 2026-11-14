@@ -1,5 +1,12 @@
 # Changelog
 
+## 8.8.11: painted Fire ranks and street portraits
+
+- All seven Fire Department ranks (Probie to Fire Chief) use the owner's painted portraits.
+- The seven street portraits (players with no career yet, and the street fighters who use them)
+  are the owner's painted ones too.
+- Every career's rank portraits are now painted, apart from the Medical Student.
+
 ## 8.8.10: painted Hacker ranks
 
 - All seven Hacker ranks (Script Kiddie to Ghost) use the owner's painted portraits, faces in
