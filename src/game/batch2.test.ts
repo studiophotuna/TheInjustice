@@ -59,8 +59,13 @@ describe("crew wars", () => {
     joinWar(c, alma, "gutter", LATER);
     expect(() => settleWar(c, "gutter", [bruno, ...muscle], [alma], LATER, always(0.5))).toThrow(/isn't over/);
     const end = LATER + BALANCE.turf.warMs;
-    settleWar(c, "gutter", [bruno, ...muscle], [alma], end, always(0.5));
+    const out = settleWar(c, "gutter", [bruno, ...muscle], [alma], end, always(0.5), alma.id);
     expect(c.turf?.gutter?.crewId).toBe(brunoCrew.id);
+    // The war plays as cards, told from the side of whoever settles it.
+    const scene = out.find((e) => e.fight?.caper)!.fight!.caper!;
+    expect(scene.steps.map((s) => s.card)).toEqual(["rally", "hold", "clash", "flag"]);
+    expect(scene.result).toBe("taken");
+    expect(scene.good).toBe(false);
     expect(c.log[0].text).toMatch(/took/);
     expect(() => declareWar(c, almaCrew, alma, "gutter", end + 1000)).toThrow(/cool down/);
   });

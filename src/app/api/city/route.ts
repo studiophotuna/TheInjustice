@@ -215,7 +215,7 @@ export async function POST(req: Request) {
           // Under martial law the army may break it up before anyone wins.
           out =
             peaceSettle(c, str(b.district) as DistrictId, side(h.war.attackers), side(h.war.defenders), side(h.war.peacekeepers ?? []), now) ??
-            settleWar(c, str(b.district) as DistrictId, side(h.war.attackers), side(h.war.defenders), now, Math.random);
+            settleWar(c, str(b.district) as DistrictId, side(h.war.attackers), side(h.war.defenders), now, Math.random, playerId);
           for (const f of byId.values()) if (f.id !== playerId) await tx.putPlayer(f);
           break;
         }

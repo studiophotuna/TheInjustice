@@ -725,6 +725,9 @@ const CAPER_OUTCOME = {
   empty: { word: "EMPTY", cls: "loss" },
   caught: { word: "CAUGHT", cls: "death" },
   busted: { word: "BUSTED", cls: "death" },
+  foiled: { word: "FOILED", cls: "loss" },
+  taken: { word: "TAKEN", cls: "win" },
+  held: { word: "HELD", cls: "win" },
 } as const;
 
 const OUTCOME = {
@@ -792,7 +795,10 @@ function FightScene({ fight, view, onClose, onAgain, busy }: { fight: FightShow 
     const t = setTimeout(() => setShown((s) => s + 1), 320);
     return () => clearTimeout(t);
   }, [shown, done]);
-  const o = fight.caper ? CAPER_OUTCOME[fight.caper.result] : OUTCOME[fight.outcome];
+  // A turf war says whether it went your way; everything else reads it from the result.
+  const o = fight.caper
+    ? { ...CAPER_OUTCOME[fight.caper.result], ...(fight.caper.good === undefined ? {} : { cls: fight.caper.good ? "win" : "loss" }) }
+    : OUTCOME[fight.outcome];
   const npcId =
     fight.opponent === "Road Gang" ? "road_gang" : view.fights.find((f) => f.name === fight.opponent)?.id ?? "mugger";
 

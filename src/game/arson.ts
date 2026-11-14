@@ -12,6 +12,7 @@ import { sv } from "./stats";
 import { fireWatchOn, logFire } from "./firehack";
 import { GameError, type City, type GameEvent, type Player, type Rng } from "./types";
 import { INSPECT, inspected } from "./protect";
+import { caperEvent, type CaperStep } from "./caper";
 
 export const TORCH = {
   energy: 20,
@@ -64,6 +65,11 @@ export function torchBusiness(a: Player, owner: Player, propertyId: string, city
 
   // A business that passed a fire inspection this week is much harder to burn.
   const chance = torchChance(a, propertyId) * (inspected(owner, propertyId, now) ? INSPECT.chanceMult : 1);
+  const title = `Arson: ${owner.name}'s ${prop.name.toLowerCase()}`;
+  const steps: CaperStep[] = [
+    { card: "case", ok: true, line: `You watch ${prop.name} until the last light goes off.` },
+    { card: "douse", ok: true, line: "Gasoline along the back wall." },
+  ];
   if (rng() < chance) {
     const until = now + TORCH.closedMs;
     owner.closed = { ...(owner.closed ?? {}), [propertyId]: until };
@@ -74,7 +80,8 @@ export function torchBusiness(a: Player, owner: Player, propertyId: string, city
     notify(owner, `${prop.name} burned down overnight. The fire chief says arson. It'll take ${Math.round(TORCH.closedMs / 3_600_000)} hours to reopen.`, "bad", undefined, now);
     if (city) city.log = [{ at: now, text: `Fire at ${owner.name}'s ${prop.name.toLowerCase()}. Investigators suspect arson.` }, ...city.log].slice(0, 20);
     logFire(city, { at: now, what: prop.name.toLowerCase(), victimName: owner.name, arsonistId: a.id, arsonistName: a.name }, now);
-    return [{ tone: "good", text: `${prop.name} goes up in flames. Nobody saw you. +${TORCH.rep} reputation on the street.` }];
+    steps.push({ card: "light", ok: true, line: "One match." }, { card: "blaze", ok: true, line: `${prop.name} goes up in flames.` });
+    return [{ tone: "good", text: `${prop.name} goes up in flames. Nobody saw you. +${TORCH.rep} reputation on the street.` }, caperEvent(title, steps, "clean")];
   }
 
   if (rng() < TORCH.caughtChance) {
@@ -83,12 +90,14 @@ export function torchBusiness(a: Player, owner: Player, propertyId: string, city
     a.heat += TORCH.heat * heatMult;
     notify(owner, `Police caught ${a.name} with a gas can outside your ${prop.name.toLowerCase()}.`, "good", undefined, now);
     if (city) city.log = [{ at: now, text: `${a.name} arrested trying to burn down ${prop.name}.` }, ...city.log].slice(0, 20);
-    return [{ tone: "bad", text: "A night guard spots you. The police are there before the match is lit. You're in a cell." }];
+    steps.push({ card: "patrol", ok: false, line: "A night guard's flashlight finds you." });
+    return [{ tone: "bad", text: "A night guard spots you. The police are there before the match is lit. You're in a cell." }, caperEvent(title, steps, "busted")];
   }
 
   a.heat += TORCH.failHeat * heatMult;
   notify(owner, `Someone tried to set fire to your ${prop.name.toLowerCase()}. The sprinklers saved it${inspected(owner, propertyId, now) ? ". Good thing it passed its inspection" : ""}.`, "info", undefined, now);
-  return [{ tone: "bad", text: "The fire doesn't catch. Sprinklers. You run before anyone sees your face." }];
+  steps.push({ card: "light", ok: true, line: "One match." }, { card: "sprinkler", ok: false, line: "The sprinklers kick in. It won't catch." });
+  return [{ tone: "bad", text: "The fire doesn't catch. Sprinklers. You run before anyone sees your face." }, caperEvent(title, steps, "foiled")];
 }
 
 /** Businesses this player could torch from the viewer's side (for the People list). */

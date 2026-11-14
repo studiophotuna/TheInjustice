@@ -12,6 +12,7 @@ import { countryOf, inJail } from "./engine";
 import { notify } from "./social";
 import { crewJob, family } from "./family";
 import { GameError, type City, type Crew, type DistrictId, type GameEvent, type Player, type Rng, type TurfHold } from "./types";
+import { caperEvent } from "./caper";
 
 const T = BALANCE.turf;
 
@@ -108,7 +109,7 @@ export function sideStrength(team: Player[]): number {
  * Once the war's time is up: compare the sides (defenders get a home advantage) and hand out
  * the district, heat and bruises. `attackers` / `defenders` are the joined players' records.
  */
-export function settleWar(c: City, d: DistrictId, attackers: Player[], defenders: Player[], now: number, rng: Rng): GameEvent[] {
+export function settleWar(c: City, d: DistrictId, attackers: Player[], defenders: Player[], now: number, rng: Rng, viewerId?: string): GameEvent[] {
   const h = holdOf(c, d);
   if (!h?.war) throw new GameError("There's no war there.");
   if (now < h.war.endsAt) throw new GameError("The fighting isn't over yet.");
@@ -122,6 +123,19 @@ export function settleWar(c: City, d: DistrictId, attackers: Player[], defenders
     p.heat += T.heat;
     p.hp = Math.max(5, p.hp - T.damage);
   }
+  // The war as cards: who turned up, the clash, and whose flag flies after.
+  const side = attackers.some((p) => p.id === viewerId) ? "atk" : defenders.some((p) => p.id === viewerId) ? "def" : null;
+  const scene = caperEvent(
+    `Turf war: ${district}`,
+    [
+      { card: "rally", ok: attackers.length > 0, who: `${war.name} [${war.tag}]`, line: attackers.length ? `${attackers.length} ${attackers.length === 1 ? "fighter rolls" : "fighters roll"} into ${district}.` : "Nobody turns up to attack." },
+      { card: "hold", ok: defenders.length > 0, who: `${h.name} [${h.tag}]`, line: defenders.length ? `${defenders.length} ${defenders.length === 1 ? "holds" : "hold"} the corners. Home ground.` : "Nobody turns up to defend it." },
+      { card: "clash", ok: attackersWin, line: attackersWin ? "The attackers break through." : "The attackers are pushed back." },
+      { card: "flag", ok: attackersWin, line: attackersWin ? `${war.name} takes ${district}.` : `${h.name} holds ${district}.` },
+    ],
+    attackersWin ? "taken" : "held",
+    side ? (side === "atk") === attackersWin : undefined,
+  );
   const winners = attackersWin ? attackers : defenders;
   for (const p of winners) {
     p.reputation += 3;
@@ -137,12 +151,12 @@ export function settleWar(c: City, d: DistrictId, attackers: Player[], defenders
     if (declarer) family(declarer).turf = true;
     c.turf![d] = { crewId: war.crewId, name: war.name, tag: war.tag, since: now, lastWarAt: now, war: null };
     c.log = [{ at: now, text: `${war.name} [${war.tag}] took ${district} from ${h.name}.` }, ...c.log].slice(0, 20);
-    return [{ tone: "good", text: `${war.name} takes ${district}.` }];
+    return [{ tone: "good", text: `${war.name} takes ${district}.` }, scene];
   }
   h.war = null;
   h.lastWarAt = now;
   c.log = [{ at: now, text: `${h.name} [${h.tag}] held ${district} against ${war.name}.` }, ...c.log].slice(0, 20);
-  return [{ tone: "info", text: `${h.name} holds ${district}.` }];
+  return [{ tone: "info", text: `${h.name} holds ${district}.` }, scene];
 }
 
 /** Turf in this city, for the map. */

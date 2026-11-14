@@ -124,8 +124,11 @@ describe("torching a business", () => {
     const { a, owner, city } = setup();
     a.stats.nerve = a.stats.agility = a.stats.wits = 2000;
     expect(torchChance(a, "laundromat")).toBeGreaterThan(0.8);
-    torchBusiness(a, owner, "laundromat", city, LATER, always(0.01));
+    const out = torchBusiness(a, owner, "laundromat", city, LATER, always(0.01));
     expect(closedUntil(owner, "laundromat")).toBeGreaterThan(LATER);
+    const scene = out.find((e) => e.fight?.caper)!.fight!.caper!;
+    expect(scene.steps.map((s) => s.card)).toEqual(["case", "douse", "light", "blaze"]);
+    expect(scene.result).toBe("clean");
     expect(owner.inbox?.[0].text).toMatch(/burned down/);
     expect(city.log[0].text).toMatch(/arson/);
     expect(() => applyAction(owner, { type: "collect_property", id: "laundromat" }, LATER + 60_000, always(0.5))).toThrow(/burned-out/);
@@ -139,8 +142,9 @@ describe("torching a business", () => {
   it("a failed attempt can land the arsonist in a cell", () => {
     const { a, owner, city } = setup();
     const rolls = [0.99, 0.1];
-    torchBusiness(a, owner, "laundromat", city, LATER, () => rolls.shift() ?? 0.5);
+    const out = torchBusiness(a, owner, "laundromat", city, LATER, () => rolls.shift() ?? 0.5);
     expect(a.jailReason).toMatch(/gas can/);
+    expect(out.find((e) => e.fight?.caper)!.fight!.caper!.result).toBe("busted");
     expect(closedUntil(owner, "laundromat")).toBe(0);
   });
 

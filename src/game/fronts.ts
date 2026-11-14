@@ -9,6 +9,7 @@ import { crewJob } from "./family";
 import { sv } from "./stats";
 import { fireWatchOn, logFire } from "./firehack";
 import { GameError, type City, type Crew, type FrontKind, type GameEvent, type Player, type Rng } from "./types";
+import { caperEvent, type CaperStep } from "./caper";
 
 export const FRONTS = {
   kinds: {
@@ -166,6 +167,11 @@ export function torchFront(a: Player, target: Crew, city: City | null, now: numb
   a.attackLog = { ...(a.attackLog ?? {}), [`torchfront:${a.id}`]: now };
   crewJob(a, "war");
   const name = `[${target.tag}]'s ${def.name.toLowerCase()}`;
+  const title = `Arson: ${name}`;
+  const steps: CaperStep[] = [
+    { card: "case", ok: true, line: `You watch ${name} until the last light goes off.` },
+    { card: "douse", ok: true, line: "Gasoline along the back wall." },
+  ];
   if (rng() < frontTorchChance(a, target)) {
     target.front!.closedUntil = now + T.closedMs;
     target.front!.collectedAt = now + T.closedMs;
@@ -174,18 +180,21 @@ export function torchFront(a: Player, target: Crew, city: City | null, now: numb
     target.log = [{ at: now, text: `Our ${def.name.toLowerCase()} burned down overnight. Arson. No income and no laundering until it's rebuilt.` }, ...target.log].slice(0, 30);
     if (city) city.log = [{ at: now, text: `A ${def.name.toLowerCase()} burned down overnight. Investigators suspect arson.` }, ...city.log].slice(0, 20);
     logFire(city, { at: now, what: `[${target.tag}]'s ${def.name.toLowerCase()}`, victimName: target.name, arsonistId: a.id, arsonistName: a.name }, now);
-    return [{ tone: "good", text: `${name} goes up in flames. Their books are ash. +${T.rep} reputation.` }];
+    steps.push({ card: "light", ok: true, line: "One match." }, { card: "blaze", ok: true, line: `${name} goes up in flames.` });
+    return [{ tone: "good", text: `${name} goes up in flames. Their books are ash. +${T.rep} reputation.` }, caperEvent(title, steps, "clean")];
   }
   if (rng() < T.caught) {
     a.jailUntil = Math.max(a.jailUntil ?? 0, now + Math.round(T.jailMs * heatMult));
     a.jailReason = `Caught with a gas can outside a ${def.name.toLowerCase()}.`;
     a.heat += T.heat * heatMult;
     target.log = [{ at: now, text: `${a.name} was caught trying to burn our ${def.name.toLowerCase()}.` }, ...target.log].slice(0, 30);
-    return [{ tone: "bad", text: "Their night guard was waiting. The police are there before the match is lit. You're in a cell." }];
+    steps.push({ card: "patrol", ok: false, line: "Their night guard was waiting." });
+    return [{ tone: "bad", text: "Their night guard was waiting. The police are there before the match is lit. You're in a cell." }, caperEvent(title, steps, "busted")];
   }
   a.heat += T.failHeat * heatMult;
   target.log = [{ at: now, text: `Someone tried to set fire to our ${def.name.toLowerCase()}. The sprinklers saved it.` }, ...target.log].slice(0, 30);
-  return [{ tone: "bad", text: "The fire won't catch. Sprinklers. You run before anyone sees your face." }];
+  steps.push({ card: "light", ok: true, line: "One match." }, { card: "sprinkler", ok: false, line: "The sprinklers kick in. It won't catch." });
+  return [{ tone: "bad", text: "The fire won't catch. Sprinklers. You run before anyone sees your face." }, caperEvent(title, steps, "foiled")];
 }
 
 /** The leader pays the vault to rebuild after a fire. */

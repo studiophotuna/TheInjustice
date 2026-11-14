@@ -7,7 +7,11 @@ import type { FightSummary, GameEvent } from "./types";
 
 export type CaperCard =
   | "case" | "lift" | "snatch" | "lock" | "inside" | "vault" | "guards" | "lookout"
-  | "getaway" | "alarm" | "dog" | "owner" | "witness" | "hotwire" | "hacker";
+  | "getaway" | "alarm" | "dog" | "owner" | "witness" | "hotwire" | "hacker"
+  // Arson
+  | "douse" | "light" | "blaze" | "sprinkler" | "patrol"
+  // Turf war
+  | "rally" | "hold" | "clash" | "flag";
 
 export interface CaperStep {
   card: CaperCard;
@@ -19,24 +23,29 @@ export interface CaperStep {
   who?: string;
 }
 
-/** How the job ended: clean, done but seen, nothing to take, caught in the act, or all arrested. */
-export type CaperResult = "clean" | "seen" | "empty" | "caught" | "busted";
+/**
+ * How the job ended: clean, done but seen, nothing to take, caught in the act, all arrested,
+ * or it simply didn't work (foiled). Turf wars end with the district taken or held.
+ */
+export type CaperResult = "clean" | "seen" | "empty" | "caught" | "busted" | "foiled" | "taken" | "held";
 
 export interface Caper {
   steps: CaperStep[];
   result: CaperResult;
+  /** Whether it went the viewer's way, when the result alone doesn't say (turf wars). */
+  good?: boolean;
 }
 
 /** The event that plays the job on screen. Its text is the log line; the steps are the scene. */
-export function caperEvent(title: string, steps: CaperStep[], result: CaperResult): GameEvent {
-  const won = result === "clean" || result === "seen";
+export function caperEvent(title: string, steps: CaperStep[], result: CaperResult, good?: boolean): GameEvent {
+  const won = good ?? (result === "clean" || result === "seen");
   const fight: FightSummary = {
     opponent: title,
     icon: "",
     won,
     lines: [steps[steps.length - 1]?.line ?? ""],
     outcome: won ? "win" : "loss",
-    caper: { steps, result },
+    caper: good === undefined ? { steps, result } : { steps, result, good },
   };
   return { tone: won ? "good" : result === "empty" ? "info" : "bad", text: title, fight };
 }

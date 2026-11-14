@@ -1,5 +1,18 @@
 # Changelog
 
+## 8.8.0: arson and turf wars play out as cards
+
+- **Arson.** Torching a business or a rival crew's front plays as cards: case it, douse it, the
+  match, then the blaze, or the sprinklers saving it ("Foiled"), or the night guard catching you
+  ("Busted").
+- **Turf wars.** Settling a war plays as cards: the attackers rolling in, the defenders digging in,
+  the clash, and whose flag flies after ("Taken" or "Held"). The stamp is green if it went your
+  crew's way and grey if it didn't.
+- **Painted crime cards.** All 15 crime and heist cards (case it, the lift, the grab, the lock,
+  inside, the safe, muscle, lookout, getaway, alarm, guard dog, someone's home, witnesses,
+  hotwire, the hacker) now use the owner's artwork. The new arson and war cards show a drawn mark
+  until theirs arrive.
+
 ## 8.7.0: crimes and heists play out as cards
 
 - **Crime cards.** Pickpocketing, bag snatches, break-ins, car theft, bank jobs and crew jobs on a

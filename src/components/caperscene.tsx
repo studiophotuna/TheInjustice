@@ -6,11 +6,11 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
-import { Binoculars, BellRing, Car, Cpu, DoorOpen, Dog, Eye, Hand, HandGrab, House, KeyRound, Lock, ShieldAlert, Users, Vault, Zap } from "lucide-react";
+import { Binoculars, BellRing, Building2, Car, Cpu, DoorOpen, Dog, Droplets, Eye, Flag, Flame, Flashlight, Hand, HandGrab, House, Lock, Shield, ShieldAlert, ShowerHead, Swords, Users, Vault, Zap } from "lucide-react";
 import type { Caper, CaperCard } from "@/game/caper";
 
 /** Cards with a painted image (public/caper/<card>.jpg). The rest show a drawn mark until theirs arrives. */
-export const CAPER_ART = new Set<CaperCard>([]);
+export const CAPER_ART = new Set<CaperCard>(["case", "lift", "snatch", "lock", "inside", "vault", "guards", "lookout", "getaway", "alarm", "dog", "owner", "witness", "hotwire", "hacker"]);
 
 const CARD: Record<CaperCard, { label: string; Icon: typeof Eye; ok: string; fail: string }> = {
   case: { label: "Case it", Icon: Eye, ok: "Ready", fail: "Spotted" },
@@ -28,6 +28,15 @@ const CARD: Record<CaperCard, { label: string; Icon: typeof Eye; ok: string; fai
   witness: { label: "Witnesses", Icon: Users, ok: "Nobody", fail: "Seen" },
   hotwire: { label: "Hotwire", Icon: Zap, ok: "Started", fail: "Dead" },
   hacker: { label: "The alarm", Icon: Cpu, ok: "Off", fail: "Still on" },
+  douse: { label: "Douse it", Icon: Droplets, ok: "Soaked", fail: "Dry" },
+  light: { label: "The match", Icon: Flame, ok: "Lit", fail: "Out" },
+  blaze: { label: "The blaze", Icon: Building2, ok: "Burning", fail: "Out" },
+  sprinkler: { label: "Sprinklers", Icon: ShowerHead, ok: "Dry", fail: "Doused" },
+  patrol: { label: "Night guard", Icon: Flashlight, ok: "Asleep", fail: "Spotted" },
+  rally: { label: "Attackers", Icon: Users, ok: "Rolling in", fail: "No-show" },
+  hold: { label: "Defenders", Icon: Shield, ok: "Dug in", fail: "No-show" },
+  clash: { label: "The clash", Icon: Swords, ok: "Broke through", fail: "Pushed back" },
+  flag: { label: "The streets", Icon: Flag, ok: "Taken", fail: "Held" },
 };
 
 export function CaperScene({ caper, title, scene, speed, skip, onDone }: { caper: Caper; title: string; scene: string; speed: number; skip: boolean; onDone: () => void }) {
