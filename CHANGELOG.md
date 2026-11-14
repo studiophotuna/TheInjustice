@@ -1,5 +1,10 @@
 # Changelog
 
+## 8.8.12: the Medical Student
+
+- Medicine rank 1 uses the owner's painted portrait (late night in the library, a skeleton in the
+  stacks). Every career rank in the game is now painted.
+
 ## 8.8.11: painted Fire ranks and street portraits
 
 - All seven Fire Department ranks (Probie to Fire Chief) use the owner's painted portraits.
