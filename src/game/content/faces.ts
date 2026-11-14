@@ -10,7 +10,7 @@ const mk = (id: string, g: Gender, old = false): [string, Face] => [`mk${id}`, {
 const pl = (id: string, g: Gender, old = false): [string, Face] => [`mk${id}`, { src: `/faces/mk${id}.jpg`, g, player: true, ...(old ? { old } : {}) }];
 const pt = (id: string, g: Gender, old = false): [string, Face] => [id, { src: `/${MOVED.has(id) ? `faces/rank-${id}` : `portraits/${id}`}.jpg`, g, ...(old ? { old } : {}) }];
 /** Rank portraits replaced by faceless painted ones: the old photos stay on as faces, in public/faces. */
-const MOVED = new Set(["medicine-4", "medicine-6", "medicine-7", "medicine-8", "police-1", "police-2", "police-3", "police-4", "police-6", "police-8"]);
+const MOVED = new Set(["medicine-4", "medicine-6", "medicine-7", "medicine-8", "police-1", "police-2", "police-3", "police-4", "police-6", "police-8", "enforcer-1", "enforcer-2", "enforcer-3", "enforcer-6", "enforcer-8"]);
 
 export const FACES: Record<string, Face> = Object.fromEntries([
   ...["12934", "13737", "14090", "16107", "16108", "23740", "32845", "35808", "36445", "41334", "41922", "4727", "4736", "4813", "49249", "51755", "6341", "4634"].map((i) => mk(i, "m")),
@@ -66,8 +66,8 @@ export const NPC_FACES: Record<string, string> = {};
 
 /** How many rank portraits each career has (public/portraits/<career>-<rank>.jpg). */
 const RANKS: Record<string, number> = { police: 8, enforcer: 8, courts: 8, vigilante: 8, medicine: 8, banking: 8, military: 8, mechanic: 7, hacker: 7, fire: 7 };
-/** Mafia portraits were shot out of order: rank → file, so the Boss is the old man, not a soldier. */
-const ORDER: Record<string, number[]> = { enforcer: [1, 2, 6, 4, 5, 7, 3, 8] };
+/** Rank → file, for any career whose portraits are stored out of order (none now). */
+const ORDER: Record<string, number[]> = {};
 /** People without a career: a few faces of the street, picked by name. */
 const STREET: Record<Gender, string[]> = { m: ["street", "street-m1", "street-m2", "street-m3", "street-m4"], f: ["street-f1", "street-f2"] };
 
@@ -94,7 +94,7 @@ const NPC_PHOTO: Record<string, string> = {
   mugger: "enforcer-1", beach_hustler: "street-m1", casino_bouncer: "enforcer-2", rail_rat: "street", state_enforcer: "police-3",
   undercity_scav: "vigilante-8", corp_security: "police-6", road_gang: "enforcer-1",
 };
-for (const [id, file] of Object.entries(NPC_PHOTO)) NPC_FACES[id] = `/portraits/${file}.jpg`;
+for (const [id, file] of Object.entries(NPC_PHOTO)) NPC_FACES[id] = MOVED.has(file) ? `/faces/rank-${file}.jpg` : `/portraits/${file}.jpg`;
 /** Faces the story portraits were taken from: no regular wears them, so nobody shares a face with the story. */
 export const STORY_SOURCE_FACES = new Set(["9248", "13737", "4813", "5777", "4804", "49439", "4954", "6341", "25005", "44544", "33210"].map((id) => `/faces/mk${id}.jpg`));
 const NPC_SRCS = new Set([...Object.values(NPC_FACES), ...STORY_SOURCE_FACES]);

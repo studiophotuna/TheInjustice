@@ -41,7 +41,8 @@ describe("NPCs are drawn as their career and rank", () => {
     const { regularPhoto } = await import("./regulars");
     // Mafia: the soldier and the boss are different people; the Boss is the old man.
     expect(rankPortrait("enforcer", 2)).not.toBe(rankPortrait("enforcer", 7));
-    expect(rankPortrait("enforcer", 7)).toBe("/portraits/enforcer-3.jpg");
+    // Painted in rank order since 8.8.4: rank N is enforcer-N.
+    expect(rankPortrait("enforcer", 7)).toBe("/portraits/enforcer-7.jpg");
     // An intern isn't the doctor.
     expect(rankPortrait("medicine", 2)).not.toBe(rankPortrait("medicine", 4));
     for (const p of ["police", "enforcer", "courts", "vigilante", "medicine", "banking", "military", "mechanic", "hacker", "fire"]) {

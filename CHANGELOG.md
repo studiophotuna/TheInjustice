@@ -1,5 +1,11 @@
 # Changelog
 
+## 8.8.4: painted Mafia ranks
+
+- All eight Mafia ranks (Associate to Don) use the owner's painted portraits, faces in shadow,
+  now stored in rank order. Street regulars and street fighters (the Mugger, the casino bouncer,
+  the road gang, and the police NPCs) keep the old photos as their faces.
+
 ## 8.8.3: painted Police ranks
 
 - All eight Police ranks (Academy Cadet to Commissioner) use the owner's painted portraits, faces
